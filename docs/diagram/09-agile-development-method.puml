@@ -1,0 +1,116 @@
+@startuml
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam ArrowColor #4A5568
+skinparam ArrowThickness 1.5
+skinparam BackgroundColor #FAFAFA
+
+<style>
+document {
+  BackgroundColor #FAFAFA
+  FontName "Segoe UI"
+  FontColor #2D3748
+}
+activityDiagram {
+  LineColor #4A5568
+  LineThickness 1.5
+  
+  activity {
+    RoundCorner 10
+    BackgroundColor #FFFFFF
+    LineColor #CBD5E0
+    FontColor #2D3748
+    FontSize 11
+    
+    .siswa {
+      BackgroundColor #EBF8FF
+      LineColor #3182CE
+      FontColor #2B6CB0
+    }
+    .petugas {
+      BackgroundColor #FEFCBF
+      LineColor #D69E2E
+      FontColor #975A16
+    }
+    .admin {
+      BackgroundColor #E6FFFA
+      LineColor #319795
+      FontColor #234E52
+    }
+    .success {
+      BackgroundColor #C6F6D5
+      LineColor #38A169
+      FontColor #22543D
+    }
+    .fail {
+      BackgroundColor #FED7D7
+      LineColor #E53E3E
+      FontColor #742A2A
+    }
+  }
+  
+  diamond {
+    BackgroundColor #ED8936
+    LineColor #DD6B20
+    FontColor #FFFFFF
+    FontSize 10
+  }
+  
+  arrow {
+    LineColor #4A5568
+    LineThickness 1.5
+  }
+}
+</style>
+
+title Agile Scrum Development Method — Sistem Kantin Digital
+
+skinparam swimlane {
+  BorderColor #CBD5E0
+  TitleBackgroundColor #F7FAFC
+  TitleFontColor #2D3748
+  TitleFontSize 12
+  TitleFontWeight bold
+}
+
+|Product Owner|
+start
+:Membuat **Product Backlog**\n(Daftar semua fitur & prioritas); <<petugas>>
+
+|Scrum Master + Team|
+:**Sprint Planning**\n(Pilih fitur untuk sprint ini); <<siswa>>
+
+:Membuat **Sprint Backlog**\n(Task breakdown 2 minggu); <<petugas>>
+
+|Development Team|
+repeat
+  :**Sprint Cycle (2 Minggu)**\nCoding, Testing, Integration; <<admin>>
+
+  :**Daily Standup (15 Menit)**\nProgress, Blocker, Plan; <<success>>
+
+repeat while (Sprint belum selesai?) is (Lanjut)
+
+:**Working App Increment**\n(Versi aplikasi yang berjalan); <<petugas>>
+
+|Scrum Master + Team|
+:**Sprint Review**\nDemo ke stakeholder; <<siswa>>
+
+:**Sprint Retrospective**\nEvaluasi proses & perbaikan; <<siswa>>
+
+|Product Owner|
+if (Semua fitur selesai?) then (Ya)
+  :**Release ke Production** 🚀; <<success>>
+  stop
+else (Belum)
+  :Update Product Backlog\nberdasarkan feedback; <<petugas>>
+  note right
+    Feedback loop:
+    Kembali ke Sprint Planning
+  end note
+  -> Iterasi berikutnya;
+  |Scrum Master + Team|
+  :**Sprint Planning**\n(Pilih fitur untuk sprint ini); <<siswa>>
+  detach
+endif
+
+@enduml

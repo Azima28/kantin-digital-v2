@@ -1,0 +1,58 @@
+{
+  "projectName": "Sistem Kantin Digital",
+  "techStack": "Flutter (Mobile & Web) + Supabase (PostgreSQL DB)",
+  "globalStyling": {
+    "fontFamily": "Segoe UI",
+    "shadows": false,
+    "themeColors": {
+      "siswa_ortu": { "fill": "#DAE8FC", "stroke": "#6C8EBF", "text": "#0A2540", "emoji": "🔵" },
+      "petugas_kasir": { "fill": "#FFE6CC", "stroke": "#D79B00", "text": "#5A3200", "emoji": "🟡" },
+      "admin_keuangan": { "fill": "#D5E8D4", "stroke": "#72B095", "text": "#0A3F2C", "emoji": "🟢" },
+      "system_backend": { "fill": "#E6F2F2", "stroke": "#0E8A8A", "text": "#0E8A8A", "emoji": "⚙️" }
+    }
+  },
+  "diagram": {
+    "title": "08. Architecture Diagram (Tiga Tingkat)",
+    "type": "architecture_diagram",
+    "description": "Representasi visual arsitektur tier-ke-tier client-server.",
+    "tiers": [
+      {
+        "name": "CLIENT TIER (Aplikasi Flutter & Perangkat Keras)",
+        "components": [
+          { "id": "cl_siswa", "label": "Siswa App (Flutter Mobile)", "color": "siswa_ortu", "emoji": "📱" },
+          { "id": "cl_kantin", "label": "Petugas POS App (Flutter Mobile / NFC)", "color": "petugas_kasir", "emoji": "🛒" },
+          { "id": "cl_admin", "label": "Admin Web Portal (Flutter Web Desktop)", "color": "admin_keuangan", "emoji": "💻" },
+          { "id": "cl_esp", "label": "ESP32 Hardware (RFID RC522 Kasir)", "emoji": "⚙️" }
+        ]
+      },
+      {
+        "name": "BACKEND TIER (Supabase Cloud Services)",
+        "components": [
+          { "id": "sb_auth", "label": "Supabase Auth (Email & Password)", "color": "system_backend", "emoji": "🔑" },
+          { "id": "sb_func", "label": "Edge Functions (Midtrans Webhook)", "color": "system_backend", "emoji": "⚡" },
+          { "id": "sb_real", "label": "Realtime Channel (Live Notif Push)", "color": "system_backend", "emoji": "🔔" },
+          { "id": "sb_db", "label": "PostgreSQL DB (12 Tabel + RLS)", "color": "system_backend", "emoji": "🗄️" }
+        ]
+      },
+      {
+        "name": "THIRD PARTY INTEGRATION TIER",
+        "components": [
+          { "id": "tp_mid", "label": "Midtrans Payment Gateway", "emoji": "💳" },
+          { "id": "tp_fcm", "label": "Firebase Cloud Messaging (FCM)", "emoji": "📡" }
+        ]
+      }
+    ],
+    "connections": [
+      { "from": "cl_siswa", "to": "sb_auth", "label": "HTTPS Auth" },
+      { "from": "cl_kantin", "to": "sb_db", "label": "NFC Checkout" },
+      { "from": "cl_admin", "to": "sb_db", "label": "REST API" },
+      { "from": "cl_esp", "to": "sb_db", "label": "HTTP POST" },
+      { "from": "sb_auth", "to": "sb_db", "label": "ACID Update" },
+      { "from": "tp_mid", "to": "sb_func", "label": "Webhook" },
+      { "from": "sb_func", "to": "sb_db", "label": "Trigger" },
+      { "from": "sb_db", "to": "tp_fcm", "label": "Push" },
+      { "from": "tp_fcm", "to": "sb_real", "label": "Notify" },
+      { "from": "sb_real", "to": "cl_siswa", "label": "Receive" }
+    ]
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "projectName": "Sistem Kantin Digital",
+  "techStack": "Flutter (Mobile & Web) + Supabase (PostgreSQL DB)",
+  "globalStyling": {
+    "fontFamily": "Segoe UI",
+    "shadows": false,
+    "themeColors": {
+      "siswa_ortu": { "fill": "#DAE8FC", "stroke": "#6C8EBF", "text": "#0A2540", "emoji": "🔵" },
+      "petugas_kasir": { "fill": "#FFE6CC", "stroke": "#D79B00", "text": "#5A3200", "emoji": "🟡" },
+      "admin_keuangan": { "fill": "#D5E8D4", "stroke": "#72B095", "text": "#0A3F2C", "emoji": "🟢" },
+      "system_backend": { "fill": "#E6F2F2", "stroke": "#0E8A8A", "text": "#0E8A8A", "emoji": "⚙️" },
+      "success_state": { "fill": "#C6F6D5", "stroke": "#38A169", "text": "#22543D", "emoji": "✅" },
+      "fail_state": { "fill": "#FED7D7", "stroke": "#E53E3E", "text": "#742A2A", "emoji": "❌" }
+    }
+  },
+  "diagram": {
+    "title": "01. Activity Diagram (Alur Kerja Operasional)",
+    "type": "activity_swimlane",
+    "description": "Menampilkan alur aktivitas operasional top-up online, jajan NFC, dan administrasi keuangan manual.",
+    "swimlanes": [
+      { "id": "swim1", "name": "SISWA / ORANG TUA", "color": "siswa_ortu" },
+      { "id": "swim2", "name": "PETUGAS KANTIN", "color": "petugas_kasir" },
+      { "id": "swim3", "name": "ADMIN KEUANGAN", "color": "admin_keuangan" }
+    ],
+    "nodes": [
+      { "id": "100", "label": "Start", "shape": "start_ellipse", "swimlane": "swim1" },
+      { "id": "101", "label": "Pilih Aksi / Jalur transaksi", "shape": "decision_rhombus", "swimlane": "swim1", "emoji": "❓" },
+      { "id": "102", "label": "Pilih nominal jajan & bayar via App", "shape": "action_rounded_rect", "swimlane": "swim1", "color": "siswa_ortu", "emoji": "📱" },
+      { "id": "103", "label": "Proses transaksi pembayaran (Midtrans)", "shape": "action_rounded_rect", "swimlane": "swim1", "color": "siswa_ortu", "emoji": "💳" },
+      { "id": "104", "label": "Update saldo & kirim push notifikasi", "shape": "action_rounded_rect", "swimlane": "swim1", "color": "success_state", "emoji": "🔔" },
+      { "id": "105", "label": "Tap kartu NFC di kantin", "shape": "action_rounded_rect", "swimlane": "swim1", "color": "siswa_ortu", "emoji": "🪪" },
+      { "id": "106", "label": "Pilih menu jajan & input tambahan di POS App", "shape": "action_rounded_rect", "swimlane": "swim2", "color": "petugas_kasir", "emoji": "🛍️" },
+      { "id": "107", "label": "Scan kartu NFC siswa", "shape": "action_rounded_rect", "swimlane": "swim2", "color": "petugas_kasir", "emoji": "📲" },
+      { "id": "108", "label": "Saldo Cukup?", "shape": "decision_rhombus", "swimlane": "swim2", "emoji": "⚖️" },
+      { "id": "109", "label": "Potong saldo & simpan transaksi DB", "shape": "action_rounded_rect", "swimlane": "swim2", "color": "success_state", "emoji": "💾" },
+      { "id": "110", "label": "Terima notifikasi jajan sukses", "shape": "action_rounded_rect", "swimlane": "swim1", "color": "siswa_ortu", "emoji": "📩" },
+      { "id": "111", "label": "Transaksi ditolak (saldo kurang)", "shape": "action_rounded_rect", "swimlane": "swim2", "color": "fail_state", "emoji": "⚠️" },
+      { "id": "112", "label": "Terima uang tunai & verifikasi NIS", "shape": "action_rounded_rect", "swimlane": "swim3", "color": "admin_keuangan", "emoji": "💵" },
+      { "id": "113", "label": "Input nominal top-up tunai", "shape": "action_rounded_rect", "swimlane": "swim3", "color": "admin_keuangan", "emoji": "✍️" },
+      { "id": "114", "label": "Input nominal koreksi & alasan wajib", "shape": "action_rounded_rect", "swimlane": "swim3", "color": "admin_keuangan", "emoji": "✏️" },
+      { "id": "115", "label": "Simpan update & buat entri audit logs", "shape": "action_rounded_rect", "swimlane": "swim3", "color": "success_state", "emoji": "📝" },
+      { "id": "116", "label": "End", "shape": "end_double_ellipse", "swimlane": "swim2" }
+    ],
+    "connections": [
+      { "from": "100", "to": "101" },
+      { "from": "101", "to": "102", "label": "Top-up Online" },
+      { "from": "102", "to": "103" },
+      { "from": "103", "to": "104" },
+      { "from": "104", "to": "116", "routing": "Out outer left margin" },
+      { "from": "101", "to": "105", "label": "Belanja NFC" },
+      { "from": "105", "to": "106" },
+      { "from": "106", "to": "107" },
+      { "from": "107", "to": "108" },
+      { "from": "108", "to": "109", "label": "Ya" },
+      { "from": "109", "to": "110" },
+      { "from": "110", "to": "116" },
+      { "from": "108", "to": "111", "label": "Tidak" },
+      { "from": "111", "to": "116" },
+      { "from": "101", "to": "112", "label": "Top-up Tunai TU", "routing": "Exit right corner -> Go right -> Go up to y=100 -> Go right -> Enter 112 top" },
+      { "from": "101", "to": "114", "label": "Koreksi", "routing": "Exit right corner -> Go right -> Go up to y=80 -> Go right -> Enter 114 top" },
+      { "from": "112", "to": "113" },
+      { "from": "113", "to": "115" },
+      { "from": "114", "to": "115" },
+      { "from": "115", "to": "116", "routing": "Out outer right margin" }
+    ]
+  }
+}

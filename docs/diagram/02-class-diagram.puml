@@ -1,0 +1,230 @@
+@startuml
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam ArrowColor #718096
+skinparam ArrowThickness 1.5
+skinparam BackgroundColor #FAFAFA
+
+<style>
+document {
+  BackgroundColor #FAFAFA
+  FontName "Segoe UI"
+  FontColor #2D3748
+}
+classDiagram {
+  class {
+    RoundCorner 8
+    BackgroundColor #FFFFFF
+    LineColor #CBD5E0
+    FontColor #2D3748
+    FontSize 11
+    HeaderBackgroundColor #4F46E5
+    HeaderFontColor #FFFFFF
+  }
+}
+</style>
+
+title Class Diagram — Sistem Kantin Digital
+
+class User {
+  + id: UUID
+  + email: String
+  + password_hash: String
+  + full_name: String
+  + role: UserRole
+  + phone: String
+  + avatar_url: String
+  + is_active: Boolean
+  + created_at: Timestamp
+  + updated_at: Timestamp
+}
+
+class School {
+  + id: UUID
+  + name: String
+  + address: String
+  + logo_url: String
+  + phone: String
+  + is_active: Boolean
+  + created_at: Timestamp
+  + updated_at: Timestamp
+}
+
+class Student {
+  + id: UUID
+  + student_id_code: String
+  + nis: String
+  + class: String
+  + card_uid: String
+  + balance: Decimal (>= 0)
+  + is_active: Boolean
+  + created_at: Timestamp
+  + updated_at: Timestamp
+}
+
+class CanteenOperator {
+  + id: UUID
+  + stall_name: String
+  + is_active: Boolean
+  + created_at: Timestamp
+  + updated_at: Timestamp
+}
+
+class AdminAssignment {
+  + id: UUID
+  + role_detail: String
+  + is_active: Boolean
+  + created_at: Timestamp
+  + updated_at: Timestamp
+}
+
+class Product {
+  + id: UUID
+  + name: String
+  + price: Decimal (>= 0)
+  + image_url: String
+  + is_available: Boolean
+  + created_at: Timestamp
+  + updated_at: Timestamp
+}
+
+class Transaction {
+  + id: UUID
+  + type: TxType
+  + amount: Decimal (> 0)
+  + balance_before: Decimal
+  + balance_after: Decimal
+  + description: String
+  + method: TxMethod
+  + reference_id: String
+  + status: TxStatus
+  + created_at: Timestamp
+  + updated_at: Timestamp
+}
+
+class TransactionItem {
+  + id: UUID
+  + name: String
+  + price: Decimal (>= 0)
+  + quantity: Int (> 0)
+  + notes: String
+  + created_at: Timestamp
+}
+
+class PaymentRequest {
+  + id: UUID
+  + amount: Decimal (> 0)
+  + payment_method: String
+  + midtrans_order_id: String
+  + midtrans_status: String
+  + paid_by_name: String
+  + paid_by_phone: String
+  + status: PaymentStatus
+  + expired_at: Timestamp
+  + paid_at: Timestamp
+  + created_at: Timestamp
+  + updated_at: Timestamp
+}
+
+class AuditLog {
+  + id: UUID
+  + action: String
+  + target_type: String
+  + target_id: UUID
+  + old_value: JSON
+  + new_value: JSON
+  + ip_address: String
+  + user_agent: String
+  + created_at: Timestamp
+}
+
+class Notification {
+  + id: UUID
+  + title: String
+  + body: String
+  + type: NotifType
+  + is_read: Boolean
+  + data: JSON
+  + created_at: Timestamp
+  + updated_at: Timestamp
+}
+
+class DailySummary {
+  + id: UUID
+  + date: Date
+  + total_spent: Decimal
+  + total_topup: Decimal
+  + transaction_count: Int
+  + created_at: Timestamp
+  + updated_at: Timestamp
+}
+
+enum UserRole {
+  super_admin
+  admin_keuangan
+  siswa
+  petugas_kantin
+}
+
+enum TxType {
+  topup
+  purchase
+  refund
+  adjustment
+}
+
+enum TxMethod {
+  cash
+  midtrans
+  bank_transfer
+  manual
+}
+
+enum TxStatus {
+  pending
+  success
+  failed
+  cancelled
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  expired
+  failed
+}
+
+enum NotifType {
+  topup
+  purchase
+  system
+  announcement
+}
+
+User "1" -- "0..1" Student : has >
+User "1" -- "0..1" CanteenOperator : has >
+User "1" -- "*" AdminAssignment : assigned >
+User "1" -- "*" AuditLog : generates >
+User "1" -- "*" Notification : receives >
+
+School "1" -- "*" Student : enrolls >
+School "1" -- "*" CanteenOperator : employs >
+School "1" -- "*" AdminAssignment : has >
+
+CanteenOperator "1" -- "*" Product : manages >
+
+Student "1" -- "*" Transaction : makes >
+Student "1" -- "*" PaymentRequest : requests >
+Student "1" -- "*" DailySummary : summarized >
+
+Transaction "1" -- "*" TransactionItem : contains >
+Product "0..1" -- "*" TransactionItem : references >
+
+User .. UserRole
+Transaction .. TxType
+Transaction .. TxMethod
+Transaction .. TxStatus
+PaymentRequest .. PaymentStatus
+Notification .. NotifType
+
+@enduml

@@ -1,0 +1,140 @@
+# PROMPT DIAGRAM: Flowchart Validasi Transaksi NFC — Sistem Kantin Digital
+
+Halo AI Diagram Builder / Draw.io Generator! Tugas Anda adalah membuat diagram visual **"Flowchart Validasi Transaksi NFC — Sistem Kantin Digital"** dalam format Draw.io XML (.drawio) yang valid berdasarkan skema tata letak, komponen, dan relasi detail di bawah ini.
+
+---
+
+## 🏛️ PART 1: KONTEKS SISTEM & WORKFLOW
+
+Flowchart ini memetakan **logika validasi transaksi tap kartu NFC** di kasir kantin. Proses dimulai ketika kasir memasukkan produk ke keranjang POS, siswa men-tap kartu NFC, lalu sistem melakukan pengecekan berlapis (validasi status siswa, status kartu beku, limit/nominal saldo secara lokal, dan validasi server-side database transaction ACID untuk mencegah manipulasi data harga di sisi client).
+
+---
+
+## 🎨 PART 2: PETUNJUK LAYOUT VISUAL (ASCII FLOW CHART MAP)
+
+Gunakan struktur tata letak vertikal ini sebagai panduan penempatan koordinat:
+
+```text
+                        [ Mulai ] (y=70)
+                           │
+                 [ Input keranjang POS ] (y=140)
+                           │
+                 [ Siswa Tap Kartu NFC ] (y=210)
+                           │
+                  [ Query Data & Saldo ] (y=280)
+                           │
+                   / Siswa Ditemukan \           Tidak
+                  <    & Aktif?       > ───────────────> [ Error 1: Kartu Tidak Valid ] (y=370)
+                   \  (y=350)        /                      │
+                           │ Ya                             │
+                    / Kartu Beku?  \             Ya         │
+                   <    (y=460)     > ─────────────────> [ Error 2: Kartu Dibekukan ] (y=480)
+                    \              /                        │
+                           │ Tidak                          │
+                    / Saldo Cukup? \             Tidak      │
+                   <    (y=570)     > ─────────────────> [ Error 3: Saldo Kurang ] (y=590)
+                    \              /                        │
+                           │ Ya                             │
+              ┌────────────┴────────────┐                   │
+              │  Server-Side ACID SP    │                   │
+              │  * Cek harga riil DB    │ (y=690)           │
+              │  * Deduct & Save log    │                   │
+              └────────────┬────────────┘                   │
+                           │                                │
+                     / Transaksi  \              Tidak      │
+                    <  DB Sukses?  > ──────────────────> [ Error 4: Ditolak Server ] (y=870)
+                     \  (y=850)   /                         │
+                           │ Ya                             │
+                 [ Sukses: FCM & POS Hijau ] (y=960)        │
+                           │                                │
+                           ▼                                ▼
+                        [ Selesai ] <───────────────────────┘ (y=1030)
+```
+
+---
+
+## 🎨 PART 3: STANDAR GAYA VISUAL (STYLING SPECIFICATIONS)
+
+1. **Font**: Gunakan `"Segoe UI"` atau `"Arial"`, ukuran font 11px untuk deskripsi teks, dan 13px bold untuk judul halaman.
+2. **Shadow**: Nonaktifkan shadow/bayangan pada semua objek (`shadow=0`).
+3. **Jenis Kotak (Nodes)**:
+   * Proses: Kotak berujung melengkung (`rounded=1;arcSize=8;whiteSpace=wrap;html=1;strokeWidth=1.5;`).
+   * Titik Mulai/Selesai: Bentuk oval/lingkaran (`ellipse;whiteSpace=wrap;strokeWidth=2;fontStyle=1;`).
+   * Keputusan: Belah ketupat (`rhombus;whiteSpace=wrap;strokeWidth=1.5;`).
+4. **Skema Warna Aktor & Aliran**:
+   * 🔵 **Siswa / Orang Tua**: `fillColor=#DAE8FC;strokeColor=#6C8EBF;fontColor=#0A2540`
+   * 🟡 **Petugas Kantin (Kasir)**: `fillColor=#FFE6CC;strokeColor=#D79B00;fontColor=#975A16`
+   * 🟢 **Admin Keuangan**: `fillColor=#D5E8D4;strokeColor=#72B095;fontColor=#0A3F2C`
+   * ⚙️ **Sistem / Database / Backend / Decision**: `fillColor=#E6F2F2;strokeColor=#0E8A8A;fontColor=#0c5757`
+   * ✅ **Success State**: `fillColor=#C6F6D5;strokeColor=#38A169;fontColor=#22543D`
+   * 🔴 **Error / Ditolak State**: `fillColor=#FED7D7;strokeColor=#E53E3E;fontColor=#742A2A`
+5. **Gaya Garis Hubung (Edges)**:
+   * Menggunakan rute siku-siku (`edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1.5;strokeColor=#4A5568;`).
+
+---
+
+## 📊 PART 4: DETAIL TATA LETAK & GEOMETRI DIAGRAM
+
+* **Judul Halaman (`title`)**: `Flowchart Validasi Transaksi NFC — Sistem Kantin Digital`
+  * Geometri: `x=250, y=20, width=400, height=30`
+* **Start Node (`start`)**: `Mulai`
+  * Geometri: `x=370, y=70, width=80, height=40`, Warna: Grey/White
+* **Langkah 1 (`step1`)**: `Petugas kasir input belanjaan ke keranjang (Cart)`
+  * Geometri: `x=300, y=140, width=220, height=40`, Warna: Kuning
+* **Langkah 2 (`step2`)**: `Siswa tap kartu NFC pada HP kasir`
+  * Geometri: `x=300, y=210, width=220, height=40`, Warna: Biru
+* **Langkah 3 (`step3`)**: `Query data siswa & saldo riil dari DB`
+  * Geometri: `x=300, y=280, width=220, height=40`, Warna: Teal
+* **Keputusan 1 (`dec1`)**: `Siswa ditemukan\n& Status Aktif?`
+  * Geometri: `x=340, y=350, width=140, height=80`, Warna: Teal Belah Ketupat
+  * **Cabang Tidak (`err1`)**: `Layar POS: 'Kartu Tidak Valid / Blokir'` (Geometri: `x=80, y=370, width=200, height=40`, Warna: Merah)
+* **Keputusan 2 (`dec2`)**: `Kartu berstatus\nBeku (Frozen)?`
+  * Geometri: `x=340, y=460, width=140, height=80`, Warna: Teal Belah Ketupat
+  * **Cabang Ya (`err2`)**: `Layar POS: 'Kartu Sedang Dibekukan'` (Geometri: `x=80, y=480, width=200, height=40`, Warna: Merah)
+* **Keputusan 3 (`dec3`)**: `Saldo Aktual\n>= Total Belanja?`
+  * Geometri: `x=340, y=570, width=140, height=80`, Warna: Teal Belah Ketupat
+  * **Cabang Tidak (`err3`)**: `Layar POS: 'Saldo Tidak Cukup'` (Geometri: `x=80, y=590, width=200, height=40`, Warna: Merah)
+* **Subproses Server (`acid`)**: 
+  ```text
+  Server-Side ACID Stored Procedure
+
+  1. Mulai Transaksi Database
+  2. Query ulang harga menu aktual dari tabel products
+  3. Kalkulasi ulang Total Belanja aktual di Server
+  4. Cek Saldo DB >= Total Belanja Server
+  5. Kurangi saldo & catat transactions + transaction_items
+  6. Commit Transaksi (atau Rollback jika gagal)
+  ```
+  * Geometri: `x=280, y=690, width=260, height=130`, Warna: Teal
+* **Keputusan 4 (`dec4`)**: `Transaksi\nDatabase Sukses?`
+  * Geometri: `x=340, y=850, width=140, height=80`, Warna: Teal Belah Ketupat
+  * **Cabang Tidak (`err4`)**: `Rollback DB: Layar POS Merah\n- 'Transaksi Ditolak Server'` (Geometri: `x=80, y=870, width=200, height=40`, Warna: Merah)
+* **Langkah Sukses (`step_success`)**: `1. Trigger Push Notification FCM\n2. Layar POS Hijau - Transaksi Sukses`
+  * Geometri: `x=310, y=960, width=200, height=45`, Warna: Hijau Sukses
+* **Node Selesai (`end`)**: `Selesai`
+  * Geometri: `x=370, y=1030, width=80, height=40`, Warna: Grey/White
+
+---
+
+## 🔗 PART 5: ALIRAN HUBUNGAN & GARIS KONEKSI (EDGES)
+
+1. **Garis Utama**:
+   * `start` $\rightarrow$ `step1` $\rightarrow$ `step2` $\rightarrow$ `step3` $\rightarrow$ `dec1`
+2. **Koneksi Cabang Keputusan**:
+   * Dari `dec1` ke `err1` (Label: `"Tidak"`, Warna Garis: Merah `#E53E3E`)
+   * Dari `dec1` ke `dec2` (Label: `"Ya"`, Warna Garis: Hijau `#38A169`)
+   * Dari `dec2` ke `err2` (Label: `"Ya"`, Warna Garis: Merah `#E53E3E`)
+   * Dari `dec2` ke `dec3` (Label: `"Tidak"`, Warna Garis: Hijau `#38A169`)
+   * Dari `dec3` ke `err3` (Label: `"Tidak"`, Warna Garis: Merah `#E53E3E`)
+   * Dari `dec3` ke `acid` (Label: `"Ya"`, Warna Garis: Hijau `#38A169`)
+   * Dari `acid` $\rightarrow$ `dec4`
+   * Dari `dec4` ke `err4` (Label: `"Tidak"`, Warna Garis: Merah `#E53E3E`)
+   * Dari `dec4` ke `step_success` (Label: `"Ya"`, Warna Garis: Hijau `#38A169`)
+   * Dari `step_success` $\rightarrow$ `end`
+3. **Penggabungan Error**:
+   * Tarik garis siku-siku dari masing-masing kotak error (`err1`, `err2`, `err3`, `err4`) di sebelah kiri, gabungkan ke bawah menuju margin kiri (x=40), lalu turun dan hubungkan ke bagian bawah `end` node.
+
+---
+
+## 🤖 OUTPUT YANG DIHARAPKAN
+Hasilkan berkas Draw.io XML lengkap yang memuat elemen-elemen di atas dengan koordinat yang presisi, warna, gaya, dan label yang sesuai agar diagram terlihat sangat profesional, modern, dan rapi secara visual saat diimpor ke dalam Draw.io!

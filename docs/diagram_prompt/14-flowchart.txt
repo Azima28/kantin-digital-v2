@@ -1,0 +1,109 @@
+# PROMPT DIAGRAM: Pembuatan Flowchart Sistem Kantin Digital (RFID/NFC + POS)
+
+Tugas Anda adalah merancang diagram visual **"Flowchart Sistem Kantin Digital"** dalam format XML Draw.io (.drawio) dari awal. Gunakan deskripsi spesifikasi tata letak, komponen, dan hubungan aliran di bawah ini untuk membuat diagram yang rapi, sejajar, dan bebas dari kesalahan logika.
+
+---
+
+## 🏛️ PART 1: LOGIKA WORKFLOW SISTEM (BUSINESS LOGIC)
+
+Flowchart ini memetakan alur kerja terintegrasi dari sistem kantin digital berbasis kartu RFID/NFC, yang melibatkan tiga peran utama:
+1. **Akses Awal**:
+   * Pengguna memulai dari **Start** -> **Akses Sistem** -> **Login / Identifikasi**.
+   * Dari **Login / Identifikasi** masuk ke diamond keputusan **Verifikasi Role?**.
+   * Alur bercabang menjadi tiga kolom vertikal berdasarkan role pengguna:
+     * **Admin / Super Admin**: Mengelola keuangan sekolah, input top-up tunai, dan memantau audit log.
+     * **Petugas Kantin**: Memproses pembelian menu makanan siswa menggunakan aplikasi kasir (POS).
+     * **Siswa / Orang Tua**: Melakukan top-up saldo dan memantau transaksi harian anak.
+
+2. **Alur Jalur Peran (3 Kolom Vertikal)**:
+   * **Jalur Admin & Super Admin (Kolom Kiri)**:
+     * Masuk ke menu parallelogram: `1. Kelola User & Siswa, 2. Input Top-up Tunai, 3. Monitor Audit Log`.
+     * Langkah berurutan (bentuk belah ketupat): **Top-up / Koreksi** -> **Tulis Audit Log** (aksi keuangan dicatat otomatis) -> **Monitor & Laporan** (oleh Super Admin).
+     * Dari Monitor & Laporan, alur turun ke bus horizontal bawah menuju **Finish**.
+   * **Jalur Petugas Kantin (Kolom Tengah)**:
+     * Masuk ke menu parallelogram: `1. Kelola Menu & Produk, 2. Input Keranjang (POS), 3. Tap Kartu NFC Siswa`.
+     * Langkah berurutan (bentuk belah ketupat): **Pilih Item (Cart)** -> **Tap Kartu NFC** -> **Validasi Server** (Backend ACID validation) -> **Saldo Cukup?** (diamond keputusan).
+     * Dari keputusan Saldo Cukup?:
+       * **Ya (Cukup)** (warna Hijau): Masuk ke proses **Potong Saldo & Catat Transaksi** (kotak hijau). Lalu memicu **Terima Notifikasi** di kolom Siswa (kanan).
+       * **Tidak (Kurang)** (warna Merah): Masuk ke proses **Transaksi Dibatalkan** (kotak merah di kolom kiri/Admin). Lalu alur turun ke bus horizontal bawah menuju **Finish**.
+   * **Jalur Siswa / Orang Tua (Kolom Kanan)**:
+     * Masuk ke menu parallelogram: `1. Cek Saldo & Riwayat, 2. Top-up Online Midtrans, 3. Tap Kartu Belanja`.
+     * Langkah berurutan (bentuk belah ketupat): **Pilih Metode** (Top-up).
+       * Cabang A (**Midtrans**): Masuk ke **Midtrans (Online)** (top-up online instan) -> alur turun ke bus horizontal bawah menuju **Finish**.
+       * Cabang B (**Tunai**): Masuk ke **Koperasi (Tunai)** (siswa membawa uang tunai ke koperasi) -> alur dialirkan ke arah kiri menuju ke **Top-up / Koreksi** di kolom Admin agar diinput manual oleh Admin Keuangan.
+     * Kotak **Terima Notifikasi** (belah ketupat di kanan bawah) menerima input dari proses transaksi berhasil Petugas Kantin, lalu alur turun ke bus horizontal bawah menuju **Finish**.
+
+---
+
+## 🎨 PART 2: ATURAN TATA LETAK & KOORDINAT GRID (LAYOUT SPECIFICATIONS)
+
+Untuk menjamin kolom-kolom vertikal lurus sempurna dan seluruh diagram simetris, terapkan koordinat dan ukuran berikut:
+
+### 📍 Koordinat Elemen Utama (Baris Atas):
+* **Start**: Oval (x=430, y=20, width=100, height=40) [Center X = 480]
+* **Akses Sistem**: Kotak tumpul (x=380, y=90, width=200, height=50) [Center X = 480]
+* **Login / Identifikasi**: Kotak tumpul (x=380, y=170, width=200, height=50) [Center X = 480]
+* **Verifikasi Role?**: Belah ketupat (x=410, y=250, width=140, height=80) [Center X = 480]
+
+### 📍 Jalur Peran Vertikal (3 Kolom Sejajar):
+
+1. **Jalur Admin (Kolom Kiri, Center X = 180)**:
+   * **Parallelogram Menu**: x=80, y=370, width=200, height=60
+   * **Top-up / Koreksi**: Belah ketupat, x=110, y=460, width=140, height=80
+   * **Tulis Audit Log**: Belah ketupat, x=110, y=560, width=140, height=80
+   * **Monitor & Laporan**: Belah ketupat, x=110, y=660, width=140, height=80
+   * **Transaksi Dibatalkan**: Kotak tumpul merah, x=110, y=865, width=140, height=50 (Menerima input penolakan dari kolom tengah)
+
+2. **Jalur Petugas Kantin (Kolom Tengah, Center X = 480)**:
+   * **Parallelogram Menu**: x=380, y=370, width=200, height=60
+   * **Pilih Item (Cart)**: Belah ketupat, x=410, y=460, width=140, height=80
+   * **Tap Kartu NFC**: Belah ketupat, x=410, y=560, width=140, height=80
+   * **Validasi Server**: Belah ketupat, x=410, y=660, width=140, height=80
+   * **Saldo Cukup?**: Belah ketupat, x=410, y=760, width=140, height=80
+   * **Potong Saldo & Catat Transaksi**: Kotak tumpul hijau, x=380, y=865, width=200, height=50
+
+3. **Jalur Siswa (Kolom Kanan, Center X = 760)**:
+   * **Parallelogram Menu**: x=660, y=370, width=200, height=60
+   * **Pilih Metode**: Belah ketupat, x=690, y=460, width=140, height=80
+   * **Midtrans (Online)**: Belah ketupat, x=690, y=560, width=140, height=80
+   * **Koperasi (Tunai)**: Belah ketupat, x=900, y=560, width=140, height=80 (Di kanan luar, Center X = 970)
+   * **Terima Notifikasi**: Belah ketupat, x=690, y=850, width=140, height=80
+
+### 📍 Elemen Akhir (Baris Bawah):
+* **Finish**: Oval, x=430, y=980, width=100, height=40 (Center X = 480)
+
+---
+
+## 🎨 PART 3: DETAIL PENGATURAN GAYA VISUAL (STYLING DESIGNS)
+
+* **Font**: Gunakan font `"Segoe UI"` atau `"Arial"`, ukuran font 10px untuk konten biasa, dan 11px Bold untuk nama node. Teks di dalam node harus dibalut kata otomatis (`whiteSpace=wrap`).
+* **Skema Warna Premium**:
+  * **Tema Gold/Kuning** (Start, Akses, Login, Finish, 3 Parallelogram Menu): `fillColor=#F59E0B;strokeColor=#D97706;strokeWidth=2;fontColor=#FFFFFF;fontStyle=1;`
+  * **Tema Grey** (Seluruh Belah Ketupat/Diamond): `fillColor=#F1F5F9;strokeColor=#475569;strokeWidth=2;fontColor=#1E293B;`
+  * **Tema Hijau** (Potong Saldo/Kantin Sukses): `fillColor=#C6F6D5;strokeColor=#38A169;strokeWidth=2;fontColor=#22543D;fontStyle=1;`
+  * **Tema Merah** (Transaksi Dibatalkan/Kantin Gagal): `fillColor=#FED7D7;strokeColor=#E53E3E;strokeWidth=2;fontColor=#742A2A;fontStyle=1;`
+* **Garis Koneksi (Edges)**:
+  * Tipe siku-siku/orthogonal (`edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1.5;strokeColor=#4A5568;`).
+  * Gunakan `labelBackgroundColor=#FAFAFA` pada semua edge yang memuat teks label agar garis tidak menimpa teks.
+
+---
+
+## 🔗 PART 4: INSTRUKSI SPESIFIK RUTE KONEKSI (CONNECTION ROUTING RULES)
+
+1. **Akses ke Login / Verifikasi Role**: Hubungkan secara vertikal lurus: `start` $\rightarrow$ `akses` $\rightarrow$ `login` $\rightarrow$ `role_check` (X=480).
+2. **Pecah Alur Role (Symmetric Split)**:
+   * **Ke Admin**: Dari vertex kiri `role_check` (x=410, y=290) horizontal kiri ke X=180, lalu turun ke top center `admin_menu` (x=180, y=370) [Label: "Admin / Super Admin"].
+   * **Ke Petugas**: Dari vertex bawah `role_check` (x=480, y=330) vertikal lurus ke top center `kantin_menu` (x=480, y=370) [Label: "Petugas Kantin"].
+   * **Ke Siswa**: Dari vertex kanan `role_check` (x=550, y=290) horizontal kanan ke X=760, lalu turun ke top center `siswa_menu` (x=760, y=370) [Label: "Siswa / Orang Tua"].
+3. **Kantin Decision & Validation**:
+   * "Ya (Cukup)": Dari bottom vertex `kantin_decision` (x=480, y=840) vertikal lurus ke `kantin_accept` (x=480, y=865).
+   * "Tidak (Kurang)": Dari left vertex `kantin_decision` (x=410, y=800) kiri ke X=280, turun ke Y=890, lalu masuk ke right edge `kantin_reject` (x=250, y=890) [Warna garis: merah `#E53E3E`].
+4. **Bypass Top-up Tunai (Cash ke Admin)**:
+   * Siswa memilih top-up tunai $\rightarrow$ membawa uang ke koperasi `siswa_topup_cash` (x=970, y=560).
+   * Hubungkan dari top vertex `siswa_topup_cash` (x=970, y=560) naik ke Y=445, berjalan horizontal ke kiri menyeberangi layar ke X=180 (di antara baris menu dan top-up), lalu turun masuk ke top vertex `admin_topup` (x=180, y=460) [Label: "Input Manual Admin"].
+5. **Bus Gabungan Selesai (Finish Bus)**:
+   * Buat garis bus horizontal virtual di Y=950.
+   * Hubungkan bottom center `admin_monitor` (X=180, Y=740) turun ke Y=950, lalu kanan ke X=480, dan turun ke `finish` (X=480, Y=980).
+   * Hubungkan bottom center `kantin_reject` (X=180, Y=915) turun ke Y=950, lalu kanan ke X=480, dan turun ke `finish`.
+   * Hubungkan bottom center `siswa_topup_online` (X=760, Y=640) turun ke Y=950, lalu kiri ke X=480, dan turun ke `finish`.
+   * Hubungkan bottom center `siswa_notification` (X=760, Y=930) turun ke Y=950, lalu kiri ke X=480, dan turun ke `finish`.

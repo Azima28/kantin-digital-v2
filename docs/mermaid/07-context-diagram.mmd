@@ -1,0 +1,19 @@
+flowchart TD
+    %% Custom Styling
+    classDef system fill:#E6F2F2,stroke:#0E8A8A,color:#0c5757,stroke-width:4px,font-weight:bold
+    classDef actor fill:#F8FAFC,stroke:#64748b,color:#0f172a,stroke-width:2px
+
+    System((("💻 SISTEM KANTIN DIGITAL"))):::system
+    
+    Siswa["👦 Siswa"]:::actor
+    Ortu["👩 Orang Tua"]:::actor
+    Petugas["👵 Petugas Kantin"]:::actor
+    Admin["👨‍💼 Admin Keuangan"]:::actor
+    Super["👑 Super Admin"]:::actor
+
+    %% Bidirectional Flows
+    Siswa <--> |"In: Req Jajan & UID NFC \nOut: Info Saldo, Notifikasi"| System
+    Ortu <--> |"In: Cek NIS, Bayar Top-up \nOut: E-Receipt, Saldo"| System
+    Petugas <--> |"In: Pilih Menu, Total POS \nOut: Data Siswa, Transaksi Sukses"| System
+    Admin <--> |"In: Top-up Cash, Koreksi Saldo \nOut: Laporan Keuangan, Struk"| System
+    Super <--> |"In: Req Blokir User \nOut: Live Audit Logs, Stats"| System

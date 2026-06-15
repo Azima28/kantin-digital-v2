@@ -1,0 +1,134 @@
+@startuml
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam ArrowColor #718096
+skinparam ArrowThickness 1.5
+skinparam BackgroundColor #FAFAFA
+
+<style>
+document {
+  BackgroundColor #FAFAFA
+  FontName "Segoe UI"
+  FontColor #2D3748
+}
+stateDiagram {
+  state {
+    RoundCorner 10
+    BackgroundColor #FFFFFF
+    LineColor #CBD5E0
+    FontColor #2D3748
+    FontSize 11
+    
+    .siswa {
+      BackgroundColor #EBF8FF
+      LineColor #3182CE
+      FontColor #2B6CB0
+    }
+    .petugas {
+      BackgroundColor #FEFCBF
+      LineColor #D69E2E
+      FontColor #975A16
+    }
+    .admin {
+      BackgroundColor #E6FFFA
+      LineColor #319795
+      FontColor #234E52
+    }
+    .ortu {
+      BackgroundColor #FFF5F5
+      LineColor #FC8181
+      FontColor #9B2C2C
+    }
+  }
+  arrow {
+    LineColor #718096
+  }
+}
+</style>
+
+title Workflow Navigation — Alur Layar per Platform
+
+state "Siswa App (Mobile)" as siswa_app <<siswa>> {
+  state "Splash & Welcome" as S_SPLASH
+  state "Login Screen" as S_LOGIN
+  state "Dashboard / Beranda\n(Saldo, Jajan Hari Ini)" as S_DASH
+  state "Top-up Nominal Grid" as S_TOP
+  state "Midtrans Snap Webview" as S_SNAP
+  state "Riwayat Transaksi\n(Filter & Search)" as S_HIST
+  state "Detail Transaksi\n(Bottom Sheet)" as S_DETAIL
+  state "Manajemen Kartu NFC\n(Link / Freeze)" as S_CARD
+  state "Profil Akun\n(Ubah Password)" as S_PROF
+
+  S_SPLASH --> S_LOGIN : Masuk Sekarang
+  S_LOGIN --> S_DASH : Login OK
+  S_DASH --> S_TOP : Top-up
+  S_TOP --> S_SNAP : Bayar via Midtrans
+  S_DASH --> S_HIST : Riwayat
+  S_HIST --> S_DETAIL : Klik Item
+  S_DASH --> S_CARD : Tab Kartu
+  S_DASH --> S_PROF : Tab Akun
+}
+
+state "Petugas App (Mobile POS)" as petugas_app <<petugas>> {
+  state "Login Kasir" as K_LOGIN
+  state "POS Catalog Grid\n(Pendapatan Hari Ini)" as K_POS
+  state "Cart & Custom Charge\n(+ Catatan Wajib)" as K_CART
+  state "NFC Payment Modal\n(Scan & Validasi)" as K_NFC
+  state "Cek Saldo Saja\n(Tap NFC)" as K_CEK
+  state "Katalog Menu CRUD" as K_CRUD
+  state "Form Tambah/Edit Produk" as K_FORM
+  state "Riwayat Penjualan Stan\n(+ Refund 10 menit)" as K_HIST
+
+  K_LOGIN --> K_POS : Login OK
+  K_POS --> K_CART : Pilih Menu
+  K_CART --> K_NFC : Checkout
+  K_POS --> K_CEK : Cek Saldo
+  K_POS --> K_CRUD : Tab Menu Makanan
+  K_CRUD --> K_FORM : Tambah / Edit
+  K_POS --> K_HIST : Tab Riwayat
+}
+
+state "Admin Keuangan (Web)" as admin_web <<admin>> {
+  state "Web Login Portal\n(admin.kantin.sekolah.id)" as A_LOGIN
+  state "Dashboard Ringkasan\n(Metrik Keuangan)" as A_DASH
+  state "Manajemen Data Siswa\n(+ Modal Link Kartu)" as A_SISWA
+  state "Top-up Tunai (TU)\n(Cari NIS → Input Nominal)" as A_TOP
+  state "Koreksi Saldo\n(+ Alasan Wajib → Audit)" as A_ADJ
+  state "Laporan Keuangan\n(Export Excel / PDF)" as A_LAP
+
+  A_LOGIN --> A_DASH : Login OK
+  A_DASH --> A_SISWA : Nav: Siswa
+  A_DASH --> A_TOP : Nav: Top-up
+  A_DASH --> A_ADJ : Nav: Koreksi
+  A_DASH --> A_LAP : Nav: Laporan
+}
+
+state "Super Admin (Web)" as superadmin_web <<admin>> {
+  state "Master Login Portal" as SA_LOGIN
+  state "Global Dashboard\n(Statistik & Grafik)" as SA_DASH
+  state "CRUD Sekolah Mitra" as SA_SCHOOL
+  state "CRUD Pengguna & Role\n(Toggle Blokir Instan)" as SA_USER
+  state "Audit Log Real-Time\n(Read-Only Explorer)" as SA_AUDIT
+  state "Konfigurasi Sistem\n(Midtrans, FCM, Maintenance)" as SA_CONFIG
+
+  SA_LOGIN --> SA_DASH : Login OK
+  SA_DASH --> SA_SCHOOL : Nav: Sekolah
+  SA_DASH --> SA_USER : Nav: User
+  SA_DASH --> SA_AUDIT : Nav: Audit Log
+  SA_DASH --> SA_CONFIG : Nav: Setelan
+}
+
+state "Orang Tua (Web Publik)" as ortu_web <<ortu>> {
+  state "Portal Masuk NIS\n(kantin.sekolah.id)" as O_LANDING
+  state "Dashboard Pantau Anak\n(Saldo & 5 Transaksi)" as O_DASH
+  state "Pilih Nominal Top-up\n(+ Data Pengirim)" as O_TOPUP
+  state "Midtrans Snap Pop-up" as O_SNAP
+  state "E-Receipt Bukti Bayar\n(Download PDF)" as O_RECEIPT
+
+  O_LANDING --> O_DASH : Input NIS → Cek
+  O_DASH --> O_TOPUP : Top-up Saldo Online
+  O_TOPUP --> O_SNAP : Bayar Sekarang
+  O_SNAP --> O_RECEIPT : Pembayaran Berhasil
+}
+
+@enduml

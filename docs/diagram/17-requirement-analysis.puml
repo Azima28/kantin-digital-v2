@@ -1,0 +1,22 @@
+@startmindmap
+!include theme.puml
+
+title Analisis Kebutuhan Sistem (Requirement Analysis) — Sistem Kantin Digital
+
+* Kebutuhan Kantin Digital <<root>>
+** Masalah Pengguna & Sekolah <<branch>>
+*** Siswa: Uang tunai sering hilang atau jajan berlebihan <<leaf>>
+*** Orang Tua: Sulit mengontrol dan memantau pengeluaran anak <<leaf>>
+*** Penjual: Pencatatan manual rawan salah hitung & antrean lama <<leaf>>
+*** Sekolah: Tidak ada laporan keuangan terpusat & risiko manipulasi <<leaf>>
+** Solusi & Fitur Sistem <<branch>>
+*** Transaksi Tap-to-Pay NFC: Pengganti uang tunai, transaksi < 2 detik <<leaf>>
+*** E-Wallet Control: Pembatasan limit jajan harian & fitur bekukan kartu <<leaf>>
+*** POS Mobile Kasir: Menu berbasis katalog produk untuk akurasi harga <<leaf>>
+*** Dashboard Pemantauan: Monitoring saldo & histori jajan anak real-time <<leaf>>
+** Transparansi & Keamanan <<branch>>
+*** ACID Transaction: Proteksi integritas saldo dan validasi harga server-side <<leaf>>
+*** RLS (Row Level Security): Pengamanan database multi-role <<leaf>>
+*** Live Audit Logs: Pencatatan aksi manual admin keuangan (Insert-Only) <<leaf>>
+
+@endmindmap

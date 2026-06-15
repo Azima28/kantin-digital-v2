@@ -1,0 +1,42 @@
+@startuml
+!include theme.puml
+
+title Peta Modul Sistem — Sistem Kantin Digital
+
+package "Aplikasi Client (Flutter Mobile & Web)" {
+  component [Modul Siswa\n(Mobile App)] as ModSiswa <<siswa>>
+  component [Modul Kasir POS\n(Mobile App)] as ModKasir <<petugas>>
+  component [Modul Admin Web\n(Web Admin)] as ModAdmin <<admin>>
+  component [Modul Super Admin\n(Web Admin)] as ModSuper <<admin>>
+  component [Modul Orang Tua\n(Web Publik)] as ModOrtu <<siswa>>
+}
+
+package "Backend & Integrasi (Supabase Cloud)" {
+  database "PostgreSQL Database\n(Tables & Constraints)" as DB
+  component [Supabase Auth] as Auth
+  component [Supabase Edge Functions] as Func
+  component [Supabase Realtime] as Realtime
+}
+
+component [Midtrans Payment Gateway] as Midtrans
+component [Firebase Cloud Messaging] as FCM
+
+ModSiswa --> Auth : "Autentikasi"
+ModSiswa --> DB : "Baca Saldo & Riwayat"
+ModSiswa --> Midtrans : "Request Token Snap"
+
+ModKasir --> DB : "Query Saldo & ACID Checkout"
+
+ModAdmin --> DB : "Top-up Tunai & Adjust Saldo\n(Generates Audit Logs)"
+
+ModSuper --> DB : "CRUD Sekolah & User,\nBaca Audit Logs"
+
+ModOrtu --> DB : "Cek Saldo (by NIS)\n& 5 Tx Terakhir"
+ModOrtu --> Midtrans : "Bayar Top-up Online"
+
+Midtrans --> Func : "Webhook Callback"
+Func --> DB : "Update Saldo & Tx"
+DB --> FCM : "Trigger Notifikasi"
+FCM --> ModSiswa : "Push Message"
+
+@enduml

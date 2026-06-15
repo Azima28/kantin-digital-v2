@@ -1,0 +1,37 @@
+{
+  "projectName": "Sistem Kantin Digital",
+  "techStack": "Flutter (Mobile & Web) + Supabase (PostgreSQL DB)",
+  "globalStyling": {
+    "fontFamily": "Segoe UI",
+    "shadows": false,
+    "themeColors": {
+      "siswa_ortu": { "fill": "#DAE8FC", "stroke": "#6C8EBF", "text": "#0A2540", "emoji": "🔵" },
+      "petugas_kasir": { "fill": "#FFE6CC", "stroke": "#D79B00", "text": "#5A3200", "emoji": "🟡" },
+      "success_state": { "fill": "#C6F6D5", "stroke": "#38A169", "text": "#22543D", "emoji": "✅" },
+      "system_backend": { "fill": "#E6F2F2", "stroke": "#0E8A8A", "text": "#0E8A8A", "emoji": "⚙️" }
+    }
+  },
+  "diagram": {
+    "title": "09. Agile Scrum Development Method",
+    "type": "scrum_flow",
+    "description": "Siklus iterasi Agile Scrum pengembangan produk.",
+    "nodes": [
+      { "id": "scr1", "label": "Product Backlog (Daftar semua fitur & prioritas)", "shape": "rect", "color": "petugas_kasir", "emoji": "📋" },
+      { "id": "scr2", "label": "Sprint Planning (Pilih fitur untuk sprint ini)", "shape": "ellipse", "color": "siswa_ortu", "emoji": "📅" },
+      { "id": "scr3", "label": "Sprint Backlog (Task breakdown 2 minggu)", "shape": "rect", "color": "petugas_kasir", "emoji": "📝" },
+      { "id": "scr4", "label": "Sprint Cycle (2 Minggu) Coding, Testing, Integration", "shape": "large_circle", "color": "system_backend", "emoji": "♻️" },
+      { "id": "scr_daily", "label": "Daily Standup (15 Menit) Progress, Blocker, Plan", "shape": "ellipse", "color": "success_state", "emoji": "👥" },
+      { "id": "scr5", "label": "Working App Increment (Versi aplikasi yang berjalan)", "shape": "rect", "color": "petugas_kasir", "emoji": "📱" },
+      { "id": "scr6", "label": "Sprint Review & Retrospective (Demo & Evaluasi)", "shape": "ellipse", "color": "siswa_ortu", "emoji": "🔍" }
+    ],
+    "connections": [
+      { "from": "scr1", "to": "scr2", "label": "Rencana" },
+      { "from": "scr2", "to": "scr3", "label": "Definisi Task" },
+      { "from": "scr3", "to": "scr4", "label": "Mulai" },
+      { "from": "scr4", "to": "scr_daily", "label": "Daily Sync", "bidirectional": true },
+      { "from": "scr4", "to": "scr5", "label": "Deliver" },
+      { "from": "scr4", "to": "scr6" },
+      { "from": "scr6", "to": "scr1", "label": "Feedback Loop", "routing": "Bottom wrap-around" }
+    ]
+  }
+}

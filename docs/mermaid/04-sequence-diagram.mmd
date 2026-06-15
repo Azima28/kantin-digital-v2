@@ -1,0 +1,22 @@
+sequenceDiagram
+    autonumber
+    actor Siswa as 👦 Siswa (NFC Card)
+    actor Kasir as 👵 Kasir (POS App)
+    participant DB as ☁️ Supabase DB (Backend)
+
+    Note over Kasir: Petugas memilih menu ke keranjang belanja (Cart) 🛒
+    Siswa->>Kasir: Tap Kartu RFID/NFC 📡
+    Kasir->>DB: Query Saldo (Card UID) 🔍
+    DB-->>Kasir: Return Nama Siswa & Saldo Teraktual ↩️
+    
+    Note over Kasir: Cek Lokal: Saldo >= Total Belanja? ⚖️
+    
+    alt Saldo Cukup
+        Kasir->>DB: Jalankan Transaksi (ACID Stored Procedure) ⚡
+        Note over DB: Server-Side Validation: Validasi harga asli di server, potong saldo, catat transaksi & items 🔒
+        DB-->>Kasir: Return Transaksi Sukses & Saldo Baru ✅
+        Kasir->>Siswa: Tampil Sukses & Getar HP Kasir 📲
+        DB->>Siswa: Push Notification SMS/FCM ke HP Siswa 🔔
+    else Saldo Tidak Cukup
+        Kasir->>Siswa: Layar POS Merah - Transaksi Ditolak ❌
+    end

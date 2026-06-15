@@ -1,0 +1,323 @@
+' Unified Premium Modern Light Theme for PlantUML Diagrams
+' Include this at the top of other diagrams using: !include theme.puml
+
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam ArrowColor #4A5568
+skinparam ArrowThickness 1.5
+skinparam TitleFontSize 16
+skinparam TitleFontColor #1A202C
+skinparam TitleFontWeight bold
+skinparam BackgroundColor #FAFAFA
+
+<style>
+document {
+  BackgroundColor #FAFAFA
+  FontName "Segoe UI"
+  FontColor #2D3748
+}
+
+/* === ACTIVITY DIAGRAMS === */
+activityDiagram {
+  LineColor #4A5568
+  LineThickness 1.5
+  
+  activity {
+    RoundCorner 10
+    BackgroundColor #FFFFFF
+    LineColor #CBD5E0
+    FontColor #2D3748
+    FontSize 11
+    
+    .siswa {
+      BackgroundColor #EBF8FF
+      LineColor #3182CE
+      FontColor #2B6CB0
+    }
+    .petugas {
+      BackgroundColor #FEFCBF
+      LineColor #D69E2E
+      FontColor #975A16
+    }
+    .admin {
+      BackgroundColor #E6FFFA
+      LineColor #319795
+      FontColor #234E52
+    }
+    .success {
+      BackgroundColor #C6F6D5
+      LineColor #38A169
+      FontColor #22543D
+    }
+    .fail {
+      BackgroundColor #FED7D7
+      LineColor #E53E3E
+      FontColor #742A2A
+    }
+  }
+  
+  diamond {
+    BackgroundColor #ED8936
+    LineColor #DD6B20
+    FontColor #FFFFFF
+    FontSize 10
+  }
+  
+  arrow {
+    LineColor #4A5568
+    LineThickness 1.5
+  }
+}
+
+/* === CLASS & ER DIAGRAMS === */
+classDiagram {
+  class {
+    RoundCorner 8
+    BackgroundColor #FFFFFF
+    LineColor #CBD5E0
+    FontColor #2D3748
+    FontSize 11
+    HeaderBackgroundColor #4F46E5
+    HeaderFontColor #FFFFFF
+  }
+  entity {
+    RoundCorner 8
+    BackgroundColor #FFFFFF
+    LineColor #CBD5E0
+    FontColor #2D3748
+    FontSize 11
+    HeaderBackgroundColor #ED8936
+    HeaderFontColor #FFFFFF
+  }
+  arrow {
+    LineColor #718096
+    LineThickness 1.5
+  }
+}
+
+objectDiagram {
+  object {
+    RoundCorner 8
+    BackgroundColor #FFFFFF
+    LineColor #CBD5E0
+    FontColor #2D3748
+    FontSize 11
+    
+    .siswa {
+      BackgroundColor #EBF8FF
+      LineColor #3182CE
+      FontColor #2B6CB0
+    }
+    .petugas {
+      BackgroundColor #FEFCBF
+      LineColor #D69E2E
+      FontColor #975A16
+    }
+    .admin {
+      BackgroundColor #E6FFFA
+      LineColor #319795
+      FontColor #234E52
+    }
+  }
+}
+
+/* === SEQUENCE DIAGRAMS === */
+sequenceDiagram {
+  participant {
+    RoundCorner 8
+    BackgroundColor #FFFFFF
+    LineColor #CBD5E0
+    FontColor #2D3748
+    FontSize 11
+    
+    .siswa {
+      BackgroundColor #EBF8FF
+      LineColor #3182CE
+      FontColor #2B6CB0
+    }
+    .petugas {
+      BackgroundColor #FEFCBF
+      LineColor #D69E2E
+      FontColor #975A16
+    }
+    .admin {
+      BackgroundColor #E6FFFA
+      LineColor #319795
+      FontColor #234E52
+    }
+  }
+  actor {
+    BackgroundColor #EBF8FF
+    LineColor #3182CE
+    FontColor #2B6CB0
+    
+    .siswa {
+      BackgroundColor #EBF8FF
+      LineColor #3182CE
+      FontColor #2B6CB0
+    }
+    .petugas {
+      BackgroundColor #FEFCBF
+      LineColor #D69E2E
+      FontColor #975A16
+    }
+    .admin {
+      BackgroundColor #E6FFFA
+      LineColor #319795
+      FontColor #234E52
+    }
+  }
+  arrow {
+    LineColor #4A5568
+    LineThickness 1.5
+  }
+  lifeline {
+    LineColor #CBD5E0
+    BackgroundColor #EDF2F7
+  }
+  reference {
+    BackgroundColor #FFFFFF
+    LineColor #CBD5E0
+  }
+  note {
+    RoundCorner 6
+    BackgroundColor #FFF5F5
+    LineColor #FEB2B2
+    FontColor #742A2A
+    FontSize 10
+  }
+}
+
+/* === USE CASE DIAGRAMS === */
+usecaseDiagram {
+  usecase {
+    BackgroundColor #FFFFFF
+    LineColor #CBD5E0
+    FontColor #2D3748
+    FontSize 11
+    
+    .siswa {
+      BackgroundColor #EBF8FF
+      LineColor #3182CE
+      FontColor #2B6CB0
+    }
+    .petugas {
+      BackgroundColor #FEFCBF
+      LineColor #D69E2E
+      FontColor #975A16
+    }
+    .admin {
+      BackgroundColor #E6FFFA
+      LineColor #319795
+      FontColor #234E52
+    }
+  }
+  actor {
+    BackgroundColor #EBF8FF
+    LineColor #3182CE
+    FontColor #2B6CB0
+    
+    .siswa {
+      BackgroundColor #EBF8FF
+      LineColor #3182CE
+      FontColor #2B6CB0
+    }
+    .petugas {
+      BackgroundColor #FEFCBF
+      LineColor #D69E2E
+      FontColor #975A16
+    }
+    .admin {
+      BackgroundColor #E6FFFA
+      LineColor #319795
+      FontColor #234E52
+    }
+  }
+  arrow {
+    LineColor #718096
+  }
+}
+
+/* === STATE DIAGRAMS === */
+stateDiagram {
+  state {
+    RoundCorner 10
+    BackgroundColor #FFFFFF
+    LineColor #CBD5E0
+    FontColor #2D3748
+    FontSize 11
+    
+    .siswa {
+      BackgroundColor #EBF8FF
+      LineColor #3182CE
+      FontColor #2B6CB0
+    }
+    .petugas {
+      BackgroundColor #FEFCBF
+      LineColor #D69E2E
+      FontColor #975A16
+    }
+    .admin {
+      BackgroundColor #E6FFFA
+      LineColor #319795
+      FontColor #234E52
+    }
+  }
+  arrow {
+    LineColor #718096
+  }
+}
+
+/* === MIND MAPS === */
+mindmapDiagram {
+  node {
+    RoundCorner 10
+    BackgroundColor #FFFFFF
+    LineColor #CBD5E0
+    FontColor #2D3748
+    FontSize 11
+    
+    .root {
+      BackgroundColor #EBF8FF
+      LineColor #3182CE
+      FontColor #2B6CB0
+      FontSize 13
+    }
+    .branch {
+      BackgroundColor #E6FFFA
+      LineColor #319795
+      FontColor #234E52
+    }
+    .leaf {
+      BackgroundColor #F7FAFC
+      LineColor #E2E8F0
+      FontColor #4A5568
+    }
+  }
+}
+
+component {
+  RoundCorner 8
+  BackgroundColor #FFFFFF
+  LineColor #CBD5E0
+  FontColor #2D3748
+  FontSize 11
+  
+  .system {
+    BackgroundColor #EBF8FF
+    LineColor #3182CE
+    FontColor #2B6CB0
+    FontSize 12
+    FontWeight bold
+  }
+}
+
+package {
+  BackgroundColor transparent
+  LineColor #A0AEC0
+  LineStyle dashed
+  FontColor #4A5568
+  FontSize 11
+  FontWeight bold
+}
+</style>

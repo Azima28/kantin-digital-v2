@@ -1,0 +1,50 @@
+@startuml
+!include theme.puml
+
+title Flowchart Validasi Transaksi NFC — Sistem Kantin Digital
+
+start
+:Petugas kasir input belanjaan ke keranjang (Cart);
+:Siswa tap kartu NFC pada HP kasir;
+:Kasir membaca UID Kartu NFC;
+:Kirim request ke Supabase Database;
+:Query data siswa & saldo riil dari DB;
+
+if (Siswa ditemukan & Status Aktif?) then (Tidak)
+  #FED7D7:Tampilkan pesan "Kartu Tidak Valid / Blokir";
+  stop
+else (Ya)
+  if (Kartu berstatus Beku (Frozen)?) then (Ya)
+    #FED7D7:Tampilkan pesan "Kartu Sedang Dibekukan";
+    stop
+  else (Tidak)
+    if (Saldo Aktual >= Total Belanja?) then (Tidak)
+      #FED7D7:Layar POS Merah - "Saldo Tidak Cukup";
+      stop
+    else (Ya)
+      :Kirim Request Checkout (ACID SP) ke Server;
+      partition "Server-Side ACID Transaction" {
+        :Mulai Transaksi Database;
+        :Query ulang harga menu aktual dari tabel `products`;
+        :Kalkulasi ulang Total Belanja aktual di Server;
+        if (Saldo di DB >= Total Belanja Server?) then (Ya)
+          :Kurangi saldo siswa di tabel `students`;
+          :Insert ke tabel `transactions` (status: success);
+          :Insert detail ke tabel `transaction_items`;
+          :Commit Transaksi Database;
+          :Kirim status SUKSES ke Kasir;
+        else (Tidak / Data Tampered)
+          #FED7D7:Rollback Transaksi;
+          #FED7D7:Kembalikan status ERROR ke Kasir;
+          stop
+        endif
+      }
+      :Trigger Push Notification (FCM) ke Siswa;
+      #C6F6D5:Layar POS Hijau - Transaksi Berhasil;
+      :Serahkan makanan ke siswa;
+      stop
+    endif
+  endif
+endif
+
+@enduml

@@ -1,0 +1,40 @@
+{
+  "projectName": "Sistem Kantin Digital",
+  "techStack": "Flutter (Mobile & Web) + Supabase (PostgreSQL DB)",
+  "globalStyling": {
+    "fontFamily": "Segoe UI",
+    "shadows": false,
+    "themeColors": {
+      "siswa_ortu": { "fill": "#DAE8FC", "stroke": "#6C8EBF", "text": "#0A2540", "emoji": "🔵" },
+      "petugas_kasir": { "fill": "#FFE6CC", "stroke": "#D79B00", "text": "#5A3200", "emoji": "🟡" },
+      "admin_keuangan": { "fill": "#D5E8D4", "stroke": "#72B095", "text": "#0A3F2C", "emoji": "🟢" },
+      "system_backend": { "fill": "#E6F2F2", "stroke": "#0E8A8A", "text": "#0E8A8A", "emoji": "⚙️" }
+    }
+  },
+  "diagram": {
+    "title": "03. ER Diagram (Skema Database PostgreSQL)",
+    "type": "er_diagram",
+    "description": "Desain database PostgreSQL fisik dengan kunci PK, FK, UK dan constraint.",
+    "nodes": [
+      { "id": "E_users", "label": "users", "fields": ["PK id: uuid", "UK email: varchar", "password_hash: varchar", "full_name: varchar", "role: enum_role", "is_active: boolean", "created_at: timestamptz"], "color": "system_backend", "emoji": "🔑" },
+      { "id": "E_schools", "label": "schools", "fields": ["PK id: uuid", "name: varchar", "address: text", "logo_url: varchar", "is_active: boolean", "created_at: timestamptz"], "color": "system_backend", "emoji": "🏢" },
+      { "id": "E_students", "label": "students", "fields": ["PK id: uuid", "FK user_id: uuid", "FK school_id: uuid", "UK nis: varchar", "balance: numeric (>=0)", "UK card_uid: varchar", "is_card_frozen: boolean", "is_active: boolean"], "color": "siswa_ortu", "emoji": "🎒" },
+      { "id": "E_canteen_operators", "label": "canteen_operators", "fields": ["PK id: uuid", "FK user_id: uuid", "FK school_id: uuid", "stall_name: varchar", "is_active: boolean"], "color": "petugas_kasir", "emoji": "🏠" },
+      { "id": "E_products", "label": "products", "fields": ["PK id: uuid", "FK canteen_operator_id: uuid", "name: varchar", "price: numeric", "image_url: varchar", "is_available: boolean"], "color": "petugas_kasir", "emoji": "🍕" },
+      { "id": "E_transactions", "label": "transactions", "fields": ["PK id: uuid", "FK student_id: uuid", "type: enum_tx_type", "amount: numeric", "performed_by: uuid", "method: enum_tx_method", "status: enum_tx_status", "notes: text", "created_at: timestamptz"], "color": "admin_keuangan", "emoji": "📊" },
+      { "id": "E_transaction_items", "label": "transaction_items", "fields": ["PK id: uuid", "FK transaction_id: uuid", "FK product_id: uuid", "name: varchar", "price: numeric", "quantity: integer", "subtotal: numeric"], "color": "admin_keuangan", "emoji": "🏷️" },
+      { "id": "E_audit_logs", "label": "audit_logs", "fields": ["PK id: uuid", "FK user_id: uuid", "action: varchar", "target_table: varchar", "target_id: uuid", "old_value: jsonb", "new_value: jsonb", "ip_address: varchar", "created_at: timestamptz"], "color": "admin_keuangan", "emoji": "📒" }
+    ],
+    "connections": [
+      { "from": "E_users", "to": "E_students", "cardinality": "1 to 0..1" },
+      { "from": "E_users", "to": "E_canteen_operators", "cardinality": "1 to 0..1" },
+      { "from": "E_schools", "to": "E_students", "cardinality": "1 to many" },
+      { "from": "E_schools", "to": "E_canteen_operators", "cardinality": "1 to many" },
+      { "from": "E_canteen_operators", "to": "E_products", "cardinality": "1 to many" },
+      { "from": "E_students", "to": "E_transactions", "cardinality": "1 to many" },
+      { "from": "E_transactions", "to": "E_transaction_items", "cardinality": "1 to many" },
+      { "from": "E_products", "to": "E_transaction_items", "cardinality": "1 to many" },
+      { "from": "E_users", "to": "E_audit_logs", "cardinality": "1 to many" }
+    ]
+  }
+}

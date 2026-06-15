@@ -1,0 +1,44 @@
+{
+  "projectName": "Sistem Kantin Digital",
+  "techStack": "Flutter (Mobile & Web) + Supabase (PostgreSQL DB)",
+  "globalStyling": {
+    "fontFamily": "Segoe UI",
+    "shadows": false,
+    "themeColors": {
+      "siswa_ortu": { "fill": "#DAE8FC", "stroke": "#6C8EBF", "text": "#0A2540", "emoji": "🔵" },
+      "petugas_kasir": { "fill": "#FFE6CC", "stroke": "#D79B00", "text": "#5A3200", "emoji": "🟡" },
+      "admin_keuangan": { "fill": "#D5E8D4", "stroke": "#72B095", "text": "#0A3F2C", "emoji": "🟢" }
+    }
+  },
+  "diagram": {
+    "title": "06. Use Case Diagram (Interaksi Pengguna)",
+    "type": "use_case",
+    "description": "Hubungan interaksi fungsional antara seluruh aktor dengan use case sistem.",
+    "actors": [
+      { "id": "Siswa", "color": "siswa_ortu", "emoji": "👦" },
+      { "id": "Ortu", "color": "siswa_ortu", "emoji": "👩" },
+      { "id": "Petugas", "color": "petugas_kasir", "emoji": "👵" },
+      { "id": "Admin", "color": "admin_keuangan", "emoji": "👨‍💼" },
+      { "id": "SuperAdmin", "color": "admin_keuangan", "emoji": "👑" }
+    ],
+    "usecases": [
+      { "id": "UC1", "label": "Login & Autentikasi" },
+      { "id": "UC2", "label": "Cek Saldo & Histori Jajan", "stereotype": "siswa" },
+      { "id": "UC3", "label": "Top-up Online (Midtrans)", "stereotype": "siswa" },
+      { "id": "UC4", "label": "Link & Freeze Kartu NFC", "stereotype": "siswa" },
+      { "id": "UC5", "label": "POS Checkout (Belanja)", "stereotype": "petugas" },
+      { "id": "UC6", "label": "Kelola Menu Stan (CRUD)", "stereotype": "petugas" },
+      { "id": "UC7", "label": "Top-up Tunai Manual", "stereotype": "admin" },
+      { "id": "UC8", "label": "Koreksi Saldo Manual", "stereotype": "admin" },
+      { "id": "UC9", "label": "CRUD Data Siswa & Operator", "stereotype": "admin" },
+      { "id": "UC10", "label": "Monitoring Live Audit Log", "stereotype": "admin" }
+    ],
+    "associations": [
+      { "actor": "Siswa", "usecase": ["UC1", "UC2", "UC3", "UC4"] },
+      { "actor": "Ortu", "usecase": ["UC2", "UC3"] },
+      { "actor": "Petugas", "usecase": ["UC1", "UC2", "UC5", "UC6"] },
+      { "actor": "Admin", "usecase": ["UC1", "UC7", "UC8", "UC9"] },
+      { "actor": "SuperAdmin", "usecase": ["UC1", "UC9", "UC10"] }
+    ]
+  }
+}

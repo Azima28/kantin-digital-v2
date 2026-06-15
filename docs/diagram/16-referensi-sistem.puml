@@ -1,0 +1,44 @@
+@startuml
+!include theme.puml
+
+title Peta Referensi & Integrasi Sistem — Sistem Kantin Digital
+
+package "Aplikasi Client (Flutter Mobile & Web)" {
+  [Mobile App (Siswa/Kasir)] as AppClient
+  [Web Admin (Finance/Super)] as WebAdmin
+  [Web Publik (Orang Tua)] as WebPublik
+}
+
+package "Integrasi SDK & API Eksternal" {
+  component [Midtrans Snap API] as MidtransSnap
+  component [Midtrans Core API] as MidtransCore
+  component [FCM REST API] as FCM_API
+}
+
+package "Supabase Cloud SDK" {
+  component [Supabase Client Library] as SupaClient
+  component [Supabase Edge Functions API] as EdgeFunc
+}
+
+package "Perangkat Keras & Hardware Reader" {
+  component [ESP32 RFID RC522] as ESP32Reader
+  component [Mobile NFC Manager SDK] as MobileNFC
+}
+
+AppClient --> MobileNFC : "Membaca UID Kartu"
+AppClient --> SupaClient : "Kueri Data & Auth"
+AppClient --> MidtransSnap : "Inisiasi snap token"
+
+WebAdmin --> SupaClient : "Kueri Data & Live Audit Logs"
+
+WebPublik --> SupaClient : "Cek Saldo by NIS"
+WebPublik --> MidtransSnap : "Top-up Online Instan"
+
+ESP32Reader --> EdgeFunc : "Kirim UID Tap Kartu via HTTP POST"
+
+MidtransCore --> EdgeFunc : "Webhook callback (HTTP POST)"
+EdgeFunc --> SupaClient : "Update status transaksi"
+
+FCM_API --> AppClient : "Kirim push notification"
+
+@enduml

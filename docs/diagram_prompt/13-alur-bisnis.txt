@@ -1,0 +1,153 @@
+# PROMPT DIAGRAM: Alur Bisnis Keuangan — Sistem Kantin Digital
+
+Halo AI Diagram Builder / Draw.io Generator! Tugas Anda adalah membuat diagram visual **"Alur Bisnis Keuangan — Sistem Kantin Digital"** dalam format Draw.io XML (.drawio) yang valid berdasarkan spesifikasi tata letak, komponen, dan relasi detail di bawah ini.
+
+---
+
+## 🏛️ PART 1: KONTEKS SISTEM & WORKFLOW
+
+Diagram ini memetakan **alur bisnis finansial utama** yang berjalan secara paralel di dalam **Sistem Kantin Digital**:
+1. **Jalur Kiri (Top-up Online)**: Siswa/Orang Tua melakukan top-up mandiri via aplikasi/web publik, diintegrasikan dengan Midtrans Payment Gateway, dan berakhir dengan notifikasi otomatis.
+2. **Jalur Tengah (Top-up Tunai)**: Siswa melakukan pengisian saldo secara manual (uang fisik diserahkan ke koperasi/guru) dan Admin Keuangan merekam aktivitas tersebut (menghasilkan audit log anti-korupsi).
+3. **Jalur Kanan (Belanja NFC)**: Siswa membeli makanan di stan kantin dengan men-tap kartu NFC pada HP kasir (POS), yang memicu validasi saldo aktual server-side sebelum transaksi disetujui.
+
+---
+
+## 🎨 PART 2: STANDAR GAYA VISUAL (STYLING SPECIFICATIONS)
+
+1. **Font**: Gunakan `"Segoe UI"` atau `"Arial"`, ukuran font 11px untuk deskripsi teks, dan 13px bold untuk judul halaman.
+2. **Shadow**: Nonaktifkan shadow/bayangan pada semua objek (`shadow=0`).
+3. **Jenis Kotak (Nodes)**:
+   * Proses/Langkah: Kotak berujung melengkung (`rounded=1;arcSize=8;whiteSpace=wrap;html=1;strokeWidth=1.5;`).
+   * Titik Mulai/Selesai: Bentuk oval/lingkaran (`ellipse;whiteSpace=wrap;strokeWidth=2;fontStyle=1;`).
+   * Keputusan: Belah ketupat (`rhombus;whiteSpace=wrap;strokeWidth=1.5;`).
+4. **Skema Warna Aktor & Aliran**:
+   * 🔵 **Siswa / Orang Tua**: `fillColor=#DAE8FC;strokeColor=#6C8EBF;fontColor=#0A2540`
+   * 🟡 **Petugas Kantin (Kasir)**: `fillColor=#FFE6CC;strokeColor=#D79B00;fontColor=#975A16`
+   * 🟢 **Admin Keuangan**: `fillColor=#D5E8D4;strokeColor=#72B095;fontColor=#0A3F2C`
+   * ⚙️ **Sistem / Database / Backend**: `fillColor=#E6F2F2;strokeColor=#0E8A8A;fontColor=#0c5757`
+   * ✅ **Success State**: `fillColor=#C6F6D5;strokeColor=#38A169;fontColor=#22543D`
+   * 🔴 **Error / Ditolak State**: `fillColor=#FED7D7;strokeColor=#E53E3E;fontColor=#742A2A`
+5. **Gaya Garis Hubung (Edges)**:
+   * Menggunakan rute siku-siku (`edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1.5;strokeColor=#4A5568;`).
+
+---
+
+## 📊 PART 3: DETAIL TATA LETAK & GEOMETRI DIAGRAM
+
+### A. Komponen Navigasi Utama
+* **Judul Halaman**
+  * **ID**: `title`
+  * **Teks**: `Alur Bisnis Keuangan — Sistem Kantin Digital`
+  * **Geometri**: `x=380, y=20, width=340, height=30`
+* **Node Mulai (Start)**
+  * **ID**: `start`
+  * **Teks**: `Mulai`
+  * **Geometri**: `x=510, y=70, width=80, height=40`
+  * **Warna**: Grey/White (`fillColor=#FAFAFA;strokeColor=#4A5568;fontColor=#2D3748`)
+* **Node Selesai (End)**
+  * **ID**: `end`
+  * **Teks**: `Selesai`
+  * **Geometri**: `x=510, y=550, width=80, height=40`
+  * **Warna**: Grey/White (`fillColor=#FAFAFA;strokeColor=#4A5568;fontColor=#2D3748`)
+
+---
+
+### B. Jalur Kiri: Top-up Online (y terentang 160 s/d 430, x = 80)
+* **Langkah L1 (Inisiasi)**
+  * **ID**: `p1_1`
+  * **Teks**: `Top-up Online via App/Web\n(E-Wallet / VA / QRIS)`
+  * **Geometri**: `x=80, y=160, width=220, height=50`
+  * **Warna**: Biru (`fillColor=#DAE8FC;strokeColor=#6C8EBF;fontColor=#0A2540`)
+* **Langkah L2 (Gateway)**
+  * **ID**: `p1_2`
+  * **Teks**: `Midtrans memproses pembayaran\n& mengirim HTTP Webhook`
+  * **Geometri**: `x=80, y=250, width=220, height=50`
+  * **Warna**: Teal/Sistem (`fillColor=#E6F2F2;strokeColor=#0E8A8A;fontColor=#0c5757`)
+* **Langkah L3 (Database)**
+  * **ID**: `p1_3`
+  * **Teks**: `Supabase Edge Function:\nUpdate Saldo & Catat di transactions`
+  * **Geometri**: `x=80, y=340, width=220, height=50`
+  * **Warna**: Hijau Sukses (`fillColor=#C6F6D5;strokeColor=#38A169;fontColor=#22543D`)
+* **Langkah L4 (Notifikasi)**
+  * **ID**: `p1_4`
+  * **Teks**: `Kirim Push Notification (FCM)\nke HP Siswa/Orang Tua`
+  * **Geometri**: `x=80, y=430, width=220, height=50`
+  * **Warna**: Biru (`fillColor=#DAE8FC;strokeColor=#6C8EBF;fontColor=#0A2540`)
+
+---
+
+### C. Jalur Tengah: Top-up Tunai (y terentang 160 s/d 430, x = 440)
+* **Langkah M1 (Penyerahan Cash)**
+  * **ID**: `p2_1`
+  * **Teks**: `Top-up Tunai di Koperasi\n(Serahkan Uang Cash)`
+  * **Geometri**: `x=440, y=160, width=220, height=50`
+  * **Warna**: Hijau Admin (`fillColor=#D5E8D4;strokeColor=#72B095;fontColor=#0A3F2C`)
+* **Langkah M2 (Input Sistem)**
+  * **ID**: `p2_2`
+  * **Teks**: `Admin Keuangan cari NIS Siswa\n& input nominal di Web Admin`
+  * **Geometri**: `x=440, y=250, width=220, height=50`
+  * **Warna**: Hijau Admin (`fillColor=#D5E8D4;strokeColor=#72B095;fontColor=#0A3F2C`)
+* **Langkah M3 (Database & Log)**
+  * **ID**: `p2_3`
+  * **Teks**: `DB: Update Saldo, Catat Transaksi,\n& Tulis Audit Log (Insert-Only)`
+  * **Geometri**: `x=440, y=340, width=220, height=50`
+  * **Warna**: Hijau Sukses (`fillColor=#C6F6D5;strokeColor=#38A169;fontColor=#22543D`)
+* **Langkah M4 (Cetak Struk)**
+  * **ID**: `p2_4`
+  * **Teks**: `Web Admin: Cetak Bukti\nTransaksi Manual`
+  * **Geometri**: `x=440, y=430, width=220, height=50`
+  * **Warna**: Hijau Admin (`fillColor=#D5E8D4;strokeColor=#72B095;fontColor=#0A3F2C`)
+
+---
+
+### D. Jalur Kanan: Belanja NFC (y terentang 160 s/d 440, x = 800)
+* **Langkah R1 (Pemilihan Menu)**
+  * **ID**: `p3_1`
+  * **Teks**: `Belanja di Stan Kantin:\nPetugas POS input item keranjang`
+  * **Geometri**: `x=800, y=160, width=220, height=50`
+  * **Warna**: Kuning POS (`fillColor=#FFE6CC;strokeColor=#D79B00;fontColor=#975A16`)
+* **Langkah R2 (Tap Kartu)**
+  * **ID**: `p3_2`
+  * **Teks**: `Siswa tap kartu NFC di HP Kasir;\nKasir baca UID & request checkout`
+  * **Geometri**: `x=800, y=250, width=220, height=50`
+  * **Warna**: Kuning POS (`fillColor=#FFE6CC;strokeColor=#D79B00;fontColor=#975A16`)
+* **Langkah R3 (Decision - Validasi Server)**
+  * **ID**: `p3_decision`
+  * **Teks**: `Validasi Saldo\nAktual Server?`
+  * **Geometri**: `x=850, y=325, width=120, height=80`
+  * **Warna**: Kuning POS Belah Ketupat (`fillColor=#FFE6CC;strokeColor=#D79B00;fontColor=#975A16`)
+* **Langkah R4-A (Branch Sukses)**
+  * **ID**: `p3_success`
+  * **Teks**: `ACID Transaksi Sukses:\nPotong Saldo & Berikan Notif FCM`
+  * **Geometri**: `x=720, y=440, width=190, height=50`
+  * **Warna**: Hijau Sukses (`fillColor=#C6F6D5;strokeColor=#38A169;fontColor=#22543D`)
+* **Langkah R4-B (Branch Gagal)**
+  * **ID**: `p3_fail`
+  * **Teks**: `Transaksi Ditolak:\nLayar POS Merah (Saldo Kurang)`
+  * **Geometri**: `x=930, y=440, width=160, height=50`
+  * **Warna**: Merah Gagal (`fillColor=#FED7D7;strokeColor=#E53E3E;fontColor=#742A2A`)
+
+---
+
+## 🔗 PART 4: HUBUNGAN & GARIS KONEKSI (EDGES)
+
+1. **Percabangan Awal**:
+   * Dari `start` ke `p1_1`
+   * Dari `start` ke `p2_1`
+   * Dari `start` ke `p3_1`
+2. **Aliran Top-up Online**:
+   * `p1_1` $\rightarrow$ `p1_2` $\rightarrow$ `p1_3` $\rightarrow$ `p1_4` $\rightarrow$ `end`
+3. **Aliran Top-up Tunai**:
+   * `p2_1` $\rightarrow$ `p2_2` $\rightarrow$ `p2_3` $\rightarrow$ `p2_4` $\rightarrow$ `end`
+4. **Aliran Belanja NFC**:
+   * `p3_1` $\rightarrow$ `p3_2` $\rightarrow$ `p3_2` $\rightarrow$ `p3_decision`
+   * Dari `p3_decision` ke `p3_success` (Label: `"Cukup"`, Garis Hijau `#38A169`)
+   * Dari `p3_decision` ke `p3_fail` (Label: `"Kurang"`, Garis Merah `#E53E3E`)
+   * Dari `p3_success` $\rightarrow$ `end`
+   * Dari `p3_fail` $\rightarrow$ `end`
+
+---
+
+## 🤖 OUTPUT YANG DIHARAPKAN
+Hasilkan berkas Draw.io XML lengkap yang memuat elemen-elemen di atas dengan koordinat yang presisi, warna, gaya, dan label yang sesuai agar diagram terlihat sangat profesional, modern, dan rapi secara visual saat diimpor ke dalam Draw.io!

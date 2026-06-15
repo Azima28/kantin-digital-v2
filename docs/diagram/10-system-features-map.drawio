@@ -1,0 +1,106 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="Electron" modified="2026-06-12T00:00:00.000Z" agent="5.0" version="20.0.0" type="device">
+  <diagram id="page1" name="Page-1">
+    <mxGraphModel dx="1500" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ===== CONNECTION EDGES (Rendered in Background) ===== -->
+        <mxCell id="1001" value="" style="endArrow=none;html=1;strokeColor=#0E8A8A;strokeWidth=2;" edge="1" parent="1" source="root" target="b1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1002" value="" style="endArrow=none;html=1;strokeColor=#0E8A8A;strokeWidth=2;" edge="1" parent="1" source="root" target="b2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1003" value="" style="endArrow=none;html=1;strokeColor=#0E8A8A;strokeWidth=2;" edge="1" parent="1" source="root" target="b3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1004" value="" style="endArrow=none;html=1;strokeColor=#0E8A8A;strokeWidth=2;" edge="1" parent="1" source="root" target="b4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1005" value="" style="endArrow=none;html=1;strokeColor=#0E8A8A;strokeWidth=2;" edge="1" parent="1" source="root" target="b5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1006" value="" style="endArrow=none;html=1;strokeColor=#0E8A8A;strokeWidth=2;" edge="1" parent="1" source="b1" target="l1_1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1007" value="" style="endArrow=none;html=1;strokeColor=#0E8A8A;strokeWidth=2;" edge="1" parent="1" source="b2" target="l2_1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1008" value="" style="endArrow=none;html=1;strokeColor=#0E8A8A;strokeWidth=2;" edge="1" parent="1" source="b3" target="l3_1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1009" value="" style="endArrow=none;html=1;strokeColor=#0E8A8A;strokeWidth=2;" edge="1" parent="1" source="b4" target="l4_1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1010" value="" style="endArrow=none;html=1;strokeColor=#0E8A8A;strokeWidth=2;" edge="1" parent="1" source="b5" target="l5_1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="root" value="FITUR UTAMA&#10;KANTIN DIGITAL" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fontStyle=1;fontSize=13;fillColor=#0E8A8A;strokeColor=none;strokeWidth=2;fontColor=#FFFFFF;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="380" y="240" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="b1" value="1. Modul Siswa (Mobile)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=2;fontColor=#0A2540;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="100" y="80" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="b2" value="2. Modul Kasir (Mobile)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=2;fontColor=#5A3200;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="100" y="360" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="b3" value="3. Admin Sekolah (Web)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;fillColor=#D5E8D4;strokeColor=#72B095;strokeWidth=2;fontColor=#0A3F2C;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="660" y="80" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="b4" value="4. Master Admin (Web)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;fillColor=#F5F5F5;strokeColor=#666666;strokeWidth=2;fontColor=#333333;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="660" y="360" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="b5" value="5. Orang Tua (Web)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;fillColor=#E1D5E7;strokeColor=#967ADC;strokeWidth=2;fontColor=#2E004B;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="380" y="50" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="l1_1" value="- Cek Saldo &amp; Histori" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F9FA;fontColor=#1A1A1A;strokeColor=#E0E0E0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="130" width="160" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="l1_2" value="- Top-up Midtrans VA/QRIS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F9FA;fontColor=#1A1A1A;strokeColor=#E0E0E0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="160" width="160" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="l1_3" value="- Lock/Freeze Kartu NFC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F9FA;fontColor=#1A1A1A;strokeColor=#E0E0E0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="190" width="160" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="l2_1" value="- POS Katalog Belanja" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F9FA;fontColor=#1A1A1A;strokeColor=#E0E0E0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="410" width="160" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="l2_2" value="- Extra Charge + Catatan" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F9FA;fontColor=#1A1A1A;strokeColor=#E0E0E0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="440" width="160" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="l2_3" value="- Tap NFC Checkout &amp; Cek Saldo" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F9FA;fontColor=#1A1A1A;strokeColor=#E0E0E0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="470" width="160" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="l2_4" value="- CRUD Menu &amp; Stok" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F9FA;fontColor=#1A1A1A;strokeColor=#E0E0E0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="500" width="160" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="l3_1" value="- Top-up Tunai Koperasi" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F9FA;fontColor=#1A1A1A;strokeColor=#E0E0E0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="660" y="130" width="160" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="l3_2" value="- Adjust Saldo (Audit Log)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F9FA;fontColor=#1A1A1A;strokeColor=#E0E0E0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="660" y="160" width="160" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="l3_3" value="- Link UID via USB Reader" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F9FA;fontColor=#1A1A1A;strokeColor=#E0E0E0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="660" y="190" width="160" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="l4_1" value="- CRUD Data Sekolah Mitra" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F9FA;fontColor=#1A1A1A;strokeColor=#E0E0E0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="660" y="410" width="160" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="l4_2" value="- Live Timeline Audit Log" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F9FA;fontColor=#1A1A1A;strokeColor=#E0E0E0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="660" y="440" width="160" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="l4_3" value="- Blokir Akun Instan" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F9FA;fontColor=#1A1A1A;strokeColor=#E0E0E0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="660" y="470" width="160" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_1" value="- Pantau Jajan NIS Anak" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F9FA;fontColor=#1A1A1A;strokeColor=#E0E0E0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="100" width="160" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_2" value="- Top-up Instan Tanpa Login" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F9FA;fontColor=#1A1A1A;strokeColor=#E0E0E0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="125" width="160" height="25" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

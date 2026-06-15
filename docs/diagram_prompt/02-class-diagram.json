@@ -1,0 +1,46 @@
+{
+  "projectName": "Sistem Kantin Digital",
+  "techStack": "Flutter (Mobile & Web) + Supabase (PostgreSQL DB)",
+  "globalStyling": {
+    "fontFamily": "Segoe UI",
+    "shadows": false,
+    "themeColors": {
+      "siswa_ortu": { "fill": "#DAE8FC", "stroke": "#6C8EBF", "text": "#0A2540", "emoji": "🔵" },
+      "petugas_kasir": { "fill": "#FFE6CC", "stroke": "#D79B00", "text": "#5A3200", "emoji": "🟡" },
+      "admin_keuangan": { "fill": "#D5E8D4", "stroke": "#72B095", "text": "#0A3F2C", "emoji": "🟢" },
+      "system_backend": { "fill": "#E6F2F2", "stroke": "#0E8A8A", "text": "#0E8A8A", "emoji": "⚙️" }
+    }
+  },
+  "diagram": {
+    "title": "02. Class Diagram (Struktur Objek Logis)",
+    "type": "class_diagram",
+    "description": "Struktur objek data logis sistem kantin beserta model enum yang digunakan.",
+    "nodes": [
+      { "id": "C_User", "label": "User", "attributes": ["id: UUID <<PK>>", "email: String <<UK>>", "password_hash: String", "full_name: String", "role: UserRole", "is_active: Boolean", "created_at: Timestamp"], "color": "system_backend", "emoji": "👤" },
+      { "id": "C_School", "label": "School", "attributes": ["id: UUID <<PK>>", "name: String", "address: String", "logo_url: String", "is_active: Boolean", "created_at: Timestamp"], "color": "system_backend", "emoji": "🏫" },
+      { "id": "C_Student", "label": "Student", "attributes": ["id: UUID <<PK>>", "user_id: UUID <<FK>>", "school_id: UUID <<FK>>", "nis: String <<UK>>", "balance: Decimal", "card_uid: String <<UK>>", "is_card_frozen: Boolean", "is_active: Boolean"], "color": "siswa_ortu", "emoji": "🎓" },
+      { "id": "C_CanteenOperator", "label": "CanteenOperator", "attributes": ["id: UUID <<PK>>", "user_id: UUID <<FK>>", "school_id: UUID <<FK>>", "stall_name: String", "is_active: Boolean"], "color": "petugas_kasir", "emoji": "🏪" },
+      { "id": "C_Product", "label": "Product", "attributes": ["id: UUID <<PK>>", "canteen_operator_id: UUID <<FK>>", "name: String", "price: Decimal", "image_url: String", "is_available: Boolean"], "color": "petugas_kasir", "emoji": "🍔" },
+      { "id": "C_Transaction", "label": "Transaction", "attributes": ["id: UUID <<PK>>", "student_id: UUID <<FK>>", "type: TxType", "amount: Decimal", "performed_by: UUID <<FK>>", "method: TxMethod", "status: TxStatus", "notes: String", "created_at: Timestamp"], "color": "admin_keuangan", "emoji": "💸" },
+      { "id": "C_TransactionItem", "label": "TransactionItem", "attributes": ["id: UUID <<PK>>", "transaction_id: UUID <<FK>>", "product_id: UUID <<FK>>", "name: String", "price: Decimal", "quantity: Int", "subtotal: Decimal"], "color": "admin_keuangan", "emoji": "🧾" },
+      { "id": "C_AuditLog", "label": "AuditLog", "attributes": ["id: UUID <<PK>>", "user_id: UUID <<FK>>", "action: String", "target_table: String", "target_id: UUID", "old_value: JSON", "new_value: JSON", "ip_address: String", "created_at: Timestamp"], "color": "admin_keuangan", "emoji": "📜" }
+    ],
+    "enums": [
+      { "name": "UserRole", "values": ["super_admin", "admin_keuangan", "siswa", "petugas_kantin"], "emoji": "🏷️" },
+      { "name": "TxType", "values": ["topup_online", "topup_cash", "purchase", "refund", "adjustment"], "emoji": "🏷️" },
+      { "name": "TxMethod", "values": ["midtrans", "cash", "nfc_tap", "manual"], "emoji": "🏷️" },
+      { "name": "TxStatus", "values": ["pending", "success", "failed", "refunded"], "emoji": "🏷️" }
+    ],
+    "connections": [
+      { "from": "C_User", "to": "C_Student", "label": "has (1 to 0..1)" },
+      { "from": "C_User", "to": "C_CanteenOperator", "label": "has (1 to 0..1)" },
+      { "from": "C_School", "to": "C_Student", "label": "enrolls (1 to *)" },
+      { "from": "C_School", "to": "C_CanteenOperator", "label": "employs (1 to *)" },
+      { "from": "C_CanteenOperator", "to": "C_Product", "label": "manages (1 to *)" },
+      { "from": "C_Student", "to": "C_Transaction", "label": "makes (1 to *)" },
+      { "from": "C_Transaction", "to": "C_TransactionItem", "label": "contains (1 to *)" },
+      { "from": "C_Product", "to": "C_TransactionItem", "label": "references (0..1 to *)" },
+      { "from": "C_User", "to": "C_AuditLog", "label": "generates (1 to *)" }
+    ]
+  }
+}

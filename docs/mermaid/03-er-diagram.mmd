@@ -1,0 +1,84 @@
+erDiagram
+    users {
+        uuid id PK
+        varchar email UK
+        varchar password_hash
+        varchar full_name
+        enum_role role
+        boolean is_active
+        timestamptz created_at
+    }
+    schools {
+        uuid id PK
+        varchar name
+        text address
+        varchar logo_url
+        boolean is_active
+        timestamptz created_at
+    }
+    students {
+        uuid id PK
+        uuid user_id FK
+        uuid school_id FK
+        varchar nis UK
+        numeric balance "CHECK (balance >= 0)"
+        varchar card_uid UK
+        boolean is_card_frozen
+        boolean is_active
+    }
+    canteen_operators {
+        uuid id PK
+        uuid user_id FK
+        uuid school_id FK
+        varchar stall_name
+        boolean is_active
+    }
+    products {
+        uuid id PK
+        uuid canteen_operator_id FK
+        varchar name
+        numeric price
+        varchar image_url
+        boolean is_available
+    }
+    transactions {
+        uuid id PK
+        uuid student_id FK
+        enum_tx_type type
+        numeric amount
+        uuid performed_by FK
+        enum_tx_method method
+        enum_tx_status status
+        text notes
+        timestamptz created_at
+    }
+    transaction_items {
+        uuid id PK
+        uuid transaction_id FK
+        uuid product_id FK
+        varchar name
+        numeric price
+        integer quantity
+        numeric subtotal
+    }
+    audit_logs {
+        uuid id PK
+        uuid user_id FK
+        varchar action
+        varchar target_table
+        uuid target_id
+        jsonb old_value
+        jsonb new_value
+        varchar ip_address
+        timestamptz created_at
+    }
+
+    users ||--o| students : "has student profile"
+    users ||--o| canteen_operators : "has canteen operator profile"
+    schools ||--o{ students : "enrolls students"
+    schools ||--o{ canteen_operators : "hosts canteen operator"
+    canteen_operators ||--o{ products : "manages products"
+    students ||--o{ transactions : "performs transactions"
+    transactions ||--o{ transaction_items : "contains transaction details"
+    products ||--o{ transaction_items : "referenced by item purchase"
+    users ||--o{ audit_logs : "records administrative actions"

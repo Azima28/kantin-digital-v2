@@ -1,0 +1,37 @@
+flowchart LR
+    %% Class Styles
+    classDef siswa fill:#DAE8FC,stroke:#6C8EBF,color:#0A2540,stroke-width:2px
+    classDef petugas fill:#FFE6CC,stroke:#D79B00,color:#5A3200,stroke-width:2px
+    classDef admin fill:#D5E8D4,stroke:#72B095,color:#0A3F2C,stroke-width:2px
+    classDef super fill:#E6F2F2,stroke:#0E8A8A,color:#0A3F2C,stroke-width:2px
+    classDef uc fill:#1e293b,stroke:#94a3b8,color:#f1f5f9,stroke-width:1px
+
+    style boundary fill:#0f172a,stroke:#475569,stroke-width:2px,stroke-dasharray: 5 5
+
+    subgraph Actors ["👥 AKTOR"]
+        Siswa["👦 Siswa"]:::siswa
+        Ortu["👩 Orang Tua"]:::siswa
+        Petugas["👵 Petugas Kantin"]:::petugas
+        Admin["👨‍💼 Admin Keuangan"]:::admin
+        Super["👑 Super Admin"]:::super
+    end
+
+    subgraph boundary ["💻 SISTEM KANTIN DIGITAL (SYSTEM BOUNDARY)"]
+        UC1(["🔑 Login & Autentikasi"]):::uc
+        UC2(["📊 Cek Saldo & Histori Jajan"]):::uc
+        UC3(["💳 Top-up Online Midtrans"]):::uc
+        UC4(["❄️ Link & Freeze Kartu NFC"]):::uc
+        UC5(["🛒 POS Checkout Belanja"]):::uc
+        UC6(["🥗 Kelola Menu Stan CRUD"]):::uc
+        UC7(["💵 Top-up Tunai Manual"]):::uc
+        UC8(["✏️ Koreksi Saldo Manual"]):::uc
+        UC9(["🏫 CRUD Data Siswa & Operator"]):::uc
+        UC10(["📜 Monitoring Live Audit Log"]):::uc
+    end
+
+    %% Associations
+    Siswa --> UC1 & UC2 & UC3 & UC4
+    Ortu --> UC2 & UC3
+    Petugas --> UC1 & UC2 & UC5 & UC6
+    Admin --> UC1 & UC7 & UC8 & UC9
+    Super --> UC1 & UC9 & UC10

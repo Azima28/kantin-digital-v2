@@ -1,0 +1,59 @@
+@startuml
+!include theme.puml
+
+title Alur Bisnis Keuangan — Sistem Kantin Digital
+
+|Siswa & Orang Tua|
+start
+:Mengisi Saldo / Melakukan Transaksi;
+
+split
+  :Top-up Online\n(via App/Web);
+  :Pilih nominal jajan &\nbayar via Midtrans (QRIS/VA);
+  :Midtrans memproses pembayaran;
+  |Sistem (Database)|
+  :Kirim Webhook Callback;
+  :Update Saldo di Database\n& Catat di Tabel `transactions`;
+  :Kirim Push Notification (FCM);
+  |Siswa & Orang Tua|
+  :Menerima Saldo & Bukti Bayar;
+
+split again
+  :Top-up Tunai\n(Koperasi Sekolah);
+  :Serahkan uang tunai\nke Admin Keuangan;
+  |Admin Keuangan|
+  :Cari siswa berdasarkan NIS;
+  :Input nominal & verifikasi;
+  |Sistem (Database)|
+  :Update Saldo di Database,\nCatat `transactions` &\nBuat Log di `audit_logs`;
+  |Admin Keuangan|
+  :Cetak Bukti Transaksi;
+
+split again
+  |Siswa & Orang Tua|
+  :Belanja di Kantin;
+  :Pilih produk makanan/minuman\ndi stan kantin;
+  |Petugas Kantin|
+  :Input menu ke keranjang POS;
+  :Minta siswa tap kartu NFC;
+  |Siswa & Orang Tua|
+  :Tap kartu NFC di HP Kasir;
+  |Petugas Kantin|
+  :Membaca UID Kartu &\nKirim nominal belanja;
+  |Sistem (Database)|
+  if (Validasi Saldo di Server?) then (Saldo Cukup)
+    :Jalankan ACID Transaction;
+    :Deduct Saldo Siswa;
+    :Simpan `transactions` &\n`transaction_items`;
+    :Kirim Push Notification;
+    |Petugas Kantin|
+    :Transaksi Sukses;\n:Serahkan Makanan;
+  else (Saldo Kurang)
+    :Transaksi Ditolak;
+    |Petugas Kantin|
+    :Tampilkan Layar Merah\n& Batalkan Transaksi;
+  endif
+end split
+
+stop
+@enduml

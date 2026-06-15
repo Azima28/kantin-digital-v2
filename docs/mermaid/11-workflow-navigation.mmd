@@ -1,0 +1,34 @@
+flowchart TD
+    %% Theme Styling
+    classDef siswa fill:#DAE8FC,stroke:#6C8EBF,color:#0A2540,stroke-width:2px
+    classDef petugas fill:#FFE6CC,stroke:#D79B00,color:#5A3200,stroke-width:2px
+    classDef admin fill:#D5E8D4,stroke:#72B095,color:#0A3F2C,stroke-width:2px
+    classDef scr fill:#1e293b,stroke:#475569,color:#f1f5f9,stroke-width:1px
+
+    style SiswaApp fill:#0f172a,stroke:#3b82f6,stroke-width:1px,stroke-dasharray: 5 5
+    style PetugasApp fill:#0f172a,stroke:#f59e0b,stroke-width:1px,stroke-dasharray: 5 5
+    style AdminPortal fill:#0f172a,stroke:#10b981,stroke-width:1px,stroke-dasharray: 5 5
+
+    subgraph SiswaApp ["🔵 SISWA APP (MOBILE)"]
+        S_LOGIN["🔑 Login Screen"]:::scr --> S_DASH["🏠 Dashboard (Home)"]:::scr
+        S_DASH --> S_TOP["🔢 Top-up Nominal Grid"]:::scr
+        S_TOP --> S_SNAP["🌐 Midtrans Snap Webview"]:::scr
+        S_DASH --> S_HIST["📜 History List Screen"]:::scr
+        S_DASH --> S_PROF["👤 Account Profile Screen"]:::scr
+    end
+
+    subgraph PetugasApp ["🟡 PETUGAS APP (MOBILE)"]
+        K_LOGIN["🔑 Login Kasir"]:::scr --> K_POS["🛍️ POS Catalog Grid"]:::scr
+        K_POS --> K_CART["🛒 Cart & Custom Charge"]:::scr
+        K_CART --> K_NFC["📡 NFC Payment Modal"]:::scr
+        K_POS --> K_CRUD["🥗 Menu Management (CRUD)"]:::scr
+        K_POS --> K_CEK["🔍 Cek Saldo Saja Screen"]:::scr
+    end
+
+    subgraph AdminPortal ["🟢 ADMIN WEB PORTAL"]
+        A_LOGIN["🔑 Web Login Portal"]:::scr --> A_DASH["📊 Dashboard Summary"]:::scr
+        A_DASH --> A_TOP["💵 Top-up Tunai (TU)"]:::scr
+        A_DASH --> A_ADJ["✏️ Koreksi Saldo Form"]:::scr
+        A_DASH --> A_AUD["📜 Audit Logs Viewer"]:::scr
+        A_DASH --> A_USER["🪪 Manage Siswa & Kartu"]:::scr
+    end

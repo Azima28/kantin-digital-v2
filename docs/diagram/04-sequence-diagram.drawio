@@ -1,0 +1,163 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="Electron" modified="2026-06-13T00:00:00.000Z" agent="5.0" version="20.0.0" type="device">
+  <diagram id="page1" name="Sequence Diagram — Alur Transaksi NFC">
+    <mxGraphModel dx="1500" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="1400" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ===== BACKGROUND FRAMES (Rendered First for proper Z-Index) ===== -->
+        <!-- alt frame: Saldo Cukup -->
+        <mxCell id="altframe" value="" style="shape=mxgraph.sysml.package;html=1;overflow=fill;whiteSpace=wrap;fillColor=#F0FFF4;strokeColor=#38A169;strokeWidth=1.5;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="70" y="330" width="620" height="350" as="geometry" />
+        </mxCell>
+        <mxCell id="altlabel" value="alt [Saldo Cukup]" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#38A169;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="75" y="333" width="120" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Divider inside alt frame -->
+        <mxCell id="altdiv" value="" style="line;strokeWidth=1;direction=east;html=1;strokeColor=#E53E3E;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="70" y="600" width="620" height="10" as="geometry" />
+        </mxCell>
+
+        <!-- else frame: Saldo Tidak Cukup -->
+        <mxCell id="elseframe" value="" style="shape=mxgraph.sysml.package;html=1;overflow=fill;whiteSpace=wrap;fillColor=#FFF5F5;strokeColor=#E53E3E;strokeWidth=1.5;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="70" y="710" width="620" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="elselabel" value="else [Saldo Tidak Cukup]" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#E53E3E;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="75" y="713" width="150" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- ===== ACTORS / PARTICIPANTS ===== -->
+        <mxCell id="500" value="Siswa&#10;(Kartu NFC)" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=2;fontColor=#0A2540;" vertex="1" parent="1">
+          <mxGeometry x="80" y="50" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="501" value="App POS Mobile&#10;(Petugas Kantin)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=2;fontColor=#5A3200;" vertex="1" parent="1">
+          <mxGeometry x="260" y="50" width="120" height="850" as="geometry" />
+        </mxCell>
+        <mxCell id="502" value="Supabase Database&#10;(Backend Server)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#E6F2F2;strokeColor=#0E8A8A;strokeWidth=2;fontColor=#0E8A8A;" vertex="1" parent="1">
+          <mxGeometry x="530" y="50" width="120" height="850" as="geometry" />
+        </mxCell>
+
+        <!-- ===== LIFELINES & ACTIVATIONS ===== -->
+        <mxCell id="503" value="" style="line;strokeWidth=2;direction=south;html=1;strokeColor=#6C8EBF;" vertex="1" parent="1">
+          <mxGeometry x="93" y="140" width="10" height="730" as="geometry" />
+        </mxCell>
+        <mxCell id="504" value="" style="html=1;points=[];fillColor=#F2994A;strokeColor=none;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="315" y="200" width="10" height="580" as="geometry" />
+        </mxCell>
+        <mxCell id="505" value="" style="html=1;points=[];fillColor=#0E8A8A;strokeColor=none;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="585" y="220" width="10" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="506" value="" style="html=1;points=[];fillColor=#0E8A8A;strokeColor=none;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="585" y="370" width="10" height="280" as="geometry" />
+        </mxCell>
+
+        <!-- ===== NOTE: Petugas pilih produk dulu ===== -->
+        <mxCell id="note1" value="🛒 Petugas memilih produk&#10;ke keranjang (Cart)&#10;+ biaya kustom (opsional)" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;size=15;fillColor=#FFF5F5;strokeColor=#FEB2B2;fontColor=#742A2A;fontSize=10;align=left;spacingLeft=5;" vertex="1" parent="1">
+          <mxGeometry x="340" y="130" width="180" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- ===== MESSAGES ===== -->
+        <!-- 1. Siswa tap kartu -->
+        <mxCell id="601" value="1. Tap Kartu RFID/NFC" style="html=1;verticalAlign=bottom;endArrow=block;strokeColor=#0E8A8A;strokeWidth=1.5;fontSize=11;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="103" y="200" as="sourcePoint" />
+            <mxPoint x="315" y="200" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- 2. POS → DB: Query saldo -->
+        <mxCell id="602" value="2. Query siswa by Card UID" style="html=1;verticalAlign=bottom;endArrow=block;strokeColor=#0E8A8A;strokeWidth=1.5;fontSize=11;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="325" y="220" as="sourcePoint" />
+            <mxPoint x="585" y="220" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- 3. DB → POS: Return data -->
+        <mxCell id="603" value="3. Return Nama, Foto &amp; Saldo Teraktual" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;strokeColor=#F2994A;strokeWidth=1.5;fontSize=11;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="585" y="260" as="sourcePoint" />
+            <mxPoint x="325" y="260" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- 4. Note: Cek lokal -->
+        <mxCell id="note2" value="4. Cek lokal:&#10;Saldo ≥ Total Belanja?" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#7A7A7A;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="340" y="280" width="140" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- 5. POS → DB: Kirim transaksi -->
+        <mxCell id="604" value="5. Kirim data transaksi&#10;(student_id, item list, total)" style="html=1;verticalAlign=bottom;endArrow=block;strokeColor=#0E8A8A;strokeWidth=1.5;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="325" y="370" as="sourcePoint" />
+            <mxPoint x="585" y="370" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- 6. Server validation note -->
+        <mxCell id="note3" value="6. Server-Side Validation (ACID):&#10;• Query saldo riil teraktual&#10;• Validasi harga produk dari tabel products&#10;• Cek saldo ≥ total belanja riil&#10;• Potong saldo → transactions + items&#10;• CHECK constraint: balance ≥ 0" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;size=15;fillColor=#FFF5F5;strokeColor=#FEB2B2;fontColor=#742A2A;fontSize=9;align=left;spacingLeft=5;" vertex="1" parent="1">
+          <mxGeometry x="610" y="380" width="210" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- ALT: Verifikasi Server Sukses -->
+        <mxCell id="altok" value="[Verifikasi Server Sukses]" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#38A169;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="75" y="390" width="160" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- 7. DB → POS: Sukses -->
+        <mxCell id="605" value="7. Return Transaksi Sukses &amp; Saldo Sisa" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;strokeColor=#38A169;strokeWidth=1.5;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="585" y="500" as="sourcePoint" />
+            <mxPoint x="325" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- 8. POS → Siswa: Sukses + Haptic -->
+        <mxCell id="606" value="8. Tampil Sukses &amp; Haptic Getar ✅" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;strokeColor=#38A169;strokeWidth=1.5;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="315" y="540" as="sourcePoint" />
+            <mxPoint x="103" y="540" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- 9. DB → Siswa: Push Notif -->
+        <mxCell id="607" value="9. Push Notification ke HP Siswa (FCM) 🔔" style="html=1;verticalAlign=bottom;endArrow=open;endSize=8;strokeColor=#38A169;strokeWidth=1.5;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="585" y="570" as="sourcePoint" />
+            <mxPoint x="103" y="570" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ALT: Verifikasi Server Gagal -->
+        <mxCell id="altfail_label" value="[Verifikasi Server Gagal — Data Tampered / Hack]" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#E53E3E;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="75" y="615" width="260" height="15" as="geometry" />
+        </mxCell>
+
+        <mxCell id="608" value="Error: Transaksi Tidak Valid (Ditolak Server)" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;strokeColor=#E53E3E;strokeWidth=1.5;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="585" y="650" as="sourcePoint" />
+            <mxPoint x="325" y="650" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="609" value="Transaksi Dibatalkan ⚠️" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;strokeColor=#E53E3E;strokeWidth=1.5;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="315" y="670" as="sourcePoint" />
+            <mxPoint x="103" y="670" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- messages inside else block -->
+        <mxCell id="610" value="UI Merah — Tombol Terkunci — Transaksi Ditolak ❌" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;strokeColor=#E53E3E;strokeWidth=1.5;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="315" y="760" as="sourcePoint" />
+            <mxPoint x="103" y="760" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

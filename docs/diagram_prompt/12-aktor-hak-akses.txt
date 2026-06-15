@@ -1,0 +1,165 @@
+# PROMPT DIAGRAM: Aktor & Hak Akses — Sistem Kantin Digital
+
+Halo AI Diagram Builder / Draw.io Generator! Tugas Anda adalah membuat diagram visual **"Aktor & Hak Akses — Sistem Kantin Digital"** dalam format Draw.io XML (.drawio) yang valid berdasarkan spesifikasi tata letak, komponen, dan relasi detail di bawah ini.
+
+---
+
+## 🏛️ PART 1: KONTEKS SISTEM & WORKFLOW
+
+Sistem yang digambarkan adalah **Sistem Kantin Digital** berbasis transaksi non-tunai (cashless) menggunakan kartu RFID/NFC. Terdapat 5 aktor utama dengan batasan platform dan hak akses yang berbeda. Diagram ini memetakan kelima aktor tersebut beserta platform yang mereka gunakan, hak akses utama mereka, dan hubungan koordinasi antar aktor di dalam sistem.
+
+---
+
+## 🎨 PART 2: STANDAR GAYA VISUAL (STYLING SPECIFICATIONS)
+
+Untuk menjamin estetika premium, modern, dan flat:
+1. **Font**: Gunakan `"Segoe UI"` atau `"Arial"`, ukuran font 11px untuk deskripsi teks, dan 13px bold untuk nama aktor.
+2. **Shadow**: Nonaktifkan shadow/bayangan pada semua objek (`shadow=0`).
+3. **Jenis Kotak (Nodes)**: Gunakan kotak berujung melengkung (`rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;spacingLeft=10;verticalAlign=top;spacingTop=10;strokeWidth=2;`).
+4. **Skema Warna Aktor**:
+   * 🟢 **Super Admin** & **Admin Keuangan**: `fillColor=#E6FFFA;strokeColor=#319795;fontColor=#234E52`
+   * 🟡 **Petugas Kantin**: `fillColor=#FFE6CC;strokeColor=#D79B00;fontColor=#975A16`
+   * 🔵 **Siswa** & **Orang Tua**: `fillColor=#EBF8FF;strokeColor=#3182CE;fontColor=#2B6CB0`
+5. **Gaya Garis Hubung (Edges)**:
+   * Menggunakan rute siku-siku (`edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1.5;`).
+   * Warna garis disesuaikan dengan warna sumber/tujuan.
+
+---
+
+## 📊 PART 3: DETAIL TATA LETAK & GEOMETRI DIAGRAM
+
+### A. Judul Halaman (Title)
+* **ID**: `title`
+* **Teks**: `Aktor & Hak Akses — Sistem Kantin Digital`
+* **Gaya**: Teks tebal, tanpa background (`text;html=1;align=center;verticalAlign=middle;fontSize=16;fontStyle=1;fontColor=#1A202C;`)
+* **Geometri**: `x=280, y=20, width=340, height=30`
+
+### B. Kotak Aktor (Nodes) - Tata Letak 2 Tingkat (Row 1 & Row 2)
+
+#### 1. Row 1: Tingkat Administrator & Kasir (y = 80)
+* **Aktor 1: Super Admin**
+  * **ID**: `actor1`
+  * **Teks**: 
+    ```
+    👑 Super Admin
+
+    Platform: Web Admin Dashboard
+    Deskripsi: Pengelola sistem tertinggi
+    --
+    Hak Akses:
+    * CRUD Sekolah Mitra
+    * CRUD User & Role (Aktif/Blokir)
+    * Lihat Live Audit Logs
+    * Setelan API Global (FCM/Midtrans)
+    ```
+  * **Geometri**: `x=40, y=80, width=240, height=180`
+  * **Warna**: Teal/Green (`fillColor=#E6FFFA;strokeColor=#319795;fontColor=#234E52`)
+
+* **Aktor 2: Admin Keuangan**
+  * **ID**: `actor2`
+  * **Teks**:
+    ```
+    👨‍💼 Admin Keuangan
+
+    Platform: Web Admin Portal
+    Deskripsi: Staf tata usaha / koperasi
+    --
+    Hak Akses:
+    * Top-up Tunai Manual
+    * Koreksi Saldo (Wajib Catatan)
+    * Registrasi Kartu Siswa (USB Reader)
+    * Laporan Keuangan & Export
+    ```
+  * **Geometri**: `x=320, y=80, width=240, height=180`
+  * **Warna**: Teal/Green (`fillColor=#E6FFFA;strokeColor=#319795;fontColor=#234E52`)
+
+* **Aktor 3: Petugas Kantin**
+  * **ID**: `actor3`
+  * **Teks**:
+    ```
+    👵 Petugas Kantin
+
+    Platform: Mobile POS App
+    Deskripsi: Kasir / operator stan
+    --
+    Hak Akses:
+    * POS Checkout Belanja
+    * Kelola Produk Stan (CRUD & Stok)
+    * Cek Saldo Siswa (Tap NFC)
+    * Riwayat Pendapatan Stan
+    ```
+  * **Geometri**: `x=600, y=80, width=240, height=180`
+  * **Warna**: Kuning/Orange (`fillColor=#FFE6CC;strokeColor=#D79B00;fontColor=#975A16`)
+
+#### 2. Row 2: Tingkat Pengguna/Siswa (y = 320)
+* **Aktor 4: Siswa**
+  * **ID**: `actor4`
+  * **Teks**:
+    ```
+    👦 Siswa
+
+    Platform: Mobile App
+    Deskripsi: Pengguna kartu NFC utama
+    --
+    Hak Akses:
+    * Cek Saldo & Histori Jajan
+    * Top-up Online (Midtrans)
+    * Freeze / Unfreeze Kartu NFC
+    * Terima Notifikasi Push (FCM)
+    ```
+  * **Geometri**: `x=180, y=320, width=240, height=180`
+  * **Warna**: Biru (`fillColor=#EBF8FF;strokeColor=#3182CE;fontColor=#2B6CB0`)
+
+* **Aktor 5: Orang Tua**
+  * **ID**: `actor5`
+  * **Teks**:
+    ```
+    👩 Orang Tua
+
+    Platform: Web Publik
+    Deskripsi: Pengendali tanpa akun
+    --
+    Hak Akses:
+    * Pantau Jajan NIS Anak
+    * Top-up Online Instan (Midtrans)
+    * Download E-Receipt
+    ```
+  * **Geometri**: `x=460, y=320, width=240, height=180`
+  * **Warna**: Biru (`fillColor=#EBF8FF;strokeColor=#3182CE;fontColor=#2B6CB0`)
+
+---
+
+## 🔗 PART 4: RELASI & GARIS HUBUNG (EDGES)
+
+1. **Relasi 1: Super Admin ke Admin Keuangan**
+   * **Sumber**: `actor1` (Super Admin)
+   * **Tujuan**: `actor2` (Admin Keuangan)
+   * **Gaya Garis**: `edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#319795;strokeWidth=1.5;fontColor=#234E52;`
+   * **Label Garis**: `Monitor aktivitas\n(Audit Logs)`
+   * **Arah**: Panah menunjuk ke `actor2`.
+
+2. **Relasi 2: Admin Keuangan ke Siswa**
+   * **Sumber**: `actor2` (Admin Keuangan)
+   * **Tujuan**: `actor4` (Siswa)
+   * **Gaya Garis**: `edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#319795;strokeWidth=1.5;fontColor=#234E52;`
+   * **Label Garis**: `Registrasi &\nTop-up`
+   * **Arah**: Panah menunjuk ke `actor4`.
+
+3. **Relasi 3: Petugas Kantin ke Siswa**
+   * **Sumber**: `actor3` (Petugas Kantin)
+   * **Tujuan**: `actor4` (Siswa)
+   * **Gaya Garis**: `edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#D79B00;strokeWidth=1.5;fontColor=#975A16;`
+   * **Label Garis**: `Scan NFC &\nPotong Saldo`
+   * **Arah**: Panah menunjuk ke `actor4`.
+
+4. **Relasi 4: Orang Tua ke Siswa**
+   * **Sumber**: `actor5` (Orang Tua)
+   * **Tujuan**: `actor4` (Siswa)
+   * **Gaya Garis**: `edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#3182CE;strokeWidth=1.5;fontColor=#2B6CB0;`
+   * **Label Garis**: `Cek Saldo &\nTop-up Anak`
+   * **Arah**: Panah menunjuk ke `actor4`.
+
+---
+
+## 🤖 OUTPUT YANG DIHARAPKAN
+Hasilkan berkas Draw.io XML lengkap yang memuat elemen-elemen di atas dengan koordinat yang presisi, warna, gaya, dan label yang sesuai agar diagram terlihat sangat profesional, modern, dan rapi secara visual saat diimpor ke dalam Draw.io!

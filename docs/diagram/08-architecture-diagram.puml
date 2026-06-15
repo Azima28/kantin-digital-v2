@@ -1,0 +1,90 @@
+@startuml
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam ArrowColor #4A5568
+skinparam ArrowThickness 1.5
+skinparam BackgroundColor #FAFAFA
+
+<style>
+document {
+  BackgroundColor #FAFAFA
+  FontName "Segoe UI"
+  FontColor #2D3748
+}
+component {
+  RoundCorner 8
+  BackgroundColor #FFFFFF
+  LineColor #CBD5E0
+  FontColor #2D3748
+  FontSize 11
+  
+  .siswa {
+    BackgroundColor #EBF8FF
+    LineColor #3182CE
+    FontColor #2B6CB0
+  }
+  .petugas {
+    BackgroundColor #FEFCBF
+    LineColor #D69E2E
+    FontColor #975A16
+  }
+  .admin {
+    BackgroundColor #E6FFFA
+    LineColor #319795
+    FontColor #234E52
+  }
+}
+package {
+  BackgroundColor transparent
+  LineColor #A0AEC0
+  LineStyle dashed
+  FontColor #4A5568
+  FontSize 11
+  FontWeight bold
+}
+</style>
+
+title Architecture Diagram — Sistem Kantin Digital
+
+package "CLIENT TIER (Aplikasi Flutter & Hardware)" {
+  component "Siswa App\n(Flutter Mobile\nAndroid + iOS)" as CL_SISWA <<siswa>>
+  component "Petugas POS App\n(Flutter Mobile + NFC\nnfc_manager package)" as CL_POS <<petugas>>
+  component "Admin Web Portal\n(Flutter Web Desktop\nadmin.kantin.sekolah.id)" as CL_ADMIN <<admin>>
+  component "Web Publik Orang Tua\n(Flutter Web\nkantin.sekolah.id)" as CL_ORTU <<siswa>>
+  component "ESP32 Hardware\n(RFID RC522 + Wi-Fi\nAlternatif HP NFC)" as CL_ESP
+}
+
+package "BACKEND TIER (Supabase Cloud Services)" {
+  component "Supabase Auth\n(Email & Password\nMulti-Role)" as SB_AUTH <<admin>>
+  component "Edge Functions\n(Midtrans Webhook\n& Snap Token)" as SB_FUNC <<admin>>
+  component "Realtime Channel\n(Live Saldo Update\n& Notif Push)" as SB_REAL <<siswa>>
+  database "PostgreSQL DB\n12 Tabel + RLS\nACID Transactions" as SB_DB
+  component "Storage\n(Foto Profil\nBukti Bayar)" as SB_STORE
+}
+
+package "THIRD PARTY INTEGRATION TIER" {
+  component "Midtrans Payment\nGateway\n(QRIS, VA, E-Wallet)" as TP_MID
+  component "Firebase Cloud\nMessaging (FCM)\nPush Notifications" as TP_FCM
+}
+
+' Client → Backend connections
+CL_SISWA -down-> SB_AUTH : HTTPS Auth
+CL_SISWA -down-> SB_DB : REST API (Saldo, Histori)
+CL_POS -down-> SB_DB : NFC Checkout (ACID)
+CL_ADMIN -down-> SB_AUTH : HTTPS Auth
+CL_ADMIN -down-> SB_DB : REST API (CRUD, Laporan)
+CL_ORTU -down-> SB_DB : REST API (Cek NIS, Top-up)
+CL_ESP -down-> SB_DB : HTTP POST (UID Query)
+
+' Backend internal connections
+SB_AUTH -down-> SB_DB : User Verification
+SB_FUNC -down-> SB_DB : Update Saldo & Status
+
+' Third party connections
+TP_MID -up-> SB_FUNC : Webhook (Payment Success)
+SB_FUNC -down-> TP_MID : Request Snap Token
+SB_DB -down-> TP_FCM : Trigger Push Notif
+TP_FCM -up-> CL_SISWA : Push Notification
+SB_REAL -up-> CL_SISWA : Realtime Saldo Update
+
+@enduml

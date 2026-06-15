@@ -1,0 +1,102 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="Electron" modified="2026-06-13T00:00:00.000Z" agent="5.0" version="20.0.0" type="device">
+  <diagram id="page1" name="Architecture Diagram — Sistem Kantin Digital">
+    <mxGraphModel dx="1500" dy="1100" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ===== CLIENT TIER ===== -->
+        <mxCell id="tier1" value="CLIENT TIER (Aplikasi Flutter &amp; Hardware)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#CBD5E0;strokeWidth=1.5;fontColor=#4A5568;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=5;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="30" y="30" width="1140" height="140" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cl_siswa" value="📱 Siswa App&#10;(Flutter Mobile&#10;Android + iOS)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#EBF8FF;strokeColor=#3182CE;strokeWidth=2;fontColor=#2B6CB0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="70" width="150" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="cl_pos" value="🛒 Petugas POS App&#10;(Flutter Mobile + NFC&#10;nfc_manager)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#FEFCBF;strokeColor=#D69E2E;strokeWidth=2;fontColor=#975A16;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="240" y="70" width="170" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="cl_admin" value="💻 Admin Web Portal&#10;(Flutter Web Desktop&#10;admin.kantin.sekolah.id)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#E6FFFA;strokeColor=#319795;strokeWidth=2;fontColor=#234E52;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="440" y="70" width="180" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="cl_ortu" value="🌐 Web Publik Ortu&#10;(Flutter Web&#10;kantin.sekolah.id)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#EBF8FF;strokeColor=#3182CE;strokeWidth=2;fontColor=#2B6CB0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="650" y="70" width="170" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="cl_esp" value="⚙️ ESP32 Hardware&#10;(RFID RC522 + Wi-Fi&#10;Alternatif HP NFC)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#F7FAFC;strokeColor=#A0AEC0;strokeWidth=2;fontColor=#4A5568;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="850" y="70" width="170" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- ===== BACKEND TIER ===== -->
+        <mxCell id="tier2" value="BACKEND TIER (Supabase Cloud Services)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#CBD5E0;strokeWidth=1.5;fontColor=#4A5568;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=5;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="100" y="280" width="1000" height="160" as="geometry" />
+        </mxCell>
+
+        <mxCell id="sb_real" value="🔔 Realtime Channel&#10;(Live Saldo Update)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#E6F2F2;strokeColor=#0E8A8A;strokeWidth=2;fontColor=#0E8A8A;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="130" y="325" width="160" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="sb_auth" value="🔑 Supabase Auth&#10;(Email &amp; Password&#10;Multi-Role)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#E6F2F2;strokeColor=#0E8A8A;strokeWidth=2;fontColor=#0E8A8A;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="320" y="325" width="160" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="sb_func" value="⚡ Edge Functions&#10;(Midtrans Webhook&#10;&amp; Snap Token)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#E6F2F2;strokeColor=#0E8A8A;strokeWidth=2;fontColor=#0E8A8A;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="510" y="325" width="160" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="sb_db" value="🗄️ PostgreSQL DB&#10;12 Tabel + RLS&#10;ACID Transactions" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#E6F2F2;strokeColor=#0E8A8A;strokeWidth=2;fontColor=#0E8A8A;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="700" y="315" width="160" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="sb_store" value="📁 Storage&#10;(Foto, Bukti Bayar)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#E6F2F2;strokeColor=#0E8A8A;strokeWidth=2;fontColor=#0E8A8A;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="890" y="325" width="150" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- ===== THIRD PARTY TIER ===== -->
+        <mxCell id="tier3" value="THIRD PARTY INTEGRATION TIER" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#CBD5E0;strokeWidth=1.5;fontColor=#4A5568;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=5;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="250" y="550" width="700" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="tp_mid" value="💳 Midtrans Payment Gateway&#10;(QRIS, VA Bank, E-Wallet, Snap API)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontColor=#4A235A;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="290" y="595" width="280" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="tp_fcm" value="📡 Firebase Cloud Messaging&#10;(FCM Push Notifications)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontColor=#4A235A;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="630" y="595" width="260" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- ===== CONNECTIONS: Client → Backend ===== -->
+        <mxCell id="c1" value="HTTPS Auth" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3182CE;strokeWidth=1.5;fontSize=9;exitX=0.5;exitY=1;exitPerimeter=0;entryX=0.5;entryY=0;entryPerimeter=0;" edge="1" parent="1" source="cl_siswa" target="sb_auth">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c2" value="NFC Checkout&#10;(ACID)" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#D69E2E;strokeWidth=1.5;fontSize=9;exitX=0.5;exitY=1;exitPerimeter=0;entryX=0.25;entryY=0;entryPerimeter=0;" edge="1" parent="1" source="cl_pos" target="sb_db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c3" value="REST API" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#319795;strokeWidth=1.5;fontSize=9;exitX=0.5;exitY=1;exitPerimeter=0;entryX=0.45;entryY=0;entryPerimeter=0;" edge="1" parent="1" source="cl_admin" target="sb_db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c4" value="REST API" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3182CE;strokeWidth=1.5;fontSize=9;exitX=0.5;exitY=1;exitPerimeter=0;entryX=0.55;entryY=0;entryPerimeter=0;" edge="1" parent="1" source="cl_ortu" target="sb_db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c5" value="HTTP POST" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#A0AEC0;strokeWidth=1.5;fontSize=9;exitX=0.5;exitY=1;exitPerimeter=0;entryX=0.75;entryY=0;entryPerimeter=0;" edge="1" parent="1" source="cl_esp" target="sb_db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Backend internal -->
+        <mxCell id="c6" value="Verify" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#0E8A8A;strokeWidth=1;fontSize=9;exitX=0.5;exitY=1;exitPerimeter=0;entryX=0.25;entryY=1;entryPerimeter=0;" edge="1" parent="1" source="sb_auth" target="sb_db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c7" value="Trigger" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#0E8A8A;strokeWidth=1;fontSize=9;exitX=1;exitY=0.5;exitPerimeter=0;entryX=0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="sb_func" target="sb_db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Third party connections -->
+        <mxCell id="c8" value="Webhook" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9673A6;strokeWidth=1.5;fontSize=9;" edge="1" parent="1" source="tp_mid" target="sb_func">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c9" value="Push Notif" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9673A6;strokeWidth=1.5;fontSize=9;" edge="1" parent="1" source="sb_db" target="tp_fcm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c10" value="Realtime" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#0E8A8A;strokeWidth=1;fontSize=9;exitX=0.5;exitY=0;exitPerimeter=0;entryX=0.25;entryY=1;entryPerimeter=0;" edge="1" parent="1" source="sb_real" target="cl_siswa">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

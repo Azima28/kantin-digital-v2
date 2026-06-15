@@ -1,0 +1,299 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="Electron" modified="2026-06-12T00:00:00.000Z" agent="5.0" version="20.0.0" type="device">
+  <diagram id="page1" name="Page-1">
+    <mxGraphModel dx="1500" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="E_users" value="users" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=listLayout;horizontalDialog=1;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#F2994A;fontColor=#FFFFFF;strokeColor=none;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="320" y="50" width="180" height="226" as="geometry" />
+        </mxCell>
+        <mxCell id="E_users_PK id: uuid" value="PK id: uuid" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_users">
+          <mxGeometry x="0" y="26" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_users_UK email: varchar" value="UK email: varchar" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_users">
+          <mxGeometry x="0" y="46" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_users_password_hash: varchar" value="password_hash: varchar" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_users">
+          <mxGeometry x="0" y="66" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_users_full_name: varchar" value="full_name: varchar" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_users">
+          <mxGeometry x="0" y="86" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_users_role: enum_role" value="role: enum_role" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_users">
+          <mxGeometry x="0" y="106" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_users_phone: varchar" value="phone: varchar" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_users">
+          <mxGeometry x="0" y="126" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_users_avatar_url: varchar" value="avatar_url: varchar" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_users">
+          <mxGeometry x="0" y="146" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_users_is_active: boolean" value="is_active: boolean" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_users">
+          <mxGeometry x="0" y="166" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_users_created_at: timestamptz" value="created_at: timestamptz" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_users">
+          <mxGeometry x="0" y="186" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_users_updated_at: timestamptz" value="updated_at: timestamptz" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_users">
+          <mxGeometry x="0" y="206" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_schools" value="schools" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=listLayout;horizontalDialog=1;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#F2994A;fontColor=#FFFFFF;strokeColor=none;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="320" y="340" width="180" height="186" as="geometry" />
+        </mxCell>
+        <mxCell id="E_schools_PK id: uuid" value="PK id: uuid" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_schools">
+          <mxGeometry x="0" y="26" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_schools_name: varchar" value="name: varchar" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_schools">
+          <mxGeometry x="0" y="46" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_schools_address: text" value="address: text" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_schools">
+          <mxGeometry x="0" y="66" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_schools_logo_url: varchar" value="logo_url: varchar" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_schools">
+          <mxGeometry x="0" y="86" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_schools_phone: varchar" value="phone: varchar" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_schools">
+          <mxGeometry x="0" y="106" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_schools_is_active: boolean" value="is_active: boolean" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_schools">
+          <mxGeometry x="0" y="126" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_schools_created_at: timestamptz" value="created_at: timestamptz" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_schools">
+          <mxGeometry x="0" y="146" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_schools_updated_at: timestamptz" value="updated_at: timestamptz" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_schools">
+          <mxGeometry x="0" y="166" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_students" value="students" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=listLayout;horizontalDialog=1;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#F2994A;fontColor=#FFFFFF;strokeColor=none;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="50" y="340" width="180" height="246" as="geometry" />
+        </mxCell>
+        <mxCell id="E_students_PK id: uuid" value="PK id: uuid" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_students">
+          <mxGeometry x="0" y="26" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_students_FK user_id: uuid" value="FK user_id: uuid" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_students">
+          <mxGeometry x="0" y="46" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_students_FK school_id: uuid" value="FK school_id: uuid" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_students">
+          <mxGeometry x="0" y="66" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_students_UK student_id_code: varchar" value="UK student_id_code: varchar" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_students">
+          <mxGeometry x="0" y="86" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_students_UK nis: varchar" value="UK nis: varchar" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_students">
+          <mxGeometry x="0" y="106" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_students_class: varchar" value="class: varchar" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_students">
+          <mxGeometry x="0" y="126" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_students_UK card_uid: varchar" value="UK card_uid: varchar" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_students">
+          <mxGeometry x="0" y="146" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_students_balance: numeric" value="balance: numeric" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_students">
+          <mxGeometry x="0" y="166" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_students_is_active: boolean" value="is_active: boolean" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_students">
+          <mxGeometry x="0" y="186" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_students_created_at: timestamptz" value="created_at: timestamptz" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_students">
+          <mxGeometry x="0" y="206" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_students_updated_at: timestamptz" value="updated_at: timestamptz" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_students">
+          <mxGeometry x="0" y="226" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_canteen_operators" value="canteen_operators" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=listLayout;horizontalDialog=1;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#F2994A;fontColor=#FFFFFF;strokeColor=none;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="590" y="340" width="180" height="166" as="geometry" />
+        </mxCell>
+        <mxCell id="E_canteen_operators_PK id: uuid" value="PK id: uuid" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_canteen_operators">
+          <mxGeometry x="0" y="26" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_canteen_operators_FK user_id: uuid" value="FK user_id: uuid" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_canteen_operators">
+          <mxGeometry x="0" y="46" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_canteen_operators_FK school_id: uuid" value="FK school_id: uuid" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_canteen_operators">
+          <mxGeometry x="0" y="66" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_canteen_operators_stall_name: varchar" value="stall_name: varchar" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_canteen_operators">
+          <mxGeometry x="0" y="86" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_canteen_operators_is_active: boolean" value="is_active: boolean" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_canteen_operators">
+          <mxGeometry x="0" y="106" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_canteen_operators_created_at: timestamptz" value="created_at: timestamptz" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_canteen_operators">
+          <mxGeometry x="0" y="126" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_canteen_operators_updated_at: timestamptz" value="updated_at: timestamptz" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_canteen_operators">
+          <mxGeometry x="0" y="146" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_products" value="products" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=listLayout;horizontalDialog=1;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#F2994A;fontColor=#FFFFFF;strokeColor=none;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="590" y="630" width="180" height="186" as="geometry" />
+        </mxCell>
+        <mxCell id="E_products_PK id: uuid" value="PK id: uuid" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_products">
+          <mxGeometry x="0" y="26" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_products_FK canteen_operator_id: uuid" value="FK canteen_operator_id: uuid" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_products">
+          <mxGeometry x="0" y="46" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_products_name: varchar" value="name: varchar" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_products">
+          <mxGeometry x="0" y="66" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_products_price: numeric" value="price: numeric" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_products">
+          <mxGeometry x="0" y="86" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_products_image_url: varchar" value="image_url: varchar" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_products">
+          <mxGeometry x="0" y="106" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_products_is_available: boolean" value="is_available: boolean" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_products">
+          <mxGeometry x="0" y="126" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_products_created_at: timestamptz" value="created_at: timestamptz" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_products">
+          <mxGeometry x="0" y="146" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_products_updated_at: timestamptz" value="updated_at: timestamptz" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_products">
+          <mxGeometry x="0" y="166" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transactions" value="transactions" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=listLayout;horizontalDialog=1;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#F2994A;fontColor=#FFFFFF;strokeColor=none;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="50" y="630" width="180" height="286" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transactions_PK id: uuid" value="PK id: uuid" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_transactions">
+          <mxGeometry x="0" y="26" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transactions_FK student_id: uuid" value="FK student_id: uuid" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_transactions">
+          <mxGeometry x="0" y="46" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transactions_type: enum_tx_type" value="type: enum_tx_type" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_transactions">
+          <mxGeometry x="0" y="66" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transactions_amount: numeric" value="amount: numeric" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_transactions">
+          <mxGeometry x="0" y="86" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transactions_balance_before: numeric" value="balance_before: numeric" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_transactions">
+          <mxGeometry x="0" y="106" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transactions_balance_after: numeric" value="balance_after: numeric" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_transactions">
+          <mxGeometry x="0" y="126" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transactions_description: text" value="description: text" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_transactions">
+          <mxGeometry x="0" y="146" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transactions_FK performed_by: uuid" value="FK performed_by: uuid" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_transactions">
+          <mxGeometry x="0" y="166" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transactions_method: enum_tx_method" value="method: enum_tx_method" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_transactions">
+          <mxGeometry x="0" y="186" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transactions_reference_id: varchar" value="reference_id: varchar" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_transactions">
+          <mxGeometry x="0" y="206" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transactions_status: enum_tx_status" value="status: enum_tx_status" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_transactions">
+          <mxGeometry x="0" y="226" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transactions_created_at: timestamptz" value="created_at: timestamptz" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_transactions">
+          <mxGeometry x="0" y="246" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transactions_updated_at: timestamptz" value="updated_at: timestamptz" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_transactions">
+          <mxGeometry x="0" y="266" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transaction_items" value="transaction_items" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=listLayout;horizontalDialog=1;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#F2994A;fontColor=#FFFFFF;strokeColor=none;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="320" y="630" width="180" height="186" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transaction_items_PK id: uuid" value="PK id: uuid" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_transaction_items">
+          <mxGeometry x="0" y="26" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transaction_items_FK transaction_id: uuid" value="FK transaction_id: uuid" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_transaction_items">
+          <mxGeometry x="0" y="46" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transaction_items_FK product_id: uuid" value="FK product_id: uuid (nullable)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_transaction_items">
+          <mxGeometry x="0" y="66" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transaction_items_name: varchar" value="name: varchar" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_transaction_items">
+          <mxGeometry x="0" y="86" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transaction_items_price: numeric" value="price: numeric" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_transaction_items">
+          <mxGeometry x="0" y="106" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transaction_items_quantity: integer" value="quantity: integer" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_transaction_items">
+          <mxGeometry x="0" y="126" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transaction_items_notes: text" value="notes: text" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_transaction_items">
+          <mxGeometry x="0" y="146" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_transaction_items_created_at: timestamptz" value="created_at: timestamptz" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_transaction_items">
+          <mxGeometry x="0" y="166" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_audit_logs" value="audit_logs" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=listLayout;horizontalDialog=1;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#F2994A;fontColor=#FFFFFF;strokeColor=none;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="590" y="50" width="180" height="246" as="geometry" />
+        </mxCell>
+        <mxCell id="E_audit_logs_PK id: uuid" value="PK id: uuid" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_audit_logs">
+          <mxGeometry x="0" y="26" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_audit_logs_FK user_id: uuid" value="FK user_id: uuid" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_audit_logs">
+          <mxGeometry x="0" y="46" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_audit_logs_FK school_id: uuid" value="FK school_id: uuid" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_audit_logs">
+          <mxGeometry x="0" y="66" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_audit_logs_action: varchar" value="action: varchar" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_audit_logs">
+          <mxGeometry x="0" y="86" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_audit_logs_target_type: varchar" value="target_type: varchar" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_audit_logs">
+          <mxGeometry x="0" y="106" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_audit_logs_target_id: uuid" value="target_id: uuid" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_audit_logs">
+          <mxGeometry x="0" y="126" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_audit_logs_old_value: jsonb" value="old_value: jsonb" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_audit_logs">
+          <mxGeometry x="0" y="146" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_audit_logs_new_value: jsonb" value="new_value: jsonb" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_audit_logs">
+          <mxGeometry x="0" y="166" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_audit_logs_ip_address: varchar" value="ip_address: varchar" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_audit_logs">
+          <mxGeometry x="0" y="186" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_audit_logs_user_agent: text" value="user_agent: text" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_audit_logs">
+          <mxGeometry x="0" y="206" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="E_audit_logs_created_at: timestamptz" value="created_at: timestamptz" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="E_audit_logs">
+          <mxGeometry x="0" y="226" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="401" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endSize=8;strokeColor=#F2994A;strokeWidth=1.5;fontSize=10;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="E_students" target="E_users">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="140" y="163" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="402" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endSize=8;strokeColor=#F2994A;strokeWidth=1.5;fontSize=10;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="E_canteen_operators" target="E_users">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="680" y="310" />
+              <mxPoint x="455" y="310" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="403" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endSize=8;strokeColor=#F2994A;strokeWidth=1.5;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="E_students" target="E_schools">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="404" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endSize=8;strokeColor=#F2994A;strokeWidth=1.5;fontSize=10;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="E_canteen_operators" target="E_schools">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="405" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endSize=8;strokeColor=#F2994A;strokeWidth=1.5;fontSize=10;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="E_products" target="E_canteen_operators">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="406" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endSize=8;strokeColor=#F2994A;strokeWidth=1.5;fontSize=10;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="E_transactions" target="E_students">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="407" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endSize=8;strokeColor=#F2994A;strokeWidth=1.5;fontSize=10;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="E_transaction_items" target="E_transactions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="408" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endSize=8;strokeColor=#F2994A;strokeWidth=1.5;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="E_transaction_items" target="E_products">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="409" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endSize=8;strokeColor=#F2994A;strokeWidth=1.5;fontSize=10;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="E_audit_logs" target="E_users">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

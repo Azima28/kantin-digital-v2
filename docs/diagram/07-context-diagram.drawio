@@ -1,0 +1,143 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="Electron" modified="2026-06-13T00:00:00.000Z" agent="5.0" version="20.0.0" type="device">
+  <diagram id="page1" name="Context Diagram (DFD Level 0)">
+    <mxGraphModel dx="1400" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ===== CENTRAL SYSTEM ===== -->
+        <mxCell id="sys" value="SISTEM KANTIN&#10;DIGITAL&#10;(Flutter + Supabase)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#EBF8FF;strokeColor=#3182CE;strokeWidth=3;fontColor=#2B6CB0;fontSize=14;fontStyle=1;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="460" y="330" width="180" height="180" as="geometry" />
+        </mxCell>
+
+        <!-- ===== EXTERNAL ENTITIES: ACTORS ===== -->
+        <!-- Siswa -->
+        <mxCell id="ac_siswa" value="Siswa" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=2;fontColor=#2B6CB0;fontSize=12;fontStyle=1;align=center;verticalLabelPosition=bottom;verticalAlign=top;labelSpacing=6;" vertex="1" parent="1">
+          <mxGeometry x="90" y="110" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ac_siswa_icon" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=none;strokeColor=#2B6CB0;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="115" y="127" width="30" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- Orang Tua -->
+        <mxCell id="ac_ortu" value="Orang Tua" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=2;fontColor=#2B6CB0;fontSize=12;fontStyle=1;align=center;verticalLabelPosition=bottom;verticalAlign=top;labelSpacing=6;" vertex="1" parent="1">
+          <mxGeometry x="90" y="540" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ac_ortu_icon" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=none;strokeColor=#2B6CB0;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="115" y="557" width="30" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- Petugas Kantin -->
+        <mxCell id="ac_petugas" value="Petugas Kantin" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=2;fontColor=#975A16;fontSize=12;fontStyle=1;align=center;verticalLabelPosition=bottom;verticalAlign=top;labelSpacing=6;" vertex="1" parent="1">
+          <mxGeometry x="940" y="110" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ac_petugas_icon" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=none;strokeColor=#975A16;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="965" y="127" width="30" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- Admin Keuangan -->
+        <mxCell id="ac_admin" value="Admin Keuangan" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#D5E8D4;strokeColor=#72B095;strokeWidth=2;fontColor=#234E52;fontSize=12;fontStyle=1;align=center;verticalLabelPosition=bottom;verticalAlign=top;labelSpacing=6;" vertex="1" parent="1">
+          <mxGeometry x="940" y="540" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ac_admin_icon" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=none;strokeColor=#234E52;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="965" y="557" width="30" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- Super Admin -->
+        <mxCell id="ac_super" value="Super Admin" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#D5E8D4;strokeColor=#72B095;strokeWidth=2;fontColor=#234E52;fontSize=12;fontStyle=1;align=center;verticalLabelPosition=bottom;verticalAlign=top;labelSpacing=6;" vertex="1" parent="1">
+          <mxGeometry x="510" y="20" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ac_super_icon" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=none;strokeColor=#234E52;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="535" y="37" width="30" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- ===== EXTERNAL ENTITIES: THIRD PARTY ===== -->
+        <mxCell id="tp_midtrans" value="💳 Midtrans&#10;Payment Gateway" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontColor=#4A235A;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="475" y="730" width="150" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ===== DATA FLOWS ===== -->
+        <!-- Siswa → System -->
+        <mxCell id="f_s_in" value="Tap Kartu NFC (UID)&#10;Req Saldo &amp; Histori" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3182CE;strokeWidth=2;fontSize=9;entryX=0;entryY=0.25;" edge="1" parent="1" source="ac_siswa" target="sys">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- System → Siswa -->
+        <mxCell id="f_s_out" value="Info Saldo, Notifikasi&#10;Detail Transaksi" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3182CE;strokeWidth=2;fontSize=9;dashed=1;exitX=0;exitY=0.35;" edge="1" parent="1" source="sys" target="ac_siswa">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="300" y="395" />
+              <mxPoint x="300" y="190" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Orang Tua → System -->
+        <mxCell id="f_o_in" value="Input NIS / Kode Siswa&#10;Bayar Top-up Online" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3182CE;strokeWidth=2;fontSize=9;entryX=0;entryY=0.75;" edge="1" parent="1" source="ac_ortu" target="sys">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- System → Orang Tua -->
+        <mxCell id="f_o_out" value="Saldo Anak, 5 Transaksi&#10;E-Receipt PDF" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3182CE;strokeWidth=2;fontSize=9;dashed=1;exitX=0;exitY=0.65;" edge="1" parent="1" source="sys" target="ac_ortu">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="300" y="460" />
+              <mxPoint x="300" y="620" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Petugas → System -->
+        <mxCell id="f_p_in" value="Pilih Menu POS&#10;Total Keranjang, NFC Tap" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#D69E2E;strokeWidth=2;fontSize=9;entryX=1;entryY=0.25;" edge="1" parent="1" source="ac_petugas" target="sys">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- System → Petugas -->
+        <mxCell id="f_p_out" value="Data Siswa &amp; Saldo&#10;Struk Transaksi" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#D69E2E;strokeWidth=2;fontSize=9;dashed=1;exitX=1;exitY=0.35;" edge="1" parent="1" source="sys" target="ac_petugas">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="800" y="395" />
+              <mxPoint x="800" y="190" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Admin → System -->
+        <mxCell id="f_a_in" value="Top-up Tunai, Koreksi&#10;Saldo, Link Kartu USB" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#319795;strokeWidth=2;fontSize=9;entryX=1;entryY=0.75;" edge="1" parent="1" source="ac_admin" target="sys">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- System → Admin -->
+        <mxCell id="f_a_out" value="Laporan Keuangan&#10;Struk Bukti Bayar" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#319795;strokeWidth=2;fontSize=9;dashed=1;exitX=1;exitY=0.65;" edge="1" parent="1" source="sys" target="ac_admin">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="800" y="460" />
+              <mxPoint x="800" y="620" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Super Admin → System -->
+        <mxCell id="f_sa_in" value="CRUD Sekolah &amp; User&#10;Blokir Akun, Setelan" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#319795;strokeWidth=2;fontSize=9;entryX=0.5;entryY=0;" edge="1" parent="1" source="ac_super" target="sys">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- System → Super Admin -->
+        <mxCell id="f_sa_out" value="Live Audit Logs&#10;Statistik Global" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#319795;strokeWidth=2;fontSize=9;dashed=1;exitX=0.6;exitY=0;" edge="1" parent="1" source="sys" target="ac_super">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="570" y="280" />
+              <mxPoint x="600" y="280" />
+              <mxPoint x="600" y="100" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- System ⇄ Midtrans (Two-way Data Flow) -->
+        <mxCell id="f_mid_req" value="Req Snap Token / QR" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9673A6;strokeWidth=2;fontSize=9;exitX=0.45;exitY=1;entryX=0.45;entryY=0;" edge="1" parent="1" source="sys" target="tp_midtrans">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_mid_callback" value="Callback / Webhook&#10;Status Pembayaran" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9673A6;strokeWidth=2;fontSize=9;exitX=0.55;exitY=0;entryX=0.55;entryY=1;" edge="1" parent="1" source="tp_midtrans" target="sys">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

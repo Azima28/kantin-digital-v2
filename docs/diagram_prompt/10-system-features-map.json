@@ -1,0 +1,49 @@
+{
+  "projectName": "Sistem Kantin Digital",
+  "techStack": "Flutter (Mobile & Web) + Supabase (PostgreSQL DB)",
+  "globalStyling": {
+    "fontFamily": "Segoe UI",
+    "shadows": false,
+    "themeColors": {
+      "siswa_ortu": { "fill": "#DAE8FC", "stroke": "#6C8EBF", "text": "#0A2540", "emoji": "🔵" },
+      "petugas_kasir": { "fill": "#FFE6CC", "stroke": "#D79B00", "text": "#5A3200", "emoji": "🟡" },
+      "admin_keuangan": { "fill": "#D5E8D4", "stroke": "#72B095", "text": "#0A3F2C", "emoji": "🟢" },
+      "system_backend": { "fill": "#E6F2F2", "stroke": "#0E8A8A", "text": "#0E8A8A", "emoji": "⚙️" }
+    }
+  },
+  "diagram": {
+    "title": "10. System Features Map (Mindmap Fitur Utama)",
+    "type": "mindmap",
+    "description": "Pemetaan struktur modular fitur aplikasi per platform.",
+    "nodes": [
+      { "id": "root", "label": "FITUR UTAMA KANTIN DIGITAL", "color": "system_backend", "emoji": "🌟" },
+      { "id": "P1", "label": "1. Modul Siswa (Mobile)", "color": "siswa_ortu", "parent": "root", "emoji": "👦", "children": [
+        { "label": "Cek Saldo & Histori", "emoji": "📊" },
+        { "label": "Top-up Midtrans VA/QRIS", "emoji": "💳" },
+        { "label": "Lock/Freeze Kartu NFC", "emoji": "❄️" },
+        { "label": "Profil & Ubah Password", "emoji": "⚙️" }
+      ]},
+      { "id": "P2", "label": "2. Modul Kasir (Mobile)", "color": "petugas_kasir", "parent": "root", "emoji": "👵", "children": [
+        { "label": "POS Katalog Belanja", "emoji": "🛍️" },
+        { "label": "Extra Charge + Catatan", "emoji": "✍️" },
+        { "label": "Tap NFC Checkout & Cek Saldo", "emoji": "📲" },
+        { "label": "CRUD Menu & Stok", "emoji": "🥗" }
+      ]},
+      { "id": "P3", "label": "3. Admin Sekolah (Web)", "color": "admin_keuangan", "parent": "root", "emoji": "👨‍💼", "children": [
+        { "label": "Top-up Tunai Koperasi", "emoji": "💵" },
+        { "label": "Adjust Saldo (Audit Log)", "emoji": "✏️" },
+        { "label": "Link UID via USB Reader", "emoji": "🔗" },
+        { "label": "Laporan Keuangan", "emoji": "📈" }
+      ]},
+      { "id": "P4", "label": "4. Master Admin (Web)", "color": "admin_keuangan", "parent": "root", "emoji": "👑", "children": [
+        { "label": "CRUD Data Sekolah Mitra", "emoji": "🏫" },
+        { "label": "Live Timeline Audit Log", "emoji": "📜" },
+        { "label": "Blokir Akun Instan", "emoji": "🚫" }
+      ]},
+      { "id": "P5", "label": "5. Orang Tua (Web)", "color": "siswa_ortu", "parent": "root", "emoji": "👩", "children": [
+        { "label": "Pantau Jajan NIS Anak", "emoji": "👁️‍gsub" },
+        { "label": "Top-up Instan Tanpa Login", "emoji": "⚡" }
+      ]}
+    ]
+  }
+}

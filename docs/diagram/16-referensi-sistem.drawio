@@ -1,0 +1,106 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="Electron" modified="2026-06-12T00:00:00.000Z" agent="5.0" version="20.0.0" type="device">
+  <diagram id="page16" name="Page-16">
+    <mxGraphModel dx="1500" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="700" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Title -->
+        <mxCell id="title" value="Peta Referensi &amp; Integrasi Sistem — Sistem Kantin Digital" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=16;fontStyle=1;fontColor=#1A202C;" vertex="1" parent="1">
+          <mxGeometry x="250" y="20" width="400" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Client Container -->
+        <mxCell id="grp1" value="💻 Aplikasi Client (Flutter Mobile &amp; Web)" style="swimlane;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#4A5568;strokeWidth=1;fontStyle=1;fontSize=11;fontColor=#4A5568;" vertex="1" parent="1">
+          <mxGeometry x="40" y="70" width="820" height="130" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="app_client" value="📱 Mobile App&#10;(Siswa &amp; Kasir POS)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=1.5;fontColor=#0A2540;fontSize=11;" vertex="1" parent="grp1">
+          <mxGeometry x="30" y="45" width="200" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="web_admin" value="💻 Web Admin Portal&#10;(Finance &amp; Super Admin)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#D5E8D4;strokeColor=#72B095;strokeWidth=1.5;fontColor=#0A3F2C;fontSize=11;" vertex="1" parent="grp1">
+          <mxGeometry x="290" y="45" width="200" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="web_pub" value="🌐 Web Publik&#10;(Orang Tua)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=1.5;fontColor=#0A2540;fontSize=11;" vertex="1" parent="grp1">
+          <mxGeometry x="550" y="45" width="200" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Hardware Box -->
+        <mxCell id="hardware" value="🔌 Hardware &amp; Reader SDK&#10;&#10;* ESP32 RFID RC522 Reader&#10;* Mobile NFC Manager SDK" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;spacingLeft=10;verticalAlign=top;spacingTop=10;fillColor=#E2E8F0;strokeColor=#64748B;strokeWidth=1.5;fontColor=#0F172A;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="70" y="240" width="200" height="90" as="geometry" />
+        </mxCell>
+        
+        <!-- Supabase Box -->
+        <mxCell id="supabase" value="☁️ Supabase Cloud SDK&#10;&#10;* Supabase Client (Auth/DB)&#10;* Edge Functions (Webhooks)&#10;* PostgreSQL RLS &amp; Constraints" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;spacingLeft=10;verticalAlign=top;spacingTop=10;fillColor=#E6F2F2;strokeColor=#0E8A8A;strokeWidth=1.5;fontColor=#0c5757;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="330" y="240" width="200" height="90" as="geometry" />
+        </mxCell>
+        
+        <!-- Midtrans Box -->
+        <mxCell id="midtrans" value="💳 Midtrans Payment SDK&#10;&#10;* Snap API (Snap Webview)&#10;* Core API (Webhook HTTP POST)&#10;* E-Payment (VA/QRIS/E-Wallet)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;spacingLeft=10;verticalAlign=top;spacingTop=10;fillColor=#F3E8FF;strokeColor=#8B5CF6;strokeWidth=1.5;fontColor=#5B21B6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="590" y="240" width="200" height="90" as="geometry" />
+        </mxCell>
+        
+        <!-- FCM Box -->
+        <mxCell id="fcm" value="📡 Firebase Cloud Messaging (FCM) REST API" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#F3E8FF;strokeColor=#8B5CF6;strokeWidth=1.5;fontColor=#5B21B6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="270" y="400" width="320" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- Connections -->
+        <mxCell id="e_hw" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#64748B;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="app_client" target="hardware">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="e_sup1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0E8A8A;strokeWidth=1.5;exitX=0.75;exitY=1;entryX=0.25;entryY=0;" edge="1" parent="1" source="app_client" target="supabase">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="220" y="210" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="e_sup2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0E8A8A;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="web_admin" target="supabase">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="e_sup3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0E8A8A;strokeWidth=1.5;exitX=0.25;exitY=1;entryX=0.75;entryY=0;" edge="1" parent="1" source="web_pub" target="supabase">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="e_mid1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8B5CF6;strokeWidth=1.5;exitX=0.75;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="web_pub" target="midtrans">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="e_mid2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8B5CF6;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.9;entryY=0;" edge="1" parent="1" source="app_client" target="midtrans">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="140" y="210" as="sourcePoint" />
+            <mxPoint x="670" y="230" as="targetPoint" />
+            <mxPoint as="points">
+              <mxPoint x="140" y="215" />
+              <mxPoint x="690" y="215" />
+            </mxPoint>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="e_webhook" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8B5CF6;strokeWidth=1.5;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="midtrans" target="supabase">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="e_fcm_trigger" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8B5CF6;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="supabase" target="fcm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="e_fcm_notif" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8B5CF6;strokeWidth=1.5;exitX=0;exitY=0.5;entryX=0.25;entryY=1;" edge="1" parent="1" source="fcm" target="app_client">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="260" y="425" as="sourcePoint" />
+            <mxPoint x="90" y="220" as="targetPoint" />
+            <mxPoint as="points">
+              <mxPoint x="90" y="425" />
+            </mxPoint>
+          </mxGeometry>
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

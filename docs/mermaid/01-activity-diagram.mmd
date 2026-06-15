@@ -1,0 +1,57 @@
+flowchart TD
+    %% Styling Classes Definition
+    classDef siswa fill:#DAE8FC,stroke:#6C8EBF,color:#0A2540,stroke-width:2px
+    classDef petugas fill:#FFE6CC,stroke:#D79B00,color:#5A3200,stroke-width:2px
+    classDef admin fill:#D5E8D4,stroke:#72B095,color:#0A3F2C,stroke-width:2px
+    classDef success fill:#C6F6D5,stroke:#38A169,color:#22543D,stroke-width:2px
+    classDef fail fill:#FED7D7,stroke:#E53E3E,color:#742A2A,stroke-width:2px
+    classDef startEnd fill:#F5F5F7,stroke:#6C7A89,color:#2D3748,stroke-width:2px
+
+    %% Subgraph Swimlanes Styling
+    style swim1 fill:#DAE8FC22,stroke:#6C8EBF,stroke-width:3px
+    style swim2 fill:#FFE6CC22,stroke:#D79B00,stroke-width:3px
+    style swim3 fill:#D5E8D422,stroke:#72B095,stroke-width:3px
+
+    subgraph swim1 ["👦 SISWA / ORANG TUA"]
+        100([Start]):::startEnd --> 101{❓ Pilih Aksi / Jalur}
+        
+        %% Online Top-up
+        101 -- "Top-up Online" --> 102[📱 Pilih nominal jajan & bayar via App]:::siswa
+        102 --> 103[💳 Proses transaksi pembayaran Midtrans]:::siswa
+        103 --> 104[🔔 Update saldo & kirim push notifikasi]:::success
+        
+        %% NFC Shopping
+        101 -- "Belanja NFC" --> 105[🪪 Tap kartu NFC di kantin]:::siswa
+        
+        %% Notif
+        110[📩 Terima notifikasi jajan sukses]:::siswa
+    end
+
+    subgraph swim2 ["👵 PETUGAS KANTIN"]
+        105 --> 106[🛍️ Pilih menu & input tambahan di POS App]:::petugas
+        106 --> 107[📲 Scan kartu NFC siswa]:::petugas
+        107 --> 108{⚖️ Saldo Cukup?}
+        
+        108 -- "Ya" --> 109[💾 Potong saldo & simpan transaksi DB]:::success
+        108 -- "Tidak" --> 111[⚠️ Transaksi ditolak saldo kurang]:::fail
+    end
+
+    subgraph swim3 ["👨‍💼 ADMIN KEUANGAN"]
+        %% Tunai Manual
+        101 -- "Top-up Tunai TU" --> 112[💵 Terima uang tunai & verifikasi NIS]:::admin
+        112 --> 113[✍️ Input nominal top-up tunai]:::admin
+        
+        %% Koreksi Saldo
+        101 -- "Koreksi" --> 114[✏️ Input nominal koreksi & alasan wajib]:::admin
+        
+        %% Save & Log
+        113 --> 115[📝 Simpan update & buat entri audit logs]:::success
+        114 --> 115
+    end
+
+    %% Merge to End
+    109 --> 110
+    110 --> 116([End]):::startEnd
+    111 --> 116
+    104 --> 116
+    115 --> 116

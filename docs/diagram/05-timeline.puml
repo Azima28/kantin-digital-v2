@@ -1,0 +1,79 @@
+@startgantt
+title Timeline — Roadmap Pengembangan Agile (6-7 Minggu)
+projectscale weekly
+
+<style>
+ganttDiagram {
+  task {
+    FontName "Segoe UI"
+    FontSize 11
+    FontColor #2D3748
+    RoundCorner 8
+    LineColor #CBD5E0
+    LineThickness 1
+  }
+  milestone {
+    FontName "Segoe UI"
+    FontSize 11
+    FontColor #1A202C
+  }
+  title {
+    FontName "Segoe UI"
+    FontSize 16
+    FontColor #1A202C
+    FontWeight bold
+  }
+}
+</style>
+
+Project starts 2026-07-01
+
+-- Fase 1: MVP (Minggu 1-3) --
+[Setup Repo & Project Flutter] starts 2026-07-01 and lasts 2 days
+[Setup Repo & Project Flutter] is colored in #DAE8FC
+
+[Setup Supabase & Eksekusi DDL\n(12 Tabel + RLS + Trigger)] starts 2026-07-03 and lasts 4 days
+[Setup Supabase & Eksekusi DDL\n(12 Tabel + RLS + Trigger)] is colored in #FFE6CC
+
+[Auth & Multi-Role Routing\n(Riverpod + GoRouter)] starts 2026-07-07 and lasts 4 days
+[Auth & Multi-Role Routing\n(Riverpod + GoRouter)] is colored in #D5E8D4
+
+[Manajemen Produk (CRUD Menu)\nPetugas Kantin] starts 2026-07-11 and lasts 3 days
+[Manajemen Produk (CRUD Menu)\nPetugas Kantin] is colored in #FEFCBF
+
+[POS Catalog, Cart & Custom Charge\n(Keranjang + Catatan Wajib)] starts 2026-07-14 and lasts 5 days
+[POS Catalog, Cart & Custom Charge\n(Keranjang + Catatan Wajib)] is colored in #FFE6CC
+
+[NFC Tap Checkout Core\n(nfc_manager + ACID Stored Proc)] starts 2026-07-19 and lasts 5 days
+[NFC Tap Checkout Core\n(nfc_manager + ACID Stored Proc)] is colored in #DAE8FC
+
+-- Fase 2: Fitur Utama & Integrasi (Minggu 3-5) --
+[Midtrans Integration\n(Snap Token + Webhook + Edge Func)] starts 2026-07-24 and lasts 5 days
+[Midtrans Integration\n(Snap Token + Webhook + Edge Func)] is colored in #E1D5E7
+
+[Top-up Online (Siswa Mobile\n+ Web Publik Orang Tua)] starts 2026-07-29 and lasts 4 days
+[Top-up Online (Siswa Mobile\n+ Web Publik Orang Tua)] is colored in #DAE8FC
+
+[Dashboard Web Admin\n(Super Admin + Admin Keuangan)] starts 2026-08-02 and lasts 5 days
+[Dashboard Web Admin\n(Super Admin + Admin Keuangan)] is colored in #D5E8D4
+
+[Top-up Tunai Manual & Audit Logs\n(Admin Keuangan)] starts 2026-08-07 and lasts 3 days
+[Top-up Tunai Manual & Audit Logs\n(Admin Keuangan)] is colored in #E6FFFA
+
+-- Fase 3: Polish, Laporan & Launch (Minggu 5-7) --
+[Push Notification (FCM)\n& Realtime Subscriptions] starts 2026-08-10 and lasts 3 days
+[Push Notification (FCM)\n& Realtime Subscriptions] is colored in #FFE6CC
+
+[Modul Pelaporan & Export\n(PDF / Excel + daily_summaries)] starts 2026-08-13 and lasts 4 days
+[Modul Pelaporan & Export\n(PDF / Excel + daily_summaries)] is colored in #D5E8D4
+
+[Polish UI/UX & Haptic Feedback\n(Micro-Interactions + Glassmorphism)] starts 2026-08-17 and lasts 3 days
+[Polish UI/UX & Haptic Feedback\n(Micro-Interactions + Glassmorphism)] is colored in #DAE8FC
+
+[QA & Testing\n(NFC Compat + Stress Test)] starts 2026-08-20 and lasts 3 days
+[QA & Testing\n(NFC Compat + Stress Test)] is colored in #FED7D7
+
+[Build APK & Deploy Web\n(Vercel / Netlify)] starts 2026-08-23 and lasts 2 days
+[Build APK & Deploy Web\n(Vercel / Netlify)] is colored in #C6F6D5
+
+@endgantt

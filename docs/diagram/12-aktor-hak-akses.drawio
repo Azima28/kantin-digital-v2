@@ -1,0 +1,63 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="Electron" modified="2026-06-12T00:00:00.000Z" agent="5.0" version="20.0.0" type="device">
+  <diagram id="page12" name="Page-12">
+    <mxGraphModel dx="1500" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Header Title -->
+        <mxCell id="title" value="Aktor &amp; Hak Akses — Sistem Kantin Digital" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=16;fontStyle=1;fontColor=#1A202C;" vertex="1" parent="1">
+          <mxGeometry x="280" y="20" width="340" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Super Admin Box -->
+        <mxCell id="actor1" value="👑 Super Admin&#10;&#10;Platform: Web Admin Dashboard&#10;Deskripsi: Pengelola sistem tertinggi&#10;--&#10;Hak Akses:&#10;* CRUD Sekolah Mitra&#10;* CRUD User &amp; Role (Aktif/Blokir)&#10;* Lihat Live Audit Logs&#10;* Setelan API Global (FCM/Midtrans)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;spacingLeft=10;verticalAlign=top;spacingTop=10;fontStyle=0;fillColor=#E6FFFA;strokeColor=#319795;strokeWidth=2;fontColor=#234E52;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="80" width="240" height="180" as="geometry" />
+        </mxCell>
+        
+        <!-- Admin Keuangan Box -->
+        <mxCell id="actor2" value="👨‍💼 Admin Keuangan&#10;&#10;Platform: Web Admin Portal&#10;Deskripsi: Staf tata usaha / koperasi&#10;--&#10;Hak Akses:&#10;* Top-up Tunai Manual&#10;* Koreksi Saldo (Wajib Catatan)&#10;* Registrasi Kartu Siswa (USB Reader)&#10;* Laporan Keuangan &amp; Export" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;spacingLeft=10;verticalAlign=top;spacingTop=10;fontStyle=0;fillColor=#E6FFFA;strokeColor=#319795;strokeWidth=2;fontColor=#234E52;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="320" y="80" width="240" height="180" as="geometry" />
+        </mxCell>
+        
+        <!-- Petugas Kantin Box -->
+        <mxCell id="actor3" value="👵 Petugas Kantin&#10;&#10;Platform: Mobile POS App&#10;Deskripsi: Kasir / operator stan&#10;--&#10;Hak Akses:&#10;* POS Checkout Belanja&#10;* Kelola Produk Stan (CRUD &amp; Stok)&#10;* Cek Saldo Siswa (Tap NFC)&#10;* Riwayat Pendapatan Stan" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;spacingLeft=10;verticalAlign=top;spacingTop=10;fontStyle=0;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=2;fontColor=#975A16;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="600" y="80" width="240" height="180" as="geometry" />
+        </mxCell>
+        
+        <!-- Siswa Box -->
+        <mxCell id="actor4" value="👦 Siswa&#10;&#10;Platform: Mobile App&#10;Deskripsi: Pengguna kartu NFC utama&#10;--&#10;Hak Akses:&#10;* Cek Saldo &amp; Histori Jajan&#10;* Top-up Online (Midtrans)&#10;* Freeze / Unfreeze Kartu NFC&#10;* Terima Notifikasi Push (FCM)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;spacingLeft=10;verticalAlign=top;spacingTop=10;fontStyle=0;fillColor=#EBF8FF;strokeColor=#3182CE;strokeWidth=2;fontColor=#2B6CB0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="180" y="320" width="240" height="180" as="geometry" />
+        </mxCell>
+        
+        <!-- Orang Tua Box -->
+        <mxCell id="actor5" value="👩 Orang Tua&#10;&#10;Platform: Web Publik&#10;Deskripsi: Pengendali tanpa akun&#10;--&#10;Hak Akses:&#10;* Pantau Jajan NIS Anak&#10;* Top-up Online Instan (Midtrans)&#10;* Download E-Receipt" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;spacingLeft=10;verticalAlign=top;spacingTop=10;fontStyle=0;fillColor=#EBF8FF;strokeColor=#3182CE;strokeWidth=2;fontColor=#2B6CB0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="460" y="320" width="240" height="180" as="geometry" />
+        </mxCell>
+        
+        <!-- Connections -->
+        <mxCell id="edge1" value="Monitor aktivitas&#10;(Audit Logs)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#319795;strokeWidth=1.5;fontSize=10;fontColor=#234E52;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="actor1" target="actor2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="edge2" value="Registrasi &amp;&#10;Top-up" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#319795;strokeWidth=1.5;fontSize=10;fontColor=#234E52;exitX=0.25;exitY=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor2" target="actor4">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="380" y="270" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="edge3" value="Scan NFC &amp;&#10;Potong Saldo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D79B00;strokeWidth=1.5;fontSize=10;fontColor=#975A16;exitX=0.25;exitY=1;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor3" target="actor4">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="660" y="270" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="edge4" value="Cek Saldo &amp;&#10;Top-up Anak" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3182CE;strokeWidth=1.5;fontSize=10;fontColor=#2B6CB0;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="actor5" target="actor4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

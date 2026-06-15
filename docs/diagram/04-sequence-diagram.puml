@@ -1,0 +1,126 @@
+@startuml
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam ArrowColor #4A5568
+skinparam ArrowThickness 1.5
+skinparam BackgroundColor #FAFAFA
+
+<style>
+document {
+  BackgroundColor #FAFAFA
+  FontName "Segoe UI"
+  FontColor #2D3748
+}
+sequenceDiagram {
+  participant {
+    RoundCorner 8
+    BackgroundColor #FFFFFF
+    LineColor #CBD5E0
+    FontColor #2D3748
+    FontSize 11
+    
+    .siswa {
+      BackgroundColor #EBF8FF
+      LineColor #3182CE
+      FontColor #2B6CB0
+    }
+    .petugas {
+      BackgroundColor #FEFCBF
+      LineColor #D69E2E
+      FontColor #975A16
+    }
+    .admin {
+      BackgroundColor #E6FFFA
+      LineColor #319795
+      FontColor #234E52
+    }
+  }
+  actor {
+    BackgroundColor #EBF8FF
+    LineColor #3182CE
+    FontColor #2B6CB0
+    
+    .siswa {
+      BackgroundColor #EBF8FF
+      LineColor #3182CE
+      FontColor #2B6CB0
+    }
+    .petugas {
+      BackgroundColor #FEFCBF
+      LineColor #D69E2E
+      FontColor #975A16
+    }
+    .admin {
+      BackgroundColor #E6FFFA
+      LineColor #319795
+      FontColor #234E52
+    }
+  }
+  arrow {
+    LineColor #4A5568
+    LineThickness 1.5
+  }
+  lifeline {
+    LineColor #CBD5E0
+    BackgroundColor #EDF2F7
+  }
+  reference {
+    BackgroundColor #FFFFFF
+    LineColor #CBD5E0
+  }
+  note {
+    RoundCorner 6
+    BackgroundColor #FFF5F5
+    LineColor #FEB2B2
+    FontColor #742A2A
+    FontSize 10
+  }
+}
+</style>
+
+title Sequence Diagram — Alur Transaksi NFC di Kantin
+
+actor "Siswa\n(Kartu NFC)" as Siswa <<siswa>>
+participant "App POS Mobile\n(Petugas Kantin)" as POS <<petugas>>
+participant "Supabase Database\n(Backend Server)" as DB <<admin>>
+
+note over POS: Petugas memilih produk\nke keranjang (Cart)\n+ biaya kustom (opsional)
+
+Siswa -> POS : 1. Tap Kartu RFID/NFC
+activate POS
+
+POS -> DB : 2. Query siswa by Card UID
+activate DB
+DB --> POS : 3. Return Nama, Foto, Saldo Teraktual
+deactivate DB
+
+note over POS: 4. Cek lokal:\nSaldo >= Total Keranjang?
+
+alt Saldo Cukup (Saldo >= Total Belanja)
+  POS -> DB : 5. Kirim data transaksi\n(student_id, item list, total belanja)
+  activate DB
+
+  note over DB: 6. Server-Side Validation (ACID):\n1. Query saldo riil teraktual\n2. Cek saldo >= total belanja riil\n3. Validasi harga produk dari tabel products\n4. Potong saldo (UPDATE students SET balance)\n5. Simpan ke transactions & transaction_items\n6. CHECK constraint: balance >= 0
+
+  alt Verifikasi Server Sukses
+    DB -> DB : Commit transaksi DB
+    DB --> POS : 7. Return Transaksi Sukses & Saldo Sisa
+    deactivate DB
+
+    POS --> Siswa : 8. Tampil Sukses & Haptic Getar ✅
+    DB -> Siswa : 9. Push Notification ke HP Siswa (FCM)
+
+  else Verifikasi Server Gagal (Data Tampered / Hack)
+    DB --> POS : Error: Transaksi Tidak Valid (Ditolak Server)
+    deactivate DB
+    POS --> Siswa : Transaksi Dibatalkan ⚠️
+  end
+
+else Saldo Tidak Cukup (Saldo < Total Belanja)
+  note over POS: UI berubah Merah\nTombol Terkunci
+  POS --> Siswa : Layar POS Merah — Transaksi Ditolak ❌
+end
+
+deactivate POS
+
+@enduml

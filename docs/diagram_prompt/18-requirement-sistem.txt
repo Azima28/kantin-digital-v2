@@ -1,0 +1,128 @@
+# PROMPT DIAGRAM: Pembuatan Spesifikasi Kebutuhan Sistem (System Requirements)
+
+Tugas Anda adalah merancang diagram arsitektur/spesifikasi **"Spesifikasi Kebutuhan Sistem (System Requirements) — Sistem Kantin Digital"** dalam format XML Draw.io (.drawio) dari awal. Gunakan deskripsi spesifikasi tata letak, komponen, kontainer (swimlanes), dan hubungan aliran di bawah ini untuk membuat diagram yang rapi, simetris, dan terstruktur secara visual tanpa adanya garis yang tumpang tindih.
+
+---
+
+## 🚨 PERINGATAN KERAS & ATURAN UTAMA:
+* **DILARANG KERAS** menulis parameter koordinat, ukuran pixel (seperti "120px", "90px", dll), nama properti XML (seperti `exitX`, `entryX`, `x=`, `y=`), atau instruksi layout sebagai **label teks** pada diagram.
+* Semua panduan ukuran, koordinat, dan port di bawah ini harus **diterapkan secara langsung ke dalam properti XML elemen** (misalnya pada atribut `x`, `y`, `width`, `height` di tag `<mxGeometry>`), **BUKAN ditulis sebagai teks label** di dalam kotak atau di luar garis!
+* Gunakan properti `labelBackgroundColor=#FAFAFA` untuk semua garis hubung (edges) yang memiliki teks label agar teks tidak tertimpa garis.
+
+---
+
+## 🏛️ PART 1: STRUKTUR & KONSEPTUAL DIAGRAM
+
+Diagram ini terdiri dari dua kontainer besar (swimlane) horizontal yang membagi spesifikasi kebutuhan sistem menjadi dua kategori:
+1. **Kebutuhan Fungsional (Functional Requirements)**: Berisi 6 modul fungsional utama (FR-1 s/d FR-6) yang dibagi menjadi dua baris simetris.
+2. **Kebutuhan Non-Fungsional (Non-Functional Requirements)**: Berisi 4 kriteria kualitas sistem (NFR-1 s/d NFR-4) yang diposisikan di bawah kontainer fungsional.
+
+Hubungan ketergantungan (dependencies) antara Kebutuhan Fungsional dan Non-Fungsional dihubungkan menggunakan garis putus-putus dengan teks label deskriptif.
+
+---
+
+## 🎨 PART 2: PETUNJUK LAYOUT VISUAL (GRID SYSTEM & ALIGNMENT)
+
+Terapkan tata letak simetris berikut untuk penempatan elemen:
+
+```text
+  [Title: Spesifikasi Kebutuhan Sistem (System Requirements) — Sistem Kantin Digital] (x=200, y=20)
+
+  ┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ 📋 Kebutuhan Fungsional (Functional Requirements) (y=70, height=250)                        │
+  │                                                                                             │
+  │    [FR-1: NFC Tap Payment]      [FR-2: Top-up Online]      [FR-3: Top-up Manual]            │
+  │           (y=40)                       (y=40)                      (y=40)                   │
+  │                                                                                             │
+  │    [FR-4: Menu POS]             [FR-5: Kontrol Kartu]      [FR-6: Laporan & Audit]          │
+  │           (y=140)                      (y=140)                     (y=140)                  │
+  └─────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ 🛡️ Kebutuhan Non-Fungsional (Non-Functional Requirements) (y=360, height=280)                 │
+  │                                                                                             │
+  │    [NFR-1: Keamanan (Security)] [NFR-2: Integritas (ACID)] [NFR-3: Kinerja (<2s)]           │
+  │           (y=50)                       (y=50)                      (y=50)                   │
+  │                                                                                             │
+  │                                 [NFR-4: Kompatibilitas]                                     │
+  │                                        (y=160)                                              │
+  └─────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📊 PART 3: DETAIL TATA LETAK & GEOMETRI DIAGRAM
+
+### 📍 A. Judul & Kontainer Utama
+* **Judul Diagram (`title`)**: Teks biasa tanpa kotak. Geometri: `x=200, y=20, width=500, height=30`. Teks: `Spesifikasi Kebutuhan Sistem (System Requirements) — Sistem Kantin Digital`.
+* **Kontainer Kebutuhan Fungsional (`grp_fr`)**: Swimlane/Container. Geometri: `x=40, y=70, width=820, height=250`. Teks: `📋 Kebutuhan Fungsional (Functional Requirements)`.
+* **Kontainer Kebutuhan Non-Fungsional (`grp_nfr`)**: Swimlane/Container. Geometri: `x=40, y=360, width=820, height=280`. Teks: `🛡️ Kebutuhan Non-Fungsional (Non-Functional Requirements)`.
+
+### 📍 B. Elemen dalam Kontainer Fungsional (grp_fr)
+*Semua koordinat di bawah ini adalah koordinat relatif terhadap parent `grp_fr` (x=40, y=70).*
+* **FR-1 (`fr1`)**: Kotak tumpul, Geometri: `x=20, y=40, width=230, height=70`. Teks: `FR-1: NFC Tap Payment\n\nDeskripsi: Transaksi pembayaran instan\ndi kasir menggunakan kartu RFID/NFC`.
+* **FR-2 (`fr2`)**: Kotak tumpul, Geometri: `x=290, y=40, width=230, height=70`. Teks: `FR-2: Top-up Saldo Online\n\nDeskripsi: Pengisian saldo online instan\nvia Midtrans Snap (QRIS/VA)`.
+* **FR-3 (`fr3`)**: Kotak tumpul, Geometri: `x=560, y=40, width=230, height=70`. Teks: `FR-3: Top-up Tunai Manual\n\nDeskripsi: Input saldo tunai oleh\nAdmin Keuangan via Web Admin`.
+* **FR-4 (`fr4`)**: Kotak tumpul, Geometri: `x=20, y=140, width=230, height=70`. Teks: `FR-4: Manajemen Menu POS\n\nDeskripsi: CRUD katalog produk\ndan pengelolaan stok oleh kasir`.
+* **FR-5 (`fr5`)**: Kotak tumpul, Geometri: `x=290, y=140, width=230, height=70`. Teks: `FR-5: Kontrol Kartu NFC\n\nDeskripsi: Fitur Freeze/Link kartu\noleh siswa untuk keamanan`.
+* **FR-6 (`fr6`)**: Kotak tumpul, Geometri: `x=560, y=140, width=230, height=70`. Teks: `FR-6: Laporan Keuangan & Audit\n\nDeskripsi: Ekspor data laporan (PDF/Excel)\n& audit logs monitor untuk Super Admin`.
+
+### 📍 C. Elemen dalam Kontainer Non-Fungsional (grp_nfr)
+*Semua koordinat di bawah ini adalah koordinat relatif terhadap parent `grp_nfr` (x=40, y=360).*
+* **NFR-1 (`nfr1`)**: Kotak tumpul, Geometri: `x=20, y=50, width=230, height=70`. Teks: `NFR-1: Keamanan Data (Security)\n\nKriteria: Supabase Row Level Security (RLS)\nagar data log & saldo terproteksi ketat`.
+* **NFR-2 (`nfr2`)**: Kotak tumpul, Geometri: `x=290, y=50, width=230, height=70`. Teks: `NFR-2: Integritas Data (Consistency)\n\nKriteria: ACID Stored Procedure di DB\nserver untuk kalkulasi saldo anti-tamper`.
+* **NFR-3 (`nfr3`)**: Kotak tumpul, Geometri: `x=560, y=50, width=230, height=70`. Teks: `NFR-3: Kinerja (Performance)\n\nKriteria: Waktu respon transaksi Tap NFC\ndi kasir kurang dari 2 detik`.
+* **NFR-4 (`nfr4`)**: Kotak tumpul, Geometri: `x=290, y=160, width=230, height=70`. Teks: `NFR-4: Kompatibilitas\n\nKriteria: Aplikasi dibangun multiplatform\nFlutter (Android, iOS, dan Web responsive)`.
+
+---
+
+## 🎨 PART 4: DETAIL PENGATURAN GAYA VISUAL (STYLING DESIGNS)
+
+* **Font**: Gunakan font `"Segoe UI"` atau `"Arial"`, ukuran font 10px untuk deskripsi teks dalam kotak, dan 11px/13px Bold untuk judul/nama modul. Teks di dalam node otomatis dibungkus (`whiteSpace=wrap`).
+* **Skema Warna Elemen**:
+  * **Modul Transaksi & Pembayaran NFC** (Biru Muda - `fr1`, `fr2`, `fr5`): `fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=1.5;fontColor=#0A2540;fontStyle=1;`
+  * **Modul Laporan & Admin Keuangan** (Hijau Muda - `fr3`, `fr6`): `fillColor=#D5E8D4;strokeColor=#72B095;strokeWidth=1.5;fontColor=#0A3F2C;fontStyle=1;`
+  * **Modul Menu Merchant/Katalog POS** (Oranye/Kuning - `fr4`): `fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=1.5;fontColor=#975A16;fontStyle=1;`
+  * **Kriteria Non-Fungsional** (Toska/Teal - `nfr1`, `nfr2`, `nfr3`, `nfr4`): `fillColor=#E6F2F2;strokeColor=#0E8A8A;strokeWidth=1.5;fontColor=#0c5757;fontStyle=1;`
+  * **Swimlanes/Containers** (`grp_fr`, `grp_nfr`): `fillColor=none;strokeColor=#4A5568;strokeWidth=1;fontColor=#4A5568;`
+* **Garis Koneksi (Edges)**:
+  * Tipe orthogonal siku-siku (`edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1.5;`).
+  * Tipe garis putus-putus (`strokeDasharray=3 3;`).
+  * Warna garis disamakan dengan target NFR, yaitu Teal (`strokeColor=#0E8A8A`).
+  * Setiap garis wajib memiliki label penjelas dengan background putih abu-abu (`labelBackgroundColor=#FAFAFA`), ukuran font 9px (`fontSize=9`), dan warna font Teal (`fontColor=#0c5757`).
+
+---
+
+## 🔗 PART 5: INSTRUKSI SPESIFIK RUTE KONEKSI & ANTI-OVERLAP
+
+Untuk menghindari garis bertumpuk, tumpang tindih, atau menembus kotak elemen secara tidak teratur, Anda **WAJIB** menerapkan pembagian port (`exitX`, `exitY`, `entryX`, `entryY`) dan belokan rute sebagai berikut:
+
+1. **Garis Hubung 1: FR-1 (`fr1`) ──> NFR-2 (`nfr2`)** ["Diproteksi oleh"]
+   * **Sumber**: `fr1` (sisi kanan, `exitX=1;exitY=0.5` — absolute X=290, Y=145).
+   * **Target**: `nfr2` (sisi atas, `entryX=0.25;entryY=0` — absolute X=387.5, Y=410).
+   * **Rute**: Keluar ke kanan menuju celah kolom di **X=310**, lalu turun secara vertikal melewati celah hingga **Y=340** (antara dua swimlane), lalu belok kanan ke **X=387.5**, dan turun lurus vertikal masuk ke atas `nfr2` di **Y=410**.
+
+2. **Garis Hubung 2: FR-1 (`fr1`) ──> NFR-3 (`nfr3`)** ["Maksimal respon"]
+   * **Sumber**: `fr1` (sisi kiri, `exitX=0;exitY=0.5` — absolute X=60, Y=145).
+   * **Target**: `nfr3` (sisi atas, `entryX=0.25;entryY=0` — absolute X=617.5, Y=410).
+   * **Rute**: Keluar ke kiri ke luar batas swimlane di **X=20**, lalu turun secara vertikal hingga **Y=345** (di antara dua swimlane), berjalan horizontal ke kanan sepanjang celah tersebut melintasi diagram hingga **X=617.5**, lalu turun vertikal masuk ke atas `nfr3` di **Y=410**.
+
+3. **Garis Hubung 3: FR-2 (`fr2`) ──> NFR-1 (`nfr1`)** ["Otorisasi via token"]
+   * **Sumber**: `fr2` (sisi kiri, `exitX=0;exitY=0.5` — absolute X=330, Y=145).
+   * **Target**: `nfr1` (sisi atas, `entryX=0.75;entryY=0` — absolute X=232.5, Y=410).
+   * **Rute**: Keluar ke kiri menuju celah kolom di **X=315**, turun secara vertikal hingga **Y=335** (antara dua swimlane), belok kiri horizontal ke **X=232.5**, lalu turun vertikal masuk ke atas `nfr1` di **Y=410**.
+
+4. **Garis Hubung 4: FR-3 (`fr3`) ──> NFR-1 (`nfr1`)** ["Tercatat di Audit Log"]
+   * **Sumber**: `fr3` (sisi kiri, `exitX=0;exitY=0.5` — absolute X=600, Y=145).
+   * **Target**: `nfr1` (sisi atas, `entryX=0.85;entryY=0` — absolute X=255.5, Y=410).
+   * **Rute**: Keluar ke kiri menuju celah kolom di **X=580**, turun secara vertikal hingga **Y=350** (antara dua swimlane), belok kiri horizontal melintasi diagram ke **X=255.5**, lalu turun vertikal masuk ke atas `nfr1` di **Y=410**.
+
+5. **Garis Hubung 5: FR-4 (`fr4`) ──> NFR-1 (`nfr1`)** ["Batas hak akses stan"]
+   * **Sumber**: `fr4` (sisi bawah, `exitX=0.5;exitY=1` — absolute X=175, Y=280).
+   * **Target**: `nfr1` (sisi atas, `entryX=0.5;entryY=0` — absolute X=175, Y=410).
+   * **Rute**: Tarik garis lurus vertikal ke bawah dari bagian bawah `fr4` langsung masuk ke bagian atas `nfr1` (karena kedua kotak ini sejajar sempurna secara vertikal di X=175).
+
+6. **Garis Hubung 6: FR-5 (`fr5`) ──> NFR-1 (`nfr1`)** ["RLS read-only bagi user lain"]
+   * **Sumber**: `fr5` (sisi bawah, `exitX=0.25;exitY=1` — absolute X=387.5, Y=280).
+   * **Target**: `nfr1` (sisi atas, `entryX=0.95;entryY=0` — absolute X=278.5, Y=410).
+   * **Rute**: Keluar dari bawah `fr5` di **X=387.5**, turun vertikal hingga **Y=330** (antara dua swimlane), belok kiri horizontal ke **X=278.5**, lalu turun vertikal masuk ke atas `nfr1` di **Y=410**.

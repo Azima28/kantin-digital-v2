@@ -1,0 +1,14 @@
+flowchart LR
+    %% Custom Styling classes
+    classDef blue fill:#DAE8FC,stroke:#6C8EBF,color:#0A2540,stroke-width:2px
+    classDef orange fill:#FFE6CC,stroke:#D79B00,color:#5A3200,stroke-width:2px
+    classDef teal fill:#E6F2F2,stroke:#0E8A8A,color:#0c5757,stroke-width:2px
+    classDef green fill:#C6F6D5,stroke:#38A169,color:#22543D,stroke-width:2px
+
+    PB["📋 Product Backlog"]:::orange --> SP["📅 Sprint Planning"]:::blue
+    SP --> SB["📝 Sprint Backlog"]:::orange
+    SB --> SC["♻️ Sprint Cycle (2 Minggu)"]:::teal
+    SC <--> |"Daily Sync"| DS["👥 Daily Standup\n(15 Min)"]:::green
+    SC --> WI["📱 Working App\nIncrement"]:::orange
+    SC --> SR["🔍 Sprint Review\n& Retrospective"]:::blue
+    SR --> |"Feedback Loop"| PB

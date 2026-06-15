@@ -1,0 +1,79 @@
+DOKUMENTASI PERANCANGAN SISTEM
+PPDB SMP TERPADU
+Penerimaan Peserta Didik Baru Berbasis Web
+Sistem Seleksi Multi-Jalur: Zonasi | Domisili | Prestasi | Afirmasi
+Tanggal 16 Maret 2026
+Waktu 2024
+Tempat & Media CV Newus Tecnology
+Pewawancara Arga & Erwin
+Narasumber Kak Lulu
+Jabatan Project Manager Newus Tecnology
+1. Deskripsi Umum
+Sistem ini dirancang untuk mengelola proses seleksi siswa baru secara transparan dan
+otomatis berdasarkan empat jalur utama: Zonasi, Domisili, Prestasi, dan Afirmasi.
+Sistem mendukung pemilihan sekolah secara bertingkat (Pilihan 1 dan Pilihan 2)
+dengan mekanisme verifikasi berlapis.
+2. Arsitektur Jalur Seleksi (Logika Peneliaaan)
+Jalur Parameter Utama Mekanisme Seleksi
+Zonasi Radius (Jarak
+Geografis)
+Perhitungan jarak garis lurus dari
+koordinat alamat rumah ke koordinat
+sekolah.
+Domisili Wilayah Kelurahan Validasi kesesuaian alamat pada KK
+dengan wilayah kelurahan/kecamatan
+sekolah.
+Prestasi Skor Nilai & Sertifikat Akumulasi nilai rata-rata rapor atau poin
+tambahan dari prestasi akademik/nonakademik.
+Afirmasi Status Sosial/Khusus Prioritas bagi pemegang kartu bantuan
+(KIP/PKH) atau bukti surat perpindahan
+tugas orang tua.
+3. Manajemen Aktor dan Hak Siswa
+1. User(Calon Siswa)
+• Regestrasi akun dan pengisian profil.
+• Unggah berkas (Scan KK, Akte Kelahiran, Foto, Ijazah/Skl, dll).
+• Memilih 2 sekolah tujuan (Prioritas 1& Prioritas 2).
+• Memantau status verifikasi dan hasil seleksi.
+2. Admin (Pihak Sekolah)
+• Memvalidasi berkas fisik dengan data digital yang diimput siswa.
+• Melakukan verivikasi pada tingkat sekolah(Layer 1).
+• Mengola kuota daya tampung sekolah.
+3. Super Admin (Dinas Pendidikan)
+• Monitor seluruh aktivitas pendaftaran ditingkat kota/kabupaten
+• Verifikasi akhir (Layer 2) sebagai penetu validasi data sebelum
+pengumuman.
+• Konfigurasi parameter system (batas radius zonasi, bobot nilai prestasi,
+dll).
+4. Alur Kerja Sistem (Workflow)
+Tahap 1: Pra-Administrasi & Registrasi
+• Siswa melakukan registrasi akun menggunakan NISN (Nomor Induk
+Siswa Nasional).
+• Siswa menentukan Pilihan 1 dan Pilihan 2.
+Tahap 2: Input Data & Lokasi
+• Geolokasi: Siswa menandai lokasi rumah pada peta digital untuk
+mendapatkan titik koordinat presisi.
+• Upload Berkas: Mengunggah dokumen pendukung sesuai jalur yang
+dipilih.
+Tahap 3: Logika Verifikasi Bertingkat (Cascading Verification)
+Sistem menggunakan logika priority queue berdasarkan pilihan sekolah:
+• Prioritas 1: Data masuk ke dashboard Admin Sekolah Pilihan 1.
+• Kondisi A (Diterima): Jika Admin Pilihan 1 memverifikasi dan siswa
+masuk kuota, maka data pada Pilihan 2 secara otomatis dikunci (tidak
+dapat diverifikasi).
+• Kondisi B (Ditolak): Jika Pilihan 1 menolak (karena jarak terlalu jauh
+atau nilai tidak cukup), data otomatis terlempar ke dashboard Admin
+Sekolah Pilihan 2 untuk diproses.
+Tahap 4: Verifikasi Final & Pengumuman
+• Setelah verifikasi Admin Sekolah selesai, Superadmin (Dinas)
+melakukan audit akhir untuk memastikan tidak ada manipulasi data.
+• Sistem menerbitkan pengumuman hasil seleksi secara real-time atau
+sesuai jadwal yang ditentukan.
+5. Spefikasi Teknis Yang Dibutuhkan
+• Peta & Lokasi: Integrasi Google Maps API atau Leaflet JS untuk
+menghitung jarak radius secara otomatis antara alamat siswa dan
+koordinat sekolah.
+• Keamanan Data: Enkripsi untuk dokumen sensitif dan sistem log
+aktivitas untuk mencatat setiap tindakan verifikasi yang dilakukan
+Admin.
+• Validasi Alamat: Database kelurahan/kecamatan yang sinkron untuk
+jalur Domisili.

@@ -1,0 +1,117 @@
+classDiagram
+    class User {
+        +UUID id
+        +String email
+        +String password_hash
+        +String full_name
+        +UserRole role
+        +Boolean is_active
+        +Timestamp created_at
+    }
+    class School {
+        +UUID id
+        +String name
+        +String address
+        +String logo_url
+        +Boolean is_active
+        +Timestamp created_at
+    }
+    class Student {
+        +UUID id
+        +UUID user_id
+        +UUID school_id
+        +String nis
+        +Decimal balance
+        +String card_uid
+        +Boolean is_card_frozen
+        +Boolean is_active
+    }
+    class CanteenOperator {
+        +UUID id
+        +UUID user_id
+        +UUID school_id
+        +String stall_name
+        +Boolean is_active
+    }
+    class Product {
+        +UUID id
+        +UUID canteen_operator_id
+        +String name
+        +Decimal price
+        +String image_url
+        +Boolean is_available
+    }
+    class Transaction {
+        +UUID id
+        +UUID student_id
+        +TxType type
+        +Decimal amount
+        +UUID performed_by
+        +TxMethod method
+        +TxStatus status
+        +String notes
+        +Timestamp created_at
+    }
+    class TransactionItem {
+        +UUID id
+        +UUID transaction_id
+        +UUID product_id
+        +String name
+        +Decimal price
+        +Int quantity
+        +Decimal subtotal
+    }
+    class AuditLog {
+        +UUID id
+        +UUID user_id
+        +String action
+        +String target_table
+        +UUID target_id
+        +JSON old_value
+        +JSON new_value
+        +String ip_address
+        +Timestamp created_at
+    }
+
+    class UserRole {
+        <<enumeration>>
+        super_admin
+        admin_keuangan
+        siswa
+        petugas_kantin
+    }
+
+    class TxType {
+        <<enumeration>>
+        topup_online
+        topup_cash
+        purchase
+        refund
+        adjustment
+    }
+
+    class TxMethod {
+        <<enumeration>>
+        midtrans
+        cash
+        nfc_tap
+        manual
+    }
+
+    class TxStatus {
+        <<enumeration>>
+        pending
+        success
+        failed
+        refunded
+    }
+
+    User "1" --> "0..1" Student : has
+    User "1" --> "0..1" CanteenOperator : has
+    School "1" --> "*" Student : enrolls
+    School "1" --> "*" CanteenOperator : employs
+    CanteenOperator "1" --> "*" Product : manages
+    Student "1" --> "*" Transaction : makes
+    Transaction "1" --> "*" TransactionItem : contains
+    Product "1" --> "*" TransactionItem : referenced_by
+    User "1" --> "*" AuditLog : generates

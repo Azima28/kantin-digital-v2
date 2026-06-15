@@ -1,0 +1,65 @@
+@startuml
+!include theme.puml
+
+title Aktor & Hak Akses — Sistem Kantin Digital
+
+object "Super Admin" as SuperAdmin <<admin>> {
+  Platform: Web Admin Dashboard
+  Deskripsi: Pengelola sistem tertinggi
+  --
+  Hak Akses:
+  * CRUD Sekolah Mitra
+  * CRUD User & Role (Aktif/Blokir)
+  * Lihat Live Audit Logs
+  * Setelan API Global (FCM, Midtrans)
+}
+
+object "Admin Keuangan" as AdminKeuang <<admin>> {
+  Platform: Web Admin Portal
+  Deskripsi: Staf tata usaha / koperasi
+  --
+  Hak Akses:
+  * Top-up Tunai Manual
+  * Koreksi Saldo (Wajib Catatan)
+  * Registrasi Kartu Siswa (USB Reader)
+  * Laporan Keuangan & Export
+}
+
+object "Petugas Kantin" as PetugasKantin <<petugas>> {
+  Platform: Mobile POS App
+  Deskripsi: Kasir / operator stan
+  --
+  Hak Akses:
+  * POS Checkout Belanja
+  * Kelola Produk Stan (CRUD & Stok)
+  * Cek Saldo Siswa (Tap NFC)
+  * Riwayat Pendapatan Stan
+}
+
+object "Siswa" as Siswa <<siswa>> {
+  Platform: Mobile App
+  Deskripsi: Pengguna kartu NFC utama
+  --
+  Hak Akses:
+  * Cek Saldo & Histori Jajan
+  * Top-up Online (Midtrans)
+  * Freeze / Unfreeze Kartu NFC
+  * Terima Notifikasi Push (FCM)
+}
+
+object "Orang Tua" as Ortu <<siswa>> {
+  Platform: Web Publik
+  Deskripsi: Pengendali tanpa akun
+  --
+  Hak Akses:
+  * Pantau Jajan NIS Anak
+  * Top-up Online Instan (Midtrans)
+  * Download E-Receipt
+}
+
+SuperAdmin .[#319795].> AdminKeuang : "Monitor aktivitas (Audit Logs)"
+AdminKeuang .[#319795].> Siswa : "Registrasi & Top-up"
+PetugasKantin .[#D69E2E].> Siswa : "Scan NFC & Potong Saldo"
+Ortu .[#3182CE].> Siswa : "Cek Saldo & Top-up Anak"
+
+@enduml

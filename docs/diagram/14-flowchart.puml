@@ -1,0 +1,41 @@
+@startuml
+!include theme.puml
+
+title Flowchart Sistem Kantin Digital
+
+start
+:Akses Sistem;
+:Login / Identifikasi;
+
+if (Verifikasi Role?) then (Admin / Super Admin)
+  :1. Kelola User & Siswa\n2. Input Top-up Tunai\n3. Monitor Audit Log<
+  :Top-up / Koreksi;
+  :Tulis Audit Log;
+  :Monitor & Laporan;
+  
+elseif (Verifikasi Role? == Petugas Kantin) then (Petugas Kantin)
+  :1. Kelola Menu & Produk\n2. Input Keranjang (POS)\n3. Tap Kartu NFC Siswa<
+  :Pilih Item (Cart);
+  :Tap Kartu NFC;
+  :Validasi Server;
+  if (Saldo Cukup?) then (Ya)
+    :Potong Saldo & Catat Transaksi;
+    :Terima Notifikasi (Siswa);
+  else (Tidak)
+    :Transaksi Dibatalkan;
+  fi
+  
+else (Siswa / Orang Tua)
+  :1. Cek Saldo & Riwayat\n2. Top-up Online Midtrans\n3. Tap Kartu Belanja<
+  if (Pilih Metode?) then (Midtrans)
+    :Midtrans (Online);
+  else (Tunai)
+    :Koperasi (Tunai);
+    note right: Diinput manual oleh Admin Keuangan
+    :Top-up / Koreksi;
+  fi
+endif
+
+:Finish;
+stop
+@enduml

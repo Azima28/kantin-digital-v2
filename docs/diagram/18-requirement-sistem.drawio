@@ -1,0 +1,107 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="Electron" modified="2026-06-12T00:00:00.000Z" agent="5.0" version="20.0.0" type="device">
+  <diagram id="page18" name="Page-18">
+    <mxGraphModel dx="1500" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="800" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Title -->
+        <mxCell id="title" value="Spesifikasi Kebutuhan Sistem (System Requirements) — Sistem Kantin Digital" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=16;fontStyle=1;fontColor=#1A202C;" vertex="1" parent="1">
+          <mxGeometry x="200" y="20" width="500" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Functional Container -->
+        <mxCell id="grp_fr" value="📋 Kebutuhan Fungsional (Functional Requirements)" style="swimlane;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#4A5568;strokeWidth=1;fontStyle=1;fontSize=11;fontColor=#4A5568;" vertex="1" parent="1">
+          <mxGeometry x="40" y="70" width="820" height="250" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="fr1" value="FR-1: NFC Tap Payment&#10;&#10;Deskripsi: Transaksi pembayaran instan&#10;di kasir menggunakan kartu RFID/NFC" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;spacingLeft=10;verticalAlign=top;spacingTop=10;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=1.5;fontColor=#0A2540;fontSize=10;" vertex="1" parent="grp_fr">
+          <mxGeometry x="20" y="40" width="230" height="70" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="fr2" value="FR-2: Top-up Saldo Online&#10;&#10;Deskripsi: Pengisian saldo online instan&#10;via Midtrans Snap (QRIS/VA)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;spacingLeft=10;verticalAlign=top;spacingTop=10;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=1.5;fontColor=#0A2540;fontSize=10;" vertex="1" parent="grp_fr">
+          <mxGeometry x="290" y="40" width="230" height="70" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="fr3" value="FR-3: Top-up Tunai Manual&#10;&#10;Deskripsi: Input saldo tunai oleh&#10;Admin Keuangan via Web Admin" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;spacingLeft=10;verticalAlign=top;spacingTop=10;fillColor=#D5E8D4;strokeColor=#72B095;strokeWidth=1.5;fontColor=#0A3F2C;fontSize=10;" vertex="1" parent="grp_fr">
+          <mxGeometry x="560" y="40" width="230" height="70" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="fr4" value="FR-4: Manajemen Menu POS&#10;&#10;Deskripsi: CRUD katalog produk&#10;dan pengelolaan stok oleh kasir" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;spacingLeft=10;verticalAlign=top;spacingTop=10;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=1.5;fontColor=#975A16;fontSize=10;" vertex="1" parent="grp_fr">
+          <mxGeometry x="20" y="140" width="230" height="70" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="fr5" value="FR-5: Kontrol Kartu NFC&#10;&#10;Deskripsi: Fitur Freeze/Link kartu&#10;oleh siswa untuk keamanan" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;spacingLeft=10;verticalAlign=top;spacingTop=10;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=1.5;fontColor=#0A2540;fontSize=10;" vertex="1" parent="grp_fr">
+          <mxGeometry x="290" y="140" width="230" height="70" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="fr6" value="FR-6: Laporan Keuangan &amp; Audit&#10;&#10;Deskripsi: Ekspor data laporan (PDF/Excel)&#10;&amp; audit logs monitor untuk Super Admin" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;spacingLeft=10;verticalAlign=top;spacingTop=10;fillColor=#D5E8D4;strokeColor=#72B095;strokeWidth=1.5;fontColor=#0A3F2C;fontSize=10;" vertex="1" parent="grp_fr">
+          <mxGeometry x="560" y="140" width="230" height="70" as="geometry" />
+        </mxCell>
+        
+        <!-- Non-Functional Container -->
+        <mxCell id="grp_nfr" value="🛡️ Kebutuhan Non-Fungsional (Non-Functional Requirements)" style="swimlane;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#4A5568;strokeWidth=1;fontStyle=1;fontSize=11;fontColor=#4A5568;" vertex="1" parent="1">
+          <mxGeometry x="40" y="360" width="820" height="280" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="nfr1" value="NFR-1: Keamanan Data (Security)&#10;&#10;Kriteria: Supabase Row Level Security (RLS)&#10;agar data log &amp; saldo terproteksi ketat" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;spacingLeft=10;verticalAlign=top;spacingTop=10;fillColor=#E6F2F2;strokeColor=#0E8A8A;strokeWidth=1.5;fontColor=#0c5757;fontSize=10;" vertex="1" parent="grp_nfr">
+          <mxGeometry x="20" y="50" width="230" height="70" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="nfr2" value="NFR-2: Integritas Data (Consistency)&#10;&#10;Kriteria: ACID Stored Procedure di DB&#10;server untuk kalkulasi saldo anti-tamper" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;spacingLeft=10;verticalAlign=top;spacingTop=10;fillColor=#E6F2F2;strokeColor=#0E8A8A;strokeWidth=1.5;fontColor=#0c5757;fontSize=10;" vertex="1" parent="grp_nfr">
+          <mxGeometry x="290" y="50" width="230" height="70" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="nfr3" value="NFR-3: Kinerja (Performance)&#10;&#10;Kriteria: Waktu respon transaksi Tap NFC&#10;di kasir kurang dari 2 detik" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;spacingLeft=10;verticalAlign=top;spacingTop=10;fillColor=#E6F2F2;strokeColor=#0E8A8A;strokeWidth=1.5;fontColor=#0c5757;fontSize=10;" vertex="1" parent="grp_nfr">
+          <mxGeometry x="560" y="50" width="230" height="70" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="nfr4" value="NFR-4: Kompatibilitas&#10;&#10;Kriteria: Aplikasi dibangun multiplatform&#10;Flutter (Android, iOS, dan Web responsive)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;spacingLeft=10;verticalAlign=top;spacingTop=10;fillColor=#E6F2F2;strokeColor=#0E8A8A;strokeWidth=1.5;fontColor=#0c5757;fontSize=10;" vertex="1" parent="grp_nfr">
+          <mxGeometry x="290" y="160" width="230" height="70" as="geometry" />
+        </mxCell>
+        
+        <!-- Connections -->
+        <!-- FR-1 (NFC Tap) -> NFR-2 (Consistency) -->
+        <mxCell id="e_fr1_nfr2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0E8A8A;strokeWidth=1.5;strokeDasharray: 3 3;exitX=0.5;exitY=1;entryX=0.25;entryY=0;" edge="1" parent="1" source="fr1" target="nfr2">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="175" y="180" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- FR-1 (NFC Tap) -> NFR-3 (Performance) -->
+        <mxCell id="e_fr1_nfr3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0E8A8A;strokeWidth=1.5;strokeDasharray: 3 3;exitX=0.25;exitY=1;entryX=0.25;entryY=0;" edge="1" parent="1" source="fr1" target="nfr3">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="110" y="180" as="sourcePoint" />
+            <mxPoint x="650" y="410" as="targetPoint" />
+            <mxPoint as="points">
+              <mxPoint x="117" y="340" />
+              <mxPoint x="657" y="340" />
+            </mxPoint>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- FR-3 (Top-up Tunai) -> NFR-1 (Security/Audit) -->
+        <mxCell id="e_fr3_nfr1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0E8A8A;strokeWidth=1.5;strokeDasharray: 3 3;exitX=0.5;exitY=1;entryX=0.75;entryY=0;" edge="1" parent="1" source="fr3" target="nfr1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="715" y="180" as="sourcePoint" />
+            <mxPoint x="230" y="410" as="targetPoint" />
+            <mxPoint as="points">
+              <mxPoint x="715" y="350" />
+              <mxPoint x="232" y="350" />
+            </mxPoint>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- FR-5 (Freeze Card) -> NFR-1 (Security) -->
+        <mxCell id="e_fr5_nfr1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0E8A8A;strokeWidth=1.5;strokeDasharray: 3 3;exitX=0.25;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="fr5" target="nfr1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="380" y="300" as="sourcePoint" />
+            <mxPoint x="180" y="410" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

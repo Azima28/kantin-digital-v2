@@ -1,0 +1,129 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="Electron" modified="2026-06-13T00:00:00.000Z" agent="5.0" version="20.0.0" type="device">
+  <diagram id="page1" name="Use Case Diagram — Sistem Kantin Digital">
+    <mxGraphModel dx="1600" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ===== SYSTEM BOUNDARY ===== -->
+        <mxCell id="sysboundary" value="Sistem Kantin Digital (Supabase + Flutter)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FAFAFA;strokeColor=#CBD5E0;strokeWidth=2;fontSize=13;fontColor=#2D3748;fontStyle=1;align=center;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="30" width="460" height="950" as="geometry" />
+        </mxCell>
+
+        <!-- ===== ACTORS (LEFT SIDE - VERTICALLY CENTERED) ===== -->
+        <mxCell id="ac_siswa" value="👦 Siswa" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=2;fontColor=#2B6CB0;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="110" y="210" width="30" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="ac_ortu" value="👩 Orang Tua" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=2;fontColor=#2B6CB0;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="110" y="385" width="30" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- ===== ACTORS (RIGHT SIDE - VERTICALLY CENTERED) ===== -->
+        <mxCell id="ac_petugas" value="👵 Petugas&#10;Kantin" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=2;fontColor=#975A16;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="680" y="210" width="30" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="ac_admin" value="👨‍💼 Admin&#10;Keuangan" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#D5E8D4;strokeColor=#72B095;strokeWidth=2;fontColor=#234E52;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="680" y="515" width="30" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="ac_super" value="👑 Super&#10;Admin" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#D5E8D4;strokeColor=#72B095;strokeWidth=2;fontColor=#234E52;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="680" y="805" width="30" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- ===== USE CASES: SISWA ===== -->
+        <mxCell id="UC2" value="Cek Saldo &amp;&#10;Histori Jajan" style="ellipse;whiteSpace=wrap;html=1;fillColor=#EBF8FF;strokeColor=#3182CE;strokeWidth=1.5;fontColor=#2B6CB0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="220" y="120" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="UC4" value="Link &amp; Freeze&#10;Kartu NFC" style="ellipse;whiteSpace=wrap;html=1;fillColor=#EBF8FF;strokeColor=#3182CE;strokeWidth=1.5;fontColor=#2B6CB0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="220" y="190" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="UC5" value="Terima Notifikasi&#10;Transaksi (FCM)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#EBF8FF;strokeColor=#3182CE;strokeWidth=1.5;fontColor=#2B6CB0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="220" y="260" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="UC3" value="Top-up Online&#10;(Midtrans)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#EBF8FF;strokeColor=#3182CE;strokeWidth=1.5;fontColor=#2B6CB0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="220" y="330" width="150" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ===== USE CASES: ORANG TUA ===== -->
+        <mxCell id="UC18" value="Cek Saldo Anak&#10;(by NIS, Tanpa Login)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#EBF8FF;strokeColor=#3182CE;strokeWidth=1.5;fontColor=#2B6CB0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="220" y="400" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="UC19" value="Lihat 5 Transaksi&#10;Terakhir Anak" style="ellipse;whiteSpace=wrap;html=1;fillColor=#EBF8FF;strokeColor=#3182CE;strokeWidth=1.5;fontColor=#2B6CB0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="220" y="470" width="150" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ===== USE CASES: PETUGAS KANTIN ===== -->
+        <mxCell id="UC6" value="POS Checkout&#10;(Belanja Cart)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FEFCBF;strokeColor=#D69E2E;strokeWidth=1.5;fontColor=#975A16;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="440" y="120" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="UC7" value="Kelola Menu Stan&#10;(CRUD Produk)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FEFCBF;strokeColor=#D69E2E;strokeWidth=1.5;fontColor=#975A16;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="440" y="190" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="UC8" value="Cek Saldo Siswa&#10;(Tap NFC saja)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FEFCBF;strokeColor=#D69E2E;strokeWidth=1.5;fontColor=#975A16;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="440" y="260" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="UC9" value="Lihat Riwayat&#10;Penjualan Stan" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FEFCBF;strokeColor=#D69E2E;strokeWidth=1.5;fontColor=#975A16;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="440" y="330" width="150" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ===== USE CASES: ADMIN KEUANGAN ===== -->
+        <mxCell id="UC10" value="Top-up Tunai Manual&#10;(Koperasi)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#E6FFFA;strokeColor=#319795;strokeWidth=1.5;fontColor=#234E52;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="440" y="410" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="UC11" value="Koreksi Saldo&#10;(Adjustment + Audit)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#E6FFFA;strokeColor=#319795;strokeWidth=1.5;fontColor=#234E52;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="440" y="480" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="UC12" value="Registrasi Kartu&#10;Siswa (USB Reader)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#E6FFFA;strokeColor=#319795;strokeWidth=1.5;fontColor=#234E52;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="440" y="550" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="UC13" value="Laporan Keuangan&#10;&amp; Export (PDF/Excel)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#E6FFFA;strokeColor=#319795;strokeWidth=1.5;fontColor=#234E52;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="440" y="620" width="160" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ===== USE CASES: SUPER ADMIN ===== -->
+        <mxCell id="UC14" value="CRUD Data&#10;Sekolah Mitra" style="ellipse;whiteSpace=wrap;html=1;fillColor=#E6FFFA;strokeColor=#319795;strokeWidth=1.5;fontColor=#234E52;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="440" y="700" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="UC15" value="CRUD Pengguna&#10;&amp; Role" style="ellipse;whiteSpace=wrap;html=1;fillColor=#E6FFFA;strokeColor=#319795;strokeWidth=1.5;fontColor=#234E52;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="440" y="770" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="UC16" value="Monitoring Live&#10;Audit Log" style="ellipse;whiteSpace=wrap;html=1;fillColor=#E6FFFA;strokeColor=#319795;strokeWidth=1.5;fontColor=#234E52;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="440" y="840" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="UC17" value="Konfigurasi Sistem&#10;Global" style="ellipse;whiteSpace=wrap;html=1;fillColor=#E6FFFA;strokeColor=#319795;strokeWidth=1.5;fontColor=#234E52;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="440" y="910" width="150" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ===== ASSOCIATIONS: SISWA ===== -->
+        <mxCell id="a_s2" style="edgeStyle=none;html=1;strokeColor=#3182CE;strokeWidth=1;endArrow=none;" edge="1" parent="1" source="ac_siswa" target="UC2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a_s3" style="edgeStyle=none;html=1;strokeColor=#3182CE;strokeWidth=1;endArrow=none;" edge="1" parent="1" source="ac_siswa" target="UC3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a_s4" style="edgeStyle=none;html=1;strokeColor=#3182CE;strokeWidth=1;endArrow=none;" edge="1" parent="1" source="ac_siswa" target="UC4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a_s5" style="edgeStyle=none;html=1;strokeColor=#3182CE;strokeWidth=1;endArrow=none;" edge="1" parent="1" source="ac_siswa" target="UC5"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- ===== ASSOCIATIONS: ORANG TUA ===== -->
+        <mxCell id="a_o1" style="edgeStyle=none;html=1;strokeColor=#3182CE;strokeWidth=1;endArrow=none;" edge="1" parent="1" source="ac_ortu" target="UC3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a_o2" style="edgeStyle=none;html=1;strokeColor=#3182CE;strokeWidth=1;endArrow=none;" edge="1" parent="1" source="ac_ortu" target="UC18"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a_o3" style="edgeStyle=none;html=1;strokeColor=#3182CE;strokeWidth=1;endArrow=none;" edge="1" parent="1" source="ac_ortu" target="UC19"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- ===== ASSOCIATIONS: PETUGAS KANTIN ===== -->
+        <mxCell id="a_p2" style="edgeStyle=none;html=1;strokeColor=#D69E2E;strokeWidth=1;endArrow=none;" edge="1" parent="1" source="ac_petugas" target="UC6"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a_p3" style="edgeStyle=none;html=1;strokeColor=#D69E2E;strokeWidth=1;endArrow=none;" edge="1" parent="1" source="ac_petugas" target="UC7"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a_p4" style="edgeStyle=none;html=1;strokeColor=#D69E2E;strokeWidth=1;endArrow=none;" edge="1" parent="1" source="ac_petugas" target="UC8"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a_p5" style="edgeStyle=none;html=1;strokeColor=#D69E2E;strokeWidth=1;endArrow=none;" edge="1" parent="1" source="ac_petugas" target="UC9"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- ===== ASSOCIATIONS: ADMIN KEUANGAN ===== -->
+        <mxCell id="a_a2" style="edgeStyle=none;html=1;strokeColor=#319795;strokeWidth=1;endArrow=none;" edge="1" parent="1" source="ac_admin" target="UC10"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a_a3" style="edgeStyle=none;html=1;strokeColor=#319795;strokeWidth=1;endArrow=none;" edge="1" parent="1" source="ac_admin" target="UC11"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a_a4" style="edgeStyle=none;html=1;strokeColor=#319795;strokeWidth=1;endArrow=none;" edge="1" parent="1" source="ac_admin" target="UC12"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a_a5" style="edgeStyle=none;html=1;strokeColor=#319795;strokeWidth=1;endArrow=none;" edge="1" parent="1" source="ac_admin" target="UC13"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- ===== ASSOCIATIONS: SUPER ADMIN ===== -->
+        <mxCell id="a_sa2" style="edgeStyle=none;html=1;strokeColor=#319795;strokeWidth=1;endArrow=none;" edge="1" parent="1" source="ac_super" target="UC14"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a_sa3" style="edgeStyle=none;html=1;strokeColor=#319795;strokeWidth=1;endArrow=none;" edge="1" parent="1" source="ac_super" target="UC15"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a_sa4" style="edgeStyle=none;html=1;strokeColor=#319795;strokeWidth=1;endArrow=none;" edge="1" parent="1" source="ac_super" target="UC16"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a_sa5" style="edgeStyle=none;html=1;strokeColor=#319795;strokeWidth=1;endArrow=none;" edge="1" parent="1" source="ac_super" target="UC17"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,444 @@
+{
+  "projectName": "Sistem Kantin Digital",
+  "techStack": "Flutter (Mobile & Web) + Supabase (PostgreSQL DB) + Midtrans PG",
+  "globalStyling": {
+    "fontFamily": "Segoe UI",
+    "shadows": false,
+    "themeColors": {
+      "siswa_ortu": {
+        "fill": "#DAE8FC",
+        "stroke": "#6C8EBF",
+        "text": "#0A2540",
+        "emoji": "🔵"
+      },
+      "petugas_kasir": {
+        "fill": "#FFE6CC",
+        "stroke": "#D79B00",
+        "text": "#5A3200",
+        "emoji": "🟡"
+      },
+      "admin_keuangan": {
+        "fill": "#D5E8D4",
+        "stroke": "#72B095",
+        "text": "#0A3F2C",
+        "emoji": "🟢"
+      },
+      "system_backend": {
+        "fill": "#E6F2F2",
+        "stroke": "#0E8A8A",
+        "text": "#0E8A8A",
+        "emoji": "⚙️"
+      },
+      "success_state": {
+        "fill": "#C6F6D5",
+        "stroke": "#38A169",
+        "text": "#22543D",
+        "emoji": "✅"
+      },
+      "fail_state": {
+        "fill": "#FED7D7",
+        "stroke": "#E53E3E",
+        "text": "#742A2A",
+        "emoji": "❌"
+      }
+    }
+  },
+  "diagrams": [
+    {
+      "id": "01",
+      "title": "Activity Diagram — Sistem Kantin Digital",
+      "type": "activity_swimlane",
+      "description": "Menampilkan alur aktivitas operasional top-up online, jajan NFC, dan administrasi keuangan manual.",
+      "swimlanes": [
+        { "id": "swim1", "name": "SISWA / ORANG TUA", "color": "siswa_ortu" },
+        { "id": "swim2", "name": "PETUGAS KANTIN", "color": "petugas_kasir" },
+        { "id": "swim3", "name": "ADMIN KEUANGAN", "color": "admin_keuangan" }
+      ],
+      "nodes": [
+        { "id": "100", "label": "Start", "shape": "start_ellipse", "swimlane": "swim1" },
+        { "id": "101", "label": "Pilih Aksi / Jalur transaksi", "shape": "decision_rhombus", "swimlane": "swim1", "emoji": "❓" },
+        { "id": "102", "label": "Pilih nominal jajan & bayar via App", "shape": "action_rounded_rect", "swimlane": "swim1", "color": "siswa_ortu", "emoji": "📱" },
+        { "id": "103", "label": "Proses transaksi pembayaran (Midtrans)", "shape": "action_rounded_rect", "swimlane": "swim1", "color": "siswa_ortu", "emoji": "💳" },
+        { "id": "104", "label": "Update saldo & kirim push notifikasi", "shape": "action_rounded_rect", "swimlane": "swim1", "color": "success_state", "emoji": "🔔" },
+        { "id": "105", "label": "Tap kartu NFC di kantin", "shape": "action_rounded_rect", "swimlane": "swim1", "color": "siswa_ortu", "emoji": "🪪" },
+        { "id": "106", "label": "Pilih menu jajan & input tambahan di POS App", "shape": "action_rounded_rect", "swimlane": "swim2", "color": "petugas_kasir", "emoji": "🛍️" },
+        { "id": "107", "label": "Scan kartu NFC siswa", "shape": "action_rounded_rect", "swimlane": "swim2", "color": "petugas_kasir", "emoji": "📲" },
+        { "id": "108", "label": "Saldo Cukup?", "shape": "decision_rhombus", "swimlane": "swim2", "emoji": "⚖️" },
+        { "id": "109", "label": "Potong saldo & simpan transaksi DB", "shape": "action_rounded_rect", "swimlane": "swim2", "color": "success_state", "emoji": "💾" },
+        { "id": "110", "label": "Terima notifikasi jajan sukses", "shape": "action_rounded_rect", "swimlane": "swim1", "color": "siswa_ortu", "emoji": "📩" },
+        { "id": "111", "label": "Transaksi ditolak (saldo kurang)", "shape": "action_rounded_rect", "swimlane": "swim2", "color": "fail_state", "emoji": "⚠️" },
+        { "id": "112", "label": "Terima uang tunai & verifikasi NIS", "shape": "action_rounded_rect", "swimlane": "swim3", "color": "admin_keuangan", "emoji": "💵" },
+        { "id": "113", "label": "Input nominal top-up tunai", "shape": "action_rounded_rect", "swimlane": "swim3", "color": "admin_keuangan", "emoji": "✍️" },
+        { "id": "114", "label": "Input nominal koreksi & alasan wajib", "shape": "action_rounded_rect", "swimlane": "swim3", "color": "admin_keuangan", "emoji": "✏️" },
+        { "id": "115", "label": "Simpan update & buat entri audit logs", "shape": "action_rounded_rect", "swimlane": "swim3", "color": "success_state", "emoji": "📝" },
+        { "id": "116", "label": "End", "shape": "end_double_ellipse", "swimlane": "swim2" }
+      ],
+      "connections": [
+        { "from": "100", "to": "101" },
+        { "from": "101", "to": "102", "label": "Top-up Online" },
+        { "from": "102", "to": "103" },
+        { "from": "103", "to": "104" },
+        { "from": "104", "to": "116", "routing": "Out outer left margin" },
+        { "from": "101", "to": "105", "label": "Belanja NFC" },
+        { "from": "105", "to": "106" },
+        { "from": "106", "to": "107" },
+        { "from": "107", "to": "108" },
+        { "from": "108", "to": "109", "label": "Ya" },
+        { "from": "109", "to": "110" },
+        { "from": "110", "to": "116" },
+        { "from": "108", "to": "111", "label": "Tidak" },
+        { "from": "111", "to": "116" },
+        { "from": "101", "to": "112", "label": "Top-up Tunai TU", "routing": "Exit right corner -> Go right -> Go up to y=100 -> Go right -> Enter 112 top" },
+        { "from": "101", "to": "114", "label": "Koreksi", "routing": "Exit right corner -> Go right -> Go up to y=80 -> Go right -> Enter 114 top" },
+        { "from": "112", "to": "113" },
+        { "from": "113", "to": "115" },
+        { "from": "114", "to": "115" },
+        { "from": "115", "to": "116", "routing": "Out outer right margin" }
+      ]
+    },
+    {
+      "id": "02",
+      "title": "Class Diagram — Sistem Kantin Digital",
+      "type": "class_diagram",
+      "description": "Struktur objek data logis sistem kantin beserta model enum yang digunakan.",
+      "nodes": [
+        { "id": "C_User", "label": "User", "attributes": ["id: UUID <<PK>>", "email: String <<UK>>", "password_hash: String", "full_name: String", "role: UserRole", "is_active: Boolean", "created_at: Timestamp"], "color": "system_backend", "emoji": "👤" },
+        { "id": "C_School", "label": "School", "attributes": ["id: UUID <<PK>>", "name: String", "address: String", "logo_url: String", "is_active: Boolean", "created_at: Timestamp"], "color": "system_backend", "emoji": "🏫" },
+        { "id": "C_Student", "label": "Student", "attributes": ["id: UUID <<PK>>", "user_id: UUID <<FK>>", "school_id: UUID <<FK>>", "nis: String <<UK>>", "balance: Decimal", "card_uid: String <<UK>>", "is_card_frozen: Boolean", "is_active: Boolean"], "color": "siswa_ortu", "emoji": "🎓" },
+        { "id": "C_CanteenOperator", "label": "CanteenOperator", "attributes": ["id: UUID <<PK>>", "user_id: UUID <<FK>>", "school_id: UUID <<FK>>", "stall_name: String", "is_active: Boolean"], "color": "petugas_kasir", "emoji": "🏪" },
+        { "id": "C_Product", "label": "Product", "attributes": ["id: UUID <<PK>>", "canteen_operator_id: UUID <<FK>>", "name: String", "price: Decimal", "image_url: String", "is_available: Boolean"], "color": "petugas_kasir", "emoji": "🍔" },
+        { "id": "C_Transaction", "label": "Transaction", "attributes": ["id: UUID <<PK>>", "student_id: UUID <<FK>>", "type: TxType", "amount: Decimal", "performed_by: UUID <<FK>>", "method: TxMethod", "status: TxStatus", "notes: String", "created_at: Timestamp"], "color": "admin_keuangan", "emoji": "💸" },
+        { "id": "C_TransactionItem", "label": "TransactionItem", "attributes": ["id: UUID <<PK>>", "transaction_id: UUID <<FK>>", "product_id: UUID <<FK>>", "name: String", "price: Decimal", "quantity: Int", "subtotal: Decimal"], "color": "admin_keuangan", "emoji": "🧾" },
+        { "id": "C_AuditLog", "label": "AuditLog", "attributes": ["id: UUID <<PK>>", "user_id: UUID <<FK>>", "action: String", "target_table: String", "target_id: UUID", "old_value: JSON", "new_value: JSON", "ip_address: String", "created_at: Timestamp"], "color": "admin_keuangan", "emoji": "📜" }
+      ],
+      "enums": [
+        { "name": "UserRole", "values": ["super_admin", "admin_keuangan", "siswa", "petugas_kantin"], "emoji": "🏷️" },
+        { "name": "TxType", "values": ["topup_online", "topup_cash", "purchase", "refund", "adjustment"], "emoji": "🏷️" },
+        { "name": "TxMethod", "values": ["midtrans", "cash", "nfc_tap", "manual"], "emoji": "🏷️" },
+        { "name": "TxStatus", "values": ["pending", "success", "failed", "refunded"], "emoji": "🏷️" }
+      ],
+      "connections": [
+        { "from": "C_User", "to": "C_Student", "label": "has (1 to 0..1)" },
+        { "from": "C_User", "to": "C_CanteenOperator", "label": "has (1 to 0..1)" },
+        { "from": "C_School", "to": "C_Student", "label": "enrolls (1 to *)" },
+        { "from": "C_School", "to": "C_CanteenOperator", "label": "employs (1 to *)" },
+        { "from": "C_CanteenOperator", "to": "C_Product", "label": "manages (1 to *)" },
+        { "from": "C_Student", "to": "C_Transaction", "label": "makes (1 to *)" },
+        { "from": "C_Transaction", "to": "C_TransactionItem", "label": "contains (1 to *)" },
+        { "from": "C_Product", "to": "C_TransactionItem", "label": "references (0..1 to *)" },
+        { "from": "C_User", "to": "C_AuditLog", "label": "generates (1 to *)" }
+      ]
+    },
+    {
+      "id": "03",
+      "title": "ER Diagram — Sistem Kantin Digital",
+      "type": "er_diagram",
+      "description": "Desain database PostgreSQL fisik dengan kunci PK, FK, UK dan constraint.",
+      "nodes": [
+        { "id": "E_users", "label": "users", "fields": ["PK id: uuid", "UK email: varchar", "password_hash: varchar", "full_name: varchar", "role: enum_role", "is_active: boolean", "created_at: timestamptz"], "color": "system_backend", "emoji": "🔑" },
+        { "id": "E_schools", "label": "schools", "fields": ["PK id: uuid", "name: varchar", "address: text", "logo_url: varchar", "is_active: boolean", "created_at: timestamptz"], "color": "system_backend", "emoji": "🏢" },
+        { "id": "E_students", "label": "students", "fields": ["PK id: uuid", "FK user_id: uuid", "FK school_id: uuid", "UK nis: varchar", "balance: numeric (>=0)", "UK card_uid: varchar", "is_card_frozen: boolean", "is_active: boolean"], "color": "siswa_ortu", "emoji": "🎒" },
+        { "id": "E_canteen_operators", "label": "canteen_operators", "fields": ["PK id: uuid", "FK user_id: uuid", "FK school_id: uuid", "stall_name: varchar", "is_active: boolean"], "color": "petugas_kasir", "emoji": "🏠" },
+        { "id": "E_products", "label": "products", "fields": ["PK id: uuid", "FK canteen_operator_id: uuid", "name: varchar", "price: numeric", "image_url: varchar", "is_available: boolean"], "color": "petugas_kasir", "emoji": "🍕" },
+        { "id": "E_transactions", "label": "transactions", "fields": ["PK id: uuid", "FK student_id: uuid", "type: enum_tx_type", "amount: numeric", "performed_by: uuid", "method: enum_tx_method", "status: enum_tx_status", "notes: text", "created_at: timestamptz"], "color": "admin_keuangan", "emoji": "📊" },
+        { "id": "E_transaction_items", "label": "transaction_items", "fields": ["PK id: uuid", "FK transaction_id: uuid", "FK product_id: uuid", "name: varchar", "price: numeric", "quantity: integer", "subtotal: numeric"], "color": "admin_keuangan", "emoji": "🏷️" },
+        { "id": "E_audit_logs", "label": "audit_logs", "fields": ["PK id: uuid", "FK user_id: uuid", "action: varchar", "target_table: varchar", "target_id: uuid", "old_value: jsonb", "new_value: jsonb", "ip_address: varchar", "created_at: timestamptz"], "color": "admin_keuangan", "emoji": "📒" }
+      ],
+      "connections": [
+        { "from": "E_users", "to": "E_students", "cardinality": "1 to 0..1" },
+        { "from": "E_users", "to": "E_canteen_operators", "cardinality": "1 to 0..1" },
+        { "from": "E_schools", "to": "E_students", "cardinality": "1 to many" },
+        { "from": "E_schools", "to": "E_canteen_operators", "cardinality": "1 to many" },
+        { "from": "E_canteen_operators", "to": "E_products", "cardinality": "1 to many" },
+        { "from": "E_students", "to": "E_transactions", "cardinality": "1 to many" },
+        { "from": "E_transactions", "to": "E_transaction_items", "cardinality": "1 to many" },
+        { "from": "E_products", "to": "E_transaction_items", "cardinality": "1 to many" },
+        { "from": "E_users", "to": "E_audit_logs", "cardinality": "1 to many" }
+      ]
+    },
+    {
+      "id": "04",
+      "title": "Sequence Diagram — Alur Transaksi NFC",
+      "type": "sequence_diagram",
+      "description": "Menampilkan validasi berlapis (client dan server-side) saat melakukan tap pembayaran kartu NFC.",
+      "lifelines": [
+        { "id": "Siswa", "label": "Siswa (Kartu NFC)", "color": "siswa_ortu", "emoji": "🪪" },
+        { "id": "POS", "label": "App POS Mobile (Kasir)", "color": "petugas_kasir", "emoji": "📱" },
+        { "id": "DB", "label": "Supabase DB (Backend)", "color": "system_backend", "emoji": "☁️" }
+      ],
+      "messages": [
+        { "from": "POS", "note": "Petugas memilih produk ke keranjang (Cart)", "emoji": "🛒" },
+        { "from": "Siswa", "to": "POS", "label": "1. Tap Kartu RFID/NFC", "emoji": "📡" },
+        { "from": "POS", "to": "DB", "label": "2. Query Saldo (Card UID)", "emoji": "🔍" },
+        { "from": "DB", "to": "POS", "label": "3. Return Nama & Saldo Terbaru", "emoji": "↩️" },
+        { "from": "POS", "note": "4. Cek local: Saldo >= Total Belanja?", "emoji": "⚖️" },
+        { "type": "alt", "conditions": [
+          { "name": "Saldo Cukup", "steps": [
+            { "from": "POS", "to": "DB", "label": "5. Jalankan Transaksi (ACID Stored Procedure)", "emoji": "⚡" },
+            { "from": "DB", "note": "6. Server validation: Validasi ulang harga riil & cek batas saldo", "emoji": "🔒" },
+            { "from": "DB", "to": "POS", "label": "7. Return Transaksi Sukses", "emoji": "✅" },
+            { "from": "POS", "to": "Siswa", "label": "8. Tampil Sukses & Getar HP", "emoji": "📲" },
+            { "from": "DB", "to": "Siswa", "label": "9. Push Notification ke HP Siswa", "emoji": "🔔" }
+          ]},
+          { "name": "Saldo Tidak Cukup", "steps": [
+            { "from": "POS", "to": "Siswa", "label": "Layar POS Merah - Transaksi Ditolak", "emoji": "❌" }
+          ]}
+        ]}
+      ]
+    },
+    {
+      "id": "05",
+      "title": "Timeline — Roadmap Pengembangan Agile (6 Minggu)",
+      "type": "gantt_chart",
+      "description": "Roadmap pembagian sprint mingguan untuk perancangan, koding, integrasi, dan perilisan.",
+      "sprints": [
+        {
+          "name": "Sprint 1 (W01-W02)",
+          "tasks": [
+            { "name": "Planning & DB Setup", "duration": "3 days", "color": "#DAE8FC", "emoji": "📋" },
+            { "name": "Setup Supabase Schema + RLS", "duration": "4 days", "color": "#FFE6CC", "emoji": "🔒" },
+            { "name": "Auth & Multi-Role Routing", "duration": "5 days", "color": "#D5E8D4", "emoji": "🔐" }
+          ]
+        },
+        {
+          "name": "Sprint 2 (W03-W04)",
+          "tasks": [
+            { "name": "POS Catalog & Cart UI", "duration": "5 days", "color": "#FFE6CC", "emoji": "🛍️" },
+            { "name": "NFC Tap Checkout Core", "duration": "5 days", "color": "#DAE8FC", "emoji": "⚡" }
+          ]
+        },
+        {
+          "name": "Sprint 3 (W05-W06)",
+          "tasks": [
+            { "name": "Midtrans Integration", "duration": "4 days", "color": "#E1D5E7", "emoji": "💳" },
+            { "name": "Push Notification & Reports", "duration": "3 days", "color": "#FFE6CC", "emoji": "📈" },
+            { "name": "QA, Polish & Deploy", "duration": "5 days", "color": "#D5E8D4", "emoji": "🚀" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "06",
+      "title": "Use Case Diagram — Sistem Kantin Digital",
+      "type": "use_case",
+      "description": "Hubungan interaksi fungsional antara seluruh aktor dengan use case sistem.",
+      "actors": [
+        { "id": "Siswa", "color": "siswa_ortu", "emoji": "👦" },
+        { "id": "Ortu", "color": "siswa_ortu", "emoji": "👩" },
+        { "id": "Petugas", "color": "petugas_kasir", "emoji": "👵" },
+        { "id": "Admin", "color": "admin_keuangan", "emoji": "👨‍💼" },
+        { "id": "SuperAdmin", "color": "admin_keuangan", "emoji": "👑" }
+      ],
+      "usecases": [
+        { "id": "UC1", "label": "Login & Autentikasi" },
+        { "id": "UC2", "label": "Cek Saldo & Histori Jajan", "stereotype": "siswa" },
+        { "id": "UC3", "label": "Top-up Online (Midtrans)", "stereotype": "siswa" },
+        { "id": "UC4", "label": "Link & Freeze Kartu NFC", "stereotype": "siswa" },
+        { "id": "UC5", "label": "POS Checkout (Belanja)", "stereotype": "petugas" },
+        { "id": "UC6", "label": "Kelola Menu Stan (CRUD)", "stereotype": "petugas" },
+        { "id": "UC7", "label": "Top-up Tunai Manual", "stereotype": "admin" },
+        { "id": "UC8", "label": "Koreksi Saldo Manual", "stereotype": "admin" },
+        { "id": "UC9", "label": "CRUD Data Siswa & Operator", "stereotype": "admin" },
+        { "id": "UC10", "label": "Monitoring Live Audit Log", "stereotype": "admin" }
+      ],
+      "associations": [
+        { "actor": "Siswa", "usecase": ["UC1", "UC2", "UC3", "UC4"] },
+        { "actor": "Ortu", "usecase": ["UC2", "UC3"] },
+        { "actor": "Petugas", "usecase": ["UC1", "UC2", "UC5", "UC6"] },
+        { "actor": "Admin", "usecase": ["UC1", "UC7", "UC8", "UC9"] },
+        { "actor": "SuperAdmin", "usecase": ["UC1", "UC9", "UC10"] }
+      ]
+    },
+    {
+      "id": "07",
+      "title": "Context Diagram (DFD Level 0) — Sistem Kantin Digital",
+      "type": "context_diagram",
+      "description": "Aliran data masuk dan keluar dari external entity ke pusat sistem kantin.",
+      "centralSystem": { "id": "system", "label": "SISTEM KANTIN\nDIGITAL", "shape": "double_ellipse", "emoji": "💻" },
+      "entities": [
+        { "id": "AC_Siswa", "label": "Siswa", "color": "siswa_ortu", "emoji": "👦" },
+        { "id": "AC_Ortu", "label": "Orang Tua", "color": "siswa_ortu", "emoji": "👩" },
+        { "id": "AC_Petugas", "label": "Petugas Kantin", "color": "petugas_kasir", "emoji": "👵" },
+        { "id": "AC_Admin", "label": "Admin Keuangan", "color": "admin_keuangan", "emoji": "👨‍💼" },
+        { "id": "AC_Super", "label": "Super Admin", "color": "admin_keuangan", "emoji": "👑" }
+      ],
+      "flows": [
+        { "from": "AC_Siswa", "to": "system", "label": "In: Req Jajan / UID NFC\nOut: Info Saldo, Notifikasi", "bidirectional": true, "color": "siswa_ortu" },
+        { "from": "AC_Ortu", "to": "system", "label": "In: Cek NIS, Bayar Top-up\nOut: E-Receipt, Saldo", "bidirectional": true, "color": "siswa_ortu" },
+        { "from": "AC_Petugas", "to": "system", "label": "In: Pilih Menu, Total POS\nOut: Data Siswa, Transaksi Sukses", "bidirectional": true, "color": "petugas_kasir" },
+        { "from": "AC_Admin", "to": "system", "label": "In: Top-up Cash, Koreksi Saldo\nOut: Laporan Keuangan, Struk", "bidirectional": true, "color": "admin_keuangan" },
+        { "from": "AC_Super", "to": "system", "label": "In: Blokir User, CRUD Sekolah\nOut: Live Audit Logs, Stats", "bidirectional": true, "color": "admin_keuangan" }
+      ]
+    },
+    {
+      "id": "08",
+      "title": "Architecture Diagram — Sistem Kantin Digital",
+      "type": "architecture_diagram",
+      "description": "Representasi visual arsitektur tier-ke-tier client-server.",
+      "tiers": [
+        {
+          "name": "CLIENT TIER (Aplikasi Flutter & Perangkat Keras)",
+          "components": [
+            { "id": "cl_siswa", "label": "Siswa App (Flutter Mobile)", "color": "siswa_ortu", "emoji": "📱" },
+            { "id": "cl_kantin", "label": "Petugas POS App (Flutter Mobile / NFC)", "color": "petugas_kasir", "emoji": "🛒" },
+            { "id": "cl_admin", "label": "Admin Web Portal (Flutter Web Desktop)", "color": "admin_keuangan", "emoji": "💻" },
+            { "id": "cl_esp", "label": "ESP32 Hardware (RFID RC522 Kasir)", "emoji": "⚙️" }
+          ]
+        },
+        {
+          "name": "BACKEND TIER (Supabase Cloud Services)",
+          "components": [
+            { "id": "sb_auth", "label": "Supabase Auth (Email & Password)", "color": "system_backend", "emoji": "🔑" },
+            { "id": "sb_func", "label": "Edge Functions (Midtrans Webhook)", "color": "system_backend", "emoji": "⚡" },
+            { "id": "sb_real", "label": "Realtime Channel (Live Notif Push)", "color": "system_backend", "emoji": "🔔" },
+            { "id": "sb_db", "label": "PostgreSQL DB (12 Tabel + RLS)", "color": "system_backend", "emoji": "🗄️" }
+          ]
+        },
+        {
+          "name": "THIRD PARTY INTEGRATION TIER",
+          "components": [
+            { "id": "tp_mid", "label": "Midtrans Payment Gateway", "emoji": "💳" },
+            { "id": "tp_fcm", "label": "Firebase Cloud Messaging (FCM)", "emoji": "📡" }
+          ]
+        }
+      ],
+      "connections": [
+        { "from": "cl_siswa", "to": "sb_auth", "label": "HTTPS Auth" },
+        { "from": "cl_kantin", "to": "sb_db", "label": "NFC Checkout" },
+        { "from": "cl_admin", "to": "sb_db", "label": "REST API" },
+        { "from": "cl_esp", "to": "sb_db", "label": "HTTP POST" },
+        { "from": "sb_auth", "to": "sb_db", "label": "ACID Update" },
+        { "from": "tp_mid", "to": "sb_func", "label": "Webhook" },
+        { "from": "sb_func", "to": "sb_db", "label": "Trigger" },
+        { "from": "sb_db", "to": "tp_fcm", "label": "Push" },
+        { "from": "tp_fcm", "to": "sb_real", "label": "Notify" },
+        { "from": "sb_real", "to": "cl_siswa", "label": "Receive" }
+      ]
+    },
+    {
+      "id": "09",
+      "title": "Agile Scrum Development Method — Sistem Kantin Digital",
+      "type": "scrum_flow",
+      "description": "Siklus iterasi Agile Scrum pengembangan produk.",
+      "nodes": [
+        { "id": "scr1", "label": "Product Backlog (Daftar semua fitur & prioritas)", "shape": "rect", "color": "petugas_kasir", "emoji": "📋" },
+        { "id": "scr2", "label": "Sprint Planning (Pilih fitur untuk sprint ini)", "shape": "ellipse", "color": "siswa_ortu", "emoji": "📅" },
+        { "id": "scr3", "label": "Sprint Backlog (Task breakdown 2 minggu)", "shape": "rect", "color": "petugas_kasir", "emoji": "📝" },
+        { "id": "scr4", "label": "Sprint Cycle (2 Minggu) Coding, Testing, Integration", "shape": "large_circle", "color": "system_backend", "emoji": "♻️" },
+        { "id": "scr_daily", "label": "Daily Standup (15 Menit) Progress, Blocker, Plan", "shape": "ellipse", "color": "success_state", "emoji": "👥" },
+        { "id": "scr5", "label": "Working App Increment (Versi aplikasi yang berjalan)", "shape": "rect", "color": "petugas_kasir", "emoji": "📱" },
+        { "id": "scr6", "label": "Sprint Review & Retrospective (Demo & Evaluasi)", "shape": "ellipse", "color": "siswa_ortu", "emoji": "🔍" }
+      ],
+      "connections": [
+        { "from": "scr1", "to": "scr2", "label": "Rencana" },
+        { "from": "scr2", "to": "scr3", "label": "Definisi Task" },
+        { "from": "scr3", "to": "scr4", "label": "Mulai" },
+        { "from": "scr4", "to": "scr_daily", "label": "Daily Sync", "bidirectional": true },
+        { "from": "scr4", "to": "scr5", "label": "Deliver" },
+        { "from": "scr4", "to": "scr6" },
+        { "from": "scr6", "to": "scr1", "label": "Feedback Loop", "routing": "Bottom wrap-around" }
+      ]
+    },
+    {
+      "id": "10",
+      "title": "System Features Map — Fitur Utama Kantin Digital",
+      "type": "mindmap",
+      "description": "Pemetaan struktur modular fitur aplikasi per platform.",
+      "nodes": [
+        { "id": "root", "label": "FITUR UTAMA KANTIN DIGITAL", "color": "system_backend", "emoji": "🌟" },
+        { "id": "P1", "label": "1. Modul Siswa (Mobile)", "color": "siswa_ortu", "parent": "root", "emoji": "👦", "children": [
+          { "label": "Cek Saldo & Histori", "emoji": "📊" },
+          { "label": "Top-up Midtrans VA/QRIS", "emoji": "💳" },
+          { "label": "Lock/Freeze Kartu NFC", "emoji": "❄️" },
+          { "label": "Profil & Ubah Password", "emoji": "⚙️" }
+        ]},
+        { "id": "P2", "label": "2. Modul Kasir (Mobile)", "color": "petugas_kasir", "parent": "root", "emoji": "👵", "children": [
+          { "label": "POS Katalog Belanja", "emoji": "🛍️" },
+          { "label": "Extra Charge + Catatan", "emoji": "✍️" },
+          { "label": "Tap NFC Checkout & Cek Saldo", "emoji": "📲" },
+          { "label": "CRUD Menu & Stok", "emoji": "🥗" }
+        ]},
+        { "id": "P3", "label": "3. Admin Sekolah (Web)", "color": "admin_keuangan", "parent": "root", "emoji": "👨‍💼", "children": [
+          { "label": "Top-up Tunai Koperasi", "emoji": "💵" },
+          { "label": "Adjust Saldo (Audit Log)", "emoji": "✏️" },
+          { "label": "Link UID via USB Reader", "emoji": "🔗" },
+          { "label": "Laporan Keuangan", "emoji": "📈" }
+        ]},
+        { "id": "P4", "label": "4. Master Admin (Web)", "color": "admin_keuangan", "parent": "root", "emoji": "👑", "children": [
+          { "label": "CRUD Data Sekolah Mitra", "emoji": "🏫" },
+          { "label": "Live Timeline Audit Log", "emoji": "📜" },
+          { "label": "Blokir Akun Instan", "emoji": "🚫" }
+        ]},
+        { "id": "P5", "label": "5. Orang Tua (Web)", "color": "siswa_ortu", "parent": "root", "emoji": "👩", "children": [
+          { "label": "Pantau Jajan NIS Anak", "emoji": "👁️‍🗨️" },
+          { "label": "Top-up Instan Tanpa Login", "emoji": "⚡" }
+        ]}
+      ]
+    },
+    {
+      "id": "11",
+      "title": "Workflow Navigation — Alur Layar per Platform",
+      "type": "screen_navigation",
+      "description": "Workflow perpindahan sitemap screen di masing-masing platform.",
+      "groups": [
+        {
+          "name": "Siswa App (Mobile)",
+          "color": "siswa_ortu",
+          "screens": [
+            { "id": "S_LOGIN", "label": "Login Screen", "emoji": "🔑" },
+            { "id": "S_DASH", "label": "Dashboard (Home)", "emoji": "🏠" },
+            { "id": "S_TOP", "label": "Top-up Nominal Grid", "emoji": "🔢" },
+            { "id": "S_SNAP", "label": "Midtrans Snap Webview", "emoji": "🌐" },
+            { "id": "S_HIST", "label": "History List Screen", "emoji": "📜" },
+            { "id": "S_PROF", "label": "Account Profile Screen", "emoji": "👤" }
+          ],
+          "transitions": [
+            { "from": "S_LOGIN", "to": "S_DASH", "label": "Login OK" },
+            { "from": "S_DASH", "to": "S_TOP", "label": "Top-up" },
+            { "from": "S_TOP", "to": "S_SNAP", "label": "Bayar" },
+            { "from": "S_DASH", "to": "S_HIST", "label": "Riwayat", "routing": "Out left margin -> bypass top/snap -> enter s_hist" },
+            { "from": "S_DASH", "to": "S_PROF", "label": "Profil", "routing": "Out right margin -> bypass top/snap/hist -> enter s_prof" }
+          ]
+        },
+        {
+          "name": "Petugas App (Mobile)",
+          "color": "petugas_kasir",
+          "screens": [
+            { "id": "K_LOGIN", "label": "Login Kasir", "emoji": "🔑" },
+            { "id": "K_POS", "label": "POS Catalog Grid", "emoji": "🛍️" },
+            { "id": "K_CART", "label": "Cart & Custom Charge", "emoji": "🛒" },
+            { "id": "K_NFC", "label": "NFC Payment Modal", "emoji": "📡" },
+            { "id": "K_CRUD", "label": "Menu Management (CRUD)", "emoji": "🥗" },
+            { "id": "K_CEK", "label": "Cek Saldo Saja Screen", "emoji": "🔍" }
+          ],
+          "transitions": [
+            { "from": "K_LOGIN", "to": "K_POS", "label": "Login OK" },
+            { "from": "K_POS", "to": "K_CART", "label": "Pilih Menu" },
+            { "from": "K_CART", "to": "K_NFC", "label": "Checkout" },
+            { "from": "K_POS", "to": "K_CRUD", "label": "Kelola Menu", "routing": "Out left margin -> bypass cart/nfc -> enter k_crud" },
+            { "from": "K_POS", "to": "K_CEK", "label": "Cek Saldo", "routing": "Out right margin -> bypass cart/nfc/crud -> enter k_cek" }
+          ]
+        },
+        {
+          "name": "Admin Web Portal",
+          "color": "admin_keuangan",
+          "screens": [
+            { "id": "A_LOGIN", "label": "Web Login Portal", "emoji": "🔑" },
+            { "id": "A_DASH", "label": "Dashboard Summary", "emoji": "📊" },
+            { "id": "A_TOP", "label": "Top-up Tunai (TU)", "emoji": "💵" },
+            { "id": "A_ADJ", "label": "Koreksi Saldo Form", "emoji": "✏️" },
+            { "id": "A_AUD", "label": "Audit Logs Viewer", "emoji": "📜" },
+            { "id": "A_USER", "label": "Manage Siswa & Kartu", "emoji": "🪪" }
+          ],
+          "transitions": [
+            { "from": "A_LOGIN", "to": "A_DASH", "label": "Login OK" },
+            { "from": "A_DASH", "to": "A_TOP", "label": "Top-up" },
+            { "from": "A_DASH", "to": "A_ADJ", "label": "Koreksi", "routing": "Out left margin -> bypass a_top -> enter a_adj" },
+            { "from": "A_DASH", "to": "A_AUD", "label": "Audit", "routing": "Out right margin -> bypass a_top/a_adj -> enter a_aud" },
+            { "from": "A_DASH", "to": "A_USER", "label": "Siswa", "routing": "Out left margin -> bypass a_top/a_adj/a_aud -> enter a_user" }
+          ]
+        }
+      ]
+    }
+  ]
+}

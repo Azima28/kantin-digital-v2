@@ -1,0 +1,101 @@
+# PROMPT DIAGRAM: Pembuatan Mindmap Analisis Kebutuhan Sistem (Requirement Analysis)
+
+Tugas Anda adalah merancang diagram konsep/mindmap **"Analisis Kebutuhan Sistem (Requirement Analysis) — Sistem Kantin Digital"** dalam format XML Draw.io (.drawio) dari awal. Gunakan deskripsi spesifikasi tata letak, komponen, dan hubungan aliran di bawah ini untuk membuat diagram yang rapi, simetris, dan terstruktur secara visual.
+
+---
+
+## 🚨 PERINGATAN KERAS & ATURAN UTAMA:
+* **DILARANG KERAS** menulis parameter koordinat, ukuran pixel (seperti "120px", "90px", dll), nama properti XML (seperti `exitX`, `entryX`, `x=`, `y=`), atau instruksi layout sebagai **label teks** pada diagram.
+* Semua panduan ukuran, koordinat, dan port di bawah ini harus **diterapkan secara langsung ke dalam properti XML elemen** (misalnya pada atribut `x`, `y`, `width`, `height` di tag `<mxGeometry>`), **BUKAN ditulis sebagai teks label** di dalam kotak atau di luar garis!
+
+---
+
+## 🏛️ PART 1: STRUKTUR & KONSEPTUAL DIAGRAM (MINDMAP)
+
+Mindmap ini bercabang secara horizontal dari satu titik pusat (Root Node) ke arah kiri dan kanan:
+* **Pusat (Root Node)**: Fokus utama kebutuhan Kantin Digital.
+* **Cabang Kiri (Branch 1 - Masalah)**: Memaparkan kendala uang tunai dan pencatatan manual dari sisi siswa, orang tua, penjual, dan sekolah.
+* **Cabang Kanan Atas (Branch 2 - Solusi)**: Fitur utama berupa pembayaran NFC, kontrol saldo, POS kasir, dan dashboard pemantauan.
+* **Cabang Kanan Bawah (Branch 3 - Keamanan)**: Keamanan transaksi data di sisi Supabase database, RLS security, dan audit logging.
+
+---
+
+## 🎨 PART 2: PETUNJUK LAYOUT VISUAL (MINDMAP GRID MAP)
+
+Terapkan tata letak simetris berikut untuk penempatan elemen:
+
+```text
+  [Daun Masalah 1] (y=200)
+  [Daun Masalah 2] (y=270)                     [Daun Solusi 1] (y=100)
+  [Daun Masalah 3] (y=340)  <─── [Cabang 1]    [Daun Solusi 2] (y=160)  <─── [Cabang 2]
+  [Daun Masalah 4] (y=410)        (y=320)      [Daun Solusi 3] (y=220)        (y=200)
+                                    ▲          [Daun Solusi 4] (y=280)
+                                    │                     ▲
+                                    │                     │
+                                [Root Pusat] ─────────────┴─────────────┐
+                                  (y=300)                               │
+                                                                        ▼
+                                                       [Daun Aman 1] (y=380)
+                                                       [Daun Aman 2] (y=455)  <─── [Cabang 3]
+                                                       [Daun Aman 3] (y=530)        (y=440)
+```
+
+---
+
+## 📊 PART 3: DETAIL TATA LETAK & GEOMETRI DIAGRAM
+
+### 📍 A. Pusat (Root Node)
+* **Pusat (`root`)**: Oval, Geometri: `x=500, y=300, width=160, height=100`. Teks: `🌟 Kebutuhan\nKantin Digital`.
+
+### 📍 B. Cabang Kiri: Masalah (X-Axis: 220 s/d 10)
+* **Cabang 1 (`b1`)**: Kotak tumpul, Geometri: `x=220, y=320, width=180, height=60`. Teks: `⚠️ Masalah Pengguna\n& Sekolah`.
+* **Daun Masalah 1 (`l1_1`)**: Kotak tumpul, Geometri: `x=10, y=200, width=170, height=45`. Teks: `Siswa: Uang tunai sering hilang\natau jajan berlebihan`.
+* **Daun Masalah 2 (`l1_2`)**: Kotak tumpul, Geometri: `x=10, y=270, width=170, height=45`. Teks: `Orang Tua: Sulit memantau\n& mengontrol jajan anak`.
+* **Daun Masalah 3 (`l1_3`)**: Kotak tumpul, Geometri: `x=10, y=340, width=170, height=45`. Teks: `Penjual: Pencatatan kas manual\nlambat & rawan salah hitung`.
+* **Daun Masalah 4 (`l1_4`)**: Kotak tumpul, Geometri: `x=10, y=410, width=170, height=45`. Teks: `Sekolah: Transaksi tidak terpusat\n& risiko korupsi internal`.
+
+### 📍 C. Cabang Kanan Atas: Solusi (X-Axis: 760 s/d 980)
+* **Cabang 2 (`b2`)**: Kotak tumpul, Geometri: `x=760, y=200, width=180, height=60`. Teks: `💡 Solusi &\nFitur Utama`.
+* **Daun Solusi 1 (`l2_1`)**: Kotak tumpul, Geometri: `x=980, y=100, width=180, height=45`. Teks: `Transaksi Tap-to-Pay NFC:\nCashless & checkout < 2 detik`.
+* **Daun Solusi 2 (`l2_2`)**: Kotak tumpul, Geometri: `x=980, y=160, width=180, height=45`. Teks: `E-Wallet Control: Limit jajan\nharian & fitur freeze kartu`.
+* **Daun Solusi 3 (`l2_3`)**: Kotak tumpul, Geometri: `x=980, y=220, width=180, height=45`. Teks: `POS Mobile Kasir: Katalog produk\nmeminimalisir salah input harga`.
+* **Daun Solusi 4 (`l2_4`)**: Kotak tumpul, Geometri: `x=980, y=280, width=180, height=45`. Teks: `Dashboard Pemantauan: Cek saldo\n& riwayat belanja real-time`.
+
+### 📍 D. Cabang Kanan Bawah: Keamanan (X-Axis: 760 s/d 980)
+* **Cabang 3 (`b3`)**: Kotak tumpul, Geometri: `x=760, y=440, width=180, height=60`. Teks: `🔒 Transparansi\n& Keamanan`.
+* **Daun Keamanan 1 (`l3_1`)**: Kotak tumpul, Geometri: `x=980, y=380, width=180, height=45`. Teks: `ACID Stored Procedure: Proteksi\nintegrity saldo & validasi server`.
+* **Daun Keamanan 2 (`l3_2`)**: Kotak tumpul, Geometri: `x=980, y=455, width=180, height=45`. Teks: `RLS Security: Otorisasi data\ndatabase aman multi-role`.
+* **Daun Keamanan 3 (`l3_3`)**: Kotak tumpul, Geometri: `x=980, y=530, width=180, height=45`. Teks: `Live Audit Logs: Rekam aksi manual\nadmin keuangan (Insert-Only)`.
+
+---
+
+## 🎨 PART 4: DETAIL PENGATURAN GAYA VISUAL (STYLING DESIGNS)
+
+* **Font**: Gunakan font `"Segoe UI"` atau `"Arial"`, ukuran font 10px untuk teks daun, dan 11px/13px Bold untuk judul cabang/root. Teks di dalam node otomatis dibungkus (`whiteSpace=wrap`).
+* **Skema Warna Modular**:
+  * **Pusat (Root)** (Biru Tua): `fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=3;fontColor=#0A2540;fontStyle=1;`
+  * **Cabang Masalah** (Oranye/Kuning): `fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=2;fontColor=#975A16;`
+  * **Cabang Solusi** (Hijau): `fillColor=#D5E8D4;strokeColor=#72B095;strokeWidth=2;fontColor=#0A3F2C;`
+  * **Cabang Keamanan** (Toska/Teal): `fillColor=#E6F2F2;strokeColor=#0E8A8A;strokeWidth=2;fontColor=#0c5757;`
+  * **Semua Daun (Leaves)** (Putih/Abu Abu): `fillColor=#F8FAFC;strokeColor=#CBD5E0;strokeWidth=1;fontColor=#2D3748;`
+* **Garis Hubung (Edges)**:
+  * Tipe orthogonal siku-siku (`edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1.5;`).
+  * Hubungan dari Pusat ke Cabang: Menggunakan tebal garis `strokeWidth=2` berwarna abu-abu gelap (`strokeColor=#4A5568`).
+  * Hubungan dari Cabang ke Daun: Menggunakan warna garis yang senada dengan cabang induknya:
+    * Jalur Masuk Masuk: `strokeColor=#D79B00` (Oranye)
+    * Jalur Masuk Solusi: `strokeColor=#72B095` (Hijau)
+    * Jalur Masuk Keamanan: `strokeColor=#0E8A8A` (Teal)
+
+---
+
+## 🔗 PART 5: INSTRUKSI SPESIFIK RUTE KONEKSI (CONNECTION ROUTING)
+
+1. **Pusat ke Cabang**:
+   * Hubungkan `root` (kiri) ke `b1` (kanan).
+   * Hubungkan `root` (kanan atas) ke `b2` (kiri).
+   * Hubungkan `root` (kanan bawah) ke `b3` (kiri).
+2. **Cabang ke Daun (Kiri - Masalah)**:
+   * Tarik garis keluar dari sisi kiri `b1`. Sebarkan untuk masuk ke sisi kanan masing-masing daun (`l1_1` s/d `l1_4`) secara orthogonal rapi.
+3. **Cabang ke Daun (Kanan - Solusi & Keamanan)**:
+   * Tarik garis keluar dari sisi kanan `b2` untuk masuk ke sisi kiri masing-masing daun solusi (`l2_1` s/d `l2_4`).
+   * Tarik garis keluar dari sisi kanan `b3` untuk masuk ke sisi kiri masing-masing daun keamanan (`l3_1` s/d `l3_3`).

@@ -1,0 +1,101 @@
+# PROMPT DIAGRAM: Pembuatan Peta Referensi & Integrasi Sistem Kantin Digital
+
+Tugas Anda adalah merancang diagram visual **"Peta Referensi & Integrasi Sistem — Sistem Kantin Digital"** dalam format XML Draw.io (.drawio) dari awal. Gunakan deskripsi spesifikasi tata letak, komponen, kontainer (swimlanes), dan hubungan aliran di bawah ini untuk membuat diagram integrasi yang rapi, berjarak ideal, dan bebas tumpang tindih.
+
+---
+
+## 🏛️ PART 1: KONTEKS & INTEGRASI SISTEM
+
+Diagram ini menggambarkan **Peta Referensi & Integrasi Sistem** yang menghubungkan aplikasi client Flutter dengan berbagai modul SDK perangkat keras dan layanan cloud:
+1. **Aplikasi Client**: Mobile App (Siswa/Kasir), Web Admin (Finance/Super Admin), dan Web Publik (Orang Tua).
+2. **Integrasi Perangkat Keras**: ESP32 RFID Reader & NFC Manager SDK untuk membaca UID kartu.
+3. **Layanan Backend & Database**: Supabase Cloud SDK (Auth, DB PostgreSQL, Edge Functions).
+4. **Integrasi Eksternal**: Midtrans Payment Gateway SDK dan Firebase Cloud Messaging (FCM) REST API.
+
+---
+
+## 🎨 PART 2: PETUNJUK LAYOUT VISUAL (CONTAINERS & MODULES)
+
+Diagram ini disusun dalam struktur tiga tingkatan dari atas ke bawah:
+
+```text
+       ┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+       │ 💻 Aplikasi Client (Flutter Mobile & Web)                                                  │
+       │     [Mobile App]              [Web Admin Portal]              [Web Publik Ortu]             │
+       └──────┬────────┬──────────────────────┬───────────────────────────────┬──────┬───────────────┘
+              │        │                      │                               │      │
+       ┌──────▼────────▼────────┐    ┌────────▼───────────────┐      ┌────────▼──────▼────────┐
+       │ 🔌 Hardware & SDK      │    │ ☁️ Supabase Cloud SDK   │      │ 💳 Midtrans Payment SDK│
+       │  (ESP32 / NFC Manager) │    │  (Auth, DB, Functions) │      │  (Snap API / Core API) │
+       └────────────────────────┘    └────────┬───────────────┘      └────────▲───────────────┘
+                                              │                               │
+                                     ┌────────▼───────────────────────────────┴────────┐
+                                     │ 📡 Firebase Cloud Messaging (FCM) REST API      │
+                                     └─────────────────────────────────────────────────┘
+```
+
+---
+
+## 🎨 PART 3: DETAIL TATA LETAK & GEOMETRI DIAGRAM
+
+### 📍 A. Baris Atas: Swimlane Aplikasi Client
+* **Kontainer Swimlane (`grp1`)**: Judul: `💻 Aplikasi Client (Flutter Mobile & Web)`. Geometri: `x=40, y=70, width=820, height=130`.
+* **Mobile App (`app_client`)**: Kotak tumpul, Geometri: `x=30, y=45, width=200, height=60` (relatif dalam swimlane). Teks: `📱 Mobile App\n(Siswa & Kasir POS)`.
+* **Web Admin Portal (`web_admin`)**: Kotak tumpul, Geometri: `x=290, y=45, width=200, height=60`. Teks: `💻 Web Admin Portal\n(Finance & Super Admin)`.
+* **Web Publik (`web_pub`)**: Kotak tumpul, Geometri: `x=550, y=45, width=200, height=60`. Teks: `🌐 Web Publik\n(Orang Tua)`.
+
+### 📍 B. Baris Tengah: Modul SDK & Cloud (di luar swimlane)
+* **Hardware & Reader SDK (`hardware`)**: Kotak tumpul, Geometri: `x=70, y=240, width=200, height=90`. Teks: `🔌 Hardware & Reader SDK\n\n* ESP32 RFID RC522 Reader\n* Mobile NFC Manager SDK` (Teks rata kiri, spacingLeft=10, verticalAlign=top).
+* **Supabase Cloud SDK (`supabase`)**: Kotak tumpul, Geometri: `x=330, y=240, width=200, height=90`. Teks: `☁️ Supabase Cloud SDK\n\n* Supabase Client (Auth/DB)\n* Edge Functions (Webhooks)\n* PostgreSQL RLS & Constraints`.
+* **Midtrans Payment SDK (`midtrans`)**: Kotak tumpul, Geometri: `x=590, y=240, width=200, height=90`. Teks: `💳 Midtrans Payment SDK\n\n* Snap API (Snap Webview)\n* Core API (Webhook HTTP POST)\n* E-Payment (VA/QRIS/E-Wallet)`.
+
+### 📍 C. Baris Bawah: Layanan Notifikasi FCM (di luar swimlane)
+* **Firebase FCM (`fcm`)**: Kotak tumpul, Geometri: `x=270, y=400, width=320, height=50`. Teks: `📡 Firebase Cloud Messaging (FCM) REST API`.
+
+---
+
+## 🎨 PART 4: DETAIL PENGATURAN GAYA VISUAL (STYLING DESIGNS)
+
+* **Font**: Gunakan font `"Segoe UI"` atau `"Arial"`, ukuran font 10px untuk deskripsi list, dan 11px Bold untuk judul modul/SDK. Teks di dalam node otomatis dibungkus (`whiteSpace=wrap`).
+* **Skema Warna Modular**:
+  * **Mobile App & Web Publik** (Biru Muda): `fillColor=#DAE8FC;strokeColor=#6C8EBF;fontColor=#0A2540;`
+  * **Web Admin Portal** (Hijau Muda): `fillColor=#D5E8D4;strokeColor=#72B095;fontColor=#0A3F2C;`
+  * **Supabase Cloud** (Toska/Teal): `fillColor=#E6F2F2;strokeColor=#0E8A8A;fontColor=#0c5757;`
+  * **Midtrans & Firebase** (Ungu Muda): `fillColor=#F3E8FF;strokeColor=#8B5CF6;fontColor=#5B21B6;`
+  * **Hardware & Reader** (Grey): `fillColor=#E2E8F0;strokeColor=#64748B;fontColor=#0F172A;`
+  * **Swimlane Aplikasi**: `fillColor=none;strokeColor=#4A5568;strokeWidth=1;fontColor=#4A5568;`
+* **Garis Koneksi (Edges)**:
+  * Tipe orthogonal siku-siku (`edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1.5;`).
+  * Kode warna garis disesuaikan dengan tujuan modul:
+    * Koneksi Hardware: `strokeColor=#64748B` (Grey)
+    * Koneksi Supabase: `strokeColor=#0E8A8A` (Teal)
+    * Koneksi Midtrans / FCM: `strokeColor=#8B5CF6` (Purple)
+
+---
+
+## 🔗 PART 5: INSTRUKSI SPESIFIK RUTE KONEKSI & ANTI-OVERLAP
+
+Untuk menghindari garis bertumpuk atau tumpang tindih, Anda **WAJIB** membagi titik keluar/masuk (`exitX`, `entryX`) dan mengatur rute belokan (`mxPoint`) sebagai berikut:
+
+1. **Jalur Hardware (Kiri)**:
+   * Hubungkan bottom `app_client` ke `hardware` secara lurus vertikal di koordinat **X=100**. Gunakan `exitX=0.3;exitY=1` pada `app_client` dan `entryX=0.5;entryY=0` pada `hardware` (warna garis abu-abu).
+
+2. **Jalur Supabase (Tengah)**:
+   * Hubungkan `app_client` $\rightarrow$ `supabase` (exitX=0.75, entryX=0.25).
+   * Hubungkan `web_admin` $\rightarrow$ `supabase` (exitX=0.5, entryX=0.5).
+   * Hubungkan `web_pub` $\rightarrow$ `supabase` (exitX=0.25, entryX=0.75).
+
+3. **Jalur Pembayaran (Kanan)**:
+   * Hubungkan `web_pub` $\rightarrow$ `midtrans` (exitX=0.75, entryX=0.5).
+   * Hubungkan `app_client` $\rightarrow$ `midtrans` (untuk alur pembayaran online di aplikasi mobile):
+     * Gunakan `exitX=0.5;exitY=1` pada `app_client` (X=140).
+     * Tarik garis turun ke Y=215, jalankan horizontal ke kanan menyeberangi area tengah ke X=690 (di antara swimlane client dan jajaran SDK tengah).
+     * Masuk ke `midtrans` di `entryX=0.9;entryY=0` (X=690, Y=240) [Warna garis ungu].
+   * Hubungkan webhook pembayaran sukses dari `midtrans` (sisi kiri, exitX=0, exitY=0.5) horizontal lurus ke kiri masuk ke `supabase` (sisi kanan, entryX=1, entryY=0.5).
+
+4. **Jalur Notifikasi Firebase FCM (Bawah)**:
+   * Hubungkan event trigger dari `supabase` (exitX=0.5, exitY=1, Y=330) vertikal lurus ke bawah masuk ke `fcm` (entryX=0.5, entryY=0, Y=400) [Warna garis ungu].
+   * Hubungkan notifikasi FCM balik ke aplikasi siswa (`fcm` $\rightarrow$ `app_client`):
+     * Keluar dari sisi kiri `fcm` (exitX=0, exitY=0.5, koordinat Y=425).
+     * Berjalan horizontal ke kiri melewati luar diagram ke koordinat **X=60** (untuk menghindari tabrakan dengan area Hardware).
+     * Naik vertikal ke atas di X=60, dan masuk ke `app_client` dari bawah di `entryX=0.15;entryY=1` (X=60, Y=175) [Warna garis ungu].

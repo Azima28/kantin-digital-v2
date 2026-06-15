@@ -1,0 +1,88 @@
+@startuml
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam ArrowColor #4A5568
+skinparam ArrowThickness 1.5
+skinparam BackgroundColor #FAFAFA
+
+<style>
+document {
+  BackgroundColor #FAFAFA
+  FontName "Segoe UI"
+  FontColor #2D3748
+}
+usecaseDiagram {
+  actor {
+    BackgroundColor #EBF8FF
+    LineColor #3182CE
+    FontColor #2B6CB0
+    
+    .siswa {
+      BackgroundColor #EBF8FF
+      LineColor #3182CE
+      FontColor #2B6CB0
+    }
+    .petugas {
+      BackgroundColor #FEFCBF
+      LineColor #D69E2E
+      FontColor #975A16
+    }
+    .admin {
+      BackgroundColor #E6FFFA
+      LineColor #319795
+      FontColor #234E52
+    }
+  }
+}
+component {
+  RoundCorner 8
+  BackgroundColor #FFFFFF
+  LineColor #CBD5E0
+  FontColor #2D3748
+  FontSize 11
+  
+  .system {
+    BackgroundColor #EBF8FF
+    LineColor #3182CE
+    FontColor #2B6CB0
+    FontSize 12
+    FontWeight bold
+  }
+}
+</style>
+
+title Context Diagram (DFD Level 0) — Sistem Kantin Digital
+
+actor "Siswa" as Siswa <<siswa>>
+actor "Orang Tua" as Ortu <<siswa>>
+actor "Petugas Kantin" as Petugas <<petugas>>
+actor "Admin Keuangan" as Admin <<admin>>
+actor "Super Admin" as SuperAdmin <<admin>>
+
+component "SISTEM KANTIN\nDIGITAL" as Sistem <<system>>
+
+component "Midtrans\nPayment Gateway" as Midtrans
+component "Firebase Cloud\nMessaging (FCM)" as FCM
+
+Siswa -right-> Sistem : Tap Kartu NFC (UID)\nReq Saldo & Histori
+Sistem -left-> Siswa : Info Saldo, Notifikasi\nDetail Transaksi
+
+Ortu -right-> Sistem : Input NIS / Kode Siswa\nBayar Top-up Online
+Sistem -left-> Ortu : Saldo Anak, 5 Transaksi\nE-Receipt PDF
+
+Petugas -left-> Sistem : Pilih Menu POS,\nTotal Keranjang, NFC Tap
+Sistem -right-> Petugas : Data Siswa & Saldo,\nStruk Transaksi Sukses
+
+Admin -left-> Sistem : Top-up Tunai, Koreksi\nSaldo, Link Kartu USB
+Sistem -right-> Admin : Laporan Keuangan,\nStruk Bukti Bayar
+
+SuperAdmin -up-> Sistem : CRUD Sekolah & User,\nBlokir Akun, Setelan
+Sistem -down-> SuperAdmin : Live Audit Logs,\nStatistik Global
+
+Midtrans -up-> Sistem : Webhook Notifikasi\nPembayaran Berhasil
+Sistem -down-> Midtrans : Request Snap Token\n& Charge API
+
+Sistem -right-> FCM : Trigger Push\nNotification
+FCM -left-> Siswa : Notifikasi Transaksi\nke HP Siswa
+
+@enduml

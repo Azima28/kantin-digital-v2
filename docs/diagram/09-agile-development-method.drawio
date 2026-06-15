@@ -1,0 +1,58 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="Electron" modified="2026-06-12T00:00:00.000Z" agent="5.0" version="20.0.0" type="device">
+  <diagram id="page1" name="Page-1">
+    <mxGraphModel dx="1500" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="scr1" value="Product&#10;Backlog" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontStyle=1;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=2;fontColor=#5A3200;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="160" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="scr2" value="Sprint&#10;Planning" style="ellipse;whiteSpace=wrap;aspect=fixed;fontStyle=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=2;fontColor=#0A2540;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="200" y="150" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="scr3" value="Sprint&#10;Backlog" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontStyle=1;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=2;fontColor=#5A3200;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="320" y="160" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="scr4" value="Sprint Cycle&#10;(2 Minggu)" style="ellipse;whiteSpace=wrap;aspect=fixed;fontStyle=1;fillColor=#E6FFFA;strokeColor=#319795;strokeWidth=2;fontColor=#234E52;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="480" y="130" width="120" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="scr_daily" value="Daily Standup&#10;(15 Menit)" style="ellipse;whiteSpace=wrap;aspect=fixed;fontStyle=1;fillColor=#D5E8D4;strokeColor=#72B095;strokeWidth=2;fontColor=#0A3F2C;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="500" y="30" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="scr5" value="Working App&#10;Increment" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontStyle=1;fillColor=#EBF8FF;strokeColor=#3182CE;strokeWidth=2;fontColor=#2B6CB0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="640" y="160" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="scr6" value="Sprint Review&#10;&amp; Retrospective" style="ellipse;whiteSpace=wrap;aspect=fixed;fontStyle=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=2;fontColor=#0A2540;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="490" y="300" width="100" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="901" value="Rencana" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4A5568;strokeWidth=1.5;fontSize=10;" edge="1" parent="1" source="scr1" target="scr2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="902" value="Definisi Task" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4A5568;strokeWidth=1.5;fontSize=10;" edge="1" parent="1" source="scr2" target="scr3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="903" value="Mulai" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4A5568;strokeWidth=1.5;fontSize=10;" edge="1" parent="1" source="scr3" target="scr4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="904" value="Daily Sync" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=classic;endArrow=classic;strokeColor=#4A5568;strokeWidth=1.5;fontSize=10;" edge="1" parent="1" source="scr4" target="scr_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="906" value="Deliver" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4A5568;strokeWidth=1.5;fontSize=10;" edge="1" parent="1" source="scr4" target="scr5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="907" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4A5568;strokeWidth=1.5;fontSize=10;" edge="1" parent="1" source="scr4" target="scr6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="908" value="Feedback" style="edgeStyle=orthogonalEdgeStyle;curved=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#E28743;strokeWidth=1.5;fontSize=10;" edge="1" parent="1" source="scr6" target="scr1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="points">
+              <mxPoint x="540" y="390" />
+              <mxPoint x="100" y="390" />
+            </mxPoint>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,50 @@
+flowchart TD
+    %% Styling Classes
+    classDef root fill:#E6F2F2,stroke:#0E8A8A,color:#0c5757,stroke-width:3px,font-weight:bold
+    classDef siswa fill:#DAE8FC,stroke:#6C8EBF,color:#0A2540,stroke-width:2px
+    classDef petugas fill:#FFE6CC,stroke:#D79B00,color:#5A3200,stroke-width:2px
+    classDef admin fill:#D5E8D4,stroke:#72B095,color:#0A3F2C,stroke-width:2px
+    classDef leaf fill:#F8FAFC,stroke:#CBD5E0,color:#2D3748,stroke-width:1px
+
+    Root(("🌟 FITUR UTAMA KANTIN DIGITAL")):::root
+
+    %% Main Branches
+    Siswa["👦 Modul Siswa (Mobile)"]:::siswa
+    Kantin["👵 Modul Kasir (Mobile)"]:::petugas
+    Admin["👨‍💼 Admin Sekolah (Web)"]:::admin
+    Master["👑 Master Admin (Web)"]:::admin
+    Ortu["👩 Orang Tua (Web)"]:::siswa
+
+    Root --> Siswa & Kantin & Admin & Master & Ortu
+
+    %% Sub-features Siswa
+    S1["📊 Cek Saldo & Histori"]:::leaf
+    S2["💳 Top-up Midtrans QRIS"]:::leaf
+    S3["❄️ Freeze Kartu NFC"]:::leaf
+    S4["⚙️ Profil & Ubah Sandi"]:::leaf
+    Siswa --> S1 & S2 & S3 & S4
+
+    %% Sub-features Kasir
+    K1["🛍️ POS Katalog Belanja"]:::leaf
+    K2["✍️ Charge & Catatan"]:::leaf
+    K3["📲 Tap NFC Checkout"]:::leaf
+    K4["🥗 CRUD Menu & Stok"]:::leaf
+    Kantin --> K1 & K2 & K3 & K4
+
+    %% Sub-features Admin
+    A1["💵 Top-up Tunai Koperasi"]:::leaf
+    A2["✏️ Adjust Saldo & Audit Log"]:::leaf
+    A3["🔗 Link UID USB Reader"]:::leaf
+    A4["📈 Laporan Keuangan"]:::leaf
+    Admin --> A1 & A2 & A3 & A4
+
+    %% Sub-features Master
+    M1["🏫 CRUD Data Sekolah Mitra"]:::leaf
+    M2["📜 Live Audit Logs Monitor"]:::leaf
+    M3["🚫 Jam Malam / Blokir Akun"]:::leaf
+    Master --> M1 & M2 & M3
+
+    %% Sub-features Ortu
+    O1["👁️‍🗨️ Pantau Jajan NIS Anak"]:::leaf
+    O2["⚡ Top-up Instan Tanpa Login"]:::leaf
+    Ortu --> O1 & O2

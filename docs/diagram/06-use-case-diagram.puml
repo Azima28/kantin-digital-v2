@@ -1,0 +1,145 @@
+@startuml
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam ArrowColor #718096
+skinparam ArrowThickness 1.5
+skinparam BackgroundColor #FAFAFA
+
+<style>
+document {
+  BackgroundColor #FAFAFA
+  FontName "Segoe UI"
+  FontColor #2D3748
+}
+usecaseDiagram {
+  usecase {
+    BackgroundColor #FFFFFF
+    LineColor #CBD5E0
+    FontColor #2D3748
+    FontSize 11
+    
+    .siswa {
+      BackgroundColor #EBF8FF
+      LineColor #3182CE
+      FontColor #2B6CB0
+    }
+    .petugas {
+      BackgroundColor #FEFCBF
+      LineColor #D69E2E
+      FontColor #975A16
+    }
+    .admin {
+      BackgroundColor #E6FFFA
+      LineColor #319795
+      FontColor #234E52
+    }
+  }
+  actor {
+    BackgroundColor #EBF8FF
+    LineColor #3182CE
+    FontColor #2B6CB0
+    
+    .siswa {
+      BackgroundColor #EBF8FF
+      LineColor #3182CE
+      FontColor #2B6CB0
+    }
+    .petugas {
+      BackgroundColor #FEFCBF
+      LineColor #D69E2E
+      FontColor #975A16
+    }
+    .admin {
+      BackgroundColor #E6FFFA
+      LineColor #319795
+      FontColor #234E52
+    }
+  }
+  arrow {
+    LineColor #718096
+  }
+}
+</style>
+
+title Use Case Diagram — Sistem Kantin Digital
+
+skinparam rectangle {
+  BackgroundColor transparent
+  BorderColor #CBD5E0
+  BorderStyle dashed
+  FontColor #718096
+}
+
+actor "Siswa" as Siswa <<siswa>>
+actor "Orang Tua" as Ortu <<siswa>>
+actor "Petugas Kantin" as Petugas <<petugas>>
+actor "Admin Keuangan" as Admin <<admin>>
+actor "Super Admin" as SuperAdmin <<admin>>
+
+rectangle "Sistem Kantin Digital (Supabase + Flutter)" {
+  ' --- Autentikasi ---
+  usecase "Login & Autentikasi" as UC1
+
+  ' --- Siswa Use Cases ---
+  usecase "Cek Saldo & Histori Jajan" as UC2 <<siswa>>
+  usecase "Top-up Online (Midtrans)" as UC3 <<siswa>>
+  usecase "Link & Freeze Kartu NFC" as UC4 <<siswa>>
+  usecase "Terima Notifikasi Transaksi" as UC5 <<siswa>>
+
+  ' --- Petugas Kantin Use Cases ---
+  usecase "POS Checkout (Belanja Cart)" as UC6 <<petugas>>
+  usecase "Kelola Menu Stan (CRUD)" as UC7 <<petugas>>
+  usecase "Cek Saldo Siswa (Tap NFC)" as UC8 <<petugas>>
+  usecase "Lihat Riwayat Penjualan Stan" as UC9 <<petugas>>
+
+  ' --- Admin Keuangan Use Cases ---
+  usecase "Top-up Tunai Manual (Koperasi)" as UC10 <<admin>>
+  usecase "Koreksi Saldo (Adjustment)" as UC11 <<admin>>
+  usecase "Registrasi Kartu Siswa (USB)" as UC12 <<admin>>
+  usecase "Laporan Keuangan & Export" as UC13 <<admin>>
+
+  ' --- Super Admin Use Cases ---
+  usecase "CRUD Data Sekolah Mitra" as UC14 <<admin>>
+  usecase "CRUD Pengguna & Role" as UC15 <<admin>>
+  usecase "Monitoring Live Audit Log" as UC16 <<admin>>
+  usecase "Konfigurasi Sistem Global" as UC17 <<admin>>
+
+  ' --- Orang Tua Use Cases ---
+  usecase "Cek Saldo Anak (by NIS)" as UC18 <<siswa>>
+  usecase "Lihat 5 Transaksi Terakhir" as UC19 <<siswa>>
+}
+
+' === Siswa Associations ===
+Siswa -- UC1
+Siswa -- UC2
+Siswa -- UC3
+Siswa -- UC4
+Siswa -- UC5
+
+' === Orang Tua Associations ===
+Ortu -- UC3 : via App / Web Publik
+Ortu -- UC18
+Ortu -- UC19
+
+' === Petugas Kantin Associations ===
+Petugas -- UC1
+Petugas -- UC6
+Petugas -- UC7
+Petugas -- UC8
+Petugas -- UC9
+
+' === Admin Keuangan Associations ===
+Admin -- UC1
+Admin -- UC10
+Admin -- UC11
+Admin -- UC12
+Admin -- UC13
+
+' === Super Admin Associations ===
+SuperAdmin -- UC1
+SuperAdmin -- UC14
+SuperAdmin -- UC15
+SuperAdmin -- UC16
+SuperAdmin -- UC17
+
+@enduml

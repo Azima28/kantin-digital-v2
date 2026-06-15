@@ -1,0 +1,49 @@
+@startuml
+!include theme.puml
+
+title Spesifikasi Kebutuhan Sistem (System Requirements) — Sistem Kantin Digital
+
+package "Kebutuhan Fungsional (Functional Requirements)" {
+  object "FR-1: NFC Tap Payment" as FR1 {
+    Deskripsi: Transaksi pembayaran instan di kasir menggunakan kartu RFID/NFC
+  }
+  object "FR-2: Top-up Saldo Online" as FR2 {
+    Deskripsi: Pengisian saldo instan menggunakan Midtrans Snap SDK (QRIS/VA)
+  }
+  object "FR-3: Top-up Tunai Manual" as FR3 {
+    Deskripsi: Input saldo tunai oleh Admin Keuangan via Web Admin
+  }
+  object "FR-4: Manajemen Menu POS" as FR4 {
+    Deskripsi: CRUD katalog produk/menu oleh Petugas Kantin
+  }
+  object "FR-5: Kontrol Kartu NFC" as FR5 {
+    Deskripsi: Fitur Freeze/Link kartu oleh siswa untuk keamanan
+  }
+  object "FR-6: Laporan Keuangan & Audit" as FR6 {
+    Deskripsi: Export PDF/Excel serta pencatatan audit log
+  }
+}
+
+package "Kebutuhan Non-Fungsional (Non-Functional Requirements)" {
+  object "NFR-1: Keamanan Data (Security)" as NFR1 {
+    Kriteria: Supabase Row Level Security (RLS) & enkripsi password
+  }
+  object "NFR-2: Integritas Data (Consistency)" as NFR2 {
+    Kriteria: ACID Stored Procedure untuk kalkulasi saldo di database server
+  }
+  object "NFR-3: Kinerja (Performance)" as NFR3 {
+    Kriteria: Waktu respon transaksi Tap NFC kurang dari 2 detik
+  }
+  object "NFR-4: Kompatibilitas" as NFR4 {
+    Kriteria: Aplikasi multiplatform Flutter (Android, iOS, Web)
+  }
+}
+
+FR1 ..> NFR2 : "Diproteksi oleh"
+FR1 ..> NFR3 : "Maksimal respon"
+FR2 ..> NFR1 : "Otorisasi via token"
+FR3 ..> NFR1 : "Tercatat di Audit Log"
+FR4 ..> NFR1 : "Batas hak akses stan"
+FR5 ..> NFR1 : "RLS read-only bagi user lain"
+
+@enduml

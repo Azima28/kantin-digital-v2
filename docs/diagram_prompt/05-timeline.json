@@ -1,0 +1,38 @@
+{
+  "projectName": "Sistem Kantin Digital",
+  "techStack": "Flutter (Mobile & Web) + Supabase (PostgreSQL DB)",
+  "globalStyling": {
+    "fontFamily": "Segoe UI",
+    "shadows": false
+  },
+  "diagram": {
+    "title": "05. Timeline (Roadmap Pengembangan Agile 6 Minggu)",
+    "type": "gantt_chart",
+    "description": "Roadmap pembagian sprint mingguan untuk perancangan, koding, integrasi, dan perilisan.",
+    "sprints": [
+      {
+        "name": "Sprint 1 (W01-W02)",
+        "tasks": [
+          { "name": "Planning & DB Setup", "duration": "3 days", "color": "#DAE8FC", "emoji": "📋" },
+          { "name": "Setup Supabase Schema + RLS", "duration": "4 days", "color": "#FFE6CC", "emoji": "🔒" },
+          { "name": "Auth & Multi-Role Routing", "duration": "5 days", "color": "#D5E8D4", "emoji": "🔐" }
+        ]
+      },
+      {
+        "name": "Sprint 2 (W03-W04)",
+        "tasks": [
+          { "name": "POS Catalog & Cart UI", "duration": "5 days", "color": "#FFE6CC", "emoji": "🛍️" },
+          { "name": "NFC Tap Checkout Core", "duration": "5 days", "color": "#DAE8FC", "emoji": "⚡" }
+        ]
+      },
+      {
+        "name": "Sprint 3 (W05-W06)",
+        "tasks": [
+          { "name": "Midtrans Integration", "duration": "4 days", "color": "#E1D5E7", "emoji": "💳" },
+          { "name": "Push Notification & Reports", "duration": "3 days", "color": "#FFE6CC", "emoji": "📈" },
+          { "name": "QA, Polish & Deploy", "duration": "5 days", "color": "#D5E8D4", "emoji": "🚀" }
+        ]
+      }
+    ]
+  }
+}

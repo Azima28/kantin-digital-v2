@@ -1,0 +1,102 @@
+@startuml
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam ArrowColor #718096
+skinparam ArrowThickness 1.5
+skinparam BackgroundColor #FAFAFA
+
+<style>
+document {
+  BackgroundColor #FAFAFA
+  FontName "Segoe UI"
+  FontColor #2D3748
+}
+objectDiagram {
+  object {
+    RoundCorner 8
+    BackgroundColor #FFFFFF
+    LineColor #CBD5E0
+    FontColor #2D3748
+    FontSize 11
+    
+    .siswa {
+      BackgroundColor #EBF8FF
+      LineColor #3182CE
+      FontColor #2B6CB0
+    }
+    .petugas {
+      BackgroundColor #FEFCBF
+      LineColor #D69E2E
+      FontColor #975A16
+    }
+    .admin {
+      BackgroundColor #E6FFFA
+      LineColor #319795
+      FontColor #234E52
+    }
+  }
+}
+package {
+  BackgroundColor transparent
+  LineColor #A0AEC0
+  LineStyle dashed
+  FontColor #4A5568
+  FontSize 11
+  FontWeight bold
+}
+</style>
+
+title System Features Map — Fitur Utama Kantin Digital
+
+object "**FITUR UTAMA\nKANTIN DIGITAL**" as root
+
+package "1. Modul Siswa (Mobile App)" as P1 {
+  object "Dashboard Saldo & Ringkasan" as F1_1 <<siswa>>
+  object "Riwayat Transaksi (Filter)" as F1_2 <<siswa>>
+  object "Detail Transaksi & Struk" as F1_3 <<siswa>>
+  object "Top-up Online (Midtrans)" as F1_4 <<siswa>>
+  object "Manajemen Kartu NFC\n(Link / Freeze)" as F1_5 <<siswa>>
+  object "Profil & Ubah Password" as F1_6 <<siswa>>
+  object "Notifikasi Real-time (FCM)" as F1_7 <<siswa>>
+}
+
+package "2. Modul Kasir (Mobile POS)" as P2 {
+  object "POS Katalog Grid Produk" as F2_1 <<petugas>>
+  object "Keranjang & Custom Charge\n(+ Catatan Wajib)" as F2_2 <<petugas>>
+  object "NFC Tap Checkout\n(Validasi ACID)" as F2_3 <<petugas>>
+  object "Cek Saldo Siswa (Tap NFC)" as F2_4 <<petugas>>
+  object "CRUD Menu & Stok Produk" as F2_5 <<petugas>>
+  object "Riwayat Penjualan Hari Ini\n& Refund (10 menit)" as F2_6 <<petugas>>
+}
+
+package "3. Admin Keuangan (Web)" as P3 {
+  object "Dashboard Metrik Keuangan" as F3_1 <<admin>>
+  object "Top-up Tunai Manual\n(Kasir Koperasi)" as F3_2 <<admin>>
+  object "Koreksi Saldo\n(Audit Log Wajib)" as F3_3 <<admin>>
+  object "Registrasi Kartu Siswa\n(USB RFID Reader)" as F3_4 <<admin>>
+  object "Manajemen Data Siswa" as F3_5 <<admin>>
+  object "Laporan Keuangan\n(Export Excel / PDF)" as F3_6 <<admin>>
+}
+
+package "4. Super Admin (Web)" as P4 {
+  object "Global Dashboard & Grafik" as F4_1 <<admin>>
+  object "CRUD Sekolah Mitra" as F4_2 <<admin>>
+  object "CRUD Pengguna & Role" as F4_3 <<admin>>
+  object "Live Audit Log Explorer\n(Read-Only, Real-Time)" as F4_4 <<admin>>
+  object "Konfigurasi Sistem Global\n(Midtrans Key, FCM, Maintenance)" as F4_5 <<admin>>
+}
+
+package "5. Orang Tua (Web Publik)" as P5 {
+  object "Cek Saldo by NIS\n(Tanpa Login)" as F5_1 <<siswa>>
+  object "Lihat 5 Transaksi\nTerakhir Anak" as F5_2 <<siswa>>
+  object "Top-up Online Instan\n(Midtrans Snap)" as F5_3 <<siswa>>
+  object "Download E-Receipt\nBukti Bayar (PDF)" as F5_4 <<siswa>>
+}
+
+root -- P1
+root -- P2
+root -- P3
+root -- P4
+root -- P5
+
+@enduml

@@ -1,0 +1,44 @@
+flowchart TD
+    %% Theme Classes
+    classDef clSiswa fill:#DAE8FC,stroke:#6C8EBF,color:#0A2540,stroke-width:2px
+    classDef clKasir fill:#FFE6CC,stroke:#D79B00,color:#5A3200,stroke-width:2px
+    classDef clAdmin fill:#D5E8D4,stroke:#72B095,color:#0A3F2C,stroke-width:2px
+    classDef clEsp fill:#E2E8F0,stroke:#64748B,color:#0F172A,stroke-width:2px
+    classDef sb fill:#E6F2F2,stroke:#0E8A8A,color:#0c5757,stroke-width:2px
+    classDef sbDb fill:#115E59,stroke:#0D9488,color:#FFFFFF,stroke-width:2px,font-weight:bold
+    classDef tp fill:#F3E8FF,stroke:#8B5CF6,color:#5B21B6,stroke-width:2px
+
+    style ClientTier fill:#0f172a,stroke:#3b82f6,stroke-width:1px,stroke-dasharray: 5 5
+    style BackendTier fill:#0f172a,stroke:#0d9488,stroke-width:1px,stroke-dasharray: 5 5
+    style ThirdPartyTier fill:#0f172a,stroke:#8b5cf6,stroke-width:1px,stroke-dasharray: 5 5
+
+    subgraph ClientTier ["📱 CLIENT TIER (Aplikasi & Perangkat Keras)"]
+        AppSiswa["📱 Siswa App\n(Flutter Mobile)"]:::clSiswa
+        AppKasir["🛒 Petugas POS App\n(Flutter Mobile / NFC)"]:::clKasir
+        AppAdmin["💻 Admin Web Portal\n(Flutter Web Desktop)"]:::clAdmin
+        ESP32["⚙️ ESP32 Hardware\n(RFID RC522 Reader)"]:::clEsp
+    end
+
+    subgraph BackendTier ["☁️ BACKEND TIER (Supabase Cloud Services)"]
+        Auth["🔑 Supabase Auth\n(Identity & Access)"]:::sb
+        Func["⚡ Edge Functions\n(Midtrans Webhook)"]:::sb
+        Realtime["🔔 Realtime Channel\n(Live Notif Push)"]:::sb
+        DB[("🗄️ PostgreSQL DB\n12 Tabel + RLS Security")]:::sbDb
+    end
+
+    subgraph ThirdPartyTier ["💳 THIRD PARTY INTEGRATION TIER"]
+        Midtrans["💳 Midtrans Payment\nGateway"]:::tp
+        FCM["📡 Firebase Cloud\nMessaging (FCM)"]:::tp
+    end
+
+    %% Communications
+    AppSiswa -->|HTTPS Auth| Auth
+    AppKasir -->|NFC Checkout| DB
+    AppAdmin -->|REST API| DB
+    ESP32 -->|HTTP POST| DB
+    Auth -->|ACID Update| DB
+    Midtrans -->|Webhook Callback| Func
+    Func -->|Trigger Trigger| DB
+    DB -->|Trigger push| FCM
+    FCM -->|Notify API| Realtime
+    Realtime -->|Receive WS| AppSiswa

@@ -1,0 +1,212 @@
+@startuml
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam ArrowColor #718096
+skinparam ArrowThickness 1.5
+skinparam BackgroundColor #FAFAFA
+
+<style>
+document {
+  BackgroundColor #FAFAFA
+  FontName "Segoe UI"
+  FontColor #2D3748
+}
+classDiagram {
+  entity {
+    RoundCorner 8
+    BackgroundColor #FFFFFF
+    LineColor #CBD5E0
+    FontColor #2D3748
+    FontSize 11
+    HeaderBackgroundColor #ED8936
+    HeaderFontColor #FFFFFF
+  }
+}
+</style>
+
+title ER Diagram — Sistem Kantin Digital (PostgreSQL / Supabase)
+
+entity "users" as users {
+  * **id** : UUID <<PK>>
+  --
+  * email : VARCHAR(255) <<UK>>
+  * password_hash : VARCHAR(255)
+  * full_name : VARCHAR(255)
+  * role : user_role (ENUM)
+  phone : VARCHAR(20)
+  avatar_url : VARCHAR(255)
+  * is_active : BOOLEAN = true
+  * created_at : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
+}
+
+entity "schools" as schools {
+  * **id** : UUID <<PK>>
+  --
+  * name : VARCHAR(255)
+  address : TEXT
+  logo_url : VARCHAR(255)
+  phone : VARCHAR(20)
+  * is_active : BOOLEAN = true
+  * created_at : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
+}
+
+entity "students" as students {
+  * **id** : UUID <<PK>>
+  --
+  * user_id : UUID <<FK>> → users
+  * school_id : UUID <<FK>> → schools
+  * student_id_code : VARCHAR(50) <<UK>>
+  * nis : VARCHAR(50) <<UK>>
+  class : VARCHAR(50)
+  card_uid : VARCHAR(100) <<UK>>
+  * balance : DECIMAL(12,2) >= 0
+  * is_active : BOOLEAN = true
+  * created_at : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
+}
+
+entity "canteen_operators" as operators {
+  * **id** : UUID <<PK>>
+  --
+  * user_id : UUID <<FK>> → users
+  * school_id : UUID <<FK>> → schools
+  * stall_name : VARCHAR(100)
+  * is_active : BOOLEAN = true
+  * created_at : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
+}
+
+entity "admin_assignments" as admin_assign {
+  * **id** : UUID <<PK>>
+  --
+  * user_id : UUID <<FK>> → users
+  * school_id : UUID <<FK>> → schools
+  role_detail : VARCHAR(100)
+  * is_active : BOOLEAN = true
+  * created_at : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
+}
+
+entity "products" as products {
+  * **id** : UUID <<PK>>
+  --
+  * canteen_operator_id : UUID <<FK>> → canteen_operators
+  * name : VARCHAR(150)
+  * price : DECIMAL(12,2) >= 0
+  image_url : VARCHAR(255)
+  * is_available : BOOLEAN = true
+  * created_at : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
+}
+
+entity "transactions" as transactions {
+  * **id** : UUID <<PK>>
+  --
+  * student_id : UUID <<FK>> → students
+  * type : tx_type (ENUM)
+  * amount : DECIMAL(12,2) > 0
+  * balance_before : DECIMAL(12,2)
+  * balance_after : DECIMAL(12,2)
+  description : TEXT
+  * performed_by : UUID <<FK>> → users
+  * method : tx_method (ENUM)
+  reference_id : VARCHAR(100)
+  * status : tx_status (ENUM) = 'pending'
+  * created_at : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
+}
+
+entity "transaction_items" as tx_items {
+  * **id** : UUID <<PK>>
+  --
+  * transaction_id : UUID <<FK>> → transactions
+  product_id : UUID <<FK>> → products (nullable)
+  * name : VARCHAR(150)
+  * price : DECIMAL(12,2) >= 0
+  * quantity : INTEGER > 0
+  notes : TEXT
+  * created_at : TIMESTAMPTZ
+}
+
+entity "payment_requests" as pay_req {
+  * **id** : UUID <<PK>>
+  --
+  * student_id : UUID <<FK>> → students
+  * amount : DECIMAL(12,2) > 0
+  payment_method : VARCHAR(50)
+  * midtrans_order_id : VARCHAR(100) <<UK>>
+  midtrans_status : VARCHAR(50) = 'pending'
+  paid_by_name : VARCHAR(255)
+  paid_by_phone : VARCHAR(20)
+  * status : payment_status (ENUM) = 'pending'
+  * expired_at : TIMESTAMPTZ
+  paid_at : TIMESTAMPTZ
+  * created_at : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
+}
+
+entity "audit_logs" as audit_logs {
+  * **id** : UUID <<PK>>
+  --
+  user_id : UUID <<FK>> → users (ON DELETE SET NULL)
+  school_id : UUID <<FK>> → schools (ON DELETE SET NULL)
+  * action : VARCHAR(100)
+  * target_type : VARCHAR(50)
+  * target_id : UUID
+  old_value : JSONB
+  new_value : JSONB
+  ip_address : VARCHAR(45)
+  user_agent : TEXT
+  * created_at : TIMESTAMPTZ
+}
+
+entity "notifications" as notifications {
+  * **id** : UUID <<PK>>
+  --
+  * user_id : UUID <<FK>> → users
+  * title : VARCHAR(150)
+  * body : TEXT
+  * type : notif_type (ENUM)
+  * is_read : BOOLEAN = false
+  data : JSONB
+  * created_at : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
+}
+
+entity "daily_summaries" as daily_sum {
+  * **id** : UUID <<PK>>
+  --
+  * student_id : UUID <<FK>> → students
+  * date : DATE
+  * total_spent : DECIMAL(12,2) = 0
+  * total_topup : DECIMAL(12,2) = 0
+  * transaction_count : INT = 0
+  * created_at : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
+  ..
+  UNIQUE (student_id, date)
+}
+
+' === Relationships ===
+users ||--o| students : "user_id"
+users ||--o| operators : "user_id"
+users ||--o{ admin_assign : "user_id"
+users ||--o{ audit_logs : "user_id"
+users ||--o{ notifications : "user_id"
+
+schools ||--o{ students : "school_id"
+schools ||--o{ operators : "school_id"
+schools ||--o{ admin_assign : "school_id"
+
+operators ||--o{ products : "canteen_operator_id"
+
+students ||--o{ transactions : "student_id"
+students ||--o{ pay_req : "student_id"
+students ||--o{ daily_sum : "student_id"
+
+transactions ||--o{ tx_items : "transaction_id"
+products ||--o{ tx_items : "product_id"
+
+@enduml

@@ -1,0 +1,78 @@
+{
+  "projectName": "Sistem Kantin Digital",
+  "techStack": "Flutter (Mobile & Web) + Supabase (PostgreSQL DB)",
+  "globalStyling": {
+    "fontFamily": "Segoe UI",
+    "shadows": false,
+    "themeColors": {
+      "siswa_ortu": { "fill": "#DAE8FC", "stroke": "#6C8EBF", "text": "#0A2540", "emoji": "🔵" },
+      "petugas_kasir": { "fill": "#FFE6CC", "stroke": "#D79B00", "text": "#5A3200", "emoji": "🟡" },
+      "admin_keuangan": { "fill": "#D5E8D4", "stroke": "#72B095", "text": "#0A3F2C", "emoji": "🟢" },
+      "system_backend": { "fill": "#E6F2F2", "stroke": "#0E8A8A", "text": "#0E8A8A", "emoji": "⚙️" }
+    }
+  },
+  "diagram": {
+    "title": "11. Workflow Navigation (Screen Sitemap)",
+    "type": "screen_navigation",
+    "description": "Workflow perpindahan sitemap screen di masing-masing platform.",
+    "groups": [
+      {
+        "name": "Siswa App (Mobile)",
+        "color": "siswa_ortu",
+        "screens": [
+          { "id": "S_LOGIN", "label": "Login Screen", "emoji": "🔑" },
+          { "id": "S_DASH", "label": "Dashboard (Home)", "emoji": "🏠" },
+          { "id": "S_TOP", "label": "Top-up Nominal Grid", "emoji": "🔢" },
+          { "id": "S_SNAP", "label": "Midtrans Snap Webview", "emoji": "🌐" },
+          { "id": "S_HIST", "label": "History List Screen", "emoji": "📜" },
+          { "id": "S_PROF", "label": "Account Profile Screen", "emoji": "👤" }
+        ],
+        "transitions": [
+          { "from": "S_LOGIN", "to": "S_DASH", "label": "Login OK" },
+          { "from": "S_DASH", "to": "S_TOP", "label": "Top-up" },
+          { "from": "S_TOP", "to": "S_SNAP", "label": "Bayar" },
+          { "from": "S_DASH", "to": "S_HIST", "label": "Riwayat", "routing": "Out left margin -> bypass top/snap -> enter s_hist" },
+          { "from": "S_DASH", "to": "S_PROF", "label": "Profil", "routing": "Out right margin -> bypass top/snap/hist -> enter s_prof" }
+        ]
+      },
+      {
+        "name": "Petugas App (Mobile)",
+        "color": "petugas_kasir",
+        "screens": [
+          { "id": "K_LOGIN", "label": "Login Kasir", "emoji": "🔑" },
+          { "id": "K_POS", "label": "POS Catalog Grid", "emoji": "🛍️" },
+          { "id": "K_CART", "label": "Cart & Custom Charge", "emoji": "🛒" },
+          { "id": "K_NFC", "label": "NFC Payment Modal", "emoji": "📡" },
+          { "id": "K_CRUD", "label": "Menu Management (CRUD)", "emoji": "🥗" },
+          { "id": "K_CEK", "label": "Cek Saldo Saja Screen", "emoji": "🔍" }
+        ],
+        "transitions": [
+          { "from": "K_LOGIN", "to": "K_POS", "label": "Login OK" },
+          { "from": "K_POS", "to": "K_CART", "label": "Pilih Menu" },
+          { "from": "K_CART", "to": "K_NFC", "label": "Checkout" },
+          { "from": "K_POS", "to": "K_CRUD", "label": "Kelola Menu", "routing": "Out left margin -> bypass cart/nfc -> enter k_crud" },
+          { "from": "K_POS", "to": "K_CEK", "label": "Cek Saldo", "routing": "Out right margin -> bypass cart/nfc/crud -> enter k_cek" }
+        ]
+      },
+      {
+        "name": "Admin Web Portal",
+        "color": "admin_keuangan",
+        "screens": [
+          { "id": "A_LOGIN", "label": "Web Login Portal", "emoji": "🔑" },
+          { "id": "A_DASH", "label": "Dashboard Summary", "emoji": "📊" },
+          { "id": "A_TOP", "label": "Top-up Tunai (TU)", "emoji": "💵" },
+          { "id": "A_ADJ", "label": "Koreksi Saldo Form", "emoji": "✏️" },
+          { "id": "A_AUD", "label": "Audit Logs Viewer", "emoji": "📜" },
+          { "id": "A_USER", "label": "Manage Siswa & Kartu", "emoji": "🪪" }
+        ],
+        "transitions": [
+          { "from": "A_LOGIN", "to": "A_DASH", "label": "Login OK" },
+          { "from": "A_DASH", "to": "A_TOP", "label": "Top-up" },
+          { "from": "A_DASH", "to": "A_ADJ", "label": "Koreksi", "routing": "Out left margin -> bypass a_top -> enter a_adj" },
+          { "from": "A_DASH", "to": "A_AUD", "label": "Audit", "routing": "Out right margin -> bypass a_top/a_adj -> enter a_aud" },
+          { "from": "A_DASH", "to": "A_USER", "label": "Siswa", "routing": "Out left margin -> bypass a_top/a_adj/a_aud -> enter a_user" }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "projectName": "Sistem Kantin Digital",
+  "techStack": "Flutter (Mobile & Web) + Supabase (PostgreSQL DB)",
+  "globalStyling": {
+    "fontFamily": "Segoe UI",
+    "shadows": false,
+    "themeColors": {
+      "siswa_ortu": { "fill": "#DAE8FC", "stroke": "#6C8EBF", "text": "#0A2540", "emoji": "🔵" },
+      "petugas_kasir": { "fill": "#FFE6CC", "stroke": "#D79B00", "text": "#5A3200", "emoji": "🟡" },
+      "system_backend": { "fill": "#E6F2F2", "stroke": "#0E8A8A", "text": "#0E8A8A", "emoji": "⚙️" }
+    }
+  },
+  "diagram": {
+    "title": "04. Sequence Diagram (Alur Transaksi NFC)",
+    "type": "sequence_diagram",
+    "description": "Menampilkan validasi berlapis (client dan server-side) saat melakukan tap pembayaran kartu NFC.",
+    "lifelines": [
+      { "id": "Siswa", "label": "Siswa (Kartu NFC)", "color": "siswa_ortu", "emoji": "🪪" },
+      { "id": "POS", "label": "App POS Mobile (Kasir)", "color": "petugas_kasir", "emoji": "📱" },
+      { "id": "DB", "label": "Supabase DB (Backend)", "color": "system_backend", "emoji": "☁️" }
+    ],
+    "messages": [
+      { "from": "POS", "note": "Petugas memilih produk ke keranjang (Cart)", "emoji": "🛒" },
+      { "from": "Siswa", "to": "POS", "label": "1. Tap Kartu RFID/NFC", "emoji": "📡" },
+      { "from": "POS", "to": "DB", "label": "2. Query Saldo (Card UID)", "emoji": "🔍" },
+      { "from": "DB", "to": "POS", "label": "3. Return Nama & Saldo Terbaru", "emoji": "↩️" },
+      { "from": "POS", "note": "4. Cek local: Saldo >= Total Belanja?", "emoji": "⚖️" },
+      { "type": "alt", "conditions": [
+        { "name": "Saldo Cukup", "steps": [
+          { "from": "POS", "to": "DB", "label": "5. Jalankan Transaksi (ACID Stored Procedure)", "emoji": "⚡" },
+          { "from": "DB", "note": "6. Server validation: Validasi ulang harga riil & cek batas saldo", "emoji": "🔒" },
+          { "from": "DB", "to": "POS", "label": "7. Return Transaksi Sukses", "emoji": "✅" },
+          { "from": "POS", "to": "Siswa", "label": "8. Tampil Sukses & Getar HP", "emoji": "📲" },
+          { "from": "DB", "to": "Siswa", "label": "9. Push Notification ke HP Siswa", "emoji": "🔔" }
+        ]},
+        { "name": "Saldo Tidak Cukup", "steps": [
+          { "from": "POS", "to": "Siswa", "label": "Layar POS Merah - Transaksi Ditolak", "emoji": "❌" }
+        ]}
+      ]}
+    ]
+  }
+}

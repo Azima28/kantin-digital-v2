@@ -1,0 +1,141 @@
+@startuml
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam ArrowColor #4A5568
+skinparam ArrowThickness 1.5
+skinparam BackgroundColor #FAFAFA
+
+<style>
+document {
+  BackgroundColor #FAFAFA
+  FontName "Segoe UI"
+  FontColor #2D3748
+}
+activityDiagram {
+  LineColor #4A5568
+  LineThickness 1.5
+  
+  activity {
+    RoundCorner 10
+    BackgroundColor #FFFFFF
+    LineColor #CBD5E0
+    FontColor #2D3748
+    FontSize 11
+    
+    .siswa {
+      BackgroundColor #EBF8FF
+      LineColor #3182CE
+      FontColor #2B6CB0
+    }
+    .petugas {
+      BackgroundColor #FEFCBF
+      LineColor #D69E2E
+      FontColor #975A16
+    }
+    .admin {
+      BackgroundColor #E6FFFA
+      LineColor #319795
+      FontColor #234E52
+    }
+    .success {
+      BackgroundColor #C6F6D5
+      LineColor #38A169
+      FontColor #22543D
+    }
+    .fail {
+      BackgroundColor #FED7D7
+      LineColor #E53E3E
+      FontColor #742A2A
+    }
+  }
+  
+  diamond {
+    BackgroundColor #ED8936
+    LineColor #DD6B20
+    FontColor #FFFFFF
+    FontSize 10
+  }
+  
+  arrow {
+    LineColor #4A5568
+    LineThickness 1.5
+  }
+}
+</style>
+
+title Activity Diagram — Sistem Kantin Digital
+
+skinparam swimlane {
+  BorderColor #CBD5E0
+  TitleBackgroundColor #F7FAFC
+  TitleFontColor #2D3748
+  TitleFontSize 12
+  TitleFontWeight bold
+}
+
+|#DAE8FC33| Siswa / Orang Tua |
+start
+:Pilih Aksi / Jalur Transaksi; <<siswa>>
+
+if (Pilih Jalur?) then (Top-up Online\nvia App / Web Publik)
+  :Pilih nominal top-up &\nbayar via Midtrans\n(VA / QRIS / E-Wallet); <<siswa>>
+  :Midtrans memproses pembayaran; <<siswa>>
+
+  if (Pembayaran Berhasil?) then (Ya)
+    :Webhook Midtrans →\nUpdate saldo di DB &\ncatat di tabel transactions; <<success>>
+    :Kirim Push Notification\nke HP Siswa (FCM); <<success>>
+    stop
+  else (Tidak / Expired)
+    :Pembayaran gagal / kadaluarsa; <<fail>>
+    stop
+  endif
+
+elseif (Belanja NFC di Kantin) then (Ya)
+
+  |#FFE6CC33| Petugas Kantin |
+  :Pilih produk dari katalog\n& masukkan ke Keranjang (Cart);\n**Bisa tambah biaya kustom\n+ catatan wajib**; <<petugas>>
+
+  |#DAE8FC33| Siswa / Orang Tua |
+  :Tap kartu NFC/RFID di HP\nPetugas Kantin; <<siswa>>
+
+  |#FFE6CC33| Petugas Kantin |
+  :Baca UID kartu → Query\nnama siswa & saldo dari DB; <<petugas>>
+
+  if (Saldo >= Total Keranjang?) then (Ya — Saldo Cukup)
+    :Kirim data transaksi ke DB\n(student_id, item list, total); <<petugas>>
+
+    note right
+      Server-Side Validation (ACID):
+      1. Query saldo riil teraktual
+      2. Validasi ulang harga produk asli
+      3. Cek saldo >= total belanja riil
+      4. Potong saldo & simpan ke
+         transactions + transaction_items
+    end note
+
+    :Transaksi sukses —\nTampilkan saldo sisa\n& berikan makanan; <<success>>
+
+    |#DAE8FC33| Siswa / Orang Tua |
+    :Terima Push Notification\njajan sukses di HP; <<siswa>>
+    stop
+  else (Tidak — Saldo Kurang)
+    :UI POS berubah MERAH\nTombol Bayar TERKUNCI\nTransaksi Ditolak; <<fail>>
+    stop
+  endif
+
+else (Aksi Admin Keuangan)
+  |#D5E8D433| Admin Keuangan |
+  if (Jenis Aksi?) then (Top-up Tunai)
+    :Terima uang tunai dari\nsiswa/ortu via koperasi; <<admin>>
+    :Cari siswa by NIS &\nverifikasi profil; <<admin>>
+    :Input nominal top-up tunai; <<admin>>
+  else (Koreksi Saldo)
+    :Cari siswa by NIS &\nverifikasi profil; <<admin>>
+    :Input nominal koreksi &\n**alasan wajib diisi**; <<admin>>
+  endif
+  :Update saldo siswa di DB &\ncatat di tabel transactions &\n**buat entri audit_logs**\n(old_value, new_value, IP); <<success>>
+  :Cetak / unduh bukti bayar; <<admin>>
+  stop
+endif
+
+@enduml

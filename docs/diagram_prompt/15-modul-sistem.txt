@@ -1,0 +1,119 @@
+# PROMPT DIAGRAM: Pembuatan Peta Modul Sistem (System Modules Map) Kantin Digital
+
+Tugas Anda adalah merancang diagram visual **"Peta Modul Sistem — Sistem Kantin Digital"** dalam format XML Draw.io (.drawio) dari awal. Gunakan deskripsi spesifikasi tata letak, komponen, kontainer (swimlanes), dan hubungan aliran di bawah ini untuk membuat diagram arsitektur yang rapi dan terstruktur.
+
+---
+
+## 🏛️ PART 1: KONTEKS & ARSITEKTUR SISTEM
+
+Diagram ini menggambarkan **Peta Modul Sistem** yang terbagi menjadi tiga lapisan utama:
+1. **Lapisan Client (Aplikasi)**: Berjalan di sisi Flutter Mobile (Siswa, Kasir POS) dan Web (Admin Web, Super Admin, Orang Tua).
+2. **Lapisan Backend & Integrasi (Supabase)**: Layanan basis data (PostgreSQL), autentikasi (Supabase Auth), dan trigger/webhook (Edge Functions).
+3. **Lapisan Layanan Eksternal (External Services)**: Layanan pembayaran (Midtrans Gateway) dan notifikasi push (Firebase Cloud Messaging).
+
+---
+
+## 🎨 PART 2: PETUNJUK LAYOUT VISUAL (CONTAINERS & MODULES MAP)
+
+Diagram ini disusun secara horizontal dan bertingkat dari atas ke bawah:
+
+```text
+       ┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+       │ 💻 Aplikasi Client (Flutter Mobile & Web)                                                  │
+       │  [Modul Siswa]   [Modul Kasir POS]   [Modul Admin Web]   [Modul Super Admin]   [Modul Ortu] │
+       └──────┬──────────────────┬───────────────────┬───────────────────┬──────────────┬────────┘
+              │                  │                   │                   │              │
+       ┌──────▼──────────────────┼───────────────────┼───────────────────┼──────────────▼────────┐
+       │ ☁️ Backend & Integrasi (Supabase Cloud Services)  │                   │              │
+       │  [Supabase Auth]        │            [PostgreSQL DB]            │      [Edge Functions] │
+       └─────────────────────────┼───────────────────▲───────────────────┼──────────────▲────────┘
+                                 │                   │                   │              │
+                                 │                   │                   │              │
+       ┌─────────────────────────┼───────────────────┼───────────────────┼──────────────┼────────┐
+       │ Layanan Eksternal       ▼                   │                   ▼              │
+       │                   [Firebase FCM] <──────────┘             [Midtrans PG] ───────┘        │
+       │                         │                                                                   │
+       │                         └─────────────────────────────────────────────────────────────────> │
+       └─────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🎨 PART 3: DETAIL TATA LETAK & GEOMETRI DIAGRAM
+
+### 📍 A. Baris Atas: Swimlane Aplikasi Client
+* **Kontainer Swimlane (`client_container`)**: Judul: `💻 Aplikasi Client (Flutter Mobile & Web)`. Geometri: `x=30, y=70, width=940, height=150`.
+* **Modul Siswa (`mod_siswa`)**: Kotak tumpul, Geometri: `x=30, y=50, width=150, height=60` (relatif di dalam swimlane). Teks: `👦 Modul Siswa\n(Mobile App)`.
+* **Modul Kasir POS (`mod_kasir`)**: Kotak tumpul, Geometri: `x=210, y=50, width=150, height=60`. Teks: `👵 Modul Kasir POS\n(Mobile App)`.
+* **Modul Admin Web (`mod_admin`)**: Kotak tumpul, Geometri: `x=390, y=50, width=150, height=60`. Teks: `👨‍💼 Modul Admin Web\n(Web Admin)`.
+* **Modul Super Admin (`mod_super`)**: Kotak tumpul, Geometri: `x=570, y=50, width=150, height=60`. Teks: `👑 Modul Super Admin\n(Web Admin)`.
+* **Modul Orang Tua (`mod_ortu`)**: Kotak tumpul, Geometri: `x=750, y=50, width=150, height=60`. Teks: `👩 Modul Orang Tua\n(Web Publik)`.
+
+### 📍 B. Baris Tengah: Swimlane Backend
+* **Kontainer Swimlane (`backend_container`)**: Judul: `☁️ Backend & Integrasi (Supabase Cloud Services)`. Geometri: `x=30, y=270, width=940, height=170`.
+* **Supabase Auth (`auth`)**: Kotak tumpul, Geometri: `x=50, y=60, width=150, height=60` (relatif di dalam swimlane). Teks: `🔑 Supabase Auth`.
+* **PostgreSQL DB (`db`)**: Bentuk Tabung Basis Data/Silinder (`shape=datastore`), Geometri: `x=370, y=45, width=200, height=90`. Teks: `🗄️ PostgreSQL DB\n(Tables & Constraints)`.
+* **Edge Functions (`funcs`)**: Kotak tumpul, Geometri: `x=730, y=60, width=150, height=60`. Teks: `⚡ Edge Functions\n(Webhooks)`.
+
+### 📍 C. Baris Bawah: Layanan Eksternal (di luar swimlane)
+* **Firebase FCM (`fcm`)**: Kotak tumpul, Geometri: `x=80, y=520, width=220, height=60` (koordinat global). Teks: `📡 Firebase Cloud Messaging (FCM)`.
+* **Midtrans PG (`midtrans`)**: Kotak tumpul, Geometri: `x=720, y=520, width=200, height=60`. Teks: `💳 Midtrans Payment Gateway`.
+
+---
+
+## 🎨 PART 4: DETAIL PENGATURAN GAYA VISUAL (STYLING DESIGNS)
+
+* **Font**: Gunakan font `"Segoe UI"` atau `"Arial"`, ukuran font 10px untuk teks biasa, dan 11px Bold untuk judul modul.
+* **Skema Warna Modular**:
+  * **Modul Siswa & Orang Tua** (Biru Muda): `fillColor=#DAE8FC;strokeColor=#6C8EBF;fontColor=#0A2540;`
+  * **Modul Kasir POS** (Oranye/Kuning): `fillColor=#FFE6CC;strokeColor=#D79B00;fontColor=#975A16;`
+  * **Modul Admin & Super Admin** (Hijau Muda): `fillColor=#D5E8D4;strokeColor=#72B095;fontColor=#0A3F2C;`
+  * **Backend Services** (Toska/Teal): `fillColor=#E6F2F2;strokeColor=#0E8A8A;fontColor=#0c5757;`
+  * **Layanan Eksternal** (Ungu Muda): `fillColor=#F3E8FF;strokeColor=#8B5CF6;fontColor=#5B21B6;`
+  * **Swimlanes/Kontainer**: `fillColor=none;strokeColor=#4A5568;strokeWidth=1;fontColor=#4A5568;`
+* **Garis Koneksi (Edges)**:
+  * Gunakan tipe orthogonal siku-siku (`edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1.5;strokeColor=#4A5568;`).
+  * Khusus untuk koneksi Midtrans/FCM (integrasi eksternal), gunakan warna ungu (`strokeColor=#8B5CF6`).
+
+---
+
+## 🔗 PART 5: ALIRAN HUBUNGAN & GARIS KONEKSI (EDGES)
+
+1. `mod_siswa` $\rightarrow$ `auth` (Garis siku-siku dari Modul Siswa turun masuk ke Supabase Auth untuk autentikasi login).
+2. `mod_kasir` $\rightarrow$ `db` (Kasir POS melakukan transaksi potong saldo, masuk ke database PostgreSQL).
+3. `mod_admin` $\rightarrow$ `db` (Web Admin mengelola data master dan top-up manual siswa, masuk ke database).
+4. `mod_super` $\rightarrow$ `db` (Web Super Admin mengelola konfigurasi global dan melihat log transaksi dari database).
+5. `mod_ortu` $\rightarrow$ `db` (Web Publik Orang Tua membaca data nama & saldo berdasarkan ID Siswa dari database).
+6. `mod_ortu` $\rightarrow$ `midtrans` (Orang tua memilih metode top-up online, diarahkan ke Midtrans Payment Gateway. Gunakan warna garis ungu `#8B5CF6`).
+7. `midtrans` $\rightarrow$ `funcs` (Setelah pembayaran sukses, Midtrans mengirimkan notifikasi HTTPS POST ke Supabase Edge Functions).
+8. `funcs` $\rightarrow$ `db` (Edge Functions memproses webhook pembayaran, memverifikasi tanda tangan, dan memperbarui saldo di database PostgreSQL).
+9. `db` $\rightarrow$ `fcm` (Perubahan saldo sukses di database memicu webhook/event untuk mengirimkan notifikasi push melalui FCM).
+10. `fcm` $\rightarrow$ `mod_siswa` (Firebase FCM mengirimkan pesan notifikasi langsung ke aplikasi mobile Siswa untuk pembaruan saldo real-time).
+
+---
+
+## 🚨 PART 6: ATURAN PENCEGAHAN TUMPANG TINDIH & SPACING (ANTI-OVERLAP RULES)
+
+Untuk mencegah garis koneksi menumpuk, bertabrakan, atau terlalu rapat satu sama lain, Anda **WAJIB** menerapkan aturan spacing dan rute port berikut:
+
+1. **Penyederhanaan Jalur Autentikasi (Sangat Penting)**:
+   * **Hanya hubungkan Modul Siswa (`mod_siswa`) ke Supabase Auth (`auth`)** dalam diagram ini.
+   * Jangan menarik garis dari Modul Kasir, Admin Web, Super Admin, maupun Orang Tua ke Supabase Auth. Hal ini untuk mencegah tumpukan garis (bundle lines) di area kiri diagram.
+
+2. **Penyebaran Titik Masuk (Entry Ports) pada Database PostgreSQL (`db`)**:
+   * Sebarkan garis-garis yang menuju `PostgreSQL DB` agar tidak menumpuk di satu titik atas tabung database. Gunakan property `entryX` secara spesifik:
+     * Garis dari `mod_kasir` masuk di `entryX=0.25;entryY=0`.
+     * Garis dari `mod_admin` masuk di `entryX=0.5;entryY=0`.
+     * Garis dari `mod_super` masuk di `entryX=0.75;entryY=0`.
+     * Garis dari `mod_ortu` masuk di `entryX=0.9;entryY=0` (tarik garis memutar rapi).
+
+3. **Pemisahan Jalur Pembayaran (Sisi Kanan)**:
+   * Garis **Modul Orang Tua $\rightarrow$ Midtrans** (`e_mid1`) dan garis **Midtrans $\rightarrow$ Edge Functions** (`e_mid2`) harus dipisah dengan jarak yang lebar:
+     * Tarik garis `e_mid1` turun vertikal di sisi luar kanan (koordinat **X=850**).
+     * Tarik garis balik `e_mid2` naik vertikal di koordinat **X=780** (memberikan ruang kosong minimal 70px di antaranya).
+   * Rute webhook dari `funcs` ke `db` ditarik horizontal lurus dari kanan ke kiri tanpa memutar-mutar.
+
+4. **Pemisahan Jalur Notifikasi (Sisi Kiri)**:
+   * Garis **PostgreSQL DB $\rightarrow$ FCM** (`e_fcm1`) dan garis **FCM $\rightarrow$ Modul Siswa** (`e_fcm2`) harus dipisah agar tidak bertabrakan dengan area Autentikasi:
+     * Tarik garis `e_fcm1` turun di koordinat **X=140**.
+     * Tarik garis balik `e_fcm2` naik ke Modul Siswa di sisi luar paling kiri (koordinat **X=60**).
