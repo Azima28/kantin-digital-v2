@@ -3,12 +3,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kantin_digital/features/auth/services/auth_service.dart';
 
 // Provider untuk instance SupabaseClient
-final Provider<SupabaseClient> supabaseClientProvider = Provider<SupabaseClient>((Ref ref) {
-  return Supabase.instance.client;
-});
+final Provider<SupabaseClient> supabaseClientProvider =
+    Provider<SupabaseClient>((Ref ref) {
+      return Supabase.instance.client;
+    });
 
 // Provider untuk AuthService
-final Provider<AuthService> authServiceProvider = Provider<AuthService>((Ref ref) {
+final Provider<AuthService> authServiceProvider = Provider<AuthService>((
+  Ref ref,
+) {
   final SupabaseClient client = ref.watch(supabaseClientProvider);
   return AuthService(client);
 });
@@ -56,7 +59,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final Session? session = _authService.currentSession;
       if (session != null) {
-        final Map<String, dynamic>? profile = await _authService.getCurrentProfile();
+        final Map<String, dynamic>? profile = await _authService
+            .getCurrentProfile();
         if (profile != null && profile['role'] == 'petugas_kantin') {
           state = AuthState(isAuthenticated: true, profile: profile);
           return;
@@ -76,10 +80,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
         email: email,
         password: password,
       );
+      print('DEBUG - Login SUCCESS, Profile: $profile');
       state = AuthState(isAuthenticated: true, profile: profile);
       return true;
     } catch (e) {
-      state = AuthState(errorMessage: e.toString().replaceFirst('Exception: ', ''));
+      print('DEBUG - Login ERROR: $e');
+      state = AuthState(
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+      );
       return false;
     }
   }
@@ -95,6 +103,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
 // Provider untuk StateNotifier
 final StateNotifierProvider<AuthNotifier, AuthState> authNotifierProvider =
     StateNotifierProvider<AuthNotifier, AuthState>((Ref ref) {
-  final AuthService service = ref.watch(authServiceProvider);
-  return AuthNotifier(service);
-});
+      final AuthService service = ref.watch(authServiceProvider);
+      return AuthNotifier(service);
+    });

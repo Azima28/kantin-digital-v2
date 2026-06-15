@@ -11,27 +11,51 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    // Query profiles directly
-    final Map<String, dynamic>? profile = await _client
-        .from('profiles')
-        .select()
-        .eq('email', email)
-        .eq('password', password)
-        .maybeSingle();
+    try {
+      // Query profiles directly
+      final Map<String, dynamic>? profile = await _client
+          .from('profiles')
+          .select()
+          .eq('email', email)
+          .eq('password', password)
+          .maybeSingle();
 
-    if (profile == null) {
-      throw Exception('Email atau kata sandi salah.');
+      if (profile == null) {
+        throw Exception('Email atau kata sandi salah.');
+      }
+
+      final String role = profile['role'] ?? '';
+      
+      // Authorization check: must be petugas_kantin
+      if (role != 'petugas_kantin') {
+        throw Exception('Akses ditolak: Hanya petugas/operator kantin yang dapat masuk ke Kasir.');
+      }
+
+      _currentProfile = profile;
+      return profile;
+    } on PostgrestException catch (e) {
+      // Menangkap error jika kolom password tidak ditemukan di database
+      if (e.code == '42703' || e.message.contains('password')) {
+        throw Exception(
+          'Konfigurasi database belum lengkap. Kolom "password" belum ditambahkan ke tabel "profiles". '
+          'Silakan jalankan query migrasi SQL yang saya berikan di Supabase.',
+        );
+      }
+      throw Exception('Gagal menghubungi database (${e.code}): ${e.message}');
+    } catch (e) {
+      final String errString = e.toString();
+      // Menangkap error koneksi internet
+      if (errString.contains('SocketException') || errString.contains('Failed host lookup')) {
+        throw Exception(
+          'Gagal menghubungkan ke server. Periksa koneksi internet Anda atau pastikan URL Supabase sudah benar.',
+        );
+      }
+      // Meneruskan exception jika sudah berupa custom Exception
+      if (e is Exception) {
+        rethrow;
+      }
+      throw Exception('Terjadi kesalahan tidak terduga: $e');
     }
-
-    final String role = profile['role'] ?? '';
-    
-    // Authorization check: must be petugas_kantin
-    if (role != 'petugas_kantin') {
-      throw Exception('Akses ditolak: Hanya petugas/operator kantin yang dapat masuk ke Kasir.');
-    }
-
-    _currentProfile = profile;
-    return profile;
   }
 
   // Sign Out current session
