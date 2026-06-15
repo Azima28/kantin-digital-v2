@@ -2,71 +2,48 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService {
   final SupabaseClient _client;
+  Map<String, dynamic>? _currentProfile;
 
   AuthService(this._client);
 
-  // Sign In using email and password
+  // Sign In using email and password queried directly from profiles table
   Future<Map<String, dynamic>> signIn({
     required String email,
     required String password,
   }) async {
-    // 1. Authenticate with Supabase Auth
-    final AuthResponse response = await _client.auth.signInWithPassword(
-      email: email,
-      password: password,
-    );
+    // Query profiles directly
+    final Map<String, dynamic>? profile = await _client
+        .from('profiles')
+        .select()
+        .eq('email', email)
+        .eq('password', password)
+        .maybeSingle();
 
-    final User? user = response.user;
-    if (user == null) {
-      throw Exception('Gagal masuk: Data pengguna kosong.');
+    if (profile == null) {
+      throw Exception('Email atau kata sandi salah.');
     }
 
-    try {
-      // 2. Fetch profile role from public.profiles
-      final Map<String, dynamic>? profile = await _client
-          .from('profiles')
-          .select()
-          .eq('id', user.id)
-          .maybeSingle();
-
-      if (profile == null) {
-        await signOut();
-        throw Exception('Profil Anda tidak ditemukan di database.');
-      }
-
-      final String role = profile['role'] ?? '';
-      
-      // 3. Authorization check: must be petugas_kantin
-      if (role != 'petugas_kantin') {
-        await signOut();
-        throw Exception('Akses ditolak: Hanya petugas/operator kantin yang dapat masuk ke Kasir.');
-      }
-
-      return profile;
-    } catch (e) {
-      // Ensure we clean up the auth session if database check fails
-      await signOut();
-      rethrow;
+    final String role = profile['role'] ?? '';
+    
+    // Authorization check: must be petugas_kantin
+    if (role != 'petugas_kantin') {
+      throw Exception('Akses ditolak: Hanya petugas/operator kantin yang dapat masuk ke Kasir.');
     }
+
+    _currentProfile = profile;
+    return profile;
   }
 
   // Sign Out current session
   Future<void> signOut() async {
-    await _client.auth.signOut();
+    _currentProfile = null;
   }
 
   // Check if session is active
-  Session? get currentSession => _client.auth.currentSession;
+  Session? get currentSession => null;
 
   // Get current authenticated user profile
   Future<Map<String, dynamic>?> getCurrentProfile() async {
-    final User? user = _client.auth.currentUser;
-    if (user == null) return null;
-
-    return await _client
-        .from('profiles')
-        .select()
-        .eq('id', user.id)
-        .maybeSingle();
+    return _currentProfile;
   }
 }
