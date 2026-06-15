@@ -17,6 +17,9 @@ class AuthService {
       
       // Mock Parent Account
       if ((queryEmail == '20260012' || queryEmail == '20260012@sekolah.sch.id') && password == 'parent123') {
+        if (expectedRole != 'parent') {
+          throw Exception('Akun ini adalah akun Orang Tua. Silakan masuk melalui Portal Orang Tua.');
+        }
         final parentProfile = {
           'id': 'parent-id-wali-ahmad',
           'email': 'orangtua@sekolah.sch.id',
