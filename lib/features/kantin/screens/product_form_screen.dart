@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,7 +26,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   late String _selectedCategory;
   bool _isLoading = false;
 
-  File? _imageFile;
+  XFile? _imageFile;
   final ImagePicker _picker = ImagePicker();
   bool _imageDeleted = false;
 
@@ -65,7 +66,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
       if (pickedFile != null) {
         setState(() {
-          _imageFile = File(pickedFile.path);
+          _imageFile = pickedFile;
           _imageDeleted = false;
         });
       }
@@ -112,7 +113,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
       if (_imageFile != null) {
         final bytes = await _imageFile!.readAsBytes();
-        final fileExt = _imageFile!.path.split('.').last;
+        final fileExt = _imageFile!.name.split('.').last;
         final fileName = 'product_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
         
         try {
@@ -341,10 +342,15 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     child: _imageFile != null
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(16),
-                            child: Image.file(
-                              _imageFile!,
-                              fit: BoxFit.cover,
-                            ),
+                            child: kIsWeb
+                                ? Image.network(
+                                    _imageFile!.path,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Image.file(
+                                    File(_imageFile!.path),
+                                    fit: BoxFit.cover,
+                                  ),
                           )
                         : showExistingImage
                             ? ClipRRect(
