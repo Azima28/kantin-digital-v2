@@ -1,0 +1,266 @@
+<!DOCTYPE html><html class="light" lang="id"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Kantin Digital - Top-up Saldo</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed-variant": "#005228",
+                        "inverse-surface": "#303030",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#ffdcc3",
+                        "on-primary-fixed": "#002020",
+                        "on-primary-container": "#f3fffe",
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#006a35",
+                        "primary-fixed": "#8ff3f2",
+                        "tertiary-fixed-dim": "#61de8a",
+                        "on-background": "#1b1c1c",
+                        "secondary-fixed-dim": "#ffb77d",
+                        "surface-container-high": "#eae8e7",
+                        "on-tertiary": "#ffffff",
+                        "background": "#fbf9f8",
+                        "inverse-on-surface": "#f3f0f0",
+                        "on-secondary": "#ffffff",
+                        "outline": "#6d7979",
+                        "on-secondary-fixed": "#2f1500",
+                        "on-surface": "#1b1c1c",
+                        "outline-variant": "#bdc9c8",
+                        "secondary": "#904d00",
+                        "surface-tint": "#006a6a",
+                        "surface-variant": "#e4e2e1",
+                        "surface": "#fbf9f8",
+                        "on-tertiary-container": "#f6fff4",
+                        "on-secondary-fixed-variant": "#6e3900",
+                        "inverse-primary": "#72d6d6",
+                        "surface-container-highest": "#e4e2e1",
+                        "tertiary-container": "#008645",
+                        "surface-dim": "#dcd9d9",
+                        "primary-fixed-dim": "#72d6d6",
+                        "on-secondary-container": "#713b00",
+                        "on-surface-variant": "#3d4949",
+                        "on-error": "#ffffff",
+                        "secondary-container": "#ffa454",
+                        "primary": "#006767",
+                        "surface-container": "#f0eded",
+                        "tertiary-fixed": "#7efba4",
+                        "primary-container": "#008282",
+                        "surface-bright": "#fbf9f8",
+                        "on-primary-fixed-variant": "#004f50",
+                        "on-tertiary-fixed": "#00210c",
+                        "surface-container-low": "#f6f3f2",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "container-max": "1200px",
+                        "xl": "40px",
+                        "lg": "24px",
+                        "md": "16px",
+                        "sm": "8px",
+                        "xs": "4px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-xl": ["Be Vietnam Pro"],
+                        "headline-lg-mobile": ["Be Vietnam Pro"],
+                        "headline-md": ["Be Vietnam Pro"],
+                        "headline-lg": ["Be Vietnam Pro"],
+                        "label-md": ["Be Vietnam Pro"],
+                        "body-lg": ["Be Vietnam Pro"],
+                        "button": ["Be Vietnam Pro"],
+                        "body-md": ["Be Vietnam Pro"],
+                        "title-md": ["Be Vietnam Pro"]
+                    },
+                    "fontSize": {
+                        "headline-xl": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "body-lg": ["16px", {"lineHeight": "26px", "fontWeight": "400"}],
+                        "button": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "22px", "fontWeight": "400"}],
+                        "title-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1;
+        }
+        /* Custom scrollbar for horizontal lists */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased min-h-screen flex flex-col">
+<!-- TopNavBar (Linear/Transactional Intent - Nav Links Suppressed, Logo Kept) -->
+<header class="bg-surface-container-lowest border-b border-surface-variant flex justify-between items-center h-16 px-lg max-w-container-max mx-auto w-full sticky top-0 z-50 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+<div class="flex items-center gap-sm">
+<button class="text-primary hover:text-primary-container transition-colors flex items-center p-sm -ml-sm rounded-full active:opacity-80" onclick="history.back()">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<span class="font-headline-md text-headline-md text-primary">Kantin Digital</span>
+</div>
+<div class="flex items-center gap-md">
+<!-- Actions hidden for transactional focus -->
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow w-full max-w-container-max mx-auto px-md md:px-lg py-lg flex justify-center">
+<div class="w-full max-w-2xl">
+<!-- Context Header -->
+<div class="mb-xl flex items-center gap-md">
+<div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-background mb-base">Formulir Top-up Saldo Online</h1>
+<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm" data-icon="person">person</span>
+                         Ahmad Subarjo (Kelas 8-B)
+                    </p>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-surface-variant p-lg md:p-xl flex flex-col gap-xl relative overflow-hidden">
+<!-- Decorative Top Accent -->
+<div class="absolute top-0 left-0 w-full h-1 bg-secondary-container"></div>
+<!-- Section: Pilih Nominal -->
+<div>
+<h2 class="font-title-md text-title-md text-on-background mb-md">Pilih Nominal Top-up</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md mb-md">
+<!-- Option 1 -->
+<label class="relative cursor-pointer">
+<input class="peer sr-only" name="nominal" type="radio" value="20000">
+<div class="h-full bg-surface-container-lowest border border-outline-variant rounded-lg p-md text-center hover:bg-surface-container-low transition-colors peer-checked:border-primary peer-checked:bg-primary-fixed peer-checked:text-on-primary-fixed flex flex-col items-center justify-center gap-xs shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+<span class="font-headline-md text-headline-md">Rp 20.000</span>
+</div>
+</label>
+<!-- Option 2 -->
+<label class="relative cursor-pointer">
+<input class="peer sr-only" name="nominal" type="radio" value="50000">
+<div class="h-full bg-surface-container-lowest border border-outline-variant rounded-lg p-md text-center hover:bg-surface-container-low transition-colors peer-checked:border-primary peer-checked:bg-primary-fixed peer-checked:text-on-primary-fixed flex flex-col items-center justify-center gap-xs shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+<span class="font-headline-md text-headline-md">Rp 50.000</span>
+</div>
+</label>
+<!-- Option 3 (Selected Default) -->
+<label class="relative cursor-pointer">
+<input checked="" class="peer sr-only" name="nominal" type="radio" value="100000">
+<div class="h-full bg-surface-container-lowest border-2 border-primary rounded-lg p-md text-center bg-primary-fixed text-on-primary-fixed transition-colors flex flex-col items-center justify-center gap-xs shadow-[0_4px_12px_rgba(0,103,103,0.15)] relative">
+<!-- Checkmark badge for selected -->
+<div class="absolute -top-2 -right-2 bg-primary text-on-primary rounded-full w-6 h-6 flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[14px]" data-icon="check" data-weight="fill">check</span>
+</div>
+<span class="font-headline-md text-headline-md">Rp 100.000</span>
+</div>
+</label>
+</div>
+<!-- Custom Input -->
+<div class="flex flex-col gap-base">
+<label class="font-label-md text-label-md text-on-surface-variant" for="custom_amount">Atau Kustom (Minimal Rp 10.000)</label>
+<div class="relative">
+<span class="absolute left-md top-1/2 -translate-y-1/2 font-body-lg text-body-lg text-on-surface-variant">Rp</span>
+<input class="w-full pl-[40px] pr-md py-md bg-surface-container-lowest border border-outline-variant rounded-lg font-body-lg text-body-lg text-on-background focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm" id="custom_amount" placeholder="0" type="number">
+</div>
+</div>
+</div>
+<hr class="border-surface-variant">
+<!-- Section: Parent Details Form -->
+<div>
+<h2 class="font-title-md text-title-md text-on-background mb-md">Detail Pengirim</h2>
+<div class="flex flex-col gap-md">
+<!-- Nama Pengirim -->
+<div class="flex flex-col gap-base">
+<label class="font-label-md text-label-md text-on-surface-variant" for="sender_name">Nama Pengirim</label>
+<div class="relative">
+<span class="absolute left-md top-1/2 -translate-y-1/2 text-on-surface-variant flex items-center">
+<span class="material-symbols-outlined text-[20px]" data-icon="account_circle">account_circle</span>
+</span>
+<input class="w-full pl-[44px] pr-md py-md bg-surface-container-lowest border border-outline-variant rounded-lg font-body-lg text-body-lg text-on-background focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm" id="sender_name" type="text" value="Budi Subarjo">
+</div>
+</div>
+<!-- Nomor WA/HP -->
+<div class="flex flex-col gap-base">
+<label class="font-label-md text-label-md text-on-surface-variant" for="sender_phone">Nomor WA/HP</label>
+<div class="relative">
+<span class="absolute left-md top-1/2 -translate-y-1/2 text-on-surface-variant flex items-center">
+<span class="material-symbols-outlined text-[20px]" data-icon="phone_android">phone_android</span>
+</span>
+<input class="w-full pl-[44px] pr-md py-md bg-surface-container-lowest border border-outline-variant rounded-lg font-body-lg text-body-lg text-on-background focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm" id="sender_phone" type="tel" value="08123456789">
+</div>
+<p class="font-label-md text-label-md text-on-surface-variant mt-xs">Nota tagihan akan dikirimkan ke nomor ini.</p>
+</div>
+</div>
+</div>
+<!-- Action Button -->
+<div class="mt-sm">
+<button class="w-full bg-primary hover:bg-primary-container text-on-primary font-button text-button py-md px-lg rounded-full flex items-center justify-center gap-sm transition-all shadow-[0_4px_12px_rgba(0,103,103,0.2)] hover:shadow-[0_6px_16px_rgba(0,103,103,0.3)] active:opacity-90">
+<span class="material-symbols-outlined" data-icon="payment">payment</span>
+                        BAYAR SEKARANG VIA MIDTRANS
+                    </button>
+<p class="text-center font-label-md text-label-md text-on-surface-variant mt-md flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined text-[14px]" data-icon="lock" data-weight="fill">lock</span>
+                        Pembayaran aman dan terenkripsi
+                    </p>
+</div>
+</div>
+<!-- Back to Dashboard Link (Secondary Action) -->
+<div class="mt-lg text-center">
+<button class="text-primary font-button text-button hover:underline flex items-center justify-center gap-xs mx-auto" onclick="history.back()">
+<span class="material-symbols-outlined text-[18px]" data-icon="chevron_left">chevron_left</span>
+                    &lt; Kembali Pantau Anak
+                 </button>
+</div>
+</div>
+</main>
+<!-- Footer (Suppressed on Transactional Screens to focus on payment, but included minimal version per standard if strictly needed. Omitting large footer for focused flow.) -->
+<footer class="bg-surface-container-low py-md px-lg flex flex-col items-center justify-center text-center mt-auto border-t border-surface-variant">
+<p class="font-label-md text-label-md text-on-surface-variant">© 2024 Kantin Digital. All rights reserved.</p>
+</footer>
+<script>
+        // Simple interactivity for custom amount field clearing radio buttons
+        document.addEventListener('DOMContentLoaded', () => {
+            const radioButtons = document.querySelectorAll('input[name="nominal"]');
+            const customInput = document.getElementById('custom_amount');
+
+            customInput.addEventListener('input', () => {
+                if (customInput.value) {
+                    radioButtons.forEach(radio => {
+                        radio.checked = false;
+                    });
+                }
+            });
+
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    if (radio.checked) {
+                        customInput.value = '';
+                    }
+                });
+            });
+        });
+    </script>
+</body></html>

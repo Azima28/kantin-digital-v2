@@ -1,0 +1,236 @@
+<!DOCTYPE html><html lang="id"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Midtrans Snap Checkout - Kantin Digital</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed-variant": "#005228",
+                        "inverse-surface": "#303030",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#ffdcc3",
+                        "on-primary-fixed": "#002020",
+                        "on-primary-container": "#f3fffe",
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#006a35",
+                        "primary-fixed": "#8ff3f2",
+                        "tertiary-fixed-dim": "#61de8a",
+                        "on-background": "#1b1c1c",
+                        "secondary-fixed-dim": "#ffb77d",
+                        "surface-container-high": "#eae8e7",
+                        "on-tertiary": "#ffffff",
+                        "background": "#fbf9f8",
+                        "inverse-on-surface": "#f3f0f0",
+                        "on-secondary": "#ffffff",
+                        "outline": "#6d7979",
+                        "on-secondary-fixed": "#2f1500",
+                        "on-surface": "#1b1c1c",
+                        "outline-variant": "#bdc9c8",
+                        "secondary": "#904d00",
+                        "surface-tint": "#006a6a",
+                        "surface-variant": "#e4e2e1",
+                        "surface": "#fbf9f8",
+                        "on-tertiary-container": "#f6fff4",
+                        "on-secondary-fixed-variant": "#6e3900",
+                        "inverse-primary": "#72d6d6",
+                        "surface-container-highest": "#e4e2e1",
+                        "tertiary-container": "#008645",
+                        "surface-dim": "#dcd9d9",
+                        "primary-fixed-dim": "#72d6d6",
+                        "on-secondary-container": "#713b00",
+                        "on-surface-variant": "#3d4949",
+                        "on-error": "#ffffff",
+                        "secondary-container": "#ffa454",
+                        "primary": "#006767",
+                        "surface-container": "#f0eded",
+                        "tertiary-fixed": "#7efba4",
+                        "primary-container": "#008282",
+                        "surface-bright": "#fbf9f8",
+                        "on-primary-fixed-variant": "#004f50",
+                        "on-tertiary-fixed": "#00210c",
+                        "surface-container-low": "#f6f3f2",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "container-max": "1200px",
+                        "xl": "40px",
+                        "lg": "24px",
+                        "md": "16px",
+                        "sm": "8px",
+                        "xs": "4px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-xl": ["Be Vietnam Pro"],
+                        "headline-lg-mobile": ["Be Vietnam Pro"],
+                        "headline-md": ["Be Vietnam Pro"],
+                        "headline-lg": ["Be Vietnam Pro"],
+                        "label-md": ["Be Vietnam Pro"],
+                        "body-lg": ["Be Vietnam Pro"],
+                        "button": ["Be Vietnam Pro"],
+                        "body-md": ["Be Vietnam Pro"],
+                        "title-md": ["Be Vietnam Pro"]
+                    },
+                    "fontSize": {
+                        "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "34px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "body-lg": ["16px", { "lineHeight": "26px", "fontWeight": "400" }],
+                        "button": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+                        "title-md": ["18px", { "lineHeight": "24px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background min-h-screen text-on-background antialiased relative">
+<!-- Top Navigation Bar (Background Context) -->
+<header class="bg-background border-b border-surface-variant flex justify-between items-center h-16 px-lg max-w-container-max mx-auto w-full">
+<div class="font-headline-md text-headline-md text-primary">Kantin Digital</div>
+<nav class="hidden md:flex gap-lg">
+<a class="font-body-md text-body-md font-button text-button text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#">Dashboard</a>
+<a class="font-body-md text-body-md font-button text-button text-primary border-b-2 border-primary pb-1 cursor-pointer" href="#">Top-up</a>
+<a class="font-body-md text-body-md font-button text-button text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#">History</a>
+</nav>
+<div class="flex gap-md items-center">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">account_circle</span>
+</div>
+</header>
+<!-- Background Content (Simulated Top-up Screen) -->
+<main class="max-w-container-max mx-auto px-lg py-xl">
+<div class="max-w-md mx-auto bg-surface-container-lowest p-lg rounded-xl shadow-[0px_4px_20px_rgba(0,0,0,0.05)] border border-surface-variant">
+<h1 class="font-headline-lg text-headline-lg mb-lg">Top-up Balance</h1>
+<div class="mb-md">
+<label class="font-label-md text-label-md text-on-surface-variant mb-xs block">Amount to Top-up</label>
+<div class="relative">
+<span class="absolute left-md top-1/2 -translate-y-1/2 font-title-md text-title-md">Rp</span>
+<input class="w-full pl-[48px] pr-md py-sm border border-outline-variant rounded bg-surface-container-low font-title-md text-title-md text-on-surface" disabled="" type="text" value="100.000">
+</div>
+</div>
+<button class="w-full bg-secondary-container text-on-secondary-container font-button text-button py-sm rounded mt-md opacity-50" disabled="">Proceed to Payment</button>
+</div>
+</main>
+<!-- Modal Overlay Backdrop -->
+<div class="fixed inset-0 bg-[#000000] bg-opacity-40 z-40 flex items-center justify-center p-md backdrop-blur-sm" id="modalBackdrop">
+<!-- Midtrans Snap Modal -->
+<div aria-modal="true" class="bg-surface-container-lowest w-full max-w-[400px] rounded-xl shadow-[0px_8px_30px_rgba(0,0,0,0.1)] flex flex-col relative z-50 animate-[slideUp_0.3s_ease-out]" role="dialog">
+<!-- Modal Header -->
+<div class="flex justify-between items-center p-md border-b border-surface-variant bg-surface-container-low rounded-t-xl">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">security</span>
+<h2 class="font-title-md text-title-md text-on-surface tracking-tight">MIDTRANS SNAP</h2>
+</div>
+<button aria-label="Close" class="text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Modal Content -->
+<div class="p-lg flex-1 overflow-y-auto max-h-[614px]">
+<!-- Bill Summary -->
+<div class="mb-lg text-center bg-surface p-md rounded-lg border border-surface-variant">
+<p class="font-label-md text-label-md text-on-surface-variant mb-xs">Total Tagihan</p>
+<p class="font-headline-lg-mobile text-headline-lg-mobile text-primary">Rp 100.000</p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-xs">Order ID: #KD-982734</p>
+</div>
+<p class="font-title-md text-title-md mb-md">Pilih Metode Pembayaran</p>
+<!-- Payment Methods List -->
+<div class="flex flex-col gap-sm">
+<!-- QRIS -->
+<label class="flex items-center p-md border border-surface-variant rounded-lg cursor-pointer hover:bg-surface-container-low hover:border-primary transition-colors group relative">
+<input checked="" class="sr-only peer" name="payment_method" type="radio">
+<div class="w-10 h-10 bg-surface-container rounded flex items-center justify-center mr-md">
+<span class="material-symbols-outlined text-primary">qr_code_scanner</span>
+</div>
+<div class="flex-1">
+<p class="font-title-md text-title-md">QRIS</p>
+<p class="font-body-md text-body-md text-on-surface-variant">Gopay, ShopeePay, Dana</p>
+</div>
+<div class="w-5 h-5 rounded-full border-2 border-outline-variant peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center relative">
+<div class="w-2 h-2 rounded-full bg-on-primary opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+</div>
+</label>
+<!-- Virtual Account BCA -->
+<label class="flex items-center p-md border border-surface-variant rounded-lg cursor-pointer hover:bg-surface-container-low hover:border-primary transition-colors group relative">
+<input class="sr-only peer" name="payment_method" type="radio">
+<div class="w-10 h-10 bg-surface-container rounded flex items-center justify-center mr-md">
+<span class="material-symbols-outlined text-primary">account_balance</span>
+</div>
+<div class="flex-1">
+<p class="font-title-md text-title-md">BCA Virtual Account</p>
+<p class="font-body-md text-body-md text-on-surface-variant">Transfer dari BCA</p>
+</div>
+<div class="w-5 h-5 rounded-full border-2 border-outline-variant peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center relative">
+<div class="w-2 h-2 rounded-full bg-on-primary opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+</div>
+</label>
+<!-- Virtual Account Mandiri -->
+<label class="flex items-center p-md border border-surface-variant rounded-lg cursor-pointer hover:bg-surface-container-low hover:border-primary transition-colors group relative">
+<input class="sr-only peer" name="payment_method" type="radio">
+<div class="w-10 h-10 bg-surface-container rounded flex items-center justify-center mr-md">
+<span class="material-symbols-outlined text-primary">account_balance</span>
+</div>
+<div class="flex-1">
+<p class="font-title-md text-title-md">Mandiri Virtual Account</p>
+<p class="font-body-md text-body-md text-on-surface-variant">Transfer dari Livin'</p>
+</div>
+<div class="w-5 h-5 rounded-full border-2 border-outline-variant peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center relative">
+<div class="w-2 h-2 rounded-full bg-on-primary opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+</div>
+</label>
+<!-- Minimarket -->
+<label class="flex items-center p-md border border-surface-variant rounded-lg cursor-pointer hover:bg-surface-container-low hover:border-primary transition-colors group relative">
+<input class="sr-only peer" name="payment_method" type="radio">
+<div class="w-10 h-10 bg-surface-container rounded flex items-center justify-center mr-md">
+<span class="material-symbols-outlined text-primary">storefront</span>
+</div>
+<div class="flex-1">
+<p class="font-title-md text-title-md">Alfamart / Indomaret</p>
+<p class="font-body-md text-body-md text-on-surface-variant">Bayar di kasir</p>
+</div>
+<div class="w-5 h-5 rounded-full border-2 border-outline-variant peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center relative">
+<div class="w-2 h-2 rounded-full bg-on-primary opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+</div>
+</label>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="p-md border-t border-surface-variant bg-surface-container-lowest rounded-b-xl">
+<button class="w-full bg-primary text-on-primary font-button text-button py-md rounded-lg shadow-[0px_4px_20px_rgba(0,0,0,0.05)] hover:bg-primary-container hover:text-on-primary-container transition-all flex items-center justify-center gap-sm">
+<span>LANJUTKAN PEMBAYARAN</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+<div class="mt-sm text-center flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined text-[12px] text-on-surface-variant">lock</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Pembayaran Aman via Midtrans</span>
+</div>
+</div>
+</div>
+</div>
+<style>
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+    </style>
+</body></html>

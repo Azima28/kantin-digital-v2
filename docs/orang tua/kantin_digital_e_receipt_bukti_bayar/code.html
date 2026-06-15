@@ -1,0 +1,195 @@
+<!DOCTYPE html><html class="light" lang="id"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>E-Receipt Bukti Bayar - Kantin Digital</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed-variant": "#005228",
+                        "inverse-surface": "#303030",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#ffdcc3",
+                        "on-primary-fixed": "#002020",
+                        "on-primary-container": "#f3fffe",
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#006a35",
+                        "primary-fixed": "#8ff3f2",
+                        "tertiary-fixed-dim": "#61de8a",
+                        "on-background": "#1b1c1c",
+                        "secondary-fixed-dim": "#ffb77d",
+                        "surface-container-high": "#eae8e7",
+                        "on-tertiary": "#ffffff",
+                        "background": "#fbf9f8",
+                        "inverse-on-surface": "#f3f0f0",
+                        "on-secondary": "#ffffff",
+                        "outline": "#6d7979",
+                        "on-secondary-fixed": "#2f1500",
+                        "on-surface": "#1b1c1c",
+                        "outline-variant": "#bdc9c8",
+                        "secondary": "#904d00",
+                        "surface-tint": "#006a6a",
+                        "surface-variant": "#e4e2e1",
+                        "surface": "#fbf9f8",
+                        "on-tertiary-container": "#f6fff4",
+                        "on-secondary-fixed-variant": "#6e3900",
+                        "inverse-primary": "#72d6d6",
+                        "surface-container-highest": "#e4e2e1",
+                        "tertiary-container": "#008645",
+                        "surface-dim": "#dcd9d9",
+                        "primary-fixed-dim": "#72d6d6",
+                        "on-secondary-container": "#713b00",
+                        "on-surface-variant": "#3d4949",
+                        "on-error": "#ffffff",
+                        "secondary-container": "#ffa454",
+                        "primary": "#006767",
+                        "surface-container": "#f0eded",
+                        "tertiary-fixed": "#7efba4",
+                        "primary-container": "#008282",
+                        "surface-bright": "#fbf9f8",
+                        "on-primary-fixed-variant": "#004f50",
+                        "on-tertiary-fixed": "#00210c",
+                        "surface-container-low": "#f6f3f2",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "container-max": "1200px",
+                        "xl": "40px",
+                        "lg": "24px",
+                        "md": "16px",
+                        "sm": "8px",
+                        "xs": "4px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-xl": ["Be Vietnam Pro"],
+                        "headline-lg-mobile": ["Be Vietnam Pro"],
+                        "headline-md": ["Be Vietnam Pro"],
+                        "headline-lg": ["Be Vietnam Pro"],
+                        "label-md": ["Be Vietnam Pro"],
+                        "body-lg": ["Be Vietnam Pro"],
+                        "button": ["Be Vietnam Pro"],
+                        "body-md": ["Be Vietnam Pro"],
+                        "title-md": ["Be Vietnam Pro"]
+                    },
+                    "fontSize": {
+                        "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "34px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "body-lg": ["16px", { "lineHeight": "26px", "fontWeight": "400" }],
+                        "button": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+                        "title-md": ["18px", { "lineHeight": "24px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .receipt-card {
+            box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.05);
+        }
+        .success-animation {
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        @keyframes fadeInUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-background min-h-screen flex flex-col items-center justify-center p-md md:p-lg text-on-background font-body-md">
+<!-- TopNavBar Omitted as per Source of Truth: Transactional/Success screen -->
+<main class="w-full max-w-2xl mx-auto flex flex-col items-center">
+<!-- Success Icon -->
+<div class="mb-lg success-animation">
+<div class="w-24 h-24 rounded-full bg-tertiary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-tertiary-container text-5xl" style="font-variation-settings: 'FILL' 1;">
+                    check_circle
+                </span>
+</div>
+</div>
+<!-- Heading -->
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-center mb-xl fade-in-up text-primary">
+            PEMBAYARAN ONLINE BERHASIL
+        </h1>
+<!-- Receipt Card -->
+<div class="receipt-card bg-surface-container-lowest border border-outline-variant rounded-xl p-lg md:p-xl w-full mb-lg fade-in-up delay-100">
+<div class="flex items-center justify-between mb-lg border-b border-surface-variant pb-md">
+<span class="font-title-md text-title-md text-on-surface">Detail Transaksi</span>
+<span class="material-symbols-outlined text-tertiary">receipt_long</span>
+</div>
+<div class="space-y-md">
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant">Order ID</span>
+<span class="font-body-lg text-body-lg text-on-surface">PR-9081203980</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant">Tanggal</span>
+<span class="font-body-lg text-body-lg text-on-surface">12 Jun 2026 14:30</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant">Pengirim</span>
+<span class="font-body-lg text-body-lg text-on-surface">Budi Subarjo</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant">Penerima</span>
+<span class="font-body-lg text-body-lg text-on-surface">Ahmad Subarjo</span>
+</div>
+<div class="flex justify-between items-center pt-sm">
+<span class="text-on-surface-variant">Nominal</span>
+<span class="font-title-md text-title-md text-primary">Rp 100.000</span>
+</div>
+<div class="flex justify-between items-center pt-sm border-t border-surface-variant">
+<span class="text-on-surface-variant">Status</span>
+<span class="px-sm py-xs rounded bg-tertiary-container text-on-tertiary-container font-label-md text-label-md uppercase tracking-wider">
+                        SUKSES / LUNAS
+                    </span>
+</div>
+</div>
+<!-- Highlighted Balance -->
+<div class="mt-lg pt-md border-t border-surface-variant flex justify-between items-center bg-surface-container-low p-md rounded-lg">
+<span class="font-title-md text-title-md text-on-surface">Saldo Baru Ahmad</span>
+<span class="font-headline-md text-headline-md text-secondary">Rp 175.000</span>
+</div>
+</div>
+<!-- Actions -->
+<div class="w-full space-y-md flex flex-col fade-in-up delay-200">
+<button class="w-full flex items-center justify-center gap-sm py-md px-lg rounded-lg border-2 border-primary text-primary font-button text-button hover:bg-surface-container-low transition-colors duration-200">
+<span class="material-symbols-outlined">download</span>
+                DOWNLOAD BUKTI PEMBAYARAN (PDF)
+            </button>
+<button class="w-full py-md px-lg rounded-lg bg-primary text-on-primary font-button text-button hover:bg-primary-container hover:text-on-primary-container transition-colors duration-200 shadow-[0px_4px_20px_rgba(0,0,0,0.05)] hover:shadow-[0px_8px_30px_rgba(0,0,0,0.1)]">
+                KEMBALI KE HALAMAN UTAMA
+            </button>
+</div>
+</main>
+<!-- Footer Omitted as per Source of Truth: Transactional/Success screen -->
+</body></html>

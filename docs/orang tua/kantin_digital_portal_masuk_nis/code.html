@@ -1,0 +1,153 @@
+<!DOCTYPE html><html lang="id"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Kantin Digital - Portal Orang Tua</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed-variant": "#005228",
+                        "inverse-surface": "#303030",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#ffdcc3",
+                        "on-primary-fixed": "#002020",
+                        "on-primary-container": "#f3fffe",
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#006a35",
+                        "primary-fixed": "#8ff3f2",
+                        "tertiary-fixed-dim": "#61de8a",
+                        "on-background": "#1b1c1c",
+                        "secondary-fixed-dim": "#ffb77d",
+                        "surface-container-high": "#eae8e7",
+                        "on-tertiary": "#ffffff",
+                        "background": "#fbf9f8",
+                        "inverse-on-surface": "#f3f0f0",
+                        "on-secondary": "#ffffff",
+                        "outline": "#6d7979",
+                        "on-secondary-fixed": "#2f1500",
+                        "on-surface": "#1b1c1c",
+                        "outline-variant": "#bdc9c8",
+                        "secondary": "#904d00",
+                        "surface-tint": "#006a6a",
+                        "surface-variant": "#e4e2e1",
+                        "surface": "#fbf9f8",
+                        "on-tertiary-container": "#f6fff4",
+                        "on-secondary-fixed-variant": "#6e3900",
+                        "inverse-primary": "#72d6d6",
+                        "surface-container-highest": "#e4e2e1",
+                        "tertiary-container": "#008645",
+                        "surface-dim": "#dcd9d9",
+                        "primary-fixed-dim": "#72d6d6",
+                        "on-secondary-container": "#713b00",
+                        "on-surface-variant": "#3d4949",
+                        "on-error": "#ffffff",
+                        "secondary-container": "#ffa454",
+                        "primary": "#006767",
+                        "surface-container": "#f0eded",
+                        "tertiary-fixed": "#7efba4",
+                        "primary-container": "#008282",
+                        "surface-bright": "#fbf9f8",
+                        "on-primary-fixed-variant": "#004f50",
+                        "on-tertiary-fixed": "#00210c",
+                        "surface-container-low": "#f6f3f2",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "container-max": "1200px",
+                        "xl": "40px",
+                        "lg": "24px",
+                        "md": "16px",
+                        "sm": "8px",
+                        "xs": "4px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-xl": ["Be Vietnam Pro"],
+                        "headline-lg-mobile": ["Be Vietnam Pro"],
+                        "headline-md": ["Be Vietnam Pro"],
+                        "headline-lg": ["Be Vietnam Pro"],
+                        "label-md": ["Be Vietnam Pro"],
+                        "body-lg": ["Be Vietnam Pro"],
+                        "button": ["Be Vietnam Pro"],
+                        "body-md": ["Be Vietnam Pro"],
+                        "title-md": ["Be Vietnam Pro"]
+                    },
+                    "fontSize": {
+                        "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "34px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "body-lg": ["16px", { "lineHeight": "26px", "fontWeight": "400" }],
+                        "button": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+                        "title-md": ["18px", { "lineHeight": "24px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background min-h-screen flex flex-col md:flex-row relative overflow-hidden">
+<!-- Background Image with Overlay -->
+<div class="absolute inset-0 md:relative md:w-1/2 md:flex-shrink-0 z-0 bg-cover bg-center" data-alt="A bright, cheerful school environment showing an empty, modern cafeteria or hallway with sunlight streaming through large windows. The scene conveys safety, cleanliness, and organization, aligning with a corporate modern style softened by natural light. The color palette features warm neutral tones, soft whites, and subtle teal accents, evoking a calm and trustworthy atmosphere suitable for a digital portal background." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDBrETCshHL1OtadMkevYxNXWoblvY3_eaW0Sk9QwBoSuocB4nFETu9B_s50rkB9wHonPRRZ-oiicHgGmjZaMu7jp3Qg2wlMNF9oWj6V8b6X-HlezzaUYU57Zf98uvu_928QX-R07vADGj2VFnO9xNaRbmhSjcLqh-KwovqNG1u2RNhZYdL4BE1aLY2xI-jAf5HCiKhAat4U6En6ZVawcS9NJA_9ZblRja_9l9Klf--WJrjJNKeSeSrJoWHWgQWRx_ubjAXR93Ixvo');">
+<div class="absolute inset-0 bg-surface-container-low/80 md:bg-surface-container-low/40 backdrop-blur-sm md:backdrop-blur-none"></div>
+</div>
+<!-- Main Content Container -->
+<main class="relative z-10 w-full md:w-1/2 flex flex-col justify-center items-center bg-surface-container-lowest/95 md:bg-surface-container-lowest backdrop-blur-md md:backdrop-blur-none min-h-screen p-lg md:p-xl">
+<div class="w-full max-w-md flex flex-col items-center">
+<!-- Brand Section -->
+<div class="text-center mb-xl w-full">
+<div class="w-16 h-16 bg-primary-container text-on-primary-container rounded-full flex items-center justify-center mx-auto mb-md">
+<span class="material-symbols-outlined text-[32px]">account_balance_wallet</span>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-primary tracking-tight">KANTIN DIGITAL</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-xs">Portal Orang Tua Siswa</p>
+</div>
+<!-- Form Section -->
+<div class="w-full">
+<div class="mb-md text-center">
+<h2 class="font-title-md text-title-md text-on-surface">Cek Saldo &amp; Aktivitas Anak</h2>
+</div>
+<form class="space-y-lg flex flex-col" onsubmit="event.preventDefault();">
+<div class="relative group">
+<label class="sr-only" for="nis-input">Nomor Induk Siswa</label>
+<div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline-variant group-focus-within:text-primary transition-colors">badge</span>
+</div>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg pl-xl pr-md py-md font-body-lg text-body-lg text-on-surface placeholder:text-outline-variant focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all" id="nis-input" placeholder="Masukkan NIS / Kode Unik Siswa" required="" type="text">
+</div>
+<button class="w-full bg-primary hover:bg-on-primary-fixed-variant text-on-primary font-button text-button py-md px-lg rounded-lg shadow-sm hover:shadow-[0_8px_30px_rgba(0,103,103,0.1)] transition-all flex items-center justify-center gap-sm active:scale-[0.98]" type="submit">
+<span>CEK SALDO &amp; AKTIVITAS ANAK</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</form>
+<div class="mt-lg text-center">
+<p class="font-label-md text-label-md text-outline">
+                        Sistem Informasi Pembayaran Terintegrasi<br>
+<span class="mt-xs inline-block">© 2024 Kantin Digital</span>
+</p>
+</div>
+</div>
+</div>
+</main>
+</body></html>
