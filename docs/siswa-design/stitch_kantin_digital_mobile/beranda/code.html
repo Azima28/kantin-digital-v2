@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Beranda - Kantin Digital</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary-container": "#008282",
+                        "surface-dim": "#d9dade",
+                        "primary": "#006767",
+                        "on-secondary-fixed-variant": "#6a3b00",
+                        "surface-bright": "#f9f9fe",
+                        "surface-container-highest": "#e2e2e7",
+                        "surface": "#f9f9fe",
+                        "tertiary": "#bc000a",
+                        "surface-container": "#ededf2",
+                        "outline-variant": "#bdc9c8",
+                        "tertiary-fixed-dim": "#ffb4aa",
+                        "on-error-container": "#93000a",
+                        "background": "#f9f9fe",
+                        "on-primary-fixed-variant": "#004f50",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#ffdcbf",
+                        "inverse-surface": "#2e3034",
+                        "outline": "#6d7979",
+                        "on-background": "#1a1c1f",
+                        "surface-container-low": "#f3f3f8",
+                        "on-tertiary-fixed-variant": "#930005",
+                        "tertiary-container": "#e2241f",
+                        "secondary-container": "#fe9400",
+                        "on-secondary-container": "#633700",
+                        "primary-fixed-dim": "#72d6d6",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-variant": "#e2e2e7",
+                        "on-secondary": "#ffffff",
+                        "on-surface": "#1a1c1f",
+                        "secondary": "#8c5000",
+                        "on-primary-container": "#f3fffe",
+                        "surface-container-high": "#e8e8ed",
+                        "inverse-on-surface": "#f0f0f5",
+                        "on-surface-variant": "#3d4949",
+                        "surface-tint": "#006a6a",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#ffdad5",
+                        "primary-fixed": "#8ff3f2",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed": "#2d1600",
+                        "on-error": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#002020",
+                        "secondary-fixed-dim": "#ffb874",
+                        "inverse-primary": "#72d6d6",
+                        "on-tertiary-container": "#fffbff",
+                        "on-tertiary-fixed": "#410001"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "margin-page": "16px",
+                        "radius-main": "12px",
+                        "gutter-stack": "12px",
+                        "radius-lg": "16px",
+                        "padding-card": "16px"
+                    },
+                    fontFamily: {
+                        "body-main": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-semibold": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "nav-title-lg": ["Inter"],
+                        "nav-title-mobile": ["Inter"],
+                        "caption-xs": ["Inter"]
+                    },
+                    fontSize: {
+                        "body-main": ["17px", { lineHeight: "22px", letterSpacing: "-0.4px", fontWeight: "400" }],
+                        "headline-md": ["20px", { lineHeight: "25px", letterSpacing: "-0.2px", fontWeight: "600" }],
+                        "body-semibold": ["17px", { lineHeight: "22px", letterSpacing: "-0.4px", fontWeight: "600" }],
+                        "label-sm": ["13px", { lineHeight: "18px", letterSpacing: "0px", fontWeight: "500" }],
+                        "nav-title-lg": ["34px", { lineHeight: "41px", letterSpacing: "-0.4px", fontWeight: "700" }],
+                        "nav-title-mobile": ["22px", { lineHeight: "28px", letterSpacing: "-0.2px", fontWeight: "700" }],
+                        "caption-xs": ["11px", { lineHeight: "13px", letterSpacing: "0.1px", fontWeight: "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #f2f2f7; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-background font-body-main antialiased selection:bg-primary-fixed selection:text-on-primary-fixed">
+<div class="max-w-[600px] mx-auto min-h-screen bg-surface relative pb-[84px]">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant/30">
+<div class="flex items-center justify-between px-margin-page w-full max-w-[600px] mx-auto h-16">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-container flex-shrink-0">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A close up portrait photo of a young indonesian male student smiling softly. He is wearing a neat white school uniform shirt. The lighting is bright and natural, indicating a morning setting. The background is a blurred school environment. Modern iOS minimal style, clear and inviting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6arrvyi-ml6AobqY9iRVH-bAtGVKv5rVu0nJZT7i59FPT_OmA4PkCVPZcxohJcnFeNHKKxMlEGwczp9sGTCXSBRwZ53UWn6wqnvQJ6ESGLnCiLIiN_siAQAl3ysBbcCnbqsWvVJQgzGe7XPjzFZ9SP8Jo8H1m8mKOOxLJ4D4ztLEW7kLenZqki4o7cC7O6heqxWa4pbHjqDA0xw5v3YHUJmVtFdFT1-1kR5VAk7w4jCOrdL8gf41TENBbruzO8EieiPGMS_p5etA"/>
+</div>
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface-variant">Halo, Ahmad!</span>
+<h1 class="text-headline-md font-headline-md text-primary dark:text-primary-fixed-dim">Beranda</h1>
+</div>
+</div>
+<button aria-label="Notifications" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors active:scale-95 text-primary dark:text-primary-fixed-dim">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">notifications</span>
+</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="pt-20 px-margin-page flex flex-col gap-gutter-stack pb-6">
+<!-- Balance Card -->
+<div class="bg-surface-container-lowest rounded-radius-lg p-padding-card border border-[#E5E5EA] flex flex-col gap-3 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary-fixed/20 rounded-bl-full -z-0"></div>
+<div class="flex justify-between items-start relative z-10">
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface-variant tracking-wider uppercase">Saldo Saku</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="text-headline-md font-headline-md text-on-surface">Rp</span>
+<span class="text-nav-title-lg font-nav-title-lg text-primary">75.000</span>
+</div>
+</div>
+<div class="bg-primary/10 text-primary px-3 py-1 rounded-full flex items-center gap-1">
+<span class="text-caption-xs font-caption-xs font-medium">Aktif</span>
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+</div>
+</div>
+</div>
+<!-- Quick Actions -->
+<div class="grid grid-cols-2 gap-3">
+<button class="bg-primary text-on-primary rounded-radius-main py-3 px-4 flex items-center justify-center gap-2 hover:opacity-90 transition-opacity active:scale-[0.98]">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span class="text-body-semibold font-body-semibold">Isi Saldo</span>
+</button>
+<button class="bg-surface-container-highest text-on-surface rounded-radius-main py-3 px-4 flex items-center justify-center gap-2 hover:bg-outline-variant/30 transition-colors active:scale-[0.98]">
+<span class="material-symbols-outlined text-[20px]">lock</span>
+<span class="text-body-semibold font-body-semibold">Bekukan</span>
+</button>
+</div>
+<!-- Transaction List -->
+<div class="mt-4 flex flex-col gap-3">
+<div class="flex justify-between items-end mb-1">
+<h2 class="text-headline-md font-headline-md text-on-surface">Jajan Hari Ini</h2>
+<a class="text-label-sm font-label-sm text-primary hover:underline" href="#">Lihat Semua</a>
+</div>
+<!-- Item 1 -->
+<div class="bg-surface-container-lowest rounded-radius-main p-3 border border-[#E5E5EA] flex items-center gap-3">
+<div class="w-12 h-12 rounded-lg overflow-hidden bg-surface-container flex-shrink-0">
+<img alt="Es Teh Manis" class="w-full h-full object-cover" data-alt="A refreshing glass of Indonesian sweet iced tea (Es Teh Manis) with condensation on the outside. The tea is a rich amber color with ice cubes floating inside. Shot on a clean white surface with natural soft lighting. Modern food photography style, highly detailed and appetizing." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsz8W-PeS6kVUDf03s6mKUNEd-R8yXBGQXwyad4JQ88s0YhDJMv5LqAyjg8iv6DE6y9u5vjTxN9xRRCYPEf_a7-_KwyIV9ECiRJmTiE6_L10sH2Z_9zvWhgp0PheiH8-PBVTdt07AFNkpEF5dF8j_hM17NhGFUCfu6lPqjozFGmSsGK_IltLDsqpmRNaks8JU6PaTWDPhGge12Dq4bnBBCP0BXY3tqM19e3u0IFBX33iVHZunrryvVE3Izel1MGrLdF754BMoQD-U"/>
+</div>
+<div class="flex-1 flex flex-col">
+<span class="text-body-semibold font-body-semibold text-on-surface">Es Teh Manis</span>
+<span class="text-caption-xs font-caption-xs text-on-surface-variant mt-0.5">Kantin Ibu Wati • 10:30 WIB</span>
+</div>
+<div class="text-right">
+<span class="text-body-semibold font-body-semibold text-error">-Rp 5.000</span>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="bg-surface-container-lowest rounded-radius-main p-3 border border-[#E5E5EA] flex items-center gap-3">
+<div class="w-12 h-12 rounded-lg overflow-hidden bg-surface-container flex-shrink-0">
+<img alt="Nasi Goreng" class="w-full h-full object-cover" data-alt="A plate of delicious Indonesian fried rice (Nasi Goreng) topped with a sunny side up egg and accompanied by prawn crackers and cucumber slices. Served on a minimalist white ceramic plate. Warm, inviting lighting highlighting the texture of the rice. Modern culinary styling." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD05q5otX1nNz2Fb9N6dtsagvzGMccQD3T2ormC3X19qZEJUisKvPGMqg7rKMcfrVaPRwjalPFX5SoB7KIQh4bSXN_rWWbzafJUJihXEeh3vGhisR1q7JcgtkdobMRiqRX_pGGqrOG4CDhoBXOfPmhbknr3I7Rt_oiCK8ht-azixG2HLmcFNLe93ZHVJCsOEfzcwt06ZNt8Ii7uqcK1dup92-eDDzkFE8O_PyhCZVoEwSkV1IoeYJ8PEGG2v_9A1i5BHQO9dcNrSJU"/>
+</div>
+<div class="flex-1 flex flex-col">
+<span class="text-body-semibold font-body-semibold text-on-surface">Nasi Goreng Spesial</span>
+<span class="text-caption-xs font-caption-xs text-on-surface-variant mt-0.5">Kantin Pak Budi • 12:15 WIB</span>
+</div>
+<div class="text-right">
+<span class="text-body-semibold font-body-semibold text-error">-Rp 15.000</span>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/80 dark:bg-surface-container-lowest/80 backdrop-blur-md border-t border-outline-variant/30">
+<div class="flex justify-around items-center w-full max-w-[600px] mx-auto h-[64px]">
+<button class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim hover:bg-surface-container-low/50 active:scale-90 transition-transform duration-200 w-16 h-full rounded-xl">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="text-caption-xs font-caption-xs">Beranda</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low/50 active:scale-90 transition-transform duration-200 w-16 h-full rounded-xl">
+<span class="material-symbols-outlined mb-1">history</span>
+<span class="text-caption-xs font-caption-xs">Riwayat</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low/50 active:scale-90 transition-transform duration-200 w-16 h-full rounded-xl">
+<span class="material-symbols-outlined mb-1">credit_card</span>
+<span class="text-caption-xs font-caption-xs">Kartu</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low/50 active:scale-90 transition-transform duration-200 w-16 h-full rounded-xl">
+<span class="material-symbols-outlined mb-1">person</span>
+<span class="text-caption-xs font-caption-xs">Akun</span>
+</button>
+</div>
+</nav>
+</div>
+</body></html>

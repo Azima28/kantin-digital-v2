@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
+import 'package:kantin_digital/core/widgets/nfc_pulse_animator.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/cart_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/nfc_payment_provider.dart';
@@ -87,6 +88,9 @@ class CartScreen extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.75,
+      ),
       builder: (BuildContext ctx) {
         return _NfcPaymentModal(totalAmount: totalAmount);
       },
@@ -459,9 +463,10 @@ class _NfcPaymentModalState extends ConsumerState<_NfcPaymentModal> {
         24,
         MediaQuery.of(context).viewInsets.bottom + 40,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
           // iOS Grab Handle
           Container(
             width: 40,
@@ -492,26 +497,19 @@ class _NfcPaymentModalState extends ConsumerState<_NfcPaymentModal> {
                 fontSize: 32,
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
             
             // Scanning Indicator
-            Container(
-              width: 140,
-              height: 140,
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.1), width: 1.5),
-              ),
-              child: const Center(
-                child: Icon(
-                  CupertinoIcons.antenna_radiowaves_left_right,
-                  color: AppColors.primary,
-                  size: 48,
-                ),
+            const NfcPulseAnimator(
+              size: 100,
+              color: AppColors.primary,
+              child: Icon(
+                CupertinoIcons.antenna_radiowaves_left_right,
+                color: AppColors.primary,
+                size: 44,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             const Text(
               AppStrings.nfcReadyToScan,
               style: TextStyle(
@@ -553,7 +551,7 @@ class _NfcPaymentModalState extends ConsumerState<_NfcPaymentModal> {
               ),
             ],
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
 
             // Mode Simulasi untuk Testing
             Container(
@@ -938,7 +936,8 @@ class _NfcPaymentModalState extends ConsumerState<_NfcPaymentModal> {
                 ),
               ),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }

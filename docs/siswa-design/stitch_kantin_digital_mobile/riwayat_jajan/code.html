@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>Riwayat Jajan - Digital Canteen</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#008282",
+                        "surface-dim": "#d9dade",
+                        "primary": "#006767",
+                        "on-secondary-fixed-variant": "#6a3b00",
+                        "surface-bright": "#f9f9fe",
+                        "surface-container-highest": "#e2e2e7",
+                        "surface": "#f9f9fe",
+                        "tertiary": "#bc000a",
+                        "surface-container": "#ededf2",
+                        "outline-variant": "#bdc9c8",
+                        "tertiary-fixed-dim": "#ffb4aa",
+                        "on-error-container": "#93000a",
+                        "background": "#f9f9fe",
+                        "on-primary-fixed-variant": "#004f50",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#ffdcbf",
+                        "inverse-surface": "#2e3034",
+                        "outline": "#6d7979",
+                        "on-background": "#1a1c1f",
+                        "surface-container-low": "#f3f3f8",
+                        "on-tertiary-fixed-variant": "#930005",
+                        "tertiary-container": "#e2241f",
+                        "secondary-container": "#fe9400",
+                        "on-secondary-container": "#633700",
+                        "primary-fixed-dim": "#72d6d6",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-variant": "#e2e2e7",
+                        "on-secondary": "#ffffff",
+                        "on-surface": "#1a1c1f",
+                        "secondary": "#8c5000",
+                        "on-primary-container": "#f3fffe",
+                        "surface-container-high": "#e8e8ed",
+                        "inverse-on-surface": "#f0f0f5",
+                        "on-surface-variant": "#3d4949",
+                        "surface-tint": "#006a6a",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#ffdad5",
+                        "primary-fixed": "#8ff3f2",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed": "#2d1600",
+                        "on-error": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#002020",
+                        "secondary-fixed-dim": "#ffb874",
+                        "inverse-primary": "#72d6d6",
+                        "on-tertiary-container": "#fffbff",
+                        "on-tertiary-fixed": "#410001"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-page": "16px",
+                        "radius-main": "12px",
+                        "gutter-stack": "12px",
+                        "radius-lg": "16px",
+                        "padding-card": "16px"
+                    },
+                    "fontFamily": {
+                        "body-main": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-semibold": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "nav-title-lg": ["Inter"],
+                        "nav-title-mobile": ["Inter"],
+                        "caption-xs": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-main": ["17px", {"lineHeight": "22px", "letterSpacing": "-0.4px", "fontWeight": "400"}],
+                        "headline-md": ["20px", {"lineHeight": "25px", "letterSpacing": "-0.2px", "fontWeight": "600"}],
+                        "body-semibold": ["17px", {"lineHeight": "22px", "letterSpacing": "-0.4px", "fontWeight": "600"}],
+                        "label-sm": ["13px", {"lineHeight": "18px", "letterSpacing": "0px", "fontWeight": "500"}],
+                        "nav-title-lg": ["34px", {"lineHeight": "41px", "letterSpacing": "-0.4px", "fontWeight": "700"}],
+                        "nav-title-mobile": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.2px", "fontWeight": "700"}],
+                        "caption-xs": ["11px", {"lineHeight": "13px", "letterSpacing": "0.1px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #F2F2F7; /* Level 0 Background */
+            -webkit-tap-highlight-color: transparent;
+        }
+        .ios-scroll {
+            -webkit-overflow-scrolling: touch;
+        }
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+        .glass-nav {
+            background: rgba(249, 249, 254, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .card-border {
+            border: 0.5px solid #E5E5EA;
+        }
+        .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom, 20px);
+        }
+        .pt-safe {
+            padding-top: env(safe-area-inset-top, 0px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-background font-body-main antialiased ios-scroll min-h-screen flex flex-col items-center">
+<div class="w-full max-w-[600px] bg-[#F2F2F7] min-h-screen flex flex-col relative pb-[100px]">
+<!-- TopAppBar (Web) -->
+<header class="hidden md:flex bg-surface/80 dark:bg-surface-container-lowest/80 backdrop-blur-md fixed top-0 w-full z-50 border-b border-outline-variant/30 items-center justify-between px-margin-page max-w-[600px] mx-auto h-16 pt-safe">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-body-semibold text-sm">
+                    U
+                </div>
+<h1 class="text-nav-title-mobile font-nav-title-mobile text-primary dark:text-primary-fixed-dim">Riwayat Jajan</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center text-primary dark:text-primary-fixed-dim hover:opacity-70 transition-opacity active:scale-95 duration-150">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 w-full pt-4 md:pt-20 px-margin-page flex flex-col gap-6">
+<!-- Mobile Header -->
+<div class="md:hidden mt-4 pt-safe">
+<h1 class="font-nav-title-lg text-nav-title-lg text-on-background tracking-tight">Riwayat Jajan</h1>
+</div>
+<!-- Search Bar -->
+<div class="relative w-full">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline text-[20px]">search</span>
+</div>
+<input class="w-full bg-[#E9E9EB] text-on-surface border-none rounded-[10px] py-[8px] pl-10 pr-4 font-body-main text-body-main placeholder:text-outline focus:ring-0 transition-shadow" placeholder="Cari nama stan jajan..." type="text"/>
+</div>
+<!-- Segmented Control Filter -->
+<div class="w-full bg-[#E9E9EB] rounded-[8px] p-[2px] flex">
+<button class="flex-1 py-[6px] text-center bg-white rounded-[6px] shadow-[0_1px_3px_rgba(0,0,0,0.12)] font-label-sm text-label-sm text-on-surface transition-all">Semua</button>
+<button class="flex-1 py-[6px] text-center rounded-[6px] font-label-sm text-label-sm text-on-surface-variant hover:bg-surface-variant/50 transition-all">Jajan</button>
+<button class="flex-1 py-[6px] text-center rounded-[6px] font-label-sm text-label-sm text-on-surface-variant hover:bg-surface-variant/50 transition-all">Top-Up</button>
+</div>
+<!-- History List -->
+<div class="flex flex-col gap-6">
+<!-- Group: HARI INI -->
+<div class="flex flex-col gap-3">
+<h2 class="font-label-sm text-label-sm text-outline px-1">HARI INI</h2>
+<div class="bg-white rounded-radius-main card-border overflow-hidden">
+<!-- Item 1: Jajan -->
+<div class="p-padding-card flex items-center justify-between border-b border-outline-variant/30 active:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[24px]">restaurant</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-semibold text-body-semibold text-on-surface">Stan Mie Ayam</span>
+<span class="font-caption-xs text-caption-xs text-outline">12:30 WIB • Jajan</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-body-semibold text-body-semibold text-on-surface">-Rp 15.000</span>
+<span class="material-symbols-outlined text-on-surface text-[16px]">arrow_downward</span>
+</div>
+</div>
+<!-- Item 2: Top-Up -->
+<div class="p-padding-card flex items-center justify-between active:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[24px]">account_balance_wallet</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-semibold text-body-semibold text-on-surface">Top-Up Saldo</span>
+<span class="font-caption-xs text-caption-xs text-outline">09:15 WIB • Kantin Pusat</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-body-semibold text-body-semibold text-primary">+Rp 50.000</span>
+<span class="material-symbols-outlined text-primary text-[16px]">arrow_upward</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Group: KEMARIN -->
+<div class="flex flex-col gap-3">
+<h2 class="font-label-sm text-label-sm text-outline px-1">KEMARIN</h2>
+<div class="bg-white rounded-radius-main card-border overflow-hidden">
+<!-- Item 3: Jajan -->
+<div class="p-padding-card flex items-center justify-between border-b border-outline-variant/30 active:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[24px]">local_cafe</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-semibold text-body-semibold text-on-surface">Kopi Kenangan Mantan</span>
+<span class="font-caption-xs text-caption-xs text-outline">15:45 WIB • Jajan</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-body-semibold text-body-semibold text-on-surface">-Rp 18.000</span>
+<span class="material-symbols-outlined text-on-surface text-[16px]">arrow_downward</span>
+</div>
+</div>
+<!-- Item 4: Jajan -->
+<div class="p-padding-card flex items-center justify-between active:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[24px]">fastfood</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-semibold text-body-semibold text-on-surface">Stan Nasi Goreng</span>
+<span class="font-caption-xs text-caption-xs text-outline">12:10 WIB • Jajan</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-body-semibold text-body-semibold text-on-surface">-Rp 20.000</span>
+<span class="material-symbols-outlined text-on-surface text-[16px]">arrow_downward</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden bg-surface/80 dark:bg-surface-container-lowest/80 backdrop-blur-md fixed bottom-0 w-full z-50 pb-safe border-t border-outline-variant/30 flex justify-around items-center max-w-[600px] mx-auto h-[64px]">
+<!-- Beranda Inactive -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low/50 active:scale-90 transition-transform duration-200 w-16 h-full" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">home</span>
+<span class="text-caption-xs font-caption-xs">Beranda</span>
+</a>
+<!-- Riwayat Active -->
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim hover:bg-surface-container-low/50 active:scale-90 transition-transform duration-200 w-16 h-full relative" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">history</span>
+<span class="text-caption-xs font-caption-xs">Riwayat</span>
+</a>
+<!-- Kartu Inactive -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low/50 active:scale-90 transition-transform duration-200 w-16 h-full" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">credit_card</span>
+<span class="text-caption-xs font-caption-xs">Kartu</span>
+</a>
+<!-- Akun Inactive -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low/50 active:scale-90 transition-transform duration-200 w-16 h-full" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">person</span>
+<span class="text-caption-xs font-caption-xs">Akun</span>
+</a>
+</nav>
+</div>
+</body></html>

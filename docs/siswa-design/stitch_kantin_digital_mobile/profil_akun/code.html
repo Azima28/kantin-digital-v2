@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Profil Akun - Kantin Digital</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#72d6d6",
+                        "surface-tint": "#006a6a",
+                        "primary": "#006767",
+                        "tertiary-container": "#e2241f",
+                        "error": "#ba1a1a",
+                        "on-primary-container": "#f3fffe",
+                        "tertiary-fixed": "#ffdad5",
+                        "on-secondary-fixed-variant": "#6a3b00",
+                        "on-primary-fixed": "#002020",
+                        "surface-container": "#ededf2",
+                        "surface-container-lowest": "#ffffff",
+                        "surface": "#f9f9fe",
+                        "on-tertiary-container": "#fffbff",
+                        "tertiary": "#bc000a",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#d9dade",
+                        "primary-fixed-dim": "#72d6d6",
+                        "on-secondary-container": "#633700",
+                        "secondary": "#8c5000",
+                        "on-surface": "#1a1c1f",
+                        "surface-container-highest": "#e2e2e7",
+                        "outline-variant": "#bdc9c8",
+                        "on-tertiary-fixed": "#410001",
+                        "inverse-on-surface": "#f0f0f5",
+                        "secondary-fixed": "#ffdcbf",
+                        "primary-fixed": "#8ff3f2",
+                        "surface-variant": "#e2e2e7",
+                        "surface-bright": "#f9f9fe",
+                        "on-primary": "#ffffff",
+                        "secondary-container": "#fe9400",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed": "#2d1600",
+                        "inverse-surface": "#2e3034",
+                        "tertiary-fixed-dim": "#ffb4aa",
+                        "on-tertiary-fixed-variant": "#930005",
+                        "surface-container-high": "#e8e8ed",
+                        "surface-container-low": "#f3f3f8",
+                        "outline": "#6d7979",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed-variant": "#004f50",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#ffb874",
+                        "on-background": "#1a1c1f",
+                        "on-surface-variant": "#3d4949",
+                        "background": "#f9f9fe",
+                        "primary-container": "#008282"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-page": "16px",
+                        "radius-main": "12px",
+                        "radius-lg": "16px",
+                        "padding-card": "16px",
+                        "gutter-stack": "12px",
+                        "safe": "env(safe-area-inset-bottom)"
+                    },
+                    "fontFamily": {
+                        "body-semibold": ["Inter"],
+                        "nav-title-lg": ["Inter"],
+                        "caption-xs": ["Inter"],
+                        "body-main": ["Inter"],
+                        "nav-title-mobile": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-semibold": ["17px", {"lineHeight": "22px", "letterSpacing": "-0.4px", "fontWeight": "600"}],
+                        "nav-title-lg": ["34px", {"lineHeight": "41px", "letterSpacing": "-0.4px", "fontWeight": "700"}],
+                        "caption-xs": ["11px", {"lineHeight": "13px", "letterSpacing": "0.1px", "fontWeight": "400"}],
+                        "body-main": ["17px", {"lineHeight": "22px", "letterSpacing": "-0.4px", "fontWeight": "400"}],
+                        "nav-title-mobile": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.2px", "fontWeight": "700"}],
+                        "label-sm": ["13px", {"lineHeight": "18px", "letterSpacing": "0px", "fontWeight": "500"}],
+                        "headline-md": ["20px", {"lineHeight": "25px", "letterSpacing": "-0.2px", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #F2F2F7; /* iOS Settings Background */
+            -webkit-tap-highlight-color: transparent;
+        }
+        .ios-list-group {
+            background-color: #FFFFFF;
+            border-top: 0.5px solid #E5E5EA;
+            border-bottom: 0.5px solid #E5E5EA;
+        }
+        .ios-list-item:not(:last-child) .ios-list-item-content {
+            border-bottom: 0.5px solid #E5E5EA;
+        }
+        .ios-section-header {
+            text-transform: uppercase;
+            font-size: 13px;
+            color: #8E8E93;
+            margin-bottom: 6px;
+            margin-left: 16px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-main text-on-surface antialiased pb-24 md:pb-0">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant/30 flex items-center justify-between px-margin-page h-16 max-w-[600px] mx-auto left-0 right-0">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed-dim" style="font-variation-settings: 'FILL' 1;">person</span>
+</div>
+</div>
+<h1 class="text-nav-title-mobile font-nav-title-mobile text-primary dark:text-primary-fixed-dim">Akun</h1>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:opacity-70 transition-opacity active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined text-on-surface-variant dark:text-outline">notifications</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-20 px-0 max-w-[600px] mx-auto flex flex-col gap-8">
+<!-- Profile Header -->
+<section class="flex flex-col items-center pt-8 pb-4">
+<div class="w-24 h-24 rounded-full overflow-hidden mb-4 border border-outline-variant/30 bg-surface-container-high">
+<img alt="Profile avatar of Ahmad Subarjo" class="w-full h-full object-cover" data-alt="A clean, professional portrait of a young male student in an Indonesian school uniform, shot against a bright, minimalist background. The lighting is soft and even, highlighting a friendly expression. The aesthetic is clean and high-key, suitable for a light-mode digital profile avatar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHY2iWpG2UFhUcpU5RqtgENtU9_Wpve_gbV2HPl_pXpDkZb7Ziws9p-eU8MISdIo5XdX0HQcGL2xl7LD3YpWxYe7Vw07SGnbGEdnIEoafRCkKVJgwMDl2cKIfeBamVdlBJhHjX09AB2sDdBPHpCGNG2L2klMozr_gJgs1Tdr2slsNb1cFtzJffPTpxIlIRgK6H30zyriUVpxCrm5V3ps59kpHps-6p9lq6PrphwMvNrbXGDMBdm8JWr1KipFUKdtK4GMc2TPvjUns"/>
+</div>
+<h2 class="text-headline-md font-headline-md text-on-surface mb-1">Ahmad Subarjo</h2>
+<div class="flex items-center gap-2 text-label-sm font-label-sm text-on-surface-variant">
+<span>NIS: 20260012</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span>Kelas 8-B</span>
+</div>
+</section>
+<!-- Parent Contact Section -->
+<section>
+<h3 class="font-body-main text-caption-xs ios-section-header tracking-wide">Kontak Orang Tua</h3>
+<div class="ios-list-group">
+<div class="ios-list-item flex px-margin-page bg-surface-container-lowest">
+<div class="ios-list-item-content flex-1 py-3 flex justify-between items-center">
+<span class="font-body-main text-body-main text-on-surface">Email</span>
+<span class="font-body-main text-body-main text-on-surface-variant text-right">budi.subarjo@gmail.com</span>
+</div>
+</div>
+<div class="ios-list-item flex px-margin-page bg-surface-container-lowest">
+<div class="ios-list-item-content flex-1 py-3 flex justify-between items-center">
+<span class="font-body-main text-body-main text-on-surface">No. HP</span>
+<span class="font-body-main text-body-main text-on-surface-variant text-right">08123456789</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Security & Access Section -->
+<section>
+<h3 class="font-body-main text-caption-xs ios-section-header tracking-wide">Keamanan &amp; Akses</h3>
+<div class="ios-list-group">
+<button class="ios-list-item flex w-full px-margin-page bg-surface-container-lowest text-left active:bg-surface-container-low transition-colors duration-150">
+<div class="ios-list-item-content flex-1 py-3 flex justify-between items-center">
+<span class="font-body-main text-body-main text-on-surface">Ubah Sandi Akun</span>
+<span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+</div>
+</button>
+<button class="ios-list-item flex w-full px-margin-page bg-surface-container-lowest text-left active:bg-surface-container-low transition-colors duration-150">
+<div class="ios-list-item-content flex-1 py-3 flex justify-between items-center">
+<span class="font-body-main text-body-main" style="color: #FF3B30;">Keluar dari Akun</span>
+<span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+</div>
+</button>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/80 dark:bg-surface-container-lowest/80 backdrop-blur-md border-t border-outline-variant/30 flex justify-around items-center h-[64px] max-w-[600px] mx-auto left-0 right-0 md:hidden">
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline w-16 h-full hover:bg-surface-container-low/50 active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="text-caption-xs font-caption-xs">Beranda</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline w-16 h-full hover:bg-surface-container-low/50 active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined mb-1">history</span>
+<span class="text-caption-xs font-caption-xs">Riwayat</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline w-16 h-full hover:bg-surface-container-low/50 active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined mb-1">credit_card</span>
+<span class="text-caption-xs font-caption-xs">Kartu</span>
+</button>
+<button class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim w-16 h-full hover:bg-surface-container-low/50 active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="text-caption-xs font-caption-xs">Akun</span>
+</button>
+</nav>
+</body></html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Login - Kantin Sekolah</title>
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#008282",
+                        "surface-dim": "#d9dade",
+                        "primary": "#006767",
+                        "on-secondary-fixed-variant": "#6a3b00",
+                        "surface-bright": "#f9f9fe",
+                        "surface-container-highest": "#e2e2e7",
+                        "surface": "#f9f9fe",
+                        "tertiary": "#bc000a",
+                        "surface-container": "#ededf2",
+                        "outline-variant": "#bdc9c8",
+                        "tertiary-fixed-dim": "#ffb4aa",
+                        "on-error-container": "#93000a",
+                        "background": "#f9f9fe",
+                        "on-primary-fixed-variant": "#004f50",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#ffdcbf",
+                        "inverse-surface": "#2e3034",
+                        "outline": "#6d7979",
+                        "on-background": "#1a1c1f",
+                        "surface-container-low": "#f3f3f8",
+                        "on-tertiary-fixed-variant": "#930005",
+                        "tertiary-container": "#e2241f",
+                        "secondary-container": "#fe9400",
+                        "on-secondary-container": "#633700",
+                        "primary-fixed-dim": "#72d6d6",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-variant": "#e2e2e7",
+                        "on-secondary": "#ffffff",
+                        "on-surface": "#1a1c1f",
+                        "secondary": "#8c5000",
+                        "on-primary-container": "#f3fffe",
+                        "surface-container-high": "#e8e8ed",
+                        "inverse-on-surface": "#f0f0f5",
+                        "on-surface-variant": "#3d4949",
+                        "surface-tint": "#006a6a",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#ffdad5",
+                        "primary-fixed": "#8ff3f2",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed": "#2d1600",
+                        "on-error": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#002020",
+                        "secondary-fixed-dim": "#ffb874",
+                        "inverse-primary": "#72d6d6",
+                        "on-tertiary-container": "#fffbff",
+                        "on-tertiary-fixed": "#410001"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-page": "16px",
+                        "radius-main": "12px",
+                        "gutter-stack": "12px",
+                        "radius-lg": "16px",
+                        "padding-card": "16px"
+                    },
+                    "fontFamily": {
+                        "body-main": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-semibold": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "nav-title-lg": ["Inter"],
+                        "nav-title-mobile": ["Inter"],
+                        "caption-xs": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-main": ["17px", {"lineHeight": "22px", "letterSpacing": "-0.4px", "fontWeight": "400"}],
+                        "headline-md": ["20px", {"lineHeight": "25px", "letterSpacing": "-0.2px", "fontWeight": "600"}],
+                        "body-semibold": ["17px", {"lineHeight": "22px", "letterSpacing": "-0.4px", "fontWeight": "600"}],
+                        "label-sm": ["13px", {"lineHeight": "18px", "letterSpacing": "0px", "fontWeight": "500"}],
+                        "nav-title-lg": ["34px", {"lineHeight": "41px", "letterSpacing": "-0.4px", "fontWeight": "700"}],
+                        "nav-title-mobile": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.2px", "fontWeight": "700"}],
+                        "caption-xs": ["11px", {"lineHeight": "13px", "letterSpacing": "0.1px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Custom styles for borderless inputs with bottom border only */
+        .input-borderless {
+            border: none;
+            border-bottom: 1px solid theme('colors.outline-variant');
+            border-radius: 0;
+            padding-left: 0;
+            padding-right: 0;
+            background-color: transparent;
+        }
+        .input-borderless:focus {
+            outline: none;
+            box-shadow: none;
+            border-color: theme('colors.primary');
+        }
+        
+        /* Smooth transitions for interactions */
+        .interactive-element {
+            transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease;
+        }
+        .interactive-element:active {
+            transform: scale(0.96);
+            opacity: 0.9;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- Main Container - Capped width for larger screens, full height -->
+<main class="w-full max-w-[600px] mx-auto min-h-[884px] flex flex-col relative bg-surface-container-lowest">
+<!-- Header: Back Button -->
+<header class="w-full px-margin-page pt-safe mt-4 flex items-center h-14">
+<button aria-label="Kembali" class="flex items-center gap-1 text-primary interactive-element -ml-2 px-2 py-2">
+<span class="material-symbols-outlined text-[24px]">chevron_left</span>
+<span class="text-body-main font-body-main">Kembali</span>
+</button>
+</header>
+<!-- Content Area -->
+<div class="flex-1 px-margin-page flex flex-col pt-6 pb-safe">
+<!-- Titles -->
+<div class="mb-12">
+<h1 class="text-nav-title-mobile font-nav-title-mobile text-on-background mb-2">Yuk, Masuk!</h1>
+<p class="text-body-main font-body-main text-on-surface-variant">Silakan masuk ke akun kantin sekolahmu.</p>
+</div>
+<!-- Form -->
+<form class="flex-1 flex flex-col gap-8" onsubmit="event.preventDefault();">
+<!-- Input Group: NIS/Email -->
+<div class="relative flex flex-col">
+<label class="text-label-sm font-label-sm text-outline mb-1" for="nis-email">NIS atau Email</label>
+<input class="input-borderless w-full text-body-main font-body-main text-on-background py-2 placeholder:text-outline-variant/60" id="nis-email" placeholder="Masukkan NIS atau Email" required="" type="text"/>
+</div>
+<!-- Input Group: Kata Sandi -->
+<div class="relative flex flex-col">
+<label class="text-label-sm font-label-sm text-outline mb-1" for="password">Kata Sandi</label>
+<div class="relative w-full">
+<input class="input-borderless w-full text-body-main font-body-main text-on-background py-2 pr-10 placeholder:text-outline-variant/60" id="password" placeholder="Masukkan Kata Sandi" required="" type="password"/>
+<button aria-label="Toggle password visibility" class="absolute right-0 top-1/2 -translate-y-1/2 text-outline-variant hover:text-on-surface-variant p-2" onclick="togglePassword()" type="button">
+<span class="material-symbols-outlined text-[20px]" id="visibility-icon">visibility_off</span>
+</button>
+</div>
+</div>
+<!-- Spacer to push button to bottom on smaller screens if needed -->
+<div class="flex-1"></div>
+<!-- Actions Container -->
+<div class="mt-auto pt-8 flex flex-col items-center gap-6">
+<!-- Primary Button -->
+<button class="w-full bg-primary text-on-primary py-[14px] rounded-xl text-body-semibold font-body-semibold interactive-element shadow-sm" type="submit">
+                        MASUK
+                    </button>
+<!-- Footer Link -->
+<div class="text-label-sm font-label-sm text-on-surface-variant text-center pb-4">
+                        Lupa sandi? <a class="text-primary hover:opacity-80 transition-opacity" href="#">Hubungi Koperasi Sekolah</a>
+</div>
+</div>
+</form>
+</div>
+</main>
+<script>
+        // Simple password toggle visibility function
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const icon = document.getElementById('visibility-icon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.textContent = 'visibility';
+                icon.classList.add('text-primary');
+                icon.classList.remove('text-outline-variant');
+            } else {
+                passwordInput.type = 'password';
+                icon.textContent = 'visibility_off';
+                icon.classList.remove('text-primary');
+                icon.classList.add('text-outline-variant');
+            }
+        }
+    </script>
+</body></html>

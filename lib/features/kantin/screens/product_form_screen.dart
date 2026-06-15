@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
@@ -19,9 +22,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _priceController;
-  late TextEditingController _imageController;
   late String _selectedCategory;
   bool _isLoading = false;
+
+  File? _imageFile;
+  final ImagePicker _picker = ImagePicker();
+  bool _imageDeleted = false;
 
   @override
   void initState() {
@@ -31,7 +37,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _priceController = TextEditingController(
       text: product?['price'] != null ? product!['price'].toString().replaceAll('.00', '') : '',
     );
-    _imageController = TextEditingController(text: product?['image_url']?.toString() ?? '');
     _selectedCategory = product?['category']?.toString() ?? 'makanan';
   }
 
@@ -39,8 +44,38 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   void dispose() {
     _nameController.dispose();
     _priceController.dispose();
-    _imageController.dispose();
     super.dispose();
+  }
+
+  void _removeImage() {
+    setState(() {
+      _imageFile = null;
+      _imageDeleted = true;
+    });
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _imageFile = File(pickedFile.path);
+          _imageDeleted = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memilih gambar: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
   }
 
   Future<void> _handleSave() async {
@@ -65,17 +100,48 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
     final String name = _nameController.text.trim();
     final double price = double.parse(_priceController.text.trim());
-    final String imageUrl = _imageController.text.trim();
     final bool isEdit = widget.initialProduct != null;
+    String? finalImageUrl = isEdit ? widget.initialProduct!['image_url']?.toString() : null;
+
+    if (_imageDeleted) {
+      finalImageUrl = null;
+    }
 
     try {
       final client = ref.read(supabaseClientProvider);
+
+      if (_imageFile != null) {
+        final bytes = await _imageFile!.readAsBytes();
+        final fileExt = _imageFile!.path.split('.').last;
+        final fileName = 'product_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+        
+        try {
+          await client.storage.from('products').uploadBinary(
+            fileName,
+            bytes,
+            fileOptions: const FileOptions(contentType: 'image/jpeg', cacheControl: '3600'),
+          );
+        } catch (storageErr) {
+          try {
+            await client.storage.createBucket('products', const BucketOptions(public: true));
+            await client.storage.from('products').uploadBinary(
+              fileName,
+              bytes,
+              fileOptions: const FileOptions(contentType: 'image/jpeg', cacheControl: '3600'),
+            );
+          } catch (createErr) {
+            throw Exception('Gagal mengunggah gambar. Pastikan bucket "products" sudah dibuat di Supabase Storage Anda. Detail: $storageErr');
+          }
+        }
+        
+        finalImageUrl = client.storage.from('products').getPublicUrl(fileName);
+      }
       
       final Map<String, dynamic> data = {
         'name': name,
         'price': price,
         'category': _selectedCategory,
-        'image_url': imageUrl.isEmpty ? null : imageUrl,
+        'image_url': finalImageUrl,
       };
 
       if (isEdit) {
@@ -122,6 +188,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isEdit = widget.initialProduct != null;
+    final bool hasExistingImage = isEdit &&
+        widget.initialProduct!['image_url'] != null &&
+        widget.initialProduct!['image_url'].toString().isNotEmpty;
+    final bool showExistingImage = hasExistingImage && !_imageDeleted;
 
     return Scaffold(
       backgroundColor: AppColors.cardBackground,
@@ -246,22 +316,67 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 ),
                 const SizedBox(height: 28),
 
-                // Input URL Gambar
+                // Upload Gambar Produk
                 Text(
-                  'URL Gambar Produk (Opsional)',
+                  'Gambar Produk (Opsional)',
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         color: AppColors.textDark,
                         fontWeight: FontWeight.w700,
                       ),
                 ),
-                TextFormField(
-                  controller: _imageController,
-                  style: const TextStyle(fontSize: 14),
-                  decoration: const InputDecoration(
-                    hintText: 'https://example.com/gambar.jpg',
-                    contentPadding: EdgeInsets.symmetric(vertical: 12),
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    width: double.infinity,
+                    height: 180,
+                    decoration: BoxDecoration(
+                      color: AppColors.systemBackground,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.borderLight,
+                        width: 0.5,
+                      ),
+                    ),
+                    child: _imageFile != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.file(
+                              _imageFile!,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : showExistingImage
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: Image.network(
+                                  widget.initialProduct!['image_url'].toString(),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) => _buildUploadPlaceholder(),
+                                ),
+                              )
+                            : _buildUploadPlaceholder(),
                   ),
                 ),
+                if (_imageFile != null || showExistingImage) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.error,
+                          padding: EdgeInsets.zero,
+                          minimumSize: const Size(0, 0),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        onPressed: _removeImage,
+                        icon: const Icon(CupertinoIcons.trash, size: 14),
+                        label: const Text('Hapus Gambar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 48),
 
                 // Simpan Button
@@ -295,6 +410,36 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildUploadPlaceholder() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          CupertinoIcons.cloud_upload,
+          size: 40,
+          color: AppColors.primary.withValues(alpha: 0.6),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'Pilih Gambar Jajanan',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Format JPG, PNG (Maks. 5MB)',
+          style: TextStyle(
+            fontSize: 11,
+            color: AppColors.textGray,
+          ),
+        ),
+      ],
     );
   }
 }

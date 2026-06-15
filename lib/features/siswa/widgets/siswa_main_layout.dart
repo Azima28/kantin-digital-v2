@@ -3,35 +3,35 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 
-class KantinMainLayout extends StatelessWidget {
+class SiswaMainLayout extends StatelessWidget {
   final Widget child;
-  const KantinMainLayout({super.key, required this.child});
+  const SiswaMainLayout({super.key, required this.child});
 
   int _getSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).uri.toString();
-    if (location.startsWith('/pos/check-card')) {
+    if (location.startsWith('/student/history')) {
       return 1;
-    } else if (location.startsWith('/pos/products')) {
+    } else if (location.startsWith('/student/cards')) {
       return 2;
-    } else if (location.startsWith('/pos/sales')) {
+    } else if (location.startsWith('/student/profile')) {
       return 3;
     }
-    return 0; // default to /pos
+    return 0; // default to /student
   }
 
   void _onItemTapped(int index, BuildContext context) {
     switch (index) {
       case 0:
-        context.go('/pos');
+        context.go('/student');
         break;
       case 1:
-        context.go('/pos/check-card');
+        context.go('/student/history');
         break;
       case 2:
-        context.go('/pos/products');
+        context.go('/student/cards');
         break;
       case 3:
-        context.go('/pos/sales');
+        context.go('/student/profile');
         break;
     }
   }
@@ -60,24 +60,24 @@ class KantinMainLayout extends StatelessWidget {
           elevation: 0,
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.home, size: 22),
+              icon: Icon(CupertinoIcons.house, size: 22),
               activeIcon: Icon(CupertinoIcons.house_fill, size: 22),
               label: 'Beranda',
             ),
             BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.clock, size: 22),
+              activeIcon: Icon(CupertinoIcons.clock_fill, size: 22),
+              label: 'Riwayat',
+            ),
+            BottomNavigationBarItem(
               icon: Icon(CupertinoIcons.creditcard, size: 22),
               activeIcon: Icon(CupertinoIcons.creditcard_fill, size: 22),
-              label: 'Cek Kartu',
+              label: 'Kartu',
             ),
             BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.tray_full, size: 22),
-              activeIcon: Icon(CupertinoIcons.tray_full_fill, size: 22),
-              label: 'Menu',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.time, size: 22),
-              activeIcon: Icon(CupertinoIcons.time_solid, size: 22),
-              label: 'Riwayat',
+              icon: Icon(CupertinoIcons.person, size: 22),
+              activeIcon: Icon(CupertinoIcons.person_fill, size: 22),
+              label: 'Akun',
             ),
           ],
         ),

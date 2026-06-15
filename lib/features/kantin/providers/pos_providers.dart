@@ -67,3 +67,20 @@ final FutureProvider<List<Map<String, dynamic>>> manageProductsProvider =
 
   return List<Map<String, dynamic>>.from(response);
 });
+
+// Provider to fetch transaction history for the logged in operator
+final FutureProvider<List<Map<String, dynamic>>> operatorTransactionsProvider =
+    FutureProvider<List<Map<String, dynamic>>>((Ref ref) async {
+  final authState = ref.watch(authNotifierProvider);
+  final operatorId = authState.profile?['id'];
+  if (operatorId == null) return <Map<String, dynamic>>[];
+
+  final client = ref.watch(supabaseClientProvider);
+  final List<dynamic> response = await client
+      .from('transactions')
+      .select('id, total_amount, type, status, created_at, student_id, students(profiles(full_name))')
+      .eq('operator_id', operatorId)
+      .order('created_at', ascending: false);
+
+  return List<Map<String, dynamic>>.from(response);
+});

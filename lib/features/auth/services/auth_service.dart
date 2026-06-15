@@ -10,25 +10,38 @@ class AuthService {
   Future<Map<String, dynamic>> signIn({
     required String email,
     required String password,
+    String expectedRole = 'petugas_kantin',
   }) async {
     try {
+      String queryEmail = email.trim();
+      // If it looks like a NIS (numeric or doesn't have @), append domain suffix for students
+      if (expectedRole == 'student' && !queryEmail.contains('@')) {
+        queryEmail = '$queryEmail@sekolah.sch.id';
+      }
+
       // Query profiles directly
       final Map<String, dynamic>? profile = await _client
           .from('profiles')
           .select()
-          .eq('email', email)
+          .eq('email', queryEmail)
           .eq('password', password)
           .maybeSingle();
 
       if (profile == null) {
-        throw Exception('Email atau kata sandi salah.');
+        throw Exception('Email/NIS atau kata sandi salah.');
       }
 
       final String role = profile['role'] ?? '';
       
-      // Authorization check: must be petugas_kantin
-      if (role != 'petugas_kantin') {
-        throw Exception('Akses ditolak: Hanya petugas/operator kantin yang dapat masuk ke Kasir.');
+      // Authorization check: must match expected role
+      if (role != expectedRole) {
+        if (expectedRole == 'petugas_kantin') {
+          throw Exception('Akses ditolak: Hanya petugas/operator kantin yang dapat masuk ke Kasir.');
+        } else if (expectedRole == 'student') {
+          throw Exception('Akses ditolak: Akun ini bukan akun siswa.');
+        } else {
+          throw Exception('Akses ditolak: Hak akses tidak sesuai.');
+        }
       }
 
       _currentProfile = profile;

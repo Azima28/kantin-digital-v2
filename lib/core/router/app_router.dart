@@ -2,20 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kantin_digital/features/auth/screens/login_screen.dart';
 import 'package:kantin_digital/features/auth/screens/splash_screen.dart';
+import 'package:kantin_digital/features/kantin/screens/pos_home_screen.dart';
 import 'package:kantin_digital/features/kantin/screens/pos_dashboard_screen.dart';
 import 'package:kantin_digital/features/kantin/screens/cart_screen.dart';
 import 'package:kantin_digital/features/kantin/screens/manage_products_screen.dart';
 import 'package:kantin_digital/features/kantin/screens/product_form_screen.dart';
+import 'package:kantin_digital/features/kantin/screens/check_card_screen.dart';
+import 'package:kantin_digital/features/kantin/screens/sales_history_screen.dart';
 import 'package:kantin_digital/features/kantin/widgets/kantin_main_layout.dart';
 
-// Import placeholders/screens if they exist, otherwise we define inline mocks
+import 'package:kantin_digital/features/siswa/screens/student_welcome_screen.dart';
+import 'package:kantin_digital/features/siswa/screens/student_login_screen.dart';
+import 'package:kantin_digital/features/siswa/screens/siswa_dashboard_screen.dart';
+import 'package:kantin_digital/features/siswa/screens/siswa_topup_screen.dart';
+import 'package:kantin_digital/features/siswa/screens/siswa_history_screen.dart';
+import 'package:kantin_digital/features/siswa/screens/siswa_cards_screen.dart';
+import 'package:kantin_digital/features/siswa/screens/siswa_profile_screen.dart';
+import 'package:kantin_digital/features/siswa/screens/siswa_notifications_screen.dart';
+import 'package:kantin_digital/features/siswa/widgets/siswa_main_layout.dart';
+
 class AppRouter {
   AppRouter._();
 
   static const String splash = '/';
   static const String login = '/login';
   
-  // Siswa App Routes
+  // Student App Routes
+  static const String studentWelcome = '/student/welcome';
+  static const String studentLogin = '/student/login';
   static const String studentHome = '/student';
   static const String studentTopUp = '/student/topup';
   static const String studentHistory = '/student/history';
@@ -25,6 +39,7 @@ class AppRouter {
 
   // POS Canteen App Routes
   static const String posHome = '/pos';
+  static const String posTerminal = '/pos/terminal';
   static const String posCart = '/pos/cart';
   static const String posCheckCard = '/pos/check-card';
   static const String posManageProducts = '/pos/products';
@@ -43,34 +58,52 @@ class AppRouter {
         builder: (BuildContext context, GoRouterState state) => const LoginScreen(),
       ),
       
-      // Siswa Routes
+      // Siswa Welcome & Login
       GoRoute(
-        path: studentHome,
-        builder: (BuildContext context, GoRouterState state) => const _PlaceholderScreen(title: 'Siswa Dashboard'),
+        path: studentWelcome,
+        builder: (BuildContext context, GoRouterState state) => const StudentWelcomeScreen(),
       ),
+      GoRoute(
+        path: studentLogin,
+        builder: (BuildContext context, GoRouterState state) => const StudentLoginScreen(),
+      ),
+
+      // Siswa Main layout with bottom tabs (Beranda, Riwayat, Kartu, Akun)
+      ShellRoute(
+        builder: (BuildContext context, GoRouterState state, Widget child) {
+          return SiswaMainLayout(child: child);
+        },
+        routes: <RouteBase>[
+          GoRoute(
+            path: studentHome,
+            builder: (BuildContext context, GoRouterState state) => const SiswaDashboardScreen(),
+          ),
+          GoRoute(
+            path: studentHistory,
+            builder: (BuildContext context, GoRouterState state) => const SiswaHistoryScreen(),
+          ),
+          GoRoute(
+            path: studentCards,
+            builder: (BuildContext context, GoRouterState state) => const SiswaCardsScreen(),
+          ),
+          GoRoute(
+            path: studentProfile,
+            builder: (BuildContext context, GoRouterState state) => const SiswaProfileScreen(),
+          ),
+        ],
+      ),
+
+      // Siswa sub-pages (without bottom tab bar)
       GoRoute(
         path: studentTopUp,
-        builder: (BuildContext context, GoRouterState state) => const _PlaceholderScreen(title: 'Isi Saldo Siswa'),
-      ),
-      GoRoute(
-        path: studentHistory,
-        builder: (BuildContext context, GoRouterState state) => const _PlaceholderScreen(title: 'Riwayat Jajan Siswa'),
-      ),
-      GoRoute(
-        path: studentCards,
-        builder: (BuildContext context, GoRouterState state) => const _PlaceholderScreen(title: 'Manajemen Kartu Siswa'),
-      ),
-      GoRoute(
-        path: studentProfile,
-        builder: (BuildContext context, GoRouterState state) => const _PlaceholderScreen(title: 'Profil Siswa'),
+        builder: (BuildContext context, GoRouterState state) => const SiswaTopUpScreen(),
       ),
       GoRoute(
         path: studentNotifications,
-        builder: (BuildContext context, GoRouterState state) => const _PlaceholderScreen(title: 'Notifikasi Siswa'),
+        builder: (BuildContext context, GoRouterState state) => const SiswaNotificationsScreen(),
       ),
 
-      // POS Cashier Routes
-      // Shell Route for Tab Pages with Bottom Nav
+      // POS Cashier Tab Pages (Beranda, Cek Kartu, Menu, Riwayat)
       ShellRoute(
         builder: (BuildContext context, GoRouterState state, Widget child) {
           return KantinMainLayout(child: child);
@@ -78,11 +111,11 @@ class AppRouter {
         routes: <RouteBase>[
           GoRoute(
             path: posHome,
-            builder: (BuildContext context, GoRouterState state) => const PosDashboardScreen(),
+            builder: (BuildContext context, GoRouterState state) => const PosHomeScreen(),
           ),
           GoRoute(
             path: posCheckCard,
-            builder: (BuildContext context, GoRouterState state) => const _PlaceholderScreen(title: 'Cek Kartu Siswa'),
+            builder: (BuildContext context, GoRouterState state) => const CheckCardScreen(),
           ),
           GoRoute(
             path: posManageProducts,
@@ -90,12 +123,16 @@ class AppRouter {
           ),
           GoRoute(
             path: posHistorySales,
-            builder: (BuildContext context, GoRouterState state) => const _PlaceholderScreen(title: 'Rekap Penjualan'),
+            builder: (BuildContext context, GoRouterState state) => const SalesHistoryScreen(),
           ),
         ],
       ),
       
-      // Sub-pages that display WITHOUT Bottom Navigation Bar
+      // POS Canteen sub-pages (without bottom tab bar)
+      GoRoute(
+        path: posTerminal,
+        builder: (BuildContext context, GoRouterState state) => const PosDashboardScreen(),
+      ),
       GoRoute(
         path: posCart,
         builder: (BuildContext context, GoRouterState state) => const CartScreen(),
@@ -108,25 +145,4 @@ class AppRouter {
       ),
     ],
   );
-}
-
-class _PlaceholderScreen extends StatelessWidget {
-  final String title;
-  const _PlaceholderScreen({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        elevation: 0,
-      ),
-      body: Center(
-        child: Text(
-          title,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
-        ),
-      ),
-    );
-  }
 }

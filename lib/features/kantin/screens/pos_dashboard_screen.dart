@@ -31,6 +31,10 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
     return Scaffold(
       backgroundColor: AppColors.systemBackground,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(CupertinoIcons.left_chevron, color: AppColors.primary),
+          onPressed: () => context.go('/pos'),
+        ),
         title: Text(
           canteenName.toUpperCase(),
           style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17, letterSpacing: 1.1),

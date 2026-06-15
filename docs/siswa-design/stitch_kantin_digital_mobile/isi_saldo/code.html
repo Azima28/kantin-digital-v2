@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+
+<html class="light" lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Isi Saldo</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-container": "#008282",
+                    "surface-dim": "#d9dade",
+                    "primary": "#006767",
+                    "on-secondary-fixed-variant": "#6a3b00",
+                    "surface-bright": "#f9f9fe",
+                    "surface-container-highest": "#e2e2e7",
+                    "surface": "#f9f9fe",
+                    "tertiary": "#bc000a",
+                    "surface-container": "#ededf2",
+                    "outline-variant": "#bdc9c8",
+                    "tertiary-fixed-dim": "#ffb4aa",
+                    "on-error-container": "#93000a",
+                    "background": "#f9f9fe",
+                    "on-primary-fixed-variant": "#004f50",
+                    "error": "#ba1a1a",
+                    "secondary-fixed": "#ffdcbf",
+                    "inverse-surface": "#2e3034",
+                    "outline": "#6d7979",
+                    "on-background": "#1a1c1f",
+                    "surface-container-low": "#f3f3f8",
+                    "on-tertiary-fixed-variant": "#930005",
+                    "tertiary-container": "#e2241f",
+                    "secondary-container": "#fe9400",
+                    "on-secondary-container": "#633700",
+                    "primary-fixed-dim": "#72d6d6",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-variant": "#e2e2e7",
+                    "on-secondary": "#ffffff",
+                    "on-surface": "#1a1c1f",
+                    "secondary": "#8c5000",
+                    "on-primary-container": "#f3fffe",
+                    "surface-container-high": "#e8e8ed",
+                    "inverse-on-surface": "#f0f0f5",
+                    "on-surface-variant": "#3d4949",
+                    "surface-tint": "#006a6a",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-fixed": "#ffdad5",
+                    "primary-fixed": "#8ff3f2",
+                    "on-primary": "#ffffff",
+                    "on-secondary-fixed": "#2d1600",
+                    "on-error": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed": "#002020",
+                    "secondary-fixed-dim": "#ffb874",
+                    "inverse-primary": "#72d6d6",
+                    "on-tertiary-container": "#fffbff",
+                    "on-tertiary-fixed": "#410001"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-page": "16px",
+                    "radius-main": "12px",
+                    "gutter-stack": "12px",
+                    "radius-lg": "16px",
+                    "padding-card": "16px",
+                    "safe": "env(safe-area-inset-bottom)"
+            },
+            "fontFamily": {
+                    "body-main": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "body-semibold": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "nav-title-lg": ["Inter"],
+                    "nav-title-mobile": ["Inter"],
+                    "caption-xs": ["Inter"]
+            },
+            "fontSize": {
+                    "body-main": ["17px", {"lineHeight": "22px", "letterSpacing": "-0.4px", "fontWeight": "400"}],
+                    "headline-md": ["20px", {"lineHeight": "25px", "letterSpacing": "-0.2px", "fontWeight": "600"}],
+                    "body-semibold": ["17px", {"lineHeight": "22px", "letterSpacing": "-0.4px", "fontWeight": "600"}],
+                    "label-sm": ["13px", {"lineHeight": "18px", "letterSpacing": "0px", "fontWeight": "500"}],
+                    "nav-title-lg": ["34px", {"lineHeight": "41px", "letterSpacing": "-0.4px", "fontWeight": "700"}],
+                    "nav-title-mobile": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.2px", "fontWeight": "700"}],
+                    "caption-xs": ["11px", {"lineHeight": "13px", "letterSpacing": "0.1px", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+          font-variation-settings: 'FILL' 1;
+        }
+        
+        /* Hide scrollbar for clean look */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        * {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        
+        .card-shadow {
+            box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased min-h-screen flex flex-col items-center">
+<div class="w-full max-w-[600px] bg-background min-h-screen relative shadow-sm pb-24">
+<!-- Header -->
+<header class="sticky top-0 w-full z-40 bg-surface/90 backdrop-blur-md border-b border-outline-variant/30 px-margin-page h-16 flex items-center justify-between">
+<button aria-label="Kembali" class="w-10 h-10 flex items-center justify-center text-primary active:scale-95 transition-transform rounded-full hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-2xl">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-on-surface">Isi Saldo</h1>
+<div class="w-10 h-10"></div> <!-- Spacer for centering -->
+</header>
+<!-- Main Content Canvas -->
+<main class="px-margin-page py-6 flex flex-col gap-6">
+<!-- Section 1: Quick Amounts (Bento Grid Style) -->
+<section class="flex flex-col gap-3">
+<h2 class="font-body-semibold text-body-semibold text-on-surface-variant">Pilih Nominal Cepat</h2>
+<div class="grid grid-cols-2 gap-3">
+<!-- 10k Option -->
+<label class="relative cursor-pointer group">
+<input class="peer sr-only" name="quick_amount" type="radio" value="10000"/>
+<div class="p-padding-card rounded-radius-lg bg-surface-container-lowest border border-outline-variant/50 transition-all duration-200 peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:ring-1 peer-checked:ring-primary active:scale-95 group-hover:border-primary/50">
+<div class="flex items-center justify-between">
+<span class="font-headline-md text-headline-md text-on-surface">10k</span>
+<span class="material-symbols-outlined text-primary opacity-0 peer-checked:opacity-100 transition-opacity">check_circle</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Rp 10.000</p>
+</div>
+</label>
+<!-- 20k Option -->
+<label class="relative cursor-pointer group">
+<input checked="" class="peer sr-only" name="quick_amount" type="radio" value="20000"/>
+<div class="p-padding-card rounded-radius-lg bg-surface-container-lowest border border-outline-variant/50 transition-all duration-200 peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:ring-1 peer-checked:ring-primary active:scale-95 group-hover:border-primary/50">
+<div class="flex items-center justify-between">
+<span class="font-headline-md text-headline-md text-on-surface">20k</span>
+<span class="material-symbols-outlined text-primary opacity-0 peer-checked:opacity-100 transition-opacity">check_circle</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Rp 20.000</p>
+</div>
+</label>
+<!-- 50k Option -->
+<label class="relative cursor-pointer group">
+<input class="peer sr-only" name="quick_amount" type="radio" value="50000"/>
+<div class="p-padding-card rounded-radius-lg bg-surface-container-lowest border border-outline-variant/50 transition-all duration-200 peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:ring-1 peer-checked:ring-primary active:scale-95 group-hover:border-primary/50">
+<div class="flex items-center justify-between">
+<span class="font-headline-md text-headline-md text-on-surface">50k</span>
+<span class="material-symbols-outlined text-primary opacity-0 peer-checked:opacity-100 transition-opacity">check_circle</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Rp 50.000</p>
+</div>
+</label>
+<!-- 100k Option -->
+<label class="relative cursor-pointer group">
+<input class="peer sr-only" name="quick_amount" type="radio" value="100000"/>
+<div class="p-padding-card rounded-radius-lg bg-surface-container-lowest border border-outline-variant/50 transition-all duration-200 peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:ring-1 peer-checked:ring-primary active:scale-95 group-hover:border-primary/50">
+<div class="flex items-center justify-between">
+<span class="font-headline-md text-headline-md text-on-surface">100k</span>
+<span class="material-symbols-outlined text-primary opacity-0 peer-checked:opacity-100 transition-opacity">check_circle</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Rp 100.000</p>
+</div>
+</label>
+</div>
+</section>
+<!-- Or Divider -->
+<div class="flex items-center gap-4 py-2">
+<div class="h-px bg-outline-variant/30 flex-1"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">atau</span>
+<div class="h-px bg-outline-variant/30 flex-1"></div>
+</div>
+<!-- Section 2: Custom Amount -->
+<section class="flex flex-col gap-3">
+<h2 class="font-body-semibold text-body-semibold text-on-surface-variant">Nominal Lainnya</h2>
+<div class="relative flex items-center">
+<span class="absolute left-4 font-headline-md text-headline-md text-on-surface">Rp</span>
+<input class="w-full bg-surface-container-high border-none rounded-[10px] py-4 pl-12 pr-4 font-headline-md text-headline-md text-on-surface focus:ring-2 focus:ring-primary transition-shadow placeholder:text-outline/50" id="custom_amount" placeholder="0" type="number"/>
+<!-- Clear button (js controlled) -->
+<button class="absolute right-4 text-outline hidden hover:text-on-surface" id="clear_input_btn">
+<span class="material-symbols-outlined">cancel</span>
+</button>
+</div>
+<p class="font-caption-xs text-caption-xs text-outline mt-1 pl-2">Minimal top-up Rp 10.000</p>
+</section>
+<!-- Info Section: Payment Method Context -->
+<section class="mt-4 p-padding-card bg-surface-container-low rounded-radius-main border border-outline-variant/30 flex gap-3 items-start">
+<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-primary text-lg">qr_code_scanner</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-semibold text-body-semibold text-on-surface">Metode Pembayaran</span>
+<span class="font-body-main text-body-main text-on-surface-variant">QRIS / Virtual Account (Instan)</span>
+<span class="font-caption-xs text-caption-xs text-outline mt-1">Dukung berbagai bank dan e-wallet.</span>
+</div>
+</section>
+</main>
+<!-- Bottom Fixed Action -->
+<div class="fixed bottom-0 w-full max-w-[600px] z-50 bg-surface/90 backdrop-blur-md border-t border-outline-variant/30 p-margin-page pb-[calc(16px+env(safe-area-inset-bottom))]">
+<button class="w-full bg-primary text-on-primary rounded-[14px] py-4 font-body-semibold text-body-semibold flex justify-center items-center gap-2 active:scale-95 transition-transform shadow-sm hover:opacity-90">
+                LANJUTKAN PEMBAYARAN
+                <span class="material-symbols-outlined text-xl">arrow_forward</span>
+</button>
+</div>
+</div>
+<script>
+        // Simple interaction script to uncheck quick amounts if custom amount is typed
+        document.addEventListener('DOMContentLoaded', () => {
+            const customInput = document.getElementById('custom_amount');
+            const radioButtons = document.querySelectorAll('input[name="quick_amount"]');
+            const clearBtn = document.getElementById('clear_input_btn');
+
+            customInput.addEventListener('input', (e) => {
+                if (e.target.value.length > 0) {
+                    // Uncheck all radios
+                    radioButtons.forEach(radio => radio.checked = false);
+                    clearBtn.classList.remove('hidden');
+                } else {
+                    clearBtn.classList.add('hidden');
+                }
+            });
+
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    if (radio.checked) {
+                        customInput.value = '';
+                        clearBtn.classList.add('hidden');
+                    }
+                });
+            });
+
+            clearBtn.addEventListener('click', () => {
+                customInput.value = '';
+                clearBtn.classList.add('hidden');
+                customInput.focus();
+            });
+        });
+    </script>
+</body></html>

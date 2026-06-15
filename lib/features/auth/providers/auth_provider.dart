@@ -62,7 +62,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (session != null) {
         final Map<String, dynamic>? profile = await _authService
             .getCurrentProfile();
-        if (profile != null && profile['role'] == 'petugas_kantin') {
+        if (profile != null && (profile['role'] == 'petugas_kantin' || profile['role'] == 'student')) {
           state = AuthState(isAuthenticated: true, profile: profile);
           return;
         }
@@ -73,13 +73,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  // Fungsi Login Kasir
-  Future<bool> login(String email, String password) async {
+  // Fungsi Login
+  Future<bool> login(String email, String password, {String role = 'petugas_kantin'}) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final Map<String, dynamic> profile = await _authService.signIn(
         email: email,
         password: password,
+        expectedRole: role,
       );
       debugPrint('DEBUG - Login SUCCESS, Profile: $profile');
       state = AuthState(isAuthenticated: true, profile: profile);
