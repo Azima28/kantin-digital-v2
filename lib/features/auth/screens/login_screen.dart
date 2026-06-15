@@ -416,15 +416,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       roleName: 'KASIR / PETUGAS',
                       identifier: 'petugas@sekolah.sch.id',
                       password: 'password123',
-                      onTap: () => _emailController.text == 'petugas@sekolah.sch.id' && _passwordController.text == 'password123'
-                          ? null
-                          : () {
-                              setState(() {
-                                _emailController.text = 'petugas@sekolah.sch.id';
-                                _passwordController.text = 'password123';
-                              });
-                              _showFillSnackBar('Kasir');
-                            }(),
+                      onTap: () {
+                        FocusScope.of(context).unfocus();
+                        setState(() {
+                          _emailController.text = 'petugas@sekolah.sch.id';
+                          _passwordController.text = 'password123';
+                        });
+                        _showFillSnackBar('Kasir');
+                      },
                     ),
                     const Divider(height: 12, color: AppColors.borderLight),
                     
@@ -433,15 +432,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       roleName: 'SISWA (AHMAD)',
                       identifier: '20260012',
                       password: 'password123',
-                      onTap: () => _emailController.text == '20260012' && _passwordController.text == 'password123'
-                          ? null
-                          : () {
-                              setState(() {
-                                _emailController.text = '20260012';
-                                _passwordController.text = 'password123';
-                              });
-                              _showFillSnackBar('Siswa');
-                            }(),
+                      onTap: () {
+                        FocusScope.of(context).unfocus();
+                        setState(() {
+                          _emailController.text = '20260012';
+                          _passwordController.text = 'password123';
+                        });
+                        _showFillSnackBar('Siswa');
+                      },
                     ),
                     const Divider(height: 12, color: AppColors.borderLight),
                     
@@ -450,15 +448,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       roleName: 'ORANG TUA (WALI AHMAD)',
                       identifier: '20260012',
                       password: 'parent123',
-                      onTap: () => _emailController.text == '20260012' && _passwordController.text == 'parent123'
-                          ? null
-                          : () {
-                              setState(() {
-                                _emailController.text = '20260012';
-                                _passwordController.text = 'parent123';
-                              });
-                              _showFillSnackBar('Orang Tua');
-                            }(),
+                      onTap: () {
+                        FocusScope.of(context).unfocus();
+                        setState(() {
+                          _emailController.text = '20260012';
+                          _passwordController.text = 'parent123';
+                        });
+                        _showFillSnackBar('Orang Tua');
+                      },
                     ),
                   ],
                 ),
