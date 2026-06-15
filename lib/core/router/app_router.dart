@@ -4,6 +4,8 @@ import 'package:kantin_digital/features/auth/screens/login_screen.dart';
 import 'package:kantin_digital/features/auth/screens/splash_screen.dart';
 import 'package:kantin_digital/features/kantin/screens/pos_dashboard_screen.dart';
 import 'package:kantin_digital/features/kantin/screens/cart_screen.dart';
+import 'package:kantin_digital/features/kantin/screens/manage_products_screen.dart';
+import 'package:kantin_digital/features/kantin/screens/product_form_screen.dart';
 import 'package:kantin_digital/features/kantin/widgets/kantin_main_layout.dart';
 
 // Import placeholders/screens if they exist, otherwise we define inline mocks
@@ -84,7 +86,7 @@ class AppRouter {
           ),
           GoRoute(
             path: posManageProducts,
-            builder: (BuildContext context, GoRouterState state) => const _PlaceholderScreen(title: 'Kelola Jajanan'),
+            builder: (BuildContext context, GoRouterState state) => const ManageProductsScreen(),
           ),
           GoRoute(
             path: posHistorySales,
@@ -100,7 +102,9 @@ class AppRouter {
       ),
       GoRoute(
         path: posAddEditProduct,
-        builder: (BuildContext context, GoRouterState state) => const _PlaceholderScreen(title: 'Form Jajanan'),
+        builder: (BuildContext context, GoRouterState state) => ProductFormScreen(
+          initialProduct: state.extra as Map<String, dynamic>?,
+        ),
       ),
     ],
   );
