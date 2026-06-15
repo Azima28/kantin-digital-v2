@@ -20,6 +20,10 @@ import 'package:kantin_digital/features/siswa/screens/siswa_cards_screen.dart';
 import 'package:kantin_digital/features/siswa/screens/siswa_profile_screen.dart';
 import 'package:kantin_digital/features/siswa/screens/siswa_notifications_screen.dart';
 import 'package:kantin_digital/features/siswa/widgets/siswa_main_layout.dart';
+import 'package:kantin_digital/features/parent/screens/parent_search_screen.dart';
+import 'package:kantin_digital/features/parent/screens/parent_dashboard_screen.dart';
+import 'package:kantin_digital/features/parent/screens/parent_topup_screen.dart';
+import 'package:kantin_digital/features/parent/screens/parent_receipt_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -36,6 +40,12 @@ class AppRouter {
   static const String studentCards = '/student/cards';
   static const String studentProfile = '/student/profile';
   static const String studentNotifications = '/student/notifications';
+
+  // Parent App Routes
+  static const String parentHome = '/parent';
+  static const String parentDashboard = '/parent/dashboard/:studentId';
+  static const String parentTopUp = '/parent/topup/:studentId';
+  static const String parentReceipt = '/parent/receipt';
 
   // POS Canteen App Routes
   static const String posHome = '/pos';
@@ -66,6 +76,30 @@ class AppRouter {
       GoRoute(
         path: studentLogin,
         builder: (BuildContext context, GoRouterState state) => const StudentLoginScreen(),
+      ),
+
+      // Parent Routes
+      GoRoute(
+        path: parentHome,
+        builder: (BuildContext context, GoRouterState state) => const ParentSearchScreen(),
+      ),
+      GoRoute(
+        path: parentDashboard,
+        builder: (BuildContext context, GoRouterState state) => ParentDashboardScreen(
+          studentId: state.pathParameters['studentId']!,
+        ),
+      ),
+      GoRoute(
+        path: parentTopUp,
+        builder: (BuildContext context, GoRouterState state) => ParentTopUpScreen(
+          studentId: state.pathParameters['studentId']!,
+        ),
+      ),
+      GoRoute(
+        path: parentReceipt,
+        builder: (BuildContext context, GoRouterState state) => ParentReceiptScreen(
+          receiptData: state.extra as Map<String, dynamic>,
+        ),
       ),
 
       // Siswa Main layout with bottom tabs (Beranda, Riwayat, Kartu, Akun)
