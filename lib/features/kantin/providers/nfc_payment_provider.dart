@@ -4,6 +4,7 @@ import 'package:kantin_digital/core/services/nfc_service.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/cart_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 
 enum NfcPaymentStatus {
   idle,
@@ -90,7 +91,7 @@ class NfcPaymentNotifier extends StateNotifier<NfcPaymentState> {
       // Query student profiles
       final Map<String, dynamic>? student = await client
           .from('students')
-          .select('id, class, balance, is_active, profiles(full_name)')
+          .select('id, class, balance, is_active, daily_limit, profiles(full_name)')
           .eq('rfid_uid', rfidUid)
           .maybeSingle();
 
@@ -109,6 +110,40 @@ class NfcPaymentNotifier extends StateNotifier<NfcPaymentState> {
           errorMessage: 'Kartu siswa ini berstatus tidak aktif atau diblokir.',
         );
         return;
+      }
+
+      final String studentId = student['id'];
+      final double dailyLimit = student['daily_limit'] != null 
+          ? double.tryParse(student['daily_limit'].toString()) ?? 0.0 
+          : 0.0;
+
+      // Check daily limit if set and active
+      if (dailyLimit > 0) {
+        final now = DateTime.now().toLocal();
+        final localTodayStart = DateTime(now.year, now.month, now.day);
+        final startOfDayUtc = localTodayStart.toUtc().toIso8601String();
+
+        final List<dynamic> todayTxs = await client
+            .from('transactions')
+            .select('total_amount')
+            .eq('student_id', studentId)
+            .eq('type', 'purchase')
+            .eq('status', 'success')
+            .gte('created_at', startOfDayUtc);
+
+        double todaySpending = 0.0;
+        for (var tx in todayTxs) {
+          todaySpending += double.tryParse(tx['total_amount'].toString()) ?? 0.0;
+        }
+
+        if ((todaySpending + totalAmount) > dailyLimit) {
+          final double remainingLimit = dailyLimit - todaySpending;
+          state = state.copyWith(
+            status: NfcPaymentStatus.error,
+            errorMessage: 'Batas jajan harian terlampaui. Limit Harian: ${CurrencyFormatter.format(dailyLimit)}, Terpakai Hari Ini: ${CurrencyFormatter.format(todaySpending)}, Sisa Limit: ${CurrencyFormatter.format(remainingLimit < 0 ? 0.0 : remainingLimit)}',
+          );
+          return;
+        }
       }
 
       final String studentName = student['profiles']?['full_name'] ?? 'Siswa';

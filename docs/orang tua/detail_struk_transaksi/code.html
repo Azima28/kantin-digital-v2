@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Detail Transaksi</title>
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <!-- Google Fonts for Be Vietnam Pro -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Tailwind Theme Configuration -->
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+              "tertiary-fixed": "#9df6b2",
+              "on-background": "#1b1c1b",
+              "background": "#fbf9f8",
+              "surface-container": "#efedec",
+              "inverse-primary": "#86d4d3",
+              "surface-container-low": "#f5f3f2",
+              "on-error-container": "#93000a",
+              "tertiary": "#005027",
+              "on-primary": "#ffffff",
+              "outline-variant": "#bec9c8",
+              "on-tertiary-container": "#90e9a6",
+              "on-primary-fixed-variant": "#004f4f",
+              "on-primary-fixed": "#002020",
+              "on-secondary": "#ffffff",
+              "on-secondary-container": "#713b00",
+              "primary-container": "#006767",
+              "surface": "#fbf9f8",
+              "on-tertiary": "#ffffff",
+              "on-secondary-fixed-variant": "#6e3900",
+              "inverse-surface": "#303030",
+              "on-tertiary-fixed-variant": "#005228",
+              "surface-bright": "#fbf9f8",
+              "surface-variant": "#e4e2e1",
+              "outline": "#6f7979",
+              "surface-container-high": "#e9e8e7",
+              "surface-dim": "#dbdad9",
+              "on-surface-variant": "#3e4948",
+              "secondary-fixed-dim": "#ffb77c",
+              "surface-tint": "#066969",
+              "error": "#ba1a1a",
+              "secondary-container": "#fca558",
+              "primary-fixed": "#a2f0ef",
+              "primary-fixed-dim": "#86d4d3",
+              "primary": "#004d4d",
+              "surface-container-highest": "#e4e2e1",
+              "error-container": "#ffdad6",
+              "on-secondary-fixed": "#2f1500",
+              "on-tertiary-fixed": "#00210c",
+              "secondary-fixed": "#ffdcc3",
+              "on-error": "#ffffff",
+              "on-surface": "#1b1c1b",
+              "tertiary-container": "#026b36",
+              "secondary": "#904d00",
+              "surface-container-lowest": "#ffffff",
+              "tertiary-fixed-dim": "#81d998",
+              "inverse-on-surface": "#f2f0ef",
+              "on-primary-container": "#94e2e2"
+            },
+            "borderRadius": {
+              "DEFAULT": "0.25rem",
+              "lg": "0.5rem",
+              "xl": "0.75rem",
+              "full": "9999px"
+            },
+            "spacing": {
+              "stack-gap": "1rem",
+              "section-margin": "2rem",
+              "bento-gap": "0.75rem",
+              "container-padding": "1.25rem"
+            },
+            "fontFamily": {
+              "headline-lg": ["Be Vietnam Pro"],
+              "title-md": ["Be Vietnam Pro"],
+              "label-md": ["Be Vietnam Pro"],
+              "label-sm": ["Be Vietnam Pro"],
+              "headline-lg-mobile": ["Be Vietnam Pro"],
+              "body-lg": ["Be Vietnam Pro"],
+              "body-md": ["Be Vietnam Pro"],
+              "display-lg": ["Be Vietnam Pro"]
+            },
+            "fontSize": {
+              "headline-lg": [
+                "28px",
+                {
+                  "lineHeight": "34px",
+                  "letterSpacing": "-0.01em",
+                  "fontWeight": "600"
+                }
+              ],
+              "title-md": [
+                "20px",
+                {
+                  "lineHeight": "25px",
+                  "fontWeight": "600"
+                }
+              ],
+              "label-md": [
+                "13px",
+                {
+                  "lineHeight": "18px",
+                  "letterSpacing": "0.01em",
+                  "fontWeight": "500"
+                }
+              ],
+              "label-sm": [
+                "11px",
+                {
+                  "lineHeight": "13px",
+                  "letterSpacing": "0.06em",
+                  "fontWeight": "600"
+                }
+              ],
+              "headline-lg-mobile": [
+                "24px",
+                {
+                  "lineHeight": "30px",
+                  "fontWeight": "600"
+                }
+              ],
+              "body-lg": [
+                "17px",
+                {
+                  "lineHeight": "22px",
+                  "fontWeight": "400"
+                }
+              ],
+              "body-md": [
+                "15px",
+                {
+                  "lineHeight": "20px",
+                  "fontWeight": "400"
+                }
+              ],
+              "display-lg": [
+                "34px",
+                {
+                  "lineHeight": "41px",
+                  "letterSpacing": "-0.02em",
+                  "fontWeight": "700"
+                }
+              ]
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+        body {
+            background-color: #7f7f7f; /* Dim background to simulate modal overlay overlaying dashboard */
+        }
+    </style>
+</head>
+<body class="font-body-md antialiased min-h-screen flex items-end justify-center">
+
+    <!-- Modal Backdrop Overlay Mock -->
+    <div class="fixed inset-0 bg-black/40 z-0"></div>
+
+    <!-- Cupertino Style Bottom Sheet -->
+    <div class="relative w-full max-w-md bg-white rounded-t-[32px] p-6 pb-10 shadow-2xl z-10 animate-slide-up flex flex-col gap-6">
+        <!-- iOS Grab Handle -->
+        <div class="w-12 h-1 bg-surface-container-highest rounded-full mx-auto mb-2"></div>
+
+        <!-- Header -->
+        <div class="text-center">
+            <h1 class="font-title-md text-title-md text-on-surface">Detail Transaksi</h1>
+        </div>
+
+        <!-- Status Icon and Label -->
+        <div class="flex flex-col items-center gap-2 my-2">
+            <div class="w-14 h-14 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant flex items-center justify-center">
+                <span class="material-symbols-outlined text-3xl font-bold" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+            </div>
+            <p class="font-title-md text-title-md text-tertiary">Transaksi Berhasil</p>
+        </div>
+
+        <!-- Metadata Rincian -->
+        <div class="bg-background rounded-2xl p-4 flex flex-col gap-3">
+            <div class="flex justify-between items-center text-sm">
+                <span class="text-on-surface-variant font-medium">ID Transaksi</span>
+                <span class="text-on-surface font-semibold">TX-2026061701</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+                <span class="text-on-surface-variant font-medium">Waktu Tap</span>
+                <span class="text-on-surface font-semibold">17 Jun 2026, 12:02 WIB</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+                <span class="text-on-surface-variant font-medium">Lokasi Stan</span>
+                <span class="text-on-surface font-semibold">Stan Bude Sari</span>
+            </div>
+        </div>
+
+        <!-- Rincian Item Belanja -->
+        <div class="flex flex-col gap-3">
+            <h3 class="font-label-sm text-label-sm text-outline tracking-wider uppercase">RINCIAN ITEM BELANJA</h3>
+            <div class="flex flex-col gap-2">
+                <!-- Item 1 -->
+                <div class="flex justify-between items-center">
+                    <span class="text-on-surface font-medium text-body-md">1x Nasi Goreng</span>
+                    <span class="text-on-surface font-semibold text-body-md">Rp 15.000</span>
+                </div>
+                <!-- Item 2 -->
+                <div class="flex justify-between items-center">
+                    <span class="text-on-surface font-medium text-body-md">1x Es Teh Manis</span>
+                    <span class="text-on-surface font-semibold text-body-md">Rp 4.000</span>
+                </div>
+            </div>
+            <div class="h-[1px] bg-surface-variant mt-2"></div>
+        </div>
+
+        <!-- Total & Sisa Saldo -->
+        <div class="flex flex-col gap-3">
+            <div class="flex justify-between items-center">
+                <span class="text-on-surface font-bold text-body-lg">TOTAL NOMINAL</span>
+                <span class="text-primary font-bold text-headline-lg-mobile">Rp 19.000</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-on-surface-variant text-sm font-medium">Sisa Saldo Saku Anak</span>
+                <span class="text-secondary font-bold text-body-lg">Rp 75.000</span>
+            </div>
+        </div>
+
+        <!-- Download Button -->
+        <button class="w-full bg-primary-container text-on-primary py-4 rounded-2xl font-semibold text-label-md flex items-center justify-center gap-2 hover:bg-primary transition-colors mt-2 shadow-sm">
+            <span class="material-symbols-outlined text-[20px]">download</span>
+            UNDUH STRUK PDF
+        </button>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>School Canteen - Layar Pengaturan Saku</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-fixed": "#9df6b2",
+                      "on-background": "#1b1c1b",
+                      "background": "#fbf9f8",
+                      "surface-container": "#efedec",
+                      "inverse-primary": "#86d4d3",
+                      "surface-container-low": "#f5f3f2",
+                      "on-error-container": "#93000a",
+                      "tertiary": "#005027",
+                      "on-primary": "#ffffff",
+                      "outline-variant": "#bec9c8",
+                      "on-tertiary-container": "#90e9a6",
+                      "on-primary-fixed-variant": "#004f4f",
+                      "on-primary-fixed": "#002020",
+                      "on-secondary": "#ffffff",
+                      "on-secondary-container": "#713b00",
+                      "primary-container": "#006767",
+                      "surface": "#fbf9f8",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-fixed-variant": "#6e3900",
+                      "inverse-surface": "#303030",
+                      "on-tertiary-fixed-variant": "#005228",
+                      "surface-bright": "#fbf9f8",
+                      "surface-variant": "#e4e2e1",
+                      "outline": "#6f7979",
+                      "surface-container-high": "#e9e8e7",
+                      "surface-dim": "#dbdad9",
+                      "on-surface-variant": "#3e4948",
+                      "secondary-fixed-dim": "#ffb77c",
+                      "surface-tint": "#066969",
+                      "error": "#ba1a1a",
+                      "secondary-container": "#fca558",
+                      "primary-fixed": "#a2f0ef",
+                      "primary-fixed-dim": "#86d4d3",
+                      "primary": "#004d4d",
+                      "surface-container-highest": "#e4e2e1",
+                      "error-container": "#ffdad6",
+                      "on-secondary-fixed": "#2f1500",
+                      "on-tertiary-fixed": "#00210c",
+                      "secondary-fixed": "#ffdcc3",
+                      "on-error": "#ffffff",
+                      "on-surface": "#1b1c1b",
+                      "tertiary-container": "#026b36",
+                      "secondary": "#904d00",
+                      "surface-container-lowest": "#ffffff",
+                      "tertiary-fixed-dim": "#81d998",
+                      "inverse-on-surface": "#f2f0ef",
+                      "on-primary-container": "#94e2e2"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack-gap": "1rem",
+                      "section-margin": "2rem",
+                      "bento-gap": "0.75rem",
+                      "container-padding": "1.25rem"
+              },
+              "fontFamily": {
+                      "headline-lg": ["Be Vietnam Pro"],
+                      "title-md": ["Be Vietnam Pro"],
+                      "label-md": ["Be Vietnam Pro"],
+                      "label-sm": ["Be Vietnam Pro"],
+                      "headline-lg-mobile": ["Be Vietnam Pro"],
+                      "body-lg": ["Be Vietnam Pro"],
+                      "body-md": ["Be Vietnam Pro"],
+                      "display-lg": ["Be Vietnam Pro"]
+              },
+              "fontSize": {
+                      "headline-lg": ["28px", {"lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "title-md": ["20px", {"lineHeight": "25px", "fontWeight": "600"}],
+                      "label-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                      "label-sm": ["11px", {"lineHeight": "13px", "letterSpacing": "0.06em", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "30px", "fontWeight": "600"}],
+                      "body-lg": ["17px", {"lineHeight": "22px", "fontWeight": "400"}],
+                      "body-md": ["15px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "display-lg": ["34px", {"lineHeight": "41px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+        /* iOS style toggle classes */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: transparent;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: theme('colors.primary');
+        }
+        .toggle-checkbox {
+            right: 0;
+            z-index: 1;
+            border-color: #e2e8f0;
+            transition: all 0.3s;
+        }
+        .toggle-label {
+            width: 3.25rem;
+            height: 1.75rem;
+            background-color: #cbd5e1;
+            border-radius: 9999px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .toggle-checkbox:checked {
+            transform: translateX(1.5rem);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-sans antialiased pb-24 selection:bg-primary/20">
+<!-- TopAppBar -->
+<header class="bg-background docked full-width top-0 sticky z-40 transition-shadow duration-300">
+<div class="flex justify-between items-center w-full px-5 py-4">
+<!-- Leading Avatar -->
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-surface-container-high shrink-0 hover:opacity-80 transition-opacity cursor-pointer">
+<img alt="Student Profile" class="w-full h-full object-cover" data-alt="A close-up portrait photograph of a young male student, smiling softly, lit by soft, bright natural window light. The style is modern, crisp, and high-contrast, fitting a minimalist iOS-inspired app interface. The background is a pleasantly blurred light grey wall." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWxi78dt0VmUaLwnWAWue2VmdXQ986OVkBPnMcasb2yhfAglQXEZxMpXBE-vdAo_WF1MaIKvxxskyu0GH6h0-4yOZeKIOfAlFJsfZ0YKLoPT_ci8fqLCrLgfEE1K6kDW6EEMyJDNrv6A4BsQNalHM2TpUb_kwtI_UN4Qok1IH2KaUFbXFol7FEqHfDLy7EhzxAMG0d__D3EyKeria0oVSkWPq9ikbQKLTo-16liSSTSgiq5Wt9r8Or9DEyQxRhdBfvr4fakKzx1Pjd"/>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary md:font-headline-lg md:text-headline-lg">Batasan Saku &amp; Keamanan</h1>
+</div>
+<!-- Trailing Icon -->
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-lowest text-primary hover:bg-surface-container-low transition-colors shadow-sm active:scale-95">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full max-w-3xl mx-auto px-5 py-4 flex flex-col gap-bento-gap">
+<!-- Active Card Info (Bento Card) -->
+<section class="bg-surface-container-lowest rounded-[24px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.04)] flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div>
+<h2 class="font-label-sm text-label-sm text-outline tracking-wider uppercase mb-1">Informasi Kartu Aktif</h2>
+<p class="font-title-md text-title-md text-on-surface">Ahmad Subarjo</p>
+<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-2 mt-1">
+<span class="material-symbols-outlined text-[18px]">credit_card</span>
+                        UID: 04:A3:F8:12
+                    </p>
+</div>
+<div class="w-12 h-12 rounded-full bg-tertiary-container/10 flex items-center justify-center text-tertiary-container">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+</div>
+</div>
+</section>
+<!-- Settings Sections Container -->
+<div class="flex flex-col gap-bento-gap">
+<!-- Pengaturan Limit Section -->
+<section class="bg-surface-container-lowest rounded-[24px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+<h3 class="font-label-sm text-label-sm text-outline tracking-wider uppercase mb-4">PENGATURAN LIMIT</h3>
+<div class="flex flex-col gap-4">
+<!-- Toggle Jajan Harian -->
+<div class="flex items-center justify-between py-2">
+<div class="flex-1 pr-4">
+<p class="font-body-lg text-body-lg text-on-surface font-medium">Batasi Jajan Harian</p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Aktifkan untuk membatasi pengeluaran per hari.</p>
+</div>
+<div class="relative inline-block w-13 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer mt-0.5 ml-0.5 transition-transform duration-300" id="toggle-limit" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-7 rounded-full bg-gray-300 cursor-pointer" for="toggle-limit"></label>
+</div>
+</div>
+<!-- Divider -->
+<hr class="border-t border-surface-variant w-full"/>
+<!-- Input Batas Maksimal -->
+<div class="py-2">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2" for="limit-input">Batas Maksimal Per Hari</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="text-on-surface-variant font-body-lg">Rp</span>
+</div>
+<input class="block w-full pl-10 pr-3 py-3 bg-surface-container-low border-none rounded-xl font-title-md text-title-md text-on-surface focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest transition-colors" id="limit-input" placeholder="0" type="text" value="20.000"/>
+</div>
+</div>
+</div>
+</section>
+<!-- Keamanan Kartu Section -->
+<section class="bg-surface-container-lowest rounded-[24px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+<h3 class="font-label-sm text-label-sm text-outline tracking-wider uppercase mb-4">KEAMANAN KARTU</h3>
+<div class="flex items-center justify-between py-2">
+<div class="flex-1 pr-4">
+<p class="font-body-lg text-body-lg text-on-surface font-medium text-error">Bekukan Kartu Sementara</p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Mencegah kartu digunakan untuk bertransaksi jika hilang atau tertinggal.</p>
+</div>
+<div class="relative inline-block w-13 mr-2 align-middle select-none transition duration-200 ease-in">
+<input class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer mt-0.5 ml-0.5 transition-transform duration-300" id="toggle-freeze" name="toggle-freeze" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-7 rounded-full bg-gray-300 cursor-pointer" for="toggle-freeze"></label>
+</div>
+</div>
+</section>
+<!-- Notifikasi WhatsApp Section -->
+<section class="bg-surface-container-lowest rounded-[24px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+<h3 class="font-label-sm text-label-sm text-outline tracking-wider uppercase mb-4">NOTIFIKASI WHATSAPP</h3>
+<div class="flex items-center justify-between py-2">
+<div class="flex-1 pr-4">
+<p class="font-body-lg text-body-lg text-on-surface font-medium">Kirim Notifikasi Jajan Real-time</p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Terima struk digital setiap kali kartu digunakan.</p>
+</div>
+<div class="relative inline-block w-13 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer mt-0.5 ml-0.5 transition-transform duration-300" id="toggle-wa" name="toggle-wa" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-7 rounded-full bg-gray-300 cursor-pointer" for="toggle-wa"></label>
+</div>
+</div>
+</section>
+</div>
+<!-- Extra spacing for bottom nav -->
+<div class="h-6"></div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden bg-surface-container-lowest/90 backdrop-blur-md fixed bottom-0 w-full z-50 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
+<div class="flex justify-around items-center w-full h-16 px-2">
+<a class="flex flex-col items-center justify-center text-outline hover:bg-surface-container-high/50 w-16 h-full rounded-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-outline hover:bg-surface-container-high/50 w-16 h-full rounded-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined mb-1">analytics</span>
+<span class="font-label-sm text-label-sm">Analysis</span>
+</a>
+<a class="flex flex-col items-center justify-center text-outline hover:bg-surface-container-high/50 w-16 h-full rounded-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined mb-1">history</span>
+<span class="font-label-sm text-label-sm">History</span>
+</a>
+<!-- Active Tab -->
+<a class="flex flex-col items-center justify-center text-primary font-semibold w-16 h-full rounded-xl scale-95 transition-all duration-200" href="#">
+<div class="bg-primary-container/20 px-4 py-1 rounded-full mb-1">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">settings</span>
+</div>
+<span class="font-label-sm text-label-sm">Settings</span>
+</a>
+</div>
+</nav>
+<script>
+        // Simple script to handle interaction feedback on touch/click
+        document.querySelectorAll('.toggle-checkbox').forEach(toggle => {
+            toggle.addEventListener('change', function() {
+                const label = this.nextElementSibling;
+                if(this.checked) {
+                    label.style.backgroundColor = '#004d4d'; // primary
+                } else {
+                    label.style.backgroundColor = '#cbd5e1';
+                }
+            });
+        });
+
+        // Initialize checked state colors
+        document.querySelectorAll('.toggle-checkbox:checked').forEach(toggle => {
+            const label = toggle.nextElementSibling;
+            label.style.backgroundColor = '#004d4d';
+        });
+    </script>
+</body></html>

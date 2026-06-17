@@ -294,7 +294,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         selectedColor: AppColors.primary,
                         unselectedColor: AppColors.systemBackground,
                         borderColor: AppColors.borderLight,
-                        pressedColor: AppColors.primaryLight,
                         children: const <String, Widget>{
                           'makanan': Padding(
                             padding: EdgeInsets.symmetric(vertical: 10),
@@ -307,6 +306,13 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             padding: EdgeInsets.symmetric(vertical: 10),
                             child: Text(
                               AppStrings.categoryDrink,
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          'camilan': Padding(
+                            padding: EdgeInsets.symmetric(vertical: 10),
+                            child: Text(
+                              'Camilan',
                               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                             ),
                           ),

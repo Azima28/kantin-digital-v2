@@ -28,12 +28,12 @@ Aplikasi ini dirancang dengan prinsip **"Satu Identitas Visual, Fungsi Berbeda"*
 
 ### Perbandingan Karakteristik Antar Role:
 
-| Aspek Desain | 📱 Siswa (Mobile) | 📱 Petugas Kantin (Mobile) | 🌐 Admin Keuangan (Web) | 🌐 Super Admin (Web) |
+| Aspek Desain | 📱 Siswa (Mobile) | 📱 Petugas Kantin (Mobile) | 🌐 Admin Keuangan (Web) | 📱 Super Admin (Mobile) |
 |---|---|---|---|---|
-| **Kemiripan (Branding)** | Teal & Orange accent, font Poppins, rounded card 16px | Teal & Orange accent, font Poppins, rounded card 16px | Teal & Orange accent, font Poppins, rounded card 8px | Teal & Orange accent, font Poppins, rounded card 8px |
-| **Gaya Layout** | **Personal Dashboard** (Layout ala e-wallet personal, navigasi bottom bar) | **Cashier Terminal / POS** (Layout katalog produk grid besar, navigasi bottom bar) | **Admin Portal** (Layout sidebar navigasi kiri, tabel data, & dashboard metrik) | **Master Control Portal** (Layout sidebar kiri lengkap, tabel log, & grafik global) |
-| **Fokus Utama Visual** | Saldo pribadi & riwayat konsumsi harian | Keranjang belanja, grid menu makanan, & area deteksi kartu | Formulir input top-up tunai, registrasi kartu, & tabel siswa | Live feed Audit Log (keamanan data) & statistik multi-sekolah |
-| **Interaksi Utama** | Membaca saldo, bayar top-up online via Midtrans | Memilih makanan, tambah biaya tambahan, scan NFC kartu siswa | Memasukkan NIS, memverifikasi uang fisik, cetak laporan | Memfilter log audit keuangan, mengaktifkan/nonaktifkan user |
+| **Kemiripan (Branding)** | Teal & Orange accent, font Poppins, rounded card 16px | Teal & Orange accent, font Poppins, rounded card 16px | Teal & Orange accent, font Poppins, rounded card 8px | Teal & Orange accent, font Be Vietnam Pro, rounded card 24px |
+| **Gaya Layout** | **Personal Dashboard** (Layout ala e-wallet personal, navigasi bottom bar) | **Cashier Terminal / POS** (Layout katalog produk grid besar, navigasi bottom bar) | **Admin Portal** (Layout sidebar navigasi kiri, tabel data, & dashboard metrik) | **Master Control Cockpit** (Layout dashboard ringkas, grafik tren & kontribusi, bottom bar) |
+| **Fokus Utama Visual** | Saldo pribadi & riwayat konsumsi harian | Keranjang belanja, grid menu makanan, & area deteksi kartu | Formulir input top-up tunai, registrasi kartu, & tabel siswa | Tren transaksi global, donasi kontribusi harian, & log keamanan |
+| **Interaksi Utama** | Membaca saldo, bayar top-up online via Midtrans | Memilih makanan, tambah biaya tambahan, scan NFC kartu siswa | Memasukkan NIS, memverifikasi uang fisik, cetak laporan | Memantau grafik volume harian, push broadcast alert, lock status |
 
 ---
 
@@ -55,9 +55,9 @@ Silakan pilih dokumen spesifikasi per role di bawah ini untuk ditinjau secara te
 - **Spesifikasi Lengkap**: **[admin-keuangan-web.md](file:///c:/Work/Project%20PKL/sistem%20kantin%20digital/docs/perencanaan/design/admin-keuangan-web.md)**
 - **Konten**: Portal Login Admin Keuangan, Dashboard Kas Sekolah, Manajemen Siswa & Link Kartu via USB Reader, Form Input Top-up Tunai (Koperasi), Modul Koreksi Saldo (Adjustment) dengan input alasan wajib & catatan audit log otomatis, Laporan setoran per stan jajan, dan Export Excel/PDF.
 
-### 🌐 D. Super Admin (Web Master Dashboard Global)
-- **Spesifikasi Lengkap**: **[super-admin-web.md](file:///c:/Work/Project%20PKL/sistem%20kantin%20digital/docs/perencanaan/design/super-admin-web.md)**
-- **Konten**: Portal Login Master, Dashboard Global (Statistik volume transaksi, total sekolah, total saldo beredar global), CRUD data sekolah mitra, CRUD data user & role (aktifkan/nonaktifkan user instan), Audit Log Explorer real-time, dan Setelan API Global (FCM & Midtrans).
+### 📱 D. Super Admin (Aplikasi Mobile Master Control)
+- **Spesifikasi Lengkap**: **[super-admin-mobile.md](file:///c:/Work/Project%20PKL/sistem%20kantin%20digital/docs/perencanaan/design/super-admin-mobile.md)**
+- **Konten**: Login Biometrik & Master PIN, Dashboard Cockpit (Metrik Global, Area Chart Tren Transaksi, Donut Chart Kontribusi, status kesehatan server), CRUD data sekolah mitra, manajemen status akun user (aktif/blokir instan), Audit Log Explorer, Broadcast Center (Push Alert), dan Setelan Global API (FCM, Midtrans, Maintenance Mode).
 
 ### 🌐 E. Orang Tua (Web Publik Tanpa Login)
 - **Spesifikasi Lengkap**: **[orang-tua-web.md](file:///c:/Work/Project%20PKL/sistem%20kantin%20digital/docs/perencanaan/design/orang-tua-web.md)**
