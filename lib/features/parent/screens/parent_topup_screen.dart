@@ -303,21 +303,30 @@ class _ParentTopUpScreenState extends ConsumerState<ParentTopUpScreen> {
               );
             }
 
+            final double modalWidth = MediaQuery.of(context).size.width;
+            final bool isModalMobile = modalWidth < 600;
+
             return Dialog(
               backgroundColor: Colors.white,
+              insetPadding: isModalMobile ? const EdgeInsets.all(12) : const EdgeInsets.symmetric(horizontal: 40.0, vertical: 24.0),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(isModalMobile ? 16 : 24),
               ),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 800),
+                constraints: BoxConstraints(
+                  maxWidth: 800,
+                  maxHeight: isModalMobile 
+                      ? MediaQuery.of(context).size.height * 0.9 
+                      : MediaQuery.of(context).size.height * 0.8,
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // Header
                     Container(
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF6F3F2),
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF6F3F2),
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(isModalMobile ? 16 : 24)),
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                       child: Row(
@@ -746,6 +755,7 @@ class _ParentTopUpScreenState extends ConsumerState<ParentTopUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
     const Color primaryTeal = Color(0xFF006767);
     const Color bgWarm = Color(0xFFFBF9F8);
     const Color borderOutline = Color(0xFFE4E2E1);
@@ -859,14 +869,17 @@ class _ParentTopUpScreenState extends ConsumerState<ParentTopUpScreen> {
                                     GridView.count(
                                       shrinkWrap: true,
                                       physics: const NeverScrollableScrollPhysics(),
-                                      crossAxisCount: 3,
+                                      crossAxisCount: screenWidth < 480 ? 2 : 3,
                                       crossAxisSpacing: 16,
                                       mainAxisSpacing: 16,
-                                      childAspectRatio: 2.2,
+                                      childAspectRatio: screenWidth < 480 ? 2.5 : 2.2,
                                       children: [
+                                        _buildQuickAmountItem(10000, 'Rp 10.000'),
                                         _buildQuickAmountItem(20000, 'Rp 20.000'),
                                         _buildQuickAmountItem(50000, 'Rp 50.000'),
                                         _buildQuickAmountItem(100000, 'Rp 100.000'),
+                                        _buildQuickAmountItem(200000, 'Rp 200.000'),
+                                        _buildQuickAmountItem(500000, 'Rp 500.000'),
                                       ],
                                     ),
                                     const SizedBox(height: 16),

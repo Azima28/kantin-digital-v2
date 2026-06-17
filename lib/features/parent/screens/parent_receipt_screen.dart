@@ -30,7 +30,7 @@ class ParentReceiptScreen extends StatelessWidget {
     Widget buildReceiptRow(String label, String value, {bool isPrimary = false, bool isStatus = false}) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
@@ -40,41 +40,51 @@ class ParentReceiptScreen extends StatelessWidget {
               fontWeight: FontWeight.w400,
             ),
           ),
-          const SizedBox(width: 16),
-          isStatus
-              ? Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF7EFBA4).withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    value,
-                    style: GoogleFonts.beVietnamPro(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: successGreen,
-                      letterSpacing: 0.5,
+          const SizedBox(width: 24),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: isStatus
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF7EFBA4).withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        value,
+                        textAlign: TextAlign.end,
+                        style: GoogleFonts.beVietnamPro(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: successGreen,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    )
+                  : Text(
+                      value,
+                      textAlign: TextAlign.end,
+                      style: GoogleFonts.beVietnamPro(
+                        fontSize: 14,
+                        fontWeight: isPrimary ? FontWeight.w700 : FontWeight.w500,
+                        color: isPrimary ? primaryTeal : AppColors.textDark,
+                      ),
                     ),
-                  ),
-                )
-              : Text(
-                  value,
-                  style: GoogleFonts.beVietnamPro(
-                    fontSize: 14,
-                    fontWeight: isPrimary ? FontWeight.w700 : FontWeight.w500,
-                    color: isPrimary ? primaryTeal : AppColors.textDark,
-                  ),
-                ),
+            ),
+          ),
         ],
       );
     }
+
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isMobile = screenWidth < 480;
 
     return Scaffold(
       backgroundColor: bgWarm,
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 540),
             child: Column(
@@ -141,7 +151,7 @@ class ParentReceiptScreen extends StatelessWidget {
                     children: [
                       // Card Header
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                        padding: EdgeInsets.fromLTRB(isMobile ? 16 : 24, isMobile ? 16 : 24, isMobile ? 16 : 24, 16),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -161,7 +171,7 @@ class ParentReceiptScreen extends StatelessWidget {
                       
                       // Details Body
                       Padding(
-                        padding: const EdgeInsets.all(24.0),
+                        padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
                         child: Column(
                           children: [
                             buildReceiptRow('Order ID', orderId),

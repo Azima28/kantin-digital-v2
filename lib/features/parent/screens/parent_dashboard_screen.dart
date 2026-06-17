@@ -62,7 +62,6 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
   Widget build(BuildContext context) {
     final dataAsync = ref.watch(parentDashboardProvider(widget.studentId));
     final double screenWidth = MediaQuery.of(context).size.width;
-    final bool isWide = screenWidth > 992;
 
     const Color primaryTeal = Color(0xFF006767);
     const Color orangeAccent = Color(0xFF904D00);
@@ -137,6 +136,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
     }
 
     Widget buildFooter() {
+      final bool isMobileFooter = screenWidth < 600;
       return Container(
         decoration: const BoxDecoration(
           color: Color(0xFFF6F3F2),
@@ -150,40 +150,74 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
             constraints: const BoxConstraints(maxWidth: 1200),
             child: Column(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Kantin Digital',
-                      style: GoogleFonts.beVietnamPro(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: primaryTeal,
+                isMobileFooter
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Kantin Digital',
+                            style: GoogleFonts.beVietnamPro(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: primaryTeal,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 16,
+                            runSpacing: 8,
+                            children: [
+                              Text(
+                                'Privacy Policy',
+                                style: GoogleFonts.beVietnamPro(fontSize: 12, color: AppColors.textGray),
+                              ),
+                              Text(
+                                'Terms of Service',
+                                style: GoogleFonts.beVietnamPro(fontSize: 12, color: AppColors.textGray),
+                              ),
+                              Text(
+                                'Help Center',
+                                style: GoogleFonts.beVietnamPro(fontSize: 12, color: AppColors.textGray),
+                              ),
+                            ],
+                          ),
+                        ],
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Kantin Digital',
+                            style: GoogleFonts.beVietnamPro(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: primaryTeal,
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              Text(
+                                'Privacy Policy',
+                                style: GoogleFonts.beVietnamPro(fontSize: 12, color: AppColors.textGray),
+                              ),
+                              const SizedBox(width: 16),
+                              Text(
+                                'Terms of Service',
+                                style: GoogleFonts.beVietnamPro(fontSize: 12, color: AppColors.textGray),
+                              ),
+                              const SizedBox(width: 16),
+                              Text(
+                                'Help Center',
+                                style: GoogleFonts.beVietnamPro(fontSize: 12, color: AppColors.textGray),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    ),
-                    Row(
-                      children: [
-                        Text(
-                          'Privacy Policy',
-                          style: GoogleFonts.beVietnamPro(fontSize: 12, color: AppColors.textGray),
-                        ),
-                        const SizedBox(width: 16),
-                        Text(
-                          'Terms of Service',
-                          style: GoogleFonts.beVietnamPro(fontSize: 12, color: AppColors.textGray),
-                        ),
-                        const SizedBox(width: 16),
-                        Text(
-                          'Help Center',
-                          style: GoogleFonts.beVietnamPro(fontSize: 12, color: AppColors.textGray),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
                 const SizedBox(height: 16),
                 Align(
-                  alignment: Alignment.centerRight,
+                  alignment: isMobileFooter ? Alignment.center : Alignment.centerRight,
                   child: Text(
                     '© 2024 Kantin Digital. All rights reserved.',
                     style: GoogleFonts.beVietnamPro(fontSize: 12, color: AppColors.textGray),
@@ -430,31 +464,55 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Title & Chips row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    '5 AKTIVITAS JAJAN TERAKHIR ANAK',
-                    style: GoogleFonts.beVietnamPro(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textDark,
-                    ),
+            screenWidth < 500
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        '5 AKTIVITAS JAJAN TERAKHIR ANAK',
+                        style: GoogleFonts.beVietnamPro(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          buildFilterChipItem('Semua'),
+                          const SizedBox(width: 8),
+                          buildFilterChipItem('Pengeluaran'),
+                          const SizedBox(width: 8),
+                          buildFilterChipItem('Top-up'),
+                        ],
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '5 AKTIVITAS JAJAN TERAKHIR ANAK',
+                          style: GoogleFonts.beVietnamPro(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          buildFilterChipItem('Semua'),
+                          const SizedBox(width: 8),
+                          buildFilterChipItem('Pengeluaran'),
+                          const SizedBox(width: 8),
+                          buildFilterChipItem('Top-up'),
+                        ],
+                      ),
+                    ],
                   ),
-                ),
-                Row(
-                  children: [
-                    buildFilterChipItem('Semua'),
-                    const SizedBox(width: 8),
-                    buildFilterChipItem('Pengeluaran'),
-                    const SizedBox(width: 8),
-                    buildFilterChipItem('Top-up'),
-                  ],
-                ),
-              ],
-            ),
             const SizedBox(height: 24),
 
             if (displayTxs.isEmpty)
@@ -472,40 +530,41 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                 ),
               )
             else ...[
-              // Table Header Row
-              Container(
-                decoration: const BoxDecoration(
-                  color: Color(0x0D006767), // 5% Teal opacity
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+              // Table Header Row (Desktop only)
+              if (screenWidth >= 600)
+                Container(
+                  decoration: const BoxDecoration(
+                    color: Color(0x0D006767), // 5% Teal opacity
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          'TANGGAL & WAKTU',
+                          style: GoogleFonts.beVietnamPro(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textGray),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 4,
+                        child: Text(
+                          'AKTIVITAS / ITEM',
+                          style: GoogleFonts.beVietnamPro(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textGray),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          'NOMINAL',
+                          textAlign: TextAlign.end,
+                          style: GoogleFonts.beVietnamPro(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textGray),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Text(
-                        'TANGGAL & WAKTU',
-                        style: GoogleFonts.beVietnamPro(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textGray),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 4,
-                      child: Text(
-                        'AKTIVITAS / ITEM',
-                        style: GoogleFonts.beVietnamPro(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textGray),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 3,
-                      child: Text(
-                        'NOMINAL',
-                        textAlign: TextAlign.end,
-                        style: GoogleFonts.beVietnamPro(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textGray),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
 
               // Transaction Rows
               ListView.separated(
@@ -528,96 +587,158 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                   final String summary = _getItemsSummary(tx);
                   final String canteen = tx['canteen_operators']?['canteen_name'] ?? 'Koperasi Siswa';
 
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    color: isTopup ? const Color(0xFFFFF2E0).withValues(alpha: 0.3) : Colors.white,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Col 1: Date & Time
-                        Expanded(
-                          flex: 3,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                  if (screenWidth < 600) {
+                    // Mobile-friendly list layout
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                      color: isTopup ? const Color(0xFFFFF2E0).withValues(alpha: 0.3) : Colors.white,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                dateStr,
-                                style: GoogleFonts.beVietnamPro(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.textDark,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '$timeStr WIB',
-                                style: GoogleFonts.beVietnamPro(
-                                  fontSize: 11,
-                                  color: AppColors.textGray,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Col 2: Item & Location/Method
-                        Expanded(
-                          flex: 4,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                summary,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.beVietnamPro(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textDark,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
                               Row(
                                 children: [
                                   Icon(
                                     isTopup ? Icons.account_balance : Icons.restaurant,
-                                    size: 12,
-                                    color: AppColors.textGray,
+                                    size: 14,
+                                    color: isTopup ? primaryTeal : AppColors.textDark,
                                   ),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      isTopup ? 'Dari Orang Tua' : canteen,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.beVietnamPro(
-                                        fontSize: 11,
-                                        color: AppColors.textGray,
-                                      ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    isTopup ? 'Top-Up Saldo' : canteen,
+                                    style: GoogleFonts.beVietnamPro(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textDark,
                                     ),
                                   ),
                                 ],
                               ),
+                              Text(
+                                '${isTopup ? "+" : "-"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
+                                style: GoogleFonts.beVietnamPro(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: isTopup ? const Color(0xFF006A35) : AppColors.error,
+                                ),
+                              ),
                             ],
                           ),
-                        ),
-
-                        // Col 3: Amount
-                        Expanded(
-                          flex: 3,
-                          child: Text(
-                            '${isTopup ? "+" : "-"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
-                            textAlign: TextAlign.end,
+                          const SizedBox(height: 6),
+                          Text(
+                            summary,
                             style: GoogleFonts.beVietnamPro(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: isTopup ? const Color(0xFF006A35) : AppColors.error,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textDark,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  );
+                          const SizedBox(height: 4),
+                          Text(
+                            '$dateStr \u2022 $timeStr WIB',
+                            style: GoogleFonts.beVietnamPro(
+                              fontSize: 11,
+                              color: AppColors.textGray,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else {
+                    // Desktop tabular table layout
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      color: isTopup ? const Color(0xFFFFF2E0).withValues(alpha: 0.3) : Colors.white,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Col 1: Date & Time
+                          Expanded(
+                            flex: 3,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  dateStr,
+                                  style: GoogleFonts.beVietnamPro(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.textDark,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '$timeStr WIB',
+                                  style: GoogleFonts.beVietnamPro(
+                                    fontSize: 11,
+                                    color: AppColors.textGray,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Col 2: Item & Location/Method
+                          Expanded(
+                            flex: 4,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  summary,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.beVietnamPro(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textDark,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      isTopup ? Icons.account_balance : Icons.restaurant,
+                                      size: 12,
+                                      color: AppColors.textGray,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        isTopup ? 'Dari Orang Tua' : canteen,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.beVietnamPro(
+                                          fontSize: 11,
+                                          color: AppColors.textGray,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Col 3: Amount
+                          Expanded(
+                            flex: 3,
+                            child: Text(
+                              '${isTopup ? "+" : "-"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
+                              textAlign: TextAlign.end,
+                              style: GoogleFonts.beVietnamPro(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: isTopup ? const Color(0xFF006A35) : AppColors.error,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
                 },
               ),
             ],
@@ -696,10 +817,8 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 24),
-
                                 // Bento layout
-                                isWide
+                                screenWidth > 992
                                     ? Row(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
@@ -722,15 +841,34 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                                           ),
                                         ],
                                       )
-                                    : Column(
-                                        children: [
-                                          buildProfileCard(name, classStr),
-                                          const SizedBox(height: 24),
-                                          buildBalanceCard(balance),
-                                          const SizedBox(height: 24),
-                                          buildHistoryCard(txs),
-                                        ],
-                                      ),
+                                    : screenWidth >= 600
+                                        ? Column(
+                                            children: [
+                                              Row(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Expanded(
+                                                    child: buildProfileCard(name, classStr),
+                                                  ),
+                                                  const SizedBox(width: 24),
+                                                  Expanded(
+                                                    child: buildBalanceCard(balance),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 24),
+                                              buildHistoryCard(txs),
+                                            ],
+                                          )
+                                        : Column(
+                                            children: [
+                                              buildProfileCard(name, classStr),
+                                              const SizedBox(height: 24),
+                                              buildBalanceCard(balance),
+                                              const SizedBox(height: 24),
+                                              buildHistoryCard(txs),
+                                            ],
+                                          ),
                               ],
                             ),
                           ),
