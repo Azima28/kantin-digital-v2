@@ -1,22 +1,33 @@
 # 📱 Spesifikasi Desain UI/UX — Role: Super Admin (Mobile Master Cockpit)
 
-Dokumen ini mendefinisikan seluruh antarmuka pengguna (UI/UX) untuk **Aplikasi Mobile Master Control Super Admin** secara lengkap dari awal hingga akhir, menggunakan pendekatan tata letak **iOS/Cupertino-style** yang minimalis modern, berorientasi pada visual bento-grid, serta dilengkapi visualisasi grafik analitik multi-dimensi dan monitoring server.
+Dokumen ini mendefinisikan seluruh antarmuka pengguna (UI/UX) untuk **Aplikasi Mobile Master Control Super Admin** secara lengkap dari awal hingga akhir, menggunakan pendekatan tata letak **iOS/Cupertino-style** yang minimalis modern, berorientasi pada visual bento-grid, serta dilengkapi visualisasi grafik analitik dan monitoring.
 
 ---
 
 ## 1. Panduan Visual Umum (Branding & Design System)
 
-*   **Tipografi**: Menggunakan **Be Vietnam Pro** (Regular, Medium, SemiBold, Bold) untuk konsistensi seluruh aplikasi ekosistem Kantin Digital.
+*   **Tipografi**: Menggunakan font **Be Vietnam Pro** untuk konsistensi seluruh ekosistem Kantin Digital.
+    *   `display`: 34px Bold, LineHeight 41px, LetterSpacing -0.02em (Total metrik utama)
+    *   `headline-lg`: 24px SemiBold, LineHeight 30px, LetterSpacing -0.01em (Nama halaman/seksi besar)
+    *   `headline-md`: 20px SemiBold, LineHeight 25px (Judul kartu bento, nama sub-halaman)
+    *   `body-lg`: 17px Regular, LineHeight 22px (Deskripsi, teks utama profil)
+    *   `body-md`: 15px Regular, LineHeight 20px (Teks sekunder, data detail)
+    *   `label-md`: 13px Medium, LineHeight 18px, LetterSpacing 0.01em (Teks tombol, label input)
+    *   `label-sm`: 11px SemiBold, LineHeight 13px, LetterSpacing 0.05em (Badge status uppercase, kategori)
+
 *   **Tema Warna**:
-    *   *Primary Teal* (`#004D4D`): Warna structural brand, navigasi utama, dan kontrol administratif.
-    *   *Accent Orange* (`#904D00`): Penanda area keuangan global dan akumulasi saldo.
-    *   *Success Green* (`#006A35`): Indikator status sukses transaksi dan kesehatan server.
-    *   *System Background* (`#FBF9F8`): Warna abu-abu hangat minimalis untuk latar belakang aplikasi.
-    *   *Card Background* (`#FFFFFF`): Putih bersih untuk container bento-grid.
+    *   *Primary Teal* (`#003434`): Warna structural brand, navigasi utama, dan kontrol administratif (Command Layer).
+    *   *Accent Orange* (`#904D00`): Penanda saldo keuangan global dan akumulasi nominal saldo utama (Value Layer).
+    *   *Success Green* (`#006A35`): Indikator status sukses transaksi dan kesehatan server optimal.
+    *   *System Background* (`#FBF9F8`): Warna abu-abu hangat minimalis untuk latar belakang aplikasi (Level 0).
+    *   *Card Background* (`#FFFFFF`): Putih bersih untuk kontainer bento-grid dengan shadow `0px 4px 20px rgba(0, 0, 0, 0.04)` (Level 1).
+
 *   **Karakteristik Mobile Layout**:
-    *   *Bento-Grid Architecture*: Tata letak modular kartu dengan sudut membulat lebar (`24px`) untuk pengelompokan metrik dan grafik yang padat informasi namun mudah dibaca.
+    *   *Bento-Grid Architecture*: Tata letak modular kartu dengan sudut membulat lebar (`24px` / `rounded-xl` pada iOS) untuk pengelompokan metrik dan grafik.
+    *   *Buttons & Inputs*: Radius sudut membulat `12px` (rounded-md) untuk kesan fungsional.
     *   *Biometric Authentication*: Integrasi Face ID / Touch ID untuk membuka akses kontrol master demi keamanan finansial global.
     *   *iOS Grab Handle*: Penarik visual pada dialog modal bottom sheet detail log audit.
+    *   *Interactive Feedback*: Tombol menyusut secara visual (scale 0.98) saat ditekan.
 
 ---
 
@@ -25,8 +36,8 @@ Dokumen ini mendefinisikan seluruh antarmuka pengguna (UI/UX) untuk **Aplikasi M
 ```
 [Login Biometrik / PIN] ──> [Dashboard Master (Tab 1)]
                              ├── [Manajemen Pengguna (Tab 2)] ──> Filter Peran, Detail & Audit Aktivitas, Ubah Password, Status
-                             ├── [Explorer Audit Log (Tab 3)] ──> Live Timeline (Bottom Sheet)
-                             └── [Broadcast & Setelan (Tab 4)] ──> Notifikasi Push & Mode Pemeliharaan
+                             ├── [Explorer Audit Log (Tab 3)] ──> Timeline Global, JSON Diff (Bottom Sheet)
+                             └── [Broadcast & Setelan (Tab 4)] ──> Notifikasi Push, Integrasi API, Mode Pemeliharaan
 ```
 
 ---
@@ -40,297 +51,403 @@ Layar awal khusus Super Admin untuk masuk ke Master Control dengan lapisan keama
 ```
 +------------------------------------------+
 |                                          |
-|                 [🛜 + 🛡️]                 |
-|              KANTIN DIGITAL              |
-|           Master Control Panel           |
+|                [ admin ]                 |
+|             KANTIN DIGITAL               |
+|             Master Control               |
 |                                          |
-|        Lapisan Keamanan Super Admin      |
 |                                          |
-|               [ Face ID ]                |
-|             Pindai Wajah Anda            |
+|                 [ face ]                 |
 |                                          |
-|       - Atau Masukkan PIN Master -       |
-|                [ * * * * ]               |
+|                                          |
+|            ENTER MASTER PIN              |
+|          [ o  o  o  o  o  o ]            |
 |                                          |
 |            [ 1 ]  [ 2 ]  [ 3 ]           |
 |            [ 4 ]  [ 5 ]  [ 6 ]           |
 |            [ 7 ]  [ 8 ]  [ 9 ]           |
-|                   [ 0 ]                  |
+|                   [ 0 ]  [ < ]           |
 |                                          |
-|     © 2026 Kantin Digital Security       |
+|       © 2026 Kantin Digital Security.    |
 +------------------------------------------+
 ```
 #### Elemen & Aksi Interaksi
+*   **Logo Panel Keamanan**: Ikon `admin_panel_settings` di dalam kontainer bayangan tebal.
 *   **Tombol Face ID (Biometrik)**:
-    *   *Aksi*: Memicu API biometrik perangkat bawaan (iOS/Android). Jika pemindaian berhasil, langsung mengarahkan pengguna ke **Screen 2: Dashboard Master**.
-*   **Numpad PIN 6-Digit**:
-    *   *Aksi*: Input kode PIN keamanan utama super admin jika sensor biometrik gagal atau tidak tersedia.
+    *   *Aksi*: Menampilkan prompt Face ID bawaan sistem. Jika sukses, langsung mengarahkan ke dashboard.
+*   **PIN Code Dot Indicator**:
+    *   *Visual*: Menampilkan 6 indikator bulat. Titik terisi (`filled`) saat PIN dimasukkan menggunakan numpad.
+*   **Numpad Grid**:
+    *   *Aksi*: Klik tombol 0-9 untuk mengisi PIN. Klik tombol `backspace` (`<`) untuk menghapus digit terakhir.
 
 ---
 
 ### Screen 2: Dashboard Master Cockpit (Tab 1: Home)
-Pusat kendali real-time untuk memantau perputaran saldo keuangan di seluruh sekolah dan kesehatan server.
+Pusat kendali real-time untuk memantau saldo keuangan di seluruh sekolah dan kesehatan server.
 
 #### ASCII Mockup
 ```
 +------------------------------------------+
-| Halo, Super Admin                    [🔔] |
-| Master Control Dashboard                 |
+| SA Kantin Digital                    [🔔] |
+|                                          |
+| Halo, Super Admin                        |
+| Real-time command center overview.       |
 |                                          |
 | +--------------------------------------+ |
-| |  TOTAL METRIK GLOBAL                 | |
-| |  Sekolah Terdaftar: 5 Sekolah        | |
-| |  Saldo Global     : Rp 102.500.000   | |
-| |  Volume Hari Ini  : Rp 12.450.000   | |
+| | Global Metrics                       | |
+| | [ SCHOOL COUNT ]    [ DAILY VOLUME ] | |
+| | 1,248               42.5K            | |
+| |                                      | |
+| |          GLOBAL BALANCE              | |
+| |          Rp 102.500.000              | |
 | +--------------------------------------+ |
 |                                          |
-| TREN VOLUME TRANSAKSI (30 Hari Terakhir) |
-| 50M|         /\                          |
-| 25M|    /\  /  \  /\                     |
-| 10M|  _/  \/    \/  \                    |
-|  0 +------------------- (Tanggal)        |
+| +--------------------------------------+ |
+| | Transaction Trend           [ 30 Days ]| |
+| |     /\                               | |
+| |    /  \    /\                        | |
+| | __/    \  /  \                       | |
+| |         \/    \/\                    | |
+| +--------------------------------------+ |
 |                                          |
-| KONTRIBUSI VOL. TRANSAKSI PER SEKOLAH    |
-| (O) SMP Terpadu (45%)  (O) SMA Negeri 3  |
-| (O) SMK Terpadu (25%)  (O) Sekolah Lain  |
-|                                          |
-| STATUS KESEHATAN SISTEM                  |
-| - Latensi API: 42ms  (Normal)            |
-| - Kapasitas DB: 12% Terpakai             |
-| - Tingkat Sukses Transaksi: [99.8%] [■]  |
-|                                          |
+| +-------------------+  +---------------+ |
+| | Contribution/Sch  |  | System Health | |
+| |      ( O )        |  | (•) Optimal   | |
+| |                   |  | API: 42ms     | |
+| | (•) Sch A (•) Sch |  | DB : 12%      | |
+| +-------------------+  +---------------+ |
 +------------------------------------------+
-| [Home]     [User]     [Audit]   [Setting]|
+| [Home]     [Users]     [Audit]  [Settings] |
 +------------------------------------------+
 ```
 #### Elemen & Aksi Interaksi
-*   **Grafik Area Volume Transaksi (Tren 30 Hari)**:
-    *   *Jenis*: **Area Chart dengan Gradasi Teal**.
-    *   *Fungsi*: Membantu Super Admin memantau kestabilan lalu lintas keuangan. Menekan area grafik akan memicu tooltip nominal transaksi pada tanggal tersebut.
-*   **Grafik Donat Kontribusi per Sekolah**:
-    *   *Jenis*: **Donut Chart**.
-    *   *Fungsi*: Menampilkan persentase kontribusi volume transaksi dari masing-masing sekolah.
-*   **Widget Status Kesehatan Sistem**:
-    *   *Elemen*: Indikator status bulat (Hijau/Kuning/Merah) untuk parameter latensi, database storage, dan tingkat kesuksesan transaksi.
+*   **Greeting Header**: Menampilkan nama akun dan foto profil sirkular (SA).
+*   **Kartu Metrik Global**:
+    *   Menampilkan data `School Count` (1,248) dan `Daily Volume` (42.5K).
+    *   Menampilkan `Global Balance` (Rp 102.500.000) dengan ukuran teks `display` dan warna *Accent Orange* (`#904D00`).
+*   **Transaction Trend Card**:
+    *   Grafik tren berbasis area teal gradasi (`chart-area-teal`) untuk riwayat volume transaksi 30 hari terakhir.
+*   **Contribution per School**:
+    *   Grafik donat mini yang membagi kontribusi transaksi dari sekolah terdaftar.
+*   **System Health Card**:
+    *   Menampilkan status "Optimal" (hijau) beserta rincian: `API Latency` (42ms), `DB Capacity` (12%), dan `Success Rate` (99.8%).
 
 ---
 
-### Screen 3: Manajemen & Detail Pengguna (Tab 2: User)
-Mengatur profil, kredensial password, dan audit aktivitas mendalam untuk seluruh role pengguna (Siswa, Orang Tua, Kasir/Petugas Kantin, dan Petugas Keuangan). Semua role menampilkan informasi identifikasi (Username, NISN untuk Siswa, Email) dan dapat diatur password-nya oleh Super Admin.
+### Screen 3: Manajemen Pengguna (Tab 2: Users)
+Pusat pencarian, penyaringan peran, dan aktivasi akun pengguna.
 
-#### ASCII Mockup (Daftar Pengguna)
+#### ASCII Mockup
 ```
 +------------------------------------------+
 | Kelola Akun Pengguna                     |
 | [🔍 Cari nama, email, NISN, usn...     ] |
 |                                          |
-| Filter Peran:                            |
 | [ Semua ] [ Keuangan ] [ Kantin ] [Siswa]|
-| [ Orang Tua ]                            |
 |                                          |
-| DAFTAR AKUN                              |
 | +--------------------------------------+ |
-| | Ahmad Subarjo (Siswa - 8-B)            | |
-| | NISN: 2026090812 • USN: ahmad_subarjo  | |
+| | [Img] Ahmad Subarjo          (Siswa) | |
+| | NISN: 0041234567 • USN: ahmad_sb     | |
 | | Status: AKTIF             [ Toggle ON ]| |
 | | > [ Detail & Riwayat Belanja ]         | |
 | +--------------------------------------+ |
-| | Rian (Petugas Kantin - Stan Bakso)     | |
-| | USN: rian_bakso • Email: r@k.com       | |
+| | [Img] Rian                 (Kantin)  | |
+| | USN: RIAN882 • Stan: Bakso & Mie     | |
 | | Status: AKTIF             [ Toggle ON ]| |
 | | > [ Detail & Riwayat Penjualan ]       | |
 | +--------------------------------------+ |
-| | Budi Hartono (Admin Keuangan)          | |
-| | USN: budi_fin • Email: b@f.com         | |
-| | Status: DIBLOKIR         [ Toggle OFF]| |
+| | [Img] Budi Hartono        (Keuangan) | |
+| | USN: ID-2093-TU • Staf Tata Usaha    | |
+| | Status: AKTIF             [ Toggle ON ]| |
 | | > [ Detail & Log Keuangan ]            | |
 | +--------------------------------------+ |
-| | Salim Subarjo (Orang Tua Ahmad)        | |
-| | USN: salim_s • Email: s@o.com          | |
+| | [Img] Salim Subarjo       (Orang Tua)| |
+| | USN: salim_s • Wali Ahmad Subarjo    | |
 | | Status: AKTIF             [ Toggle ON ]| |
-| | > [ Detail & Atur Password ]           | |
+| | > [ Detail & Hubungan Anak ]           | |
 | +--------------------------------------+ |
 +------------------------------------------+
-| [Home]     [User]     [Audit]   [Setting] |
+| [Home]     [Users]     [Audit]  [Settings] |
 +------------------------------------------+
 ```
-
-#### ASCII Mockup (Rincian & Riwayat per Peran)
-Admin dapat memilih akun untuk membuka detail data lengkap masing-masing peran secara spesifik:
-
-##### A. Rincian & Riwayat Siswa
-```
-+------------------------------------------+
-| Rincian Pengguna (Siswa)                 |
-|                                          |
-| Nama : Ahmad Subarjo                     |
-| NISN : 2026090812                        |
-| USN  : ahmad_subarjo                     |
-| Kelas: 8-B                               |
-| Email: ahmad.subarjo@student.sch.id      |
-| Saldo: Rp 45.000 (Kartu: AKTIF)          |
-|                                          |
-| [ UBAH KATA SANDI (PASSWORD) ]           |
-|                                          |
-| RIWAYAT BELANJA & TOP-UP SISWA           |
-| - 17 Jun, 12:30 | Belanja Nasi Goreng    |
-|   Total: Rp 12.000 (Stan Kantin Utama)   |
-| - 17 Jun, 09:15 | Belanja Es Teh         |
-|   Total: Rp 3.000 (Stan Minuman Segar)   |
-| - 16 Jun, 08:00 | Top-Up Saldo Koperasi  |
-|   Total: +Rp 50.000                      |
-|                                          |
-+------------------------------------------+
-| [ Kembali ke Daftar ]                    |
-+------------------------------------------+
-```
-
-##### B. Rincian & Riwayat Petugas Kantin
-```
-+------------------------------------------+
-| Rincian Pengguna (Petugas Kantin)        |
-|                                          |
-| Nama : Rian                              |
-| Stan : Stan Bakso & Mie Ayam             |
-| USN  : rian_bakso                        |
-| Email: rian.canteen@canteen.com          |
-| Pendapatan Hari Ini: Rp 750.000          |
-|                                          |
-| [ UBAH KATA SANDI (PASSWORD) ]           |
-|                                          |
-| RIWAYAT TRANSAKSI PENJUALAN STAN         |
-| - 17 Jun, 12:45 | Penjualan Bakso Urat   |
-|   Total: +Rp 15.000 (Siswa: Budi Hartono)|
-| - 17 Jun, 12:20 | Penjualan Es Jeruk     |
-|   Total: +Rp 5.000 (Siswa: Ahmad)        |
-|                                          |
-| PRODUK YANG DIKELOLA (2)                 |
-| 1. Bakso Biasa (Rp 12.000)               |
-| 2. Mie Ayam (Rp 10.000)                  |
-|                                          |
-+------------------------------------------+
-| [ Kembali ke Daftar ]                    |
-+------------------------------------------+
-```
-
-##### C. Rincian & Riwayat Petugas Keuangan
-```
-+------------------------------------------+
-| Rincian Pengguna (Keuangan)              |
-|                                          |
-| Nama : Budi Hartono                      |
-| USN  : budi_fin                          |
-| Email: budi.finance@finance.com          |
-| Hak  : Admin Keuangan Utama              |
-|                                          |
-| [ UBAH KATA SANDI (PASSWORD) ]           |
-|                                          |
-| LOG AKTIVITAS KEUANGAN TERAKHIR          |
-| - 17 Jun, 10:15 | Pencatatan Top-Up      |
-|   Murid: Ahmad (Rp 100.000)              |
-| - 16 Jun, 15:30 | Rekonsiliasi Kasir     |
-|   Stan: Stan Bakso (Rp 1.200.000)        |
-|                                          |
-+------------------------------------------+
-| [ Kembali ke Daftar ]                    |
-+------------------------------------------+
-```
-
-##### D. Rincian Orang Tua
-```
-+------------------------------------------+
-| Rincian Pengguna (Orang Tua)             |
-|                                          |
-| Nama : Salim Subarjo                     |
-| USN  : salim_s                           |
-| Email: salim.subarjo@gmail.com           |
-| Anak : Ahmad Subarjo (NISN: 2026090812)  |
-|                                          |
-| [ UBAH KATA SANDI (PASSWORD) ]           |
-|                                          |
-| * Catatan Keamanan: Untuk akun orang     |
-|   tua, rincian hanya menyertakan info    |
-|   profil umum & tombol ganti sandi.      |
-|                                          |
-+------------------------------------------+
-| [ Kembali ke Daftar ]                    |
-+------------------------------------------+
-```
-
 #### Elemen & Aksi Interaksi
-*   **Filter Peran Pil Horisontal**: Segment filter bergaya iOS untuk memilah daftar user secara cepat.
-*   **Toggle Status (Cupertino Switch)**:
-    *   *Aksi*: Merubah status `is_active` pengguna di tabel `profiles`. Jika dimatikan (`OFF`), mematikan hak akses otentikasi Supabase pengguna secara instan.
-*   **Tombol [ UBAH KATA SANDI (PASSWORD) ]**:
-    *   *Aksi*: Membuka modal pop-up Cupertino Text Field untuk menginput password baru. Super Admin dapat menyetel ulang password user secara paksa.
-*   **Tautan Rincian & Riwayat (Siswa, Kantin, Keuangan)**:
-    *   *Aksi*: Membuka layar sub-detail peran yang memuat riwayat transaksi mutasi lengkap (read-only untuk mempermudah pengecekan dan investigasi data).
+*   **Search Bar**: Memungkinkan pencarian teks bebas (real-time query) untuk nama, email, username, atau NISN.
+*   **Segmented Control Filter**: Menyaring daftar pengguna berdasarkan Peran (`Semua`, `Keuangan`, `Kantin`, `Siswa`, `Orang Tua`).
+*   **List Item Akun**:
+    *   Foto avatar profil bulat.
+    *   Label teks ringkas (Nama, Username, Role, Parameter unik seperti Stan atau NISN).
+    *   **Status Toggle (Cupertino Switch)**:
+        *   *Aksi*: Mengaktifkan / menonaktifkan akun langsung di database. Pengguna nonaktif tidak bisa login/transaksi.
+    *   **Pintasan Detail (`>`)**: Mengalihkan ke detail sub-page khusus peran tersebut.
 
 ---
 
-### Screen 4: Explorer Audit Log (Tab 3: Audit)
-Halaman pengawasan real-time yang tidak dapat diubah (read-only) untuk melacak perubahan data manual.
+### Screen 4: Detail Pengguna — Peran Siswa (Sub-page)
+Layar audit profil siswa, saldo RFID, dan riwayat jajannya.
 
 #### ASCII Mockup
 ```
 +------------------------------------------+
-| Timeline Audit Log Global                |
-| Filter Sekolah: [ Semua Sekolah      [v] ]|
-| Filter Aksi   : [ Semua Aksi         [v] ]|
+| < Detail Siswa                           |
 |                                          |
-| HARI INI (17 Jun 2026)                   |
-| ---------------------------------------- |
-| [🚨 KOREKSI SALDO] - 12:10:05 WIB        |
-| Pelaksana: Budi (Keuangan SMP Terpadu)   |
-| Keterangan: Koreksi saldo salah tap      |
-| [ Detail Log Perubahan ] (Link)          |
+| +--------------------------------------+ |
+| | [Img] Ahmad Subarjo                  | |
+| |       Kelas 11 IPA 2 • NISN: 00412347| |
+| +--------------------------------------+ |
 |                                          |
-| [💳 PENDAFTARAN KARTU] - 10:45:00 WIB    |
-| Pelaksana: Rian (Kasir SMA Negeri 3)     |
-| Keterangan: Registrasi kartu RFID baru   |
-| [ Detail Log Perubahan ] (Link)          |
+| +--------------------------------------+ |
+| | Status Kartu         [ Active (Pill) ] | |
+| | UID RFID                 A1 B2 C3 D4 | |
+| | Saldo                Rp 45.000       | |
+| | Batas Harian         Rp 50.000       | |
+| +--------------------------------------+ |
 |                                          |
-+------------------------------------------+
-| [Home]     [User]     [Audit]   [Setting] |
+|  [ 🔑 Ubah Kata Sandi ]                  |
+|  [ ❄️ Bekukan Kartu RFID ]                |
+|                                          |
+| Riwayat Transaksi          [ Lihat Semua ]|
+| +--------------------------------------+ |
+| | [🍔] Nasi Goreng           -Rp 15.000| |
+| |      Kantin Ibu Tini • Hari ini, 12:30| |
+| +--------------------------------------+ |
+| | [🍹] Es Teh Manis           -Rp 5.000| |
+| |      Kantin Minuman • Hari ini, 12:35| |
+| +--------------------------------------+ |
+| | [💳] Top-up Saldo          +Rp 50.000| |
+| |      Tata Usaha • Kemarin, 08:00     | |
+| +--------------------------------------+ |
 +------------------------------------------+
 ```
 #### Elemen & Aksi Interaksi
-*   **Tombol "Detail Log Perubahan"**:
-    *   *Aksi*: Membuka dialog iOS Bottom Sheet yang menampilkan metadata JSON data sebelum (`old_value`) dan sesudah (`new_value`) aksi, lengkap dengan pencatatan IP Address dan User Agent demi alasan forensik keamanan keuangan digital.
+*   **Header Profil**: Tombol kembali Cupertino `<` dan judul "Detail Siswa". Foto profil bulat, Nama lengkap, Kelas, dan NISN.
+*   **Info Card Bento**:
+    *   Badge status hijau (`Active`).
+    *   UID RFID fisik (dalam bentuk hexadecimal monospace).
+    *   Saldo dompet saku dalam format nominal besar (Primary Teal).
+    *   Batas limit jajan harian siswa.
+*   **Tombol Ubah Kata Sandi**:
+    *   *Aksi*: Menampilkan modal dialog input teks password baru.
+*   **Tombol Bekukan Kartu RFID**:
+    *   *Aksi*: Menandai `is_active` menjadi `false` pada tabel `students` dengan background oranye/merah.
+*   **Riwayat Transaksi**:
+    *   Daftar item belanja dengan detail nama produk, nama stan, waktu transaksi, dan harga.
 
 ---
 
-### Screen 5: Broadcast & Setelan (Tab 4: Setting)
-Pemberitahuan darurat push notification secara global dan penyetelan backend.
+### Screen 5: Detail Pengguna — Peran Petugas Kantin (Sub-page)
+Layar detail performa penjualan stan kantin, menu aktif, dan penjualan terbaru.
 
 #### ASCII Mockup
 ```
 +------------------------------------------+
-| Broadcast & Setelan Global               |
+| < Rian                                   |
 |                                          |
-| BROADCAST ANNOUNCEMENT                   |
-| Target Peran: [ Semua Pengguna       [v] ]|
-| Isi Pesan:                               |
-| [ Pemeliharaan server dijadwalkan pada ] |
-| [ pukul 23.00 WIB malam ini.           ] |
-| [ KIRIM NOTIFIKASI PUSH ] (Teal Button)  |
+| +--------------------------------------+ |
+| | [Img] Rian                           | |
+| |       Bakso & Mie • USN: RIAN882     | |
+| +--------------------------------------+ |
 |                                          |
-| INTEGRASI PAYMENT (MIDTRANS API)         |
-| Mode: [ Sandbox ]   Server: [ Active ]   |
-| Client Key: [ Client-Key-Prod-09823... ] |
+|  [ 🔑 Ubah Kata Sandi ]                  |
 |                                          |
-| PEMELIHARAAN SISTEM                      |
-| Mode Pemeliharaan Global    [ Toggle OFF ]|
-| (Kunci akses semua aplikasi mitra)       |
+| +-------------------+  +---------------+ |
+| | Daily Sales       |  | Monthly Sales | |
+| | Rp 750.000        |  | Rp 18.250.000 | |
+| | +12% from yesterday  |  On track     | |
+| +-------------------+  +---------------+ |
 |                                          |
-| [ SIMPAN SETELAN GLOBAL ] (Orange)       |
-+------------------------------------------+
-| [Home]     [User]     [Audit]   [Setting] |
+| Product Catalog              [Read-Only] |
+| +--------------------------------------+ |
+| | Bakso Urat        Rp 15.000 [ Avail ]| |
+| | Mie Ayam Spesial  Rp 12.000 [ Avail ]| |
+| | Es Teh Manis      Rp 3.000  [ Soldout]| |
+| +--------------------------------------+ |
+|                                          |
+| Recent Sales               [ Lihat Semua ]|
+| +--------------------------------------+ |
+| | Bakso Urat, Es Teh          Rp 18.000| |
+| | NISN: 0041234567 • 10:42 AM          | |
+| +--------------------------------------+ |
 +------------------------------------------+
 ```
 #### Elemen & Aksi Interaksi
-*   **Tombol "KIRIM NOTIFIKASI PUSH"**:
-    *   *Aksi*: Mengirim payload notifikasi push Firebase Cloud Messaging (FCM) secara massal ke segmen peran pengguna terpilih.
-*   **Toggle "Mode Pemeliharaan Global"**:
-    *   *Aksi*: Jika diaktifkan, database config Supabase akan merubah bendera `maintenance_mode` menjadi `true`. Ini langsung mengarahkan semua aplikasi murid dan petugas kantin ke halaman "Server Maintenance" dan memblokir request transaksi API masuk.
-*   **Tombol "SIMPAN SETELAN GLOBAL"**: Menyimpan enkripsi konfigurasi sistem API payment gateway Midtrans ke tabel konfigurasi database.
+*   **Header Profil**: Tombol kembali `<` dan judul "Rian". Nama lengkap, stan, dan username kasir.
+*   **Performance Bento**:
+    *   Bento kiri: `Daily Sales` (nominal saldo omset + trend persentase hijau).
+    *   Bento kanan: `Monthly Sales` (total bulanan + status).
+*   **Product Catalog**:
+    *   Daftar menu jajan read-only dengan indikator ketersediaan produk (`Available` / `Sold Out`).
+*   **Recent Sales**:
+    *   Laporan struk penjualan terbaru stan, menampilkan gabungan produk, NISN pembeli, waktu, dan total harga belanja.
+
+---
+
+### Screen 6: Detail Pengguna — Peran Petugas Keuangan (Sub-page)
+Layar penugasan staf Tata Usaha dan monitoring riwayat pengisian saldo (top-up) manual.
+
+#### ASCII Mockup
+```
++------------------------------------------+
+| < Profile Pegawai                        |
+|                                          |
+| +--------------------------------------+ |
+| | [Img] Budi Hartono                   | |
+| |       Staf Tata Usaha • ID-2093-TU   | |
+| +--------------------------------------+ |
+|                                          |
+|  [ 🔑 Ubah Kata Sandi ]                  |
+|                                          |
+| +-------------------+  +---------------+ |
+| | Unit Tugas        |  | Tingkat Akses | |
+| | SMP Terpadu       |  | Officer L1    | |
+| | Kampus Utama      |  | Top-up | Tarik| |
+| +-------------------+  +---------------+ |
+|                                          |
+| Aktivitas Transaksi        [ Lihat Semua ]|
+| +--------------------------------------+ |
+| | Top-up Tunai Siswa        +Rp 50.000 | |
+| | Anita Rahman (10293) • 10:42 AM      | |
+| +--------------------------------------+ |
+| | Penarikan Saldo           -Rp 150.000| |
+| | Guru: Bpk. Joko Widodo • Kemarin     | |
+| +--------------------------------------+ |
+| | Koreksi Transaksi         [Dibatalkan] | |
+| | Salah input nominal • 12 Okt         | |
+| +--------------------------------------+ |
++------------------------------------------+
+```
+#### Elemen & Aksi Interaksi
+*   **Header Profil**: Tombol kembali `<` dan nama "Budi Hartono".
+*   **Bento Ops**:
+    *   Bento kiri: `Unit Tugas` (sekolah penugasan petugas, misal SMP Terpadu).
+    *   Bento kanan: `Tingkat Akses` (level administratif L1/L2/L3 beserta chip fitur aktif seperti Top-up atau Tarik Dana).
+*   **Aktivitas Transaksi**:
+    *   Timeline log operasi keuangan yang dilakukan oleh petugas bersangkutan (Top-up, Tarik tunai, Koreksi saldo).
+
+---
+
+### Screen 7: Detail Pengguna — Peran Orang Tua (Sub-page)
+Layar detail wali murid dan pintasan peninjauan aktivitas jajan anak terikat.
+
+#### ASCII Mockup
+```
++------------------------------------------+
+| < Profil Orang Tua                       |
+|                                          |
+| +--------------------------------------+ |
+| | [Img] Salim Subarjo                  | |
+| |       Orang Tua Wali                 | |
+| |       salim.subarjo@example.com      | |
+| |       +62 812 3456 7890              | |
+| +--------------------------------------+ |
+|                                          |
+| Data Anak                                |
+| +--------------------------------------+ |
+| | [Img] Ahmad Subarjo                  | |
+| |       Kelas 10A • SMA N 1 Jakarta    | |
+| +--------------------------------------+ |
+|                                          |
+|  [ 👉 LIHAT DETAIL AKUN SISWA ]          |
+|                                          |
+| Pengaturan Keamanan                      |
+| +--------------------------------------+ |
+| | [🔑] Ubah Kata Sandi               > | |
+| | [⚙️] Sesi Aktif                    > | |
+| +--------------------------------------+ |
+|                                          |
+|  [ Nonaktifkan Akun Orang Tua (Red) ]    |
++------------------------------------------+
+```
+#### Elemen & Aksi Interaksi
+*   **Header Profil**: Detail kontak (email, nomor telepon) dan nama "Salim Subarjo".
+*   **Data Anak**:
+    *   Menampilkan profil anak yang terhubung dengan akun orang tua tersebut (Nama, Kelas, Sekolah).
+*   **Tombol 👉 LIHAT DETAIL AKUN SISWA**:
+    *   *Aksi*: Melakukan navigasi cepat langsung ke **Screen 4: Detail Pengguna - Peran Siswa** untuk meninjau riwayat jajan secara rinci.
+*   **Danger Zone**: Tombol "Nonaktifkan Akun Orang Tua" dengan border merah solid.
+
+---
+
+### Screen 8: Explorer Audit Log (Tab 3: Audit)
+Halaman timeline read-only real-time untuk audit investigasi semua aktivitas platform.
+
+#### ASCII Mockup
+```
++------------------------------------------+
+| Audit Log Explorer                       |
+| Real-time system monitoring.             |
+|                                          |
+| Filter Sekolah: [ All Schools        [v] ]|
+| Filter Aksi   : [ All Actions        [v] ]|
+|                                          |
+| HARI INI                                 |
+| -[!] KOREKSI SALDO               Just now|
+|  Budi Santoso adjusted balance for       |
+|  Student ID 109283 (Rp 50k -> Rp 150k)   |
+|  [ Detail Log Perubahan -> ]             |
+|                                          |
+| -[+] PENDAFTARAN KARTU        10 mins ago|
+|  Siti Aminah registered new NFC card     |
+|  UID: A4B9C2D8 | Student: Rina (10A)     |
+|  [ Detail Log Perubahan -> ]             |
+|                                          |
+| -[*] PENGATURAN SISTEM        1 hour ago |
+|  Super Admin updated fee parameter       |
+|  (Fee changed from 2% to 2.5%)           |
+|  [ Detail Log Perubahan -> ]             |
++------------------------------------------+
+| [Home]     [Users]     [Audit]  [Settings] |
++------------------------------------------+
+```
+#### Elemen & Aksi Interaksi
+*   **Dropdown Filters**:
+    *   Penyaringan log audit berdasarkan sekolah terdaftar.
+    *   Penyaringan log audit berdasarkan kategori aksi (`Koreksi Saldo`, `Registrasi Kartu`, `Pengaturan`).
+*   **Timeline Item**:
+    *   Badge kategori berwarna (Merah untuk Koreksi, Hijau untuk Pendaftaran, Abu-abu untuk Sistem).
+    *   Waktu relatif (`Just now`, `10 mins ago`).
+    *   Deskripsi singkat perubahan.
+*   **Link Detail Log Perubahan**:
+    *   *Aksi*: Membuka modal bottom sheet iOS (dengan grab handle) berisi metadata perubahan JSON (`old_value` dan `new_value`), IP address pelaku, dan User Agent.
+
+---
+
+### Screen 9: Broadcast & Setelan (Tab 4: Settings)
+Pemberitahuan notifikasi push global dan konfigurasi parameter payment gateway.
+
+#### ASCII Mockup
+```
++------------------------------------------+
+| Settings                                 |
+| Global platform controls.                |
+|                                          |
+| +--------------------------------------+ |
+| | [📢] Push Broadcast                  | |
+| | Target: [ All Users                [v] ]|
+| | Message:                               | |
+| | [ Server maintenance scheduled at..  ] | |
+| | [ KIRIM NOTIFIKASI PUSH ]            | |
+| +--------------------------------------+ |
+|                                          |
+| +-------------------+  +---------------+ |
+| | [⚙️] Payment API   |  | [🛠️] System    | |
+| | Midtrans [Active] |  | Access        | |
+| | Env: [Sandbox   ] |  | Pemeliharaan  | |
+| | Key: [**********] |  | [ Toggle ON ] | |
+| +-------------------+  +---------------+ |
+|                                          |
+|                [ SIMPAN SETELAN GLOBAL ] |
++------------------------------------------+
+| [Home]     [Users]     [Audit]  [Settings] |
++------------------------------------------+
+```
+#### Elemen & Aksi Interaksi
+*   **Push Broadcast**:
+    *   Dropdown pilihan target (`All Users`, `Merchants`, `Students`, `Staff`).
+    *   Textarea pesan pengumuman FCM.
+    *   Tombol kirim notifikasi push instan (Primary Teal).
+*   **Payment API Card (Midtrans)**:
+    *   Status indikator aktif.
+    *   Pill switcher Mode (`Sandbox` / `Production`).
+    *   Key mask dengan tombol salin (`content_copy`) dan intip (`visibility`).
+*   **System Access Card**:
+    *   iOS Switch untuk `Mode Pemeliharaan Global` (jika ON, mematikan seluruh akses login & transaksi platform bagi non-admin).
+*   **SIMPAN SETELAN GLOBAL**: Tombol oranye aksen untuk menyimpan perubahan konfigurasi secara permanen ke database settings.

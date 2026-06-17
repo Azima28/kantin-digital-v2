@@ -62,7 +62,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (session != null) {
         final Map<String, dynamic>? profile = await _authService
             .getCurrentProfile();
-        if (profile != null && (profile['role'] == 'petugas_kantin' || profile['role'] == 'student')) {
+        if (profile != null && (profile['role'] == 'petugas_kantin' || profile['role'] == 'student' || profile['role'] == 'parent' || profile['role'] == 'super_admin')) {
           state = AuthState(isAuthenticated: true, profile: profile);
           return;
         }

@@ -1,0 +1,309 @@
+<!DOCTYPE html><html class="light" lang="id"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Settings - Kantin Digital</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary": "#003434",
+                      "on-secondary-container": "#713b00",
+                      "secondary-fixed": "#ffdcc3",
+                      "on-background": "#1b1c1b",
+                      "on-error": "#ffffff",
+                      "tertiary": "#003718",
+                      "on-surface": "#1b1c1b",
+                      "secondary-container": "#fca558",
+                      "tertiary-fixed": "#9df6b2",
+                      "surface-container-highest": "#e4e2e1",
+                      "secondary": "#904d00",
+                      "on-tertiary-fixed": "#00210c",
+                      "outline": "#6f7978",
+                      "surface": "#fbf9f8",
+                      "secondary-fixed-dim": "#ffb77c",
+                      "primary-fixed-dim": "#94d1d1",
+                      "tertiary-fixed-dim": "#81d998",
+                      "on-tertiary-fixed-variant": "#005228",
+                      "on-primary-fixed": "#002020",
+                      "inverse-on-surface": "#f2f0ef",
+                      "surface-dim": "#dbdad9",
+                      "on-error-container": "#93000a",
+                      "background": "#fbf9f8",
+                      "surface-container": "#efedec",
+                      "on-tertiary-container": "#6dc485",
+                      "on-surface-variant": "#3f4848",
+                      "on-primary": "#ffffff",
+                      "on-primary-fixed-variant": "#044f4f",
+                      "on-secondary-fixed-variant": "#6e3900",
+                      "outline-variant": "#bfc8c8",
+                      "error-container": "#ffdad6",
+                      "primary-fixed": "#b0eeed",
+                      "tertiary-container": "#005026",
+                      "on-tertiary": "#ffffff",
+                      "inverse-surface": "#303030",
+                      "on-secondary-fixed": "#2f1500",
+                      "surface-bright": "#fbf9f8",
+                      "on-secondary": "#ffffff",
+                      "surface-container-lowest": "#ffffff",
+                      "error": "#ba1a1a",
+                      "on-primary-container": "#80bdbc",
+                      "surface-container-low": "#f5f3f2",
+                      "primary-container": "#004d4d",
+                      "surface-variant": "#e4e2e1",
+                      "inverse-primary": "#94d1d1",
+                      "surface-tint": "#296767",
+                      "surface-container-high": "#e9e8e7"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "bento-gap": "12px",
+                      "stack-gap": "16px",
+                      "inline-padding": "16px",
+                      "container-margin": "20px",
+                      "section-padding": "24px"
+              },
+              "fontFamily": {
+                      "headline-lg": [
+                              "Be Vietnam Pro"
+                      ],
+                      "body-lg": [
+                              "Be Vietnam Pro"
+                      ],
+                      "display": [
+                              "Be Vietnam Pro"
+                      ],
+                      "label-sm": [
+                              "Be Vietnam Pro"
+                      ],
+                      "headline-md": [
+                              "Be Vietnam Pro"
+                      ],
+                      "body-md": [
+                              "Be Vietnam Pro"
+                      ],
+                      "label-md": [
+                              "Be Vietnam Pro"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "30px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "17px",
+                              {
+                                      "lineHeight": "22px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display": [
+                              "34px",
+                              {
+                                      "lineHeight": "41px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-sm": [
+                              "11px",
+                              {
+                                      "lineHeight": "13px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "20px",
+                              {
+                                      "lineHeight": "25px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "15px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-md": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "letterSpacing": "0.01em",
+                                      "fontWeight": "500"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body-md min-h-screen pb-24 selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="docked full-width top-0 bg-surface shadow-[0px_4px_20px_rgba(0,0,0,0.04)] z-50 sticky">
+<div class="flex justify-between items-center w-full px-container-margin py-stack-gap h-16">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl">person</span>
+</div>
+<h1 class="text-headline-md font-headline-md font-bold text-primary">Kantin Digital</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors active:scale-[0.98]">
+<span class="material-symbols-outlined text-primary">notifications</span>
+</button>
+</div>
+</header>
+<main class="px-container-margin py-section-padding flex flex-col gap-bento-gap max-w-3xl mx-auto">
+<div class="mb-2">
+<h2 class="text-display font-display text-primary">Settings</h2>
+<p class="text-body-lg font-body-lg text-on-surface-variant mt-1">Global platform controls and configurations.</p>
+</div>
+<!-- Broadcast Card -->
+<div class="bg-white rounded-xl p-6 shadow-[0px_4px_20px_rgba(0,0,0,0.04)] flex flex-col gap-stack-gap border border-surface-variant/50">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-10 h-10 rounded-full bg-primary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">campaign</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-primary">Push Broadcast</h3>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md text-on-surface-variant">Target Audience</label>
+<div class="relative">
+<select class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-3 text-body-md font-body-md text-on-surface appearance-none focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+<option value="all">All Users</option>
+<option value="merchants">Merchants Only</option>
+<option value="students">Students Only</option>
+<option value="staff">Staff Only</option>
+</select>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-outline pointer-events-none">expand_more</span>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md text-on-surface-variant">Message Content</label>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-3 text-body-md font-body-md text-on-surface resize-none focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors" placeholder="Type your notification message here..." rows="4"></textarea>
+</div>
+<button class="w-full bg-primary hover:bg-primary-container text-on-primary rounded-lg py-3.5 px-4 text-label-md font-label-md flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-sm mt-2">
+<span class="material-symbols-outlined text-[20px]">send</span>
+                KIRIM NOTIFIKASI PUSH
+            </button>
+</div>
+<!-- Grid for API and Maintenance -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-bento-gap">
+<!-- API Integration Card -->
+<div class="bg-white rounded-xl p-6 shadow-[0px_4px_20px_rgba(0,0,0,0.04)] flex flex-col gap-stack-gap border border-surface-variant/50">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-10 h-10 rounded-full bg-secondary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary">api</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-primary">Payment API</h3>
+</div>
+<div class="flex items-center justify-between p-3 bg-surface-container-low rounded-lg">
+<div class="flex items-center gap-3">
+<img alt="Midtrans Logo" class="h-6 object-contain mix-blend-multiply" data-alt="The Midtrans payment gateway logo." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_8x2-aBJtlkVvf2uenOPp2nPUCJ6UupY2YA1GKp-NX8OVr4K_M61FF3aX3FWsvhGGrKmb1iHass4Q19synuplVpQJaFpqjb3iFhi3dcJ0-_-snpX6eqvEnrGxTqL2_urbCHzsaxKy0UGV04VTkKsa95btycztH_8SQEzyUZhqGvcL58rg85hQ-3VI2qIqCm01dE2O9hrgIwM3hl7e82RnLz5ifiLe1P0zeotPg6OtOYl5Tp3zPylA2cEMQ_BiGBkxJikhbeWnUdA">
+<span class="px-2 py-0.5 bg-tertiary-fixed text-on-tertiary-fixed text-label-sm font-label-sm rounded-full">Active</span>
+</div>
+</div>
+<div class="flex flex-col gap-4 mt-2">
+<div class="flex items-center justify-between">
+<span class="text-body-md font-body-md text-on-surface-variant">Environment Mode</span>
+<div class="flex bg-surface-container-highest rounded-lg p-1">
+<button class="px-3 py-1.5 text-label-md font-label-md rounded-md bg-white text-on-surface shadow-sm">Sandbox</button>
+<button class="px-3 py-1.5 text-label-md font-label-md rounded-md text-on-surface-variant hover:text-on-surface">Production</button>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<span class="text-label-sm font-label-sm text-on-surface-variant">Client Key (Sandbox)</span>
+<div class="flex items-center gap-2 bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2">
+<input class="flex-1 bg-transparent text-body-md font-body-md text-on-surface focus:outline-none" readonly="" type="password" value="SB-Mid-client-1234567890">
+<button class="p-1 hover:bg-surface-container-high rounded text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">content_copy</span>
+</button>
+<button class="p-1 hover:bg-surface-container-high rounded text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Maintenance Card -->
+<div class="bg-white rounded-xl p-6 shadow-[0px_4px_20px_rgba(0,0,0,0.04)] flex flex-col gap-stack-gap border border-error-container/50">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-10 h-10 rounded-full bg-error-container/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-error">construction</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-error">System Access</h3>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant">Activating maintenance mode will immediately block all non-admin access to the Kantin Digital platform.</p>
+<div class="mt-auto pt-4 flex items-center justify-between border-t border-surface-variant">
+<span class="text-body-lg font-body-lg font-semibold text-on-surface">Mode Pemeliharaan Global</span>
+<!-- iOS Style Switch -->
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox" value="">
+<div class="w-11 h-6 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface-variant after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</div>
+<!-- Global Save Action -->
+<div class="mt-4 flex justify-end">
+<button class="bg-secondary-container hover:bg-[#eb964d] text-on-secondary-container rounded-lg py-3.5 px-8 text-label-md font-label-md flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-sm">
+<span class="material-symbols-outlined text-[20px]">save</span>
+                SIMPAN SETELAN GLOBAL
+            </button>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="docked full-width bottom-0 rounded-t-xl bg-surface/80 backdrop-blur-xl border-t border-outline-variant shadow-[0px_-4px_20px_rgba(0,0,0,0.04)] fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pt-2 pb-6 md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:opacity-80 transition-opacity w-16 group" href="#">
+<div class="w-12 h-8 rounded-full flex items-center justify-center group-hover:bg-surface-variant/50 transition-colors mb-1">
+<span class="material-symbols-outlined text-[24px]">dashboard</span>
+</div>
+<span class="text-label-sm font-label-sm">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:opacity-80 transition-opacity w-16 group" href="#">
+<div class="w-12 h-8 rounded-full flex items-center justify-center group-hover:bg-surface-variant/50 transition-colors mb-1">
+<span class="material-symbols-outlined text-[24px]">group</span>
+</div>
+<span class="text-label-sm font-label-sm">Users</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:opacity-80 transition-opacity w-16 group" href="#">
+<div class="w-12 h-8 rounded-full flex items-center justify-center group-hover:bg-surface-variant/50 transition-colors mb-1">
+<span class="material-symbols-outlined text-[24px]">history_edu</span>
+</div>
+<span class="text-label-sm font-label-sm">Audit</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary font-bold hover:opacity-80 transition-opacity w-16 active:scale-[0.96] transition-transform duration-200" href="#">
+<div class="w-12 h-8 rounded-full bg-primary-container/20 flex items-center justify-center mb-1">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">settings</span>
+</div>
+<span class="text-label-sm font-label-sm">Settings</span>
+</a>
+</nav>
+
+
+</body></html>

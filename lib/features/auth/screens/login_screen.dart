@@ -49,6 +49,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           context.go('/pos');
         } else if (role == 'student') {
           context.go('/student');
+        } else if (role == 'super_admin') {
+          context.go('/admin/secure-entry');
         } else if (role == 'parent') {
           final String studentId = profile?['student_id'] ?? '';
           if (studentId.isNotEmpty) {
@@ -503,6 +505,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             _passwordController.text = 'password123';
                           });
                           _showFillSnackBar('Siswa');
+                        },
+                      ),
+                      const Divider(height: 12, color: AppColors.borderLight),
+                      
+                      // Super Admin
+                      _buildPreviewItem(
+                        roleName: 'SUPER ADMIN (MOCK)',
+                        identifier: 'superadmin',
+                        password: 'admin123',
+                        onTap: () {
+                          FocusScope.of(context).unfocus();
+                          setState(() {
+                            _emailController.text = 'superadmin';
+                            _passwordController.text = 'admin123';
+                          });
+                          _showFillSnackBar('Super Admin');
                         },
                       ),
                     ] else ...[

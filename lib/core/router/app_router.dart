@@ -24,6 +24,17 @@ import 'package:kantin_digital/features/parent/screens/parent_topup_screen.dart'
 import 'package:kantin_digital/features/parent/screens/parent_receipt_screen.dart';
 import 'package:kantin_digital/features/parent/screens/parent_portal_screen.dart';
 
+import 'package:kantin_digital/features/admin/screens/secure_entry_screen.dart';
+import 'package:kantin_digital/features/admin/screens/admin_dashboard_screen.dart';
+import 'package:kantin_digital/features/admin/screens/admin_users_screen.dart';
+import 'package:kantin_digital/features/admin/screens/admin_audit_log_screen.dart';
+import 'package:kantin_digital/features/admin/screens/admin_settings_screen.dart';
+import 'package:kantin_digital/features/admin/screens/admin_student_detail_screen.dart';
+import 'package:kantin_digital/features/admin/screens/admin_merchant_detail_screen.dart';
+import 'package:kantin_digital/features/admin/screens/admin_finance_detail_screen.dart';
+import 'package:kantin_digital/features/admin/screens/admin_parent_detail_screen.dart';
+import 'package:kantin_digital/features/admin/widgets/admin_main_layout.dart';
+
 class AppRouter {
   AppRouter._();
 
@@ -54,6 +65,17 @@ class AppRouter {
   static const String posManageProducts = '/pos/products';
   static const String posAddEditProduct = '/pos/products/form';
   static const String posHistorySales = '/pos/sales';
+
+  // Super Admin App Routes
+  static const String adminSecureEntry = '/admin/secure-entry';
+  static const String adminHome = '/admin';
+  static const String adminUsers = '/admin/users';
+  static const String adminAudit = '/admin/audit';
+  static const String adminSettings = '/admin/settings';
+  static const String adminStudentDetail = '/admin/users/student/:studentId';
+  static const String adminMerchantDetail = '/admin/users/merchant/:merchantId';
+  static const String adminFinanceDetail = '/admin/users/finance/:officerId';
+  static const String adminParentDetail = '/admin/users/parent/:parentId';
 
   static final GoRouter router = GoRouter(
     initialLocation: splash,
@@ -174,6 +196,63 @@ class AppRouter {
         path: posAddEditProduct,
         builder: (BuildContext context, GoRouterState state) => ProductFormScreen(
           initialProduct: state.extra as Map<String, dynamic>?,
+        ),
+      ),
+
+      // Super Admin Secure PIN/Biometric Entry
+      GoRoute(
+        path: adminSecureEntry,
+        builder: (BuildContext context, GoRouterState state) => const SecureEntryScreen(),
+      ),
+
+      // Super Admin Main tab layouts (Home, Users, Audit, Settings)
+      ShellRoute(
+        builder: (BuildContext context, GoRouterState state, Widget child) {
+          return AdminMainLayout(child: child);
+        },
+        routes: <RouteBase>[
+          GoRoute(
+            path: adminHome,
+            builder: (BuildContext context, GoRouterState state) => const AdminDashboardScreen(),
+          ),
+          GoRoute(
+            path: adminUsers,
+            builder: (BuildContext context, GoRouterState state) => const AdminUsersScreen(),
+          ),
+          GoRoute(
+            path: adminAudit,
+            builder: (BuildContext context, GoRouterState state) => const AdminAuditLogScreen(),
+          ),
+          GoRoute(
+            path: adminSettings,
+            builder: (BuildContext context, GoRouterState state) => const AdminSettingsScreen(),
+          ),
+        ],
+      ),
+
+      // Super Admin Sub-pages details (Pushed outside main layout for clean back buttons)
+      GoRoute(
+        path: adminStudentDetail,
+        builder: (BuildContext context, GoRouterState state) => AdminStudentDetailScreen(
+          studentId: state.pathParameters['studentId']!,
+        ),
+      ),
+      GoRoute(
+        path: adminMerchantDetail,
+        builder: (BuildContext context, GoRouterState state) => AdminMerchantDetailScreen(
+          merchantId: state.pathParameters['merchantId']!,
+        ),
+      ),
+      GoRoute(
+        path: adminFinanceDetail,
+        builder: (BuildContext context, GoRouterState state) => AdminFinanceDetailScreen(
+          officerId: state.pathParameters['officerId']!,
+        ),
+      ),
+      GoRoute(
+        path: adminParentDetail,
+        builder: (BuildContext context, GoRouterState state) => AdminParentDetailScreen(
+          parentId: state.pathParameters['parentId']!,
         ),
       ),
     ],

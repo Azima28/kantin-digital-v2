@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Parent Detail Profile - Salim Subarjo</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#003434",
+                        "on-secondary-container": "#713b00",
+                        "secondary-fixed": "#ffdcc3",
+                        "on-background": "#1b1c1b",
+                        "on-error": "#ffffff",
+                        "tertiary": "#003718",
+                        "on-surface": "#1b1c1b",
+                        "secondary-container": "#fca558",
+                        "tertiary-fixed": "#9df6b2",
+                        "surface-container-highest": "#e4e2e1",
+                        "secondary": "#904d00",
+                        "on-tertiary-fixed": "#00210c",
+                        "outline": "#6f7978",
+                        "surface": "#fbf9f8",
+                        "secondary-fixed-dim": "#ffb77c",
+                        "primary-fixed-dim": "#94d1d1",
+                        "tertiary-fixed-dim": "#81d998",
+                        "on-tertiary-fixed-variant": "#005228",
+                        "on-primary-fixed": "#002020",
+                        "inverse-on-surface": "#f2f0ef",
+                        "surface-dim": "#dbdad9",
+                        "on-error-container": "#93000a",
+                        "background": "#fbf9f8",
+                        "surface-container": "#efedec",
+                        "on-tertiary-container": "#6dc485",
+                        "on-surface-variant": "#3f4848",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#044f4f",
+                        "on-secondary-fixed-variant": "#6e3900",
+                        "outline-variant": "#bfc8c8",
+                        "error-container": "#ffdad6",
+                        "primary-fixed": "#b0eeed",
+                        "tertiary-container": "#005026",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#303030",
+                        "on-secondary-fixed": "#2f1500",
+                        "surface-bright": "#fbf9f8",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-primary-container": "#80bdbc",
+                        "surface-container-low": "#f5f3f2",
+                        "primary-container": "#004d4d",
+                        "surface-variant": "#e4e2e1",
+                        "inverse-primary": "#94d1d1",
+                        "surface-tint": "#296767",
+                        "surface-container-high": "#e9e8e7"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px",
+                        "2xl": "1rem",
+                        "3xl": "1.5rem"
+                    },
+                    "spacing": {
+                        "bento-gap": "12px",
+                        "stack-gap": "16px",
+                        "inline-padding": "16px",
+                        "container-margin": "20px",
+                        "section-padding": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Be Vietnam Pro"],
+                        "body-lg": ["Be Vietnam Pro"],
+                        "display": ["Be Vietnam Pro"],
+                        "label-sm": ["Be Vietnam Pro"],
+                        "headline-md": ["Be Vietnam Pro"],
+                        "body-md": ["Be Vietnam Pro"],
+                        "label-md": ["Be Vietnam Pro"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["24px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["17px", { "lineHeight": "22px", "fontWeight": "400" }],
+                        "display": ["34px", { "lineHeight": "41px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["11px", { "lineHeight": "13px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["20px", { "lineHeight": "25px", "fontWeight": "600" }],
+                        "body-md": ["15px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+            -webkit-font-smoothing: antialiased;
+        }
+        .bento-card {
+            background-color: theme('colors.surface-container-lowest');
+            box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.04);
+            border-radius: theme('borderRadius.2xl');
+            padding: theme('spacing.inline-padding');
+        }
+        .bento-card-interactive {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .bento-card-interactive:active {
+            transform: scale(0.98);
+            box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen flex justify-center">
+<!-- Mobile Viewport Container -->
+<div class="w-full max-w-md bg-background relative overflow-hidden flex flex-col h-screen">
+<!-- TopAppBar (Sub-page / No Bottom Nav) -->
+<header class="bg-surface flex justify-between items-center w-full px-container-margin py-stack-gap h-16 shadow-[0px_4px_20px_rgba(0,0,0,0.04)] sticky top-0 z-50">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-primary active:scale-[0.98]">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">arrow_back_ios_new</span>
+</button>
+<h1 class="text-headline-md font-headline-md font-bold text-primary flex-1 text-center pr-10">Profil Orang Tua</h1>
+<!-- Empty div to balance flex spacing due to pr-10 on title -->
+</header>
+<!-- Main Content Scrollable Area -->
+<main class="flex-1 overflow-y-auto p-container-margin flex flex-col gap-bento-gap">
+<!-- Profile Header Bento -->
+<section class="bento-card flex flex-col items-center text-center">
+<div class="w-24 h-24 rounded-full overflow-hidden mb-4 border-4 border-surface-container-lowest shadow-sm relative">
+<img alt="Salim Subarjo Profile Picture" class="w-full h-full object-cover" data-alt="A professional headshot of a middle-aged Indonesian man. He has a warm, approachable smile and is wearing a neat, light-colored collared shirt. The lighting is soft and natural, suggesting a bright daytime setting. The background is slightly blurred but appears to be a clean, modern interior space, fitting the high-end, light-mode Cupertino aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7j9ENQC5GT8bWTZYkdo1O0ms_s1B8ChA16R8LNqqcgxSbhwSlqHy0rudhM6z0z9M-yzuxkN4OsFpBydKF9MoGFfrCpyenCAJPnh3Uvi4nWFo-k03uNphQ956a65U0FVDEdKenfX_R7Sf0rKGoD5RsjuNhIbkZxTG_J3SrfYKRQCvKXf9XSDed_XHlBhTASsOpkYlq-ov-JgkF3YYBRmr_a1sIIUXSBsQoDD-2Qcvc25ooq7wMgQJltS4DGkspQp4nnJ1hhGe5He8"/>
+<!-- Edit Badge -->
+<button class="absolute bottom-0 right-0 w-8 h-8 bg-primary text-on-primary rounded-full flex items-center justify-center border-2 border-surface-container-lowest shadow-sm hover:bg-primary-container transition-colors active:scale-95">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+</div>
+<h2 class="text-headline-lg font-headline-lg text-on-surface mb-1">Salim Subarjo</h2>
+<div class="flex items-center gap-2 mb-2">
+<span class="px-3 py-1 bg-primary-container text-on-primary-container text-label-sm font-label-sm rounded-full">Orang Tua Wali</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant flex items-center justify-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[16px]">mail</span>
+                    salim.subarjo@example.com
+                </p>
+<p class="text-body-md font-body-md text-on-surface-variant flex items-center justify-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[16px]">phone_iphone</span>
+                    +62 812 3456 7890
+                </p>
+</section>
+<!-- Linked Children Connection Card -->
+<section class="bento-card flex flex-col gap-4">
+<div class="flex justify-between items-center border-b border-outline-variant pb-3">
+<h3 class="text-headline-md font-headline-md text-on-surface">Data Anak</h3>
+<span class="material-symbols-outlined text-outline">family_restroom</span>
+</div>
+<!-- Child Item -->
+<div class="flex items-center gap-4 bg-surface-container-low p-3 rounded-xl">
+<div class="w-12 h-12 rounded-full overflow-hidden shrink-0">
+<img alt="Ahmad Subarjo Profile" class="w-full h-full object-cover" data-alt="A portrait of a young Indonesian boy in a neat school uniform. He has a bright, eager expression. The lighting is crisp and well-lit, typical of a modern school photography session. The background is a simple, light neutral tone to maintain focus on the subject, aligning with a clean, minimalist design style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB00bnhTDkhOfOhOKmwjrorpBvNzRO8DxkDgrDa882FyzxzENdvSLPGwqvZfPmyrxozRrucQGE0jssqmQGvS-b7GnyH3_6pqpiyMuvaAYvNm2fpmarpBwkWWsE3Vc30QowZSVmL2ASdimpksfmkDUecAjBbGEFe1clnBujpljVYPHYrJMpRKcBNIv7joNmnyKfZCjn67BVJpoQ_R3lf62o86C9M_V-ok3_MNFEMraCT1MIiNZw0k7_J9eJ8zrpbwYEBihZSHvvTH3g"/>
+</div>
+<div class="flex-1">
+<p class="text-body-lg font-headline-md text-on-surface font-semibold">Ahmad Subarjo</p>
+<p class="text-body-md font-body-md text-on-surface-variant">Kelas 10A • SMA N 1 Jakarta</p>
+</div>
+<span class="material-symbols-outlined text-success">check_circle</span>
+</div>
+<!-- Navigation Link to Student Detail -->
+<a class="mt-2 bento-card-interactive bg-primary-container text-on-primary-container p-4 rounded-xl flex items-center justify-between group" href="#">
+<span class="text-label-md font-label-md font-bold uppercase tracking-wider flex items-center gap-2">
+                        👉 LIHAT DETAIL AKUN SISWA
+                    </span>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward_ios</span>
+</a>
+</section>
+<!-- Actions Section -->
+<section class="bento-card flex flex-col gap-2 mt-4">
+<h3 class="text-label-md font-label-md text-on-surface-variant mb-2 uppercase tracking-wider pl-1">Pengaturan Keamanan</h3>
+<button class="w-full py-4 px-4 bg-surface-container-low text-on-surface hover:bg-surface-container-high rounded-xl flex items-center justify-between transition-colors active:scale-[0.98]">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">lock_reset</span>
+</div>
+<span class="text-body-lg font-body-lg font-medium">Ubah Kata Sandi</span>
+</div>
+<span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+</button>
+<button class="w-full py-4 px-4 bg-surface-container-low text-on-surface hover:bg-surface-container-high rounded-xl flex items-center justify-between transition-colors active:scale-[0.98]">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">devices</span>
+</div>
+<span class="text-body-lg font-body-lg font-medium">Sesi Aktif</span>
+</div>
+<span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+</button>
+</section>
+<!-- Danger Zone -->
+<section class="bento-card mt-2 mb-8 border border-error-container">
+<button class="w-full py-3 text-error font-label-md text-label-md flex items-center justify-center gap-2 hover:bg-error-container rounded-lg transition-colors">
+<span class="material-symbols-outlined text-[20px]">block</span>
+                     Nonaktifkan Akun Orang Tua
+                 </button>
+</section>
+</main>
+</div>
+</body></html>

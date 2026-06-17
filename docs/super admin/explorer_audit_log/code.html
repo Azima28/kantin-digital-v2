@@ -1,0 +1,271 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Audit Log Explorer - Kantin Digital</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#003434",
+                        "on-secondary-container": "#713b00",
+                        "secondary-fixed": "#ffdcc3",
+                        "on-background": "#1b1c1b",
+                        "on-error": "#ffffff",
+                        "tertiary": "#003718",
+                        "on-surface": "#1b1c1b",
+                        "secondary-container": "#fca558",
+                        "tertiary-fixed": "#9df6b2",
+                        "surface-container-highest": "#e4e2e1",
+                        "secondary": "#904d00",
+                        "on-tertiary-fixed": "#00210c",
+                        "outline": "#6f7978",
+                        "surface": "#fbf9f8",
+                        "secondary-fixed-dim": "#ffb77c",
+                        "primary-fixed-dim": "#94d1d1",
+                        "tertiary-fixed-dim": "#81d998",
+                        "on-tertiary-fixed-variant": "#005228",
+                        "on-primary-fixed": "#002020",
+                        "inverse-on-surface": "#f2f0ef",
+                        "surface-dim": "#dbdad9",
+                        "on-error-container": "#93000a",
+                        "background": "#fbf9f8",
+                        "surface-container": "#efedec",
+                        "on-tertiary-container": "#6dc485",
+                        "on-surface-variant": "#3f4848",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#044f4f",
+                        "on-secondary-fixed-variant": "#6e3900",
+                        "outline-variant": "#bfc8c8",
+                        "error-container": "#ffdad6",
+                        "primary-fixed": "#b0eeed",
+                        "tertiary-container": "#005026",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#303030",
+                        "on-secondary-fixed": "#2f1500",
+                        "surface-bright": "#fbf9f8",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-primary-container": "#80bdbc",
+                        "surface-container-low": "#f5f3f2",
+                        "primary-container": "#004d4d",
+                        "surface-variant": "#e4e2e1",
+                        "inverse-primary": "#94d1d1",
+                        "surface-tint": "#296767",
+                        "surface-container-high": "#e9e8e7"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "bento-gap": "12px",
+                        "stack-gap": "16px",
+                        "inline-padding": "16px",
+                        "container-margin": "20px",
+                        "section-padding": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Be Vietnam Pro"],
+                        "body-lg": ["Be Vietnam Pro"],
+                        "display": ["Be Vietnam Pro"],
+                        "label-sm": ["Be Vietnam Pro"],
+                        "headline-md": ["Be Vietnam Pro"],
+                        "body-md": ["Be Vietnam Pro"],
+                        "label-md": ["Be Vietnam Pro"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["24px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["17px", { "lineHeight": "22px", "fontWeight": "400" }],
+                        "display": ["34px", { "lineHeight": "41px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["11px", { "lineHeight": "13px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["20px", { "lineHeight": "25px", "fontWeight": "600" }],
+                        "body-md": ["15px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #fbf9f8; }
+        .bento-card {
+            background-color: #ffffff;
+            box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.04);
+            border-radius: 0.75rem;
+        }
+        .timeline-line::before {
+            content: '';
+            position: absolute;
+            top: 24px;
+            bottom: -24px;
+            left: 19px;
+            width: 2px;
+            background-color: #e4e2e1; /* surface-variant */
+            z-index: 0;
+        }
+        .timeline-item:last-child .timeline-line::before {
+            display: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-background font-body-md pb-24 md:pb-0">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface-dim shadow-[0px_4px_20px_rgba(0,0,0,0.04)] dark:shadow-none docked full-width top-0 z-40 sticky">
+<div class="flex justify-between items-center w-full px-container-margin py-stack-gap h-16">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center overflow-hidden">
+<span class="material-symbols-outlined text-[18px]">person</span>
+</div>
+<h1 class="text-headline-md font-headline-md font-bold text-primary dark:text-primary-fixed-dim tracking-tight">Kantin Digital</h1>
+</div>
+<div class="flex items-center">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors active:scale-[0.98] duration-200">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed-dim text-[24px]">notifications</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="px-container-margin py-section-padding max-w-4xl mx-auto flex flex-col gap-bento-gap">
+<!-- Header & Filters -->
+<div class="flex flex-col gap-4 mb-2">
+<h2 class="text-headline-lg font-headline-lg text-primary">Audit Log Explorer</h2>
+<p class="text-body-md font-body-md text-on-surface-variant">Real-time system monitoring and activity history.</p>
+<div class="flex flex-col sm:flex-row gap-3 mt-2">
+<div class="flex-1">
+<label class="sr-only">Filter by School</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">school</span>
+<select class="w-full pl-10 pr-4 py-2.5 bg-surface-container-low border-none rounded-lg text-body-md font-body-md text-on-surface focus:ring-2 focus:ring-primary focus:bg-surface transition-colors appearance-none">
+<option>All Schools</option>
+<option>SMA Negeri 1</option>
+<option>SMA Kebangsaan</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px] pointer-events-none">expand_more</span>
+</div>
+</div>
+<div class="flex-1">
+<label class="sr-only">Filter by Action</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">filter_list</span>
+<select class="w-full pl-10 pr-4 py-2.5 bg-surface-container-low border-none rounded-lg text-body-md font-body-md text-on-surface focus:ring-2 focus:ring-primary focus:bg-surface transition-colors appearance-none">
+<option>All Actions</option>
+<option>Balance Correction</option>
+<option>Card Registration</option>
+<option>System Settings</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px] pointer-events-none">expand_more</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Timeline Bento Card -->
+<div class="bento-card p-inline-padding flex flex-col gap-6">
+<!-- Log Item 1 -->
+<div class="timeline-item relative flex gap-4">
+<div class="timeline-line flex-shrink-0 z-10">
+<div class="w-10 h-10 rounded-full bg-error-container text-on-error-container flex items-center justify-center ring-4 ring-white">
+<span class="material-symbols-outlined text-[20px]">warning</span>
+</div>
+</div>
+<div class="flex flex-col flex-1 pb-6">
+<div class="flex justify-between items-start mb-1">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-error-container/50 text-on-error-container text-label-sm font-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                            🚨 KOREKSI SALDO
+                        </span>
+<span class="text-label-sm font-label-sm text-on-surface-variant">Just now</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface mb-1"><span class="font-semibold">Budi Santoso</span> adjusted balance for Student ID 109283.</p>
+<p class="text-label-md font-label-md text-outline mb-3">Previous: Rp 50.000 → New: Rp 150.000</p>
+<a class="inline-flex items-center gap-1 text-label-md font-label-md text-primary hover:text-primary-container transition-colors w-fit" href="#">
+                        Detail Log Perubahan
+                        <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Log Item 2 -->
+<div class="timeline-item relative flex gap-4">
+<div class="timeline-line flex-shrink-0 z-10">
+<div class="w-10 h-10 rounded-full bg-tertiary-container text-on-tertiary-container flex items-center justify-center ring-4 ring-white">
+<span class="material-symbols-outlined text-[20px]">credit_card</span>
+</div>
+</div>
+<div class="flex flex-col flex-1 pb-6">
+<div class="flex justify-between items-start mb-1">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-tertiary-container/10 text-tertiary text-label-sm font-label-sm">
+                            💳 PENDAFTARAN KARTU
+                        </span>
+<span class="text-label-sm font-label-sm text-on-surface-variant">10 mins ago</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface mb-1"><span class="font-semibold">Siti Aminah</span> registered new NFC card.</p>
+<p class="text-label-md font-label-md text-outline mb-3">Card UID: A4B9C2D8 | Assigned to: Rina (Kelas 10A)</p>
+<a class="inline-flex items-center gap-1 text-label-md font-label-md text-primary hover:text-primary-container transition-colors w-fit" href="#">
+                        Detail Log Perubahan
+                        <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Log Item 3 -->
+<div class="timeline-item relative flex gap-4">
+<div class="timeline-line flex-shrink-0 z-10">
+<div class="w-10 h-10 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center ring-4 ring-white">
+<span class="material-symbols-outlined text-[20px]">settings_backup_restore</span>
+</div>
+</div>
+<div class="flex flex-col flex-1 pb-6">
+<div class="flex justify-between items-start mb-1">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-surface-variant/50 text-on-surface-variant text-label-sm font-label-sm">
+                            ⚙️ PENGATURAN SISTEM
+                        </span>
+<span class="text-label-sm font-label-sm text-on-surface-variant">1 hour ago</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface mb-1"><span class="font-semibold">Super Admin</span> updated global canteen fee parameters.</p>
+<p class="text-label-md font-label-md text-outline mb-3">Fee changed from 2% to 2.5%.</p>
+<a class="inline-flex items-center gap-1 text-label-md font-label-md text-primary hover:text-primary-container transition-colors w-fit" href="#">
+                        Detail Log Perubahan
+                        <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden bg-surface/80 dark:bg-surface-dim/80 backdrop-blur-xl shadow-[0px_-4px_20px_rgba(0,0,0,0.04)] docked full-width bottom-0 rounded-t-xl z-50 fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pt-2 pb-6">
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:opacity-80 transition-opacity w-16">
+<span class="material-symbols-outlined text-[24px] mb-1">dashboard</span>
+<span class="text-label-sm font-label-sm">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:opacity-80 transition-opacity w-16">
+<span class="material-symbols-outlined text-[24px] mb-1">group</span>
+<span class="text-label-sm font-label-sm">Users</span>
+</button>
+<!-- Active Tab: Audit -->
+<button class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim font-bold scale-[0.96] transition-transform duration-200 w-16">
+<div class="px-4 py-1 bg-primary-container rounded-full mb-1 flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container text-[24px]" style="font-variation-settings: 'FILL' 1;">history_edu</span>
+</div>
+<span class="text-label-sm font-label-sm">Audit</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:opacity-80 transition-opacity w-16">
+<span class="material-symbols-outlined text-[24px] mb-1">settings</span>
+<span class="text-label-sm font-label-sm">Settings</span>
+</button>
+</nav>
+
+
+</body></html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kantin Digital - Master Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#003434",
+                        "on-secondary-container": "#713b00",
+                        "secondary-fixed": "#ffdcc3",
+                        "on-background": "#1b1c1b",
+                        "on-error": "#ffffff",
+                        "tertiary": "#003718",
+                        "on-surface": "#1b1c1b",
+                        "secondary-container": "#fca558",
+                        "tertiary-fixed": "#9df6b2",
+                        "surface-container-highest": "#e4e2e1",
+                        "secondary": "#904d00",
+                        "on-tertiary-fixed": "#00210c",
+                        "outline": "#6f7978",
+                        "surface": "#fbf9f8",
+                        "secondary-fixed-dim": "#ffb77c",
+                        "primary-fixed-dim": "#94d1d1",
+                        "tertiary-fixed-dim": "#81d998",
+                        "on-tertiary-fixed-variant": "#005228",
+                        "on-primary-fixed": "#002020",
+                        "inverse-on-surface": "#f2f0ef",
+                        "surface-dim": "#dbdad9",
+                        "on-error-container": "#93000a",
+                        "background": "#fbf9f8",
+                        "surface-container": "#efedec",
+                        "on-tertiary-container": "#6dc485",
+                        "on-surface-variant": "#3f4848",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#044f4f",
+                        "on-secondary-fixed-variant": "#6e3900",
+                        "outline-variant": "#bfc8c8",
+                        "error-container": "#ffdad6",
+                        "primary-fixed": "#b0eeed",
+                        "tertiary-container": "#005026",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#303030",
+                        "on-secondary-fixed": "#2f1500",
+                        "surface-bright": "#fbf9f8",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-primary-container": "#80bdbc",
+                        "surface-container-low": "#f5f3f2",
+                        "primary-container": "#004d4d",
+                        "surface-variant": "#e4e2e1",
+                        "inverse-primary": "#94d1d1",
+                        "surface-tint": "#296767",
+                        "surface-container-high": "#e9e8e7"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "bento-gap": "12px",
+                        "stack-gap": "16px",
+                        "inline-padding": "16px",
+                        "container-margin": "20px",
+                        "section-padding": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Be Vietnam Pro"],
+                        "body-lg": ["Be Vietnam Pro"],
+                        "display": ["Be Vietnam Pro"],
+                        "label-sm": ["Be Vietnam Pro"],
+                        "headline-md": ["Be Vietnam Pro"],
+                        "body-md": ["Be Vietnam Pro"],
+                        "label-md": ["Be Vietnam Pro"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["24px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["17px", { "lineHeight": "22px", "fontWeight": "400" }],
+                        "display": ["34px", { "lineHeight": "41px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["11px", { "lineHeight": "13px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["20px", { "lineHeight": "25px", "fontWeight": "600" }],
+                        "body-md": ["15px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: theme('colors.background'); color: theme('colors.on-background'); font-family: 'Be Vietnam Pro', sans-serif; -webkit-font-smoothing: antialiased; }
+        .bento-card { background-color: theme('colors.surface-container-lowest'); border-radius: theme('borderRadius.xl'); box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.04); padding: 20px; transition: transform 0.2s ease; }
+        .bento-card:active { transform: scale(0.98); }
+        .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-weight: normal; font-style: normal; font-size: 24px; line-height: 1; letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; word-wrap: normal; direction: ltr; -webkit-font-smoothing: antialiased; }
+        .chart-area-teal { background: linear-gradient(180deg, rgba(0,52,52,0.15) 0%, rgba(0,52,52,0) 100%); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="pb-24">
+<!-- TopAppBar -->
+<header class="bg-surface text-primary font-headline-md font-bold docked full-width top-0 shadow-[0px_4px_20px_rgba(0,0,0,0.04)] sticky z-40">
+<div class="flex justify-between items-center w-full px-container-margin py-stack-gap h-16">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-label-md">SA</div>
+<span class="text-headline-md font-headline-md font-bold text-primary">Kantin Digital</span>
+</div>
+<button class="w-10 h-10 rounded-full hover:bg-surface-container-high flex items-center justify-center transition-colors active:scale-[0.98]">
+<span class="material-symbols-outlined text-primary">notifications</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="px-container-margin py-section-padding space-y-6">
+<!-- Greeting -->
+<section>
+<h1 class="text-display font-display text-primary">Halo, Super Admin</h1>
+<p class="text-body-md font-body-md text-on-surface-variant mt-1">Real-time command center overview.</p>
+</section>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-bento-gap auto-rows-min">
+<!-- Global Metrics Card -->
+<div class="bento-card flex flex-col gap-4">
+<h2 class="text-headline-md font-headline-md text-primary">Global Metrics</h2>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-low rounded-lg p-4">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase">School Count</span>
+<p class="text-headline-lg font-headline-lg text-on-surface mt-1">1,248</p>
+</div>
+<div class="bg-surface-container-low rounded-lg p-4">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase">Daily Volume</span>
+<p class="text-headline-lg font-headline-lg text-on-surface mt-1">42.5K</p>
+</div>
+</div>
+<div class="bg-secondary-container/10 border border-secondary-container/20 rounded-lg p-5 flex flex-col items-center justify-center mt-2">
+<span class="text-label-sm font-label-sm text-secondary uppercase tracking-wider">Global Balance</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="text-headline-md font-headline-md text-secondary font-medium">Rp</span>
+<span class="text-display font-display text-secondary">102.500.000</span>
+</div>
+</div>
+</div>
+<!-- Transaction Trend Card (Teal Area Chart mockup) -->
+<div class="bento-card flex flex-col relative overflow-hidden min-h-[220px]">
+<div class="flex justify-between items-start z-10 relative">
+<h2 class="text-headline-md font-headline-md text-primary">Transaction Trend</h2>
+<div class="bg-surface-container px-3 py-1 rounded-full text-label-sm font-label-sm text-on-surface-variant">30 Days</div>
+</div>
+<!-- Mockup Chart Canvas -->
+<div class="mt-auto h-32 w-full relative z-0 flex items-end">
+<div class="w-full h-full chart-area-teal relative">
+<!-- SVG Line overlay -->
+<svg class="absolute inset-0 w-full h-full" preserveaspectratio="none" viewbox="0 0 100 100">
+<path d="M0,80 Q10,70 20,75 T40,60 T60,65 T80,40 T100,20 L100,100 L0,100 Z" fill="rgba(0,52,52,0.1)"></path>
+<path d="M0,80 Q10,70 20,75 T40,60 T60,65 T80,40 T100,20" fill="none" stroke="theme('colors.primary')" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+</svg>
+</div>
+</div>
+</div>
+<!-- Contribution Card (Donut chart placeholder) -->
+<div class="bento-card flex flex-col md:col-span-1">
+<h2 class="text-headline-md font-headline-md text-primary mb-4">Contribution per School</h2>
+<div class="flex items-center justify-center py-4">
+<!-- Simple CSS Donut representation -->
+<div class="w-32 h-32 rounded-full border-8 border-primary relative flex items-center justify-center" style="border-right-color: theme('colors.secondary-container'); border-bottom-color: theme('colors.tertiary-container');">
+<span class="text-headline-md font-headline-md text-primary">Vol.</span>
+</div>
+</div>
+<div class="flex flex-wrap gap-3 mt-4 justify-center">
+<div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-full bg-primary"></div><span class="text-label-sm font-label-sm">High School A</span></div>
+<div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-full bg-secondary-container"></div><span class="text-label-sm font-label-sm">Middle School B</span></div>
+<div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-full bg-tertiary-container"></div><span class="text-label-sm font-label-sm">Others</span></div>
+</div>
+</div>
+<!-- System Health Card -->
+<div class="bento-card flex flex-col md:col-span-1">
+<div class="flex justify-between items-center mb-4">
+<h2 class="text-headline-md font-headline-md text-primary">System Health</h2>
+<div class="flex items-center gap-1.5 bg-tertiary-container/10 px-2.5 py-1 rounded-full">
+<div class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></div>
+<span class="text-label-sm font-label-sm text-tertiary-container">Optimal</span>
+</div>
+</div>
+<div class="flex flex-col gap-3">
+<div class="flex justify-between items-center p-3 bg-surface-container-low rounded-lg">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline">speed</span>
+<span class="text-body-md font-body-md text-on-surface">API Latency</span>
+</div>
+<span class="text-label-md font-label-md text-on-surface font-semibold">42ms</span>
+</div>
+<div class="flex justify-between items-center p-3 bg-surface-container-low rounded-lg">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline">storage</span>
+<span class="text-body-md font-body-md text-on-surface">DB Capacity</span>
+</div>
+<span class="text-label-md font-label-md text-on-surface font-semibold">12%</span>
+</div>
+<div class="flex justify-between items-center p-3 bg-surface-container-low rounded-lg">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline">check_circle</span>
+<span class="text-body-md font-body-md text-on-surface">Success Rate</span>
+</div>
+<span class="text-label-md font-label-md text-on-surface font-semibold">99.8%</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="bg-surface/80 backdrop-blur-xl border-t border-outline-variant docked full-width bottom-0 rounded-t-xl shadow-[0px_-4px_20px_rgba(0,0,0,0.04)] fixed left-0 w-full z-50 flex justify-around items-center px-4 pt-2 pb-6 md:hidden">
+<!-- Home (Active) -->
+<a class="flex flex-col items-center justify-center text-primary font-bold hover:opacity-80 transition-opacity active:scale-[0.96] transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="text-label-sm font-label-sm mt-1">Home</span>
+</a>
+<!-- Users (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-label-sm font-label-sm mt-1">Users</span>
+</a>
+<!-- Audit (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined">history_edu</span>
+<span class="text-label-sm font-label-sm mt-1">Audit</span>
+</a>
+<!-- Settings (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-label-sm font-label-sm mt-1">Settings</span>
+</a>
+</nav>
+<!-- Desktop Sidebar mapping placeholder for context (hidden on mobile, nav shell structure) -->
+<aside class="hidden md:flex flex-col fixed top-16 left-0 w-64 h-[calc(100vh-64px)] bg-surface border-r border-outline-variant py-6 px-4 z-30">
+<a class="flex items-center gap-3 px-4 py-3 bg-surface-container rounded-lg text-primary font-semibold mb-2" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="text-label-md font-label-md">Home</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-low mb-2" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-label-md font-label-md">Users</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-low mb-2" href="#">
+<span class="material-symbols-outlined">history_edu</span>
+<span class="text-label-md font-label-md">Audit</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-low mb-2" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-label-md font-label-md">Settings</span>
+</a>
+</aside>
+<!-- Adjust main margin for desktop sidebar -->
+<style>
+        @media (min-width: 768px) {
+            main { margin-left: 16rem; }
+            body { padding-bottom: 0; }
+        }
+    </style>
+</body></html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Student Detail - Ahmad Subarjo</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#003434",
+                        "on-secondary-container": "#713b00",
+                        "secondary-fixed": "#ffdcc3",
+                        "on-background": "#1b1c1b",
+                        "on-error": "#ffffff",
+                        "tertiary": "#003718",
+                        "on-surface": "#1b1c1b",
+                        "secondary-container": "#fca558",
+                        "tertiary-fixed": "#9df6b2",
+                        "surface-container-highest": "#e4e2e1",
+                        "secondary": "#904d00",
+                        "on-tertiary-fixed": "#00210c",
+                        "outline": "#6f7978",
+                        "surface": "#fbf9f8",
+                        "secondary-fixed-dim": "#ffb77c",
+                        "primary-fixed-dim": "#94d1d1",
+                        "tertiary-fixed-dim": "#81d998",
+                        "on-tertiary-fixed-variant": "#005228",
+                        "on-primary-fixed": "#002020",
+                        "inverse-on-surface": "#f2f0ef",
+                        "surface-dim": "#dbdad9",
+                        "on-error-container": "#93000a",
+                        "background": "#fbf9f8",
+                        "surface-container": "#efedec",
+                        "on-tertiary-container": "#6dc485",
+                        "on-surface-variant": "#3f4848",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#044f4f",
+                        "on-secondary-fixed-variant": "#6e3900",
+                        "outline-variant": "#bfc8c8",
+                        "error-container": "#ffdad6",
+                        "primary-fixed": "#b0eeed",
+                        "tertiary-container": "#005026",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#303030",
+                        "on-secondary-fixed": "#2f1500",
+                        "surface-bright": "#fbf9f8",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-primary-container": "#80bdbc",
+                        "surface-container-low": "#f5f3f2",
+                        "primary-container": "#004d4d",
+                        "surface-variant": "#e4e2e1",
+                        "inverse-primary": "#94d1d1",
+                        "surface-tint": "#296767",
+                        "surface-container-high": "#e9e8e7"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "bento-gap": "12px",
+                        "stack-gap": "16px",
+                        "inline-padding": "16px",
+                        "container-margin": "20px",
+                        "section-padding": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Be Vietnam Pro"],
+                        "body-lg": ["Be Vietnam Pro"],
+                        "display": ["Be Vietnam Pro"],
+                        "label-sm": ["Be Vietnam Pro"],
+                        "headline-md": ["Be Vietnam Pro"],
+                        "body-md": ["Be Vietnam Pro"],
+                        "label-md": ["Be Vietnam Pro"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["24px", {"lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-lg": ["17px", {"lineHeight": "22px", "fontWeight": "400"}],
+                        "display": ["34px", {"lineHeight": "41px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-sm": ["11px", {"lineHeight": "13px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-md": ["20px", {"lineHeight": "25px", "fontWeight": "600"}],
+                        "body-md": ["15px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: theme('colors.background'); color: theme('colors.on-background'); }
+        .bento-card {
+            background-color: theme('colors.surface-container-lowest');
+            box-shadow: 0px 4px 20px rgba(0,0,0,0.04);
+            border-radius: theme('borderRadius.xl');
+            padding: theme('spacing.inline-padding');
+        }
+        .bento-card-interactive:active {
+            transform: scale(0.98);
+            transition: transform 0.2s;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased min-h-screen flex flex-col items-center">
+<div class="w-full max-w-md bg-surface min-h-screen relative shadow-2xl overflow-hidden">
+<!-- Header -->
+<header class="flex justify-between items-center w-full px-container-margin py-stack-gap h-16 bg-surface z-10 sticky top-0">
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-container-high transition-colors active:scale-[0.98]">
+<span class="material-symbols-outlined text-on-surface">arrow_back_ios_new</span>
+</button>
+<h1 class="text-headline-md font-headline-md font-semibold text-on-surface">Detail Siswa</h1>
+<div class="w-10"></div> <!-- Placeholder for balance -->
+</header>
+<!-- Main Content Canvas -->
+<main class="px-container-margin py-section-padding flex flex-col gap-stack-gap pb-24">
+<!-- Profile Header -->
+<div class="flex flex-col items-center text-center bento-card">
+<div class="relative w-24 h-24 rounded-full overflow-hidden mb-4 border-4 border-surface">
+<img alt="Profile Picture" class="w-full h-full object-cover" data-alt="A clear, professional headshot portrait of an Indonesian male student in high school uniform. The lighting is soft and natural, highlighting a friendly but focused expression. Set against a blurred school background, creating a shallow depth of field. Designed to fit perfectly within a circular avatar frame in a premium light-mode UI." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVb0YEoQCcA5A2SruMDPtubwHsIMRDSB1TBIl8JyEJobhANgPH-4GsholX81FKGeMovC-ylMROwBtTRKmrLkkjQNAelBL3op7sAJa23jIgRAH237gUQPMfpx5gHmGHWoYptsXWypjxc87LL3juZ1HJEisHaUoL0y8PHdYFe-A9RC7Gmf0q7zSoBkXLY2Dn7PDu29H2xG4JrBurQxctdv2gRsnMfF40TLB3Eq5_ZtuIyz7lVFqbzvJvKhn3tJuA5rx7Yz1xBlahaTM"/>
+</div>
+<h2 class="text-headline-lg font-headline-lg text-on-surface mb-1">Ahmad Subarjo</h2>
+<p class="text-body-md font-body-md text-on-surface-variant">Kelas 11 IPA 2 • NISN: 0041234567</p>
+</div>
+<!-- Info Card -->
+<div class="bento-card flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<span class="text-label-md font-label-md text-on-surface-variant">Status Kartu</span>
+<span class="px-3 py-1 rounded-full bg-tertiary-container/10 text-on-tertiary-container text-label-sm font-label-sm uppercase">Active</span>
+</div>
+<hr class="border-outline-variant/30"/>
+<div class="flex justify-between items-center">
+<span class="text-label-md font-label-md text-on-surface-variant">UID RFID</span>
+<span class="text-body-md font-body-md font-mono text-on-surface">A1 B2 C3 D4</span>
+</div>
+<hr class="border-outline-variant/30"/>
+<div class="flex justify-between items-center">
+<span class="text-label-md font-label-md text-on-surface-variant">Saldo</span>
+<span class="text-headline-md font-headline-md text-primary font-bold"><span class="font-normal text-on-surface-variant">Rp</span> 45.000</span>
+</div>
+<div class="flex justify-between items-center mt-[-8px]">
+<span class="text-label-md font-label-md text-on-surface-variant">Batas Harian</span>
+<span class="text-body-md font-body-md text-on-surface">Rp 50.000</span>
+</div>
+</div>
+<!-- Actions -->
+<div class="grid grid-cols-2 gap-bento-gap">
+<button class="bento-card bento-card-interactive flex flex-col items-center justify-center gap-2 py-4 bg-surface-container-low hover:bg-surface-container">
+<span class="material-symbols-outlined text-primary text-[28px]">key</span>
+<span class="text-label-md font-label-md text-on-surface text-center">Ubah<br/>Kata Sandi</span>
+</button>
+<button class="bento-card bento-card-interactive flex flex-col items-center justify-center gap-2 py-4 bg-error-container/20 hover:bg-error-container/40 border border-error-container">
+<span class="material-symbols-outlined text-error text-[28px]">ac_unit</span>
+<span class="text-label-md font-label-md text-error text-center">Bekukan<br/>Kartu RFID</span>
+</button>
+</div>
+<!-- Transaction History -->
+<div class="mt-4">
+<div class="flex justify-between items-end mb-4">
+<h3 class="text-headline-md font-headline-md text-on-surface">Riwayat Transaksi</h3>
+<button class="text-label-md font-label-md text-primary">Lihat Semua</button>
+</div>
+<div class="flex flex-col gap-bento-gap">
+<!-- Tx Item -->
+<div class="bento-card flex items-center justify-between p-4">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+</div>
+<div>
+<h4 class="text-body-md font-body-md font-semibold text-on-surface">Nasi Goreng</h4>
+<p class="text-label-sm font-label-sm text-on-surface-variant">Kantin Ibu Tini • Hari ini, 12:30</p>
+</div>
+</div>
+<span class="text-body-md font-body-md font-semibold text-on-surface">-Rp 15.000</span>
+</div>
+<!-- Tx Item -->
+<div class="bento-card flex items-center justify-between p-4">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">local_drink</span>
+</div>
+<div>
+<h4 class="text-body-md font-body-md font-semibold text-on-surface">Es Teh Manis</h4>
+<p class="text-label-sm font-label-sm text-on-surface-variant">Kantin Minuman • Hari ini, 12:35</p>
+</div>
+</div>
+<span class="text-body-md font-body-md font-semibold text-on-surface">-Rp 5.000</span>
+</div>
+<!-- Tx Item -->
+<div class="bento-card flex items-center justify-between p-4">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-tertiary-container/20 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+</div>
+<div>
+<h4 class="text-body-md font-body-md font-semibold text-on-surface">Top-up Saldo</h4>
+<p class="text-label-sm font-label-sm text-on-surface-variant">Tata Usaha • Kemarin, 08:00</p>
+</div>
+</div>
+<span class="text-body-md font-body-md font-semibold text-on-tertiary-container">+Rp 50.000</span>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>
