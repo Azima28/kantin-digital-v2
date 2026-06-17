@@ -109,7 +109,8 @@ class SiswaCardsScreen extends ConsumerWidget {
         onRefresh: () async {
           ref.invalidate(siswaStudentProvider);
         },
-        child: Center(
+        child: Align(
+          alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 800),
             child: SingleChildScrollView(

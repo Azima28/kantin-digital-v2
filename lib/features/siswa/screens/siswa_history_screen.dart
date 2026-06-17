@@ -253,7 +253,8 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
         onRefresh: () async {
           ref.invalidate(siswaTransactionsProvider);
         },
-        child: Center(
+        child: Align(
+          alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 800),
             child: Column(

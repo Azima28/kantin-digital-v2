@@ -77,7 +77,8 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
           ),
         ],
       ),
-      body: Center(
+      body: Align(
+        alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1000),
           child: Stack(

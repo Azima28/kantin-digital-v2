@@ -95,7 +95,8 @@ class SiswaNotificationsScreen extends ConsumerWidget {
         onRefresh: () async {
           ref.invalidate(siswaNotificationsProvider);
         },
-        child: Center(
+        child: Align(
+          alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 800),
             child: notificationsAsync.when(

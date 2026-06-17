@@ -327,7 +327,8 @@ class SiswaDashboardScreen extends ConsumerWidget {
           ref.invalidate(siswaStudentProvider);
           ref.invalidate(siswaTransactionsProvider);
         },
-        child: Center(
+        child: Align(
+          alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 800),
             child: SingleChildScrollView(

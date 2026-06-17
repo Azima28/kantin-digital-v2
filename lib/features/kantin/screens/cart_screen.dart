@@ -136,7 +136,8 @@ class CartScreen extends ConsumerWidget {
           bottom: BorderSide(color: AppColors.borderLight, width: 0.5),
         ),
       ),
-      body: Center(
+      body: Align(
+        alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
           child: cartState.items.isEmpty

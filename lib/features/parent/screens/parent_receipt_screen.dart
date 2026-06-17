@@ -82,7 +82,8 @@ class ParentReceiptScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: bgWarm,
-      body: Center(
+      body: Align(
+        alignment: Alignment.topCenter,
         child: SingleChildScrollView(
           padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
           child: ConstrainedBox(

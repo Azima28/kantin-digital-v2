@@ -204,7 +204,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       body: Stack(
         children: [
           SafeArea(
-            child: Center(
+            child: Align(
+              alignment: Alignment.topCenter,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 450),
                 child: SingleChildScrollView(

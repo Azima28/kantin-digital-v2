@@ -214,7 +214,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         ),
       ),
       body: SafeArea(
-        child: Center(
+        child: Align(
+          alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 800),
             child: SingleChildScrollView(

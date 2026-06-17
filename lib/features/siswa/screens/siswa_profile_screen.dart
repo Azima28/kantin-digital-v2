@@ -182,7 +182,8 @@ class SiswaProfileScreen extends ConsumerWidget {
         data: (student) {
           final String studentClass = student?['class'] ?? '8-B';
 
-          return Center(
+          return Align(
+            alignment: Alignment.topCenter,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 800),
               child: SingleChildScrollView(

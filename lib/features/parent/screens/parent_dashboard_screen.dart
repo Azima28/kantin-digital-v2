@@ -1051,7 +1051,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                 // Transaction parameters
                 _buildSheetReceiptRow('ID Transaksi', tx['id']?.toString().substring(0, 18).toUpperCase() ?? '-'),
                 const SizedBox(height: 12),
-                _buildSheetReceiptRow('Waktu Transaksi', DateFormat('dd MMM yyyy, HH:mm').format(date) + ' WIB'),
+                _buildSheetReceiptRow('Waktu Transaksi', '${DateFormat('dd MMM yyyy, HH:mm').format(date)} WIB'),
                 const SizedBox(height: 12),
                 _buildSheetReceiptRow('Lokasi / Metode', isTopup ? 'Top-up Transfer Bank' : canteen),
                 const SizedBox(height: 16),
@@ -1186,7 +1186,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                   ),
                   CupertinoSwitch(
                     value: _dailyLimitActive,
-                    activeColor: primaryTeal,
+                    activeTrackColor: primaryTeal,
                     onChanged: (val) {
                       setState(() {
                         _dailyLimitActive = val;
@@ -1260,7 +1260,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
               ),
               CupertinoSwitch(
                 value: _cardFrozen,
-                activeColor: const Color(0xFFBA1A1A),
+                activeTrackColor: const Color(0xFFBA1A1A),
                 onChanged: (val) {
                   setState(() {
                     _cardFrozen = val;
@@ -1304,7 +1304,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                   ),
                   CupertinoSwitch(
                     value: _waAlertsActive,
-                    activeColor: primaryTeal,
+                    activeTrackColor: primaryTeal,
                     onChanged: (val) {
                       setState(() {
                         _waAlertsActive = val;
@@ -1438,7 +1438,8 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                 // Bind settings to local state once
                 _initSettingsIfRequired(student);
 
-                return Center(
+                return Align(
+                  alignment: Alignment.topCenter,
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 600),
                     child: SingleChildScrollView(

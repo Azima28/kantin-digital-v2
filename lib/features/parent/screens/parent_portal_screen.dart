@@ -90,7 +90,8 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
       return LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
-            child: Center(
+            child: Align(
+              alignment: Alignment.topCenter,
               child: ConstrainedBox(
                 constraints: BoxConstraints(
                   minHeight: constraints.maxHeight,

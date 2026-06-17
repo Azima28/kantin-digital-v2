@@ -795,7 +795,8 @@ class _ParentTopUpScreenState extends ConsumerState<ParentTopUpScreen> {
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
-              child: Center(
+              child: Align(
+                alignment: Alignment.topCenter,
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 700),
                   child: Form(

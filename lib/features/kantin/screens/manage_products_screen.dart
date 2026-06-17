@@ -120,9 +120,10 @@ class ManageProductsScreen extends ConsumerWidget {
         onRefresh: () async {
           ref.invalidate(manageProductsProvider);
         },
-        child: Center(
+        child: Align(
+          alignment: Alignment.topCenter,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1000),
+            constraints: const BoxConstraints(maxWidth: 800),
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [

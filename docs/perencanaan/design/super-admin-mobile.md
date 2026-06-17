@@ -24,10 +24,9 @@ Dokumen ini mendefinisikan seluruh antarmuka pengguna (UI/UX) untuk **Aplikasi M
 
 ```
 [Login Biometrik / PIN] ──> [Dashboard Master (Tab 1)]
-                             ├── [Manajemen Sekolah (Tab 2)] ──> Detail & CRUD Sekolah
-                             ├── [Manajemen Pengguna (Tab 3)] ──> Filter Role & Lock Status
-                             ├── [Explorer Audit Log (Tab 4)] ──> Live Timeline (Bottom Sheet)
-                             └── [Broadcast & Setelan (Tab 5)] ──> Notifikasi Push & Mode Pemeliharaan
+                             ├── [Manajemen Pengguna (Tab 2)] ──> Filter Peran, Detail & Audit Aktivitas, Ubah Password, Status
+                             ├── [Explorer Audit Log (Tab 3)] ──> Live Timeline (Bottom Sheet)
+                             └── [Broadcast & Setelan (Tab 4)] ──> Notifikasi Push & Mode Pemeliharaan
 ```
 
 ---
@@ -80,9 +79,9 @@ Pusat kendali real-time untuk memantau perputaran saldo keuangan di seluruh seko
 |                                          |
 | +--------------------------------------+ |
 | |  TOTAL METRIK GLOBAL                 | |
-| |  Sekolah Mitra : 5 Sekolah           | |
-| |  Saldo Global  : Rp 102.500.000      | |
-| |  Volume Hari Ini: Rp 12.450.000      | |
+| |  Sekolah Terdaftar: 5 Sekolah        | |
+| |  Saldo Global     : Rp 102.500.000   | |
+| |  Volume Hari Ini  : Rp 12.450.000   | |
 | +--------------------------------------+ |
 |                                          |
 | TREN VOLUME TRANSAKSI (30 Hari Terakhir) |
@@ -101,7 +100,7 @@ Pusat kendali real-time untuk memantau perputaran saldo keuangan di seluruh seko
 | - Tingkat Sukses Transaksi: [99.8%] [■]  |
 |                                          |
 +------------------------------------------+
-| [Home] [Sekolah] [User] [Audit] [Setting]|
+| [Home]     [User]     [Audit]   [Setting]|
 +------------------------------------------+
 ```
 #### Elemen & Aksi Interaksi
@@ -116,75 +115,160 @@ Pusat kendali real-time untuk memantau perputaran saldo keuangan di seluruh seko
 
 ---
 
-### Screen 3: Manajemen Sekolah Mitra (Tab 2: Sekolah)
-Mengelola data pendaftaran sekolah mitra kantin digital.
+### Screen 3: Manajemen & Detail Pengguna (Tab 2: User)
+Mengatur profil, kredensial password, dan audit aktivitas mendalam untuk seluruh role pengguna (Siswa, Orang Tua, Kasir/Petugas Kantin, dan Petugas Keuangan). Semua role menampilkan informasi identifikasi (Username, NISN untuk Siswa, Email) dan dapat diatur password-nya oleh Super Admin.
 
-#### ASCII Mockup
-```
-+------------------------------------------+
-| Kelola Sekolah Mitra                     |
-| [🔍 Cari nama sekolah...               ] |
-|                                          |
-| [ + MITRAKAN SEKOLAH BARU ] (Teal)       |
-|                                          |
-| MITRA AKTIF (5)                          |
-| +--------------------------------------+ |
-| | [Img] SMP Terpadu Kota                 | |
-| |       850 Siswa • Rp 45.200.000 Saldo  | |
-| |       [ Rincian ]   [ Nonaktifkan ]    | |
-| +--------------------------------------+ |
-| | [Img] SMA Negeri 3                     | |
-| |       1.200 Siswa • Rp 57.300.000 Saldo| |
-| |       [ Rincian ]   [ Nonaktifkan ]    | |
-| +--------------------------------------+ |
-|                                          |
-+------------------------------------------+
-| [Home] [Sekolah] [User] [Audit] [Setting]|
-+------------------------------------------+
-```
-#### Elemen & Aksi Interaksi
-*   **Tombol "+ MITRAKAN SEKOLAH BARU"**:
-    *   *Aksi*: Membuka formulir input mobile (Nama Sekolah, Kontak, Alamat, Setoran Koperasi default, dan upload logo) untuk disimpan ke tabel `schools`.
-*   **Tombol "Nonaktifkan"**:
-    *   *Aksi*: Meminta konfirmasi keamanan dialog iOS sebelum merubah kolom `is_active` menjadi `false` (soft delete).
-
----
-
-### Screen 4: Manajemen Pengguna & Aktivasi Akun (Tab 3: User)
-Mengatur status aktif dan izin login dari semua pengguna sistem (Siswa, Orang Tua, Kasir, Admin Keuangan).
-
-#### ASCII Mockup
+#### ASCII Mockup (Daftar Pengguna)
 ```
 +------------------------------------------+
 | Kelola Akun Pengguna                     |
-| [🔍 Cari nama, email, NISN...          ] |
+| [🔍 Cari nama, email, NISN, usn...     ] |
 |                                          |
 | Filter Peran:                            |
-| [ Semua ] [ Admin ] [ Kasir ] [ OrangTua ]|
+| [ Semua ] [ Keuangan ] [ Kantin ] [Siswa]|
+| [ Orang Tua ]                            |
 |                                          |
 | DAFTAR AKUN                              |
 | +--------------------------------------+ |
-| | Ahmad Subarjo (Orang Tua Ahmad)        | |
-| | Wali Ahmad • SMP Terpadu               | |
-| | Status: AKTIF             [ Toggle ON ]|
+| | Ahmad Subarjo (Siswa - 8-B)            | |
+| | NISN: 2026090812 • USN: ahmad_subarjo  | |
+| | Status: AKTIF             [ Toggle ON ]| |
+| | > [ Detail & Riwayat Belanja ]         | |
+| +--------------------------------------+ |
+| | Rian (Petugas Kantin - Stan Bakso)     | |
+| | USN: rian_bakso • Email: r@k.com       | |
+| | Status: AKTIF             [ Toggle ON ]| |
+| | > [ Detail & Riwayat Penjualan ]       | |
 | +--------------------------------------+ |
 | | Budi Hartono (Admin Keuangan)          | |
-| | Keuangan • SMK Terpadu                 | |
-| | Status: DIBLOKIR         [ Toggle OFF]|
+| | USN: budi_fin • Email: b@f.com         | |
+| | Status: DIBLOKIR         [ Toggle OFF]| |
+| | > [ Detail & Log Keuangan ]            | |
 | +--------------------------------------+ |
-|                                          |
+| | Salim Subarjo (Orang Tua Ahmad)        | |
+| | USN: salim_s • Email: s@o.com          | |
+| | Status: AKTIF             [ Toggle ON ]| |
+| | > [ Detail & Atur Password ]           | |
+| +--------------------------------------+ |
 +------------------------------------------+
-| [Home] [Sekolah] [User] [Audit] [Setting]|
+| [Home]     [User]     [Audit]   [Setting] |
 +------------------------------------------+
 ```
+
+#### ASCII Mockup (Rincian & Riwayat per Peran)
+Admin dapat memilih akun untuk membuka detail data lengkap masing-masing peran secara spesifik:
+
+##### A. Rincian & Riwayat Siswa
+```
++------------------------------------------+
+| Rincian Pengguna (Siswa)                 |
+|                                          |
+| Nama : Ahmad Subarjo                     |
+| NISN : 2026090812                        |
+| USN  : ahmad_subarjo                     |
+| Kelas: 8-B                               |
+| Email: ahmad.subarjo@student.sch.id      |
+| Saldo: Rp 45.000 (Kartu: AKTIF)          |
+|                                          |
+| [ UBAH KATA SANDI (PASSWORD) ]           |
+|                                          |
+| RIWAYAT BELANJA & TOP-UP SISWA           |
+| - 17 Jun, 12:30 | Belanja Nasi Goreng    |
+|   Total: Rp 12.000 (Stan Kantin Utama)   |
+| - 17 Jun, 09:15 | Belanja Es Teh         |
+|   Total: Rp 3.000 (Stan Minuman Segar)   |
+| - 16 Jun, 08:00 | Top-Up Saldo Koperasi  |
+|   Total: +Rp 50.000                      |
+|                                          |
++------------------------------------------+
+| [ Kembali ke Daftar ]                    |
++------------------------------------------+
+```
+
+##### B. Rincian & Riwayat Petugas Kantin
+```
++------------------------------------------+
+| Rincian Pengguna (Petugas Kantin)        |
+|                                          |
+| Nama : Rian                              |
+| Stan : Stan Bakso & Mie Ayam             |
+| USN  : rian_bakso                        |
+| Email: rian.canteen@canteen.com          |
+| Pendapatan Hari Ini: Rp 750.000          |
+|                                          |
+| [ UBAH KATA SANDI (PASSWORD) ]           |
+|                                          |
+| RIWAYAT TRANSAKSI PENJUALAN STAN         |
+| - 17 Jun, 12:45 | Penjualan Bakso Urat   |
+|   Total: +Rp 15.000 (Siswa: Budi Hartono)|
+| - 17 Jun, 12:20 | Penjualan Es Jeruk     |
+|   Total: +Rp 5.000 (Siswa: Ahmad)        |
+|                                          |
+| PRODUK YANG DIKELOLA (2)                 |
+| 1. Bakso Biasa (Rp 12.000)               |
+| 2. Mie Ayam (Rp 10.000)                  |
+|                                          |
++------------------------------------------+
+| [ Kembali ke Daftar ]                    |
++------------------------------------------+
+```
+
+##### C. Rincian & Riwayat Petugas Keuangan
+```
++------------------------------------------+
+| Rincian Pengguna (Keuangan)              |
+|                                          |
+| Nama : Budi Hartono                      |
+| USN  : budi_fin                          |
+| Email: budi.finance@finance.com          |
+| Hak  : Admin Keuangan Utama              |
+|                                          |
+| [ UBAH KATA SANDI (PASSWORD) ]           |
+|                                          |
+| LOG AKTIVITAS KEUANGAN TERAKHIR          |
+| - 17 Jun, 10:15 | Pencatatan Top-Up      |
+|   Murid: Ahmad (Rp 100.000)              |
+| - 16 Jun, 15:30 | Rekonsiliasi Kasir     |
+|   Stan: Stan Bakso (Rp 1.200.000)        |
+|                                          |
++------------------------------------------+
+| [ Kembali ke Daftar ]                    |
++------------------------------------------+
+```
+
+##### D. Rincian Orang Tua
+```
++------------------------------------------+
+| Rincian Pengguna (Orang Tua)             |
+|                                          |
+| Nama : Salim Subarjo                     |
+| USN  : salim_s                           |
+| Email: salim.subarjo@gmail.com           |
+| Anak : Ahmad Subarjo (NISN: 2026090812)  |
+|                                          |
+| [ UBAH KATA SANDI (PASSWORD) ]           |
+|                                          |
+| * Catatan Keamanan: Untuk akun orang     |
+|   tua, rincian hanya menyertakan info    |
+|   profil umum & tombol ganti sandi.      |
+|                                          |
++------------------------------------------+
+| [ Kembali ke Daftar ]                    |
++------------------------------------------+
+```
+
 #### Elemen & Aksi Interaksi
 *   **Filter Peran Pil Horisontal**: Segment filter bergaya iOS untuk memilah daftar user secara cepat.
 *   **Toggle Status (Cupertino Switch)**:
     *   *Aksi*: Merubah status `is_active` pengguna di tabel `profiles`. Jika dimatikan (`OFF`), mematikan hak akses otentikasi Supabase pengguna secara instan.
+*   **Tombol [ UBAH KATA SANDI (PASSWORD) ]**:
+    *   *Aksi*: Membuka modal pop-up Cupertino Text Field untuk menginput password baru. Super Admin dapat menyetel ulang password user secara paksa.
+*   **Tautan Rincian & Riwayat (Siswa, Kantin, Keuangan)**:
+    *   *Aksi*: Membuka layar sub-detail peran yang memuat riwayat transaksi mutasi lengkap (read-only untuk mempermudah pengecekan dan investigasi data).
 
 ---
 
-### Screen 5: Explorer Audit Log (Tab 4: Audit)
+### Screen 4: Explorer Audit Log (Tab 3: Audit)
 Halaman pengawasan real-time yang tidak dapat diubah (read-only) untuk melacak perubahan data manual.
 
 #### ASCII Mockup
@@ -207,7 +291,7 @@ Halaman pengawasan real-time yang tidak dapat diubah (read-only) untuk melacak p
 | [ Detail Log Perubahan ] (Link)          |
 |                                          |
 +------------------------------------------+
-| [Home] [Sekolah] [User] [Audit] [Setting]|
+| [Home]     [User]     [Audit]   [Setting] |
 +------------------------------------------+
 ```
 #### Elemen & Aksi Interaksi
@@ -216,7 +300,7 @@ Halaman pengawasan real-time yang tidak dapat diubah (read-only) untuk melacak p
 
 ---
 
-### Screen 6: Broadcast & Setelan (Tab 5: Setting)
+### Screen 5: Broadcast & Setelan (Tab 4: Setting)
 Pemberitahuan darurat push notification secara global dan penyetelan backend.
 
 #### ASCII Mockup
@@ -241,7 +325,7 @@ Pemberitahuan darurat push notification secara global dan penyetelan backend.
 |                                          |
 | [ SIMPAN SETELAN GLOBAL ] (Orange)       |
 +------------------------------------------+
-| [Home] [Sekolah] [User] [Audit] [Setting]|
+| [Home]     [User]     [Audit]   [Setting] |
 +------------------------------------------+
 ```
 #### Elemen & Aksi Interaksi

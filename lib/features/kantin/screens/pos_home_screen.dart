@@ -110,7 +110,8 @@ class PosHomeScreen extends ConsumerWidget {
           ref.invalidate(todayRevenueProvider);
           ref.invalidate(operatorTransactionsProvider);
         },
-        child: Center(
+        child: Align(
+          alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 800),
             child: SingleChildScrollView(

@@ -231,7 +231,8 @@ class SalesHistoryScreen extends ConsumerWidget {
           ref.invalidate(operatorTransactionsProvider);
           ref.invalidate(todayRevenueProvider);
         },
-        child: Center(
+        child: Align(
+          alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 800),
             child: CustomScrollView(
