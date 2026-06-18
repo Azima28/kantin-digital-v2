@@ -32,6 +32,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       final String role = authState.profile?['role'] ?? '';
       if (role == 'petugas_kantin') {
         context.go('/pos');
+      } else if (role == 'petugas_keuangan') {
+        context.go('/finance');
+      } else if (role == 'super_admin') {
+        context.go('/admin/secure-entry');
+      } else if (role == 'parent') {
+        final String studentId = authState.profile?['student_id'] ?? '';
+        if (studentId.isNotEmpty) {
+          context.go('/parent/dashboard/$studentId');
+        } else {
+          context.go('/parent');
+        }
       } else {
         context.go('/student');
       }

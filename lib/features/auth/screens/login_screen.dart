@@ -51,6 +51,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           context.go('/student');
         } else if (role == 'super_admin') {
           context.go('/admin/secure-entry');
+        } else if (role == 'petugas_keuangan') {
+          context.go('/finance');
         } else if (role == 'parent') {
           final String studentId = profile?['student_id'] ?? '';
           if (studentId.isNotEmpty) {
@@ -489,6 +491,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             _passwordController.text = 'password123';
                           });
                           _showFillSnackBar('Kasir');
+                        },
+                      ),
+                      const Divider(height: 12, color: AppColors.borderLight),
+                      
+                      // Admin Keuangan
+                      _buildPreviewItem(
+                        roleName: 'ADMIN KEUANGAN (USERNAME)',
+                        identifier: 'budi_fin',
+                        password: 'budi123',
+                        onTap: () {
+                          FocusScope.of(context).unfocus();
+                          setState(() {
+                            _emailController.text = 'budi_fin';
+                            _passwordController.text = 'budi123';
+                          });
+                          _showFillSnackBar('Admin Keuangan');
                         },
                       ),
                       const Divider(height: 12, color: AppColors.borderLight),

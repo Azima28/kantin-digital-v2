@@ -78,7 +78,7 @@ final FutureProvider<List<Map<String, dynamic>>> operatorTransactionsProvider =
   final client = ref.watch(supabaseClientProvider);
   final List<dynamic> response = await client
       .from('transactions')
-      .select('id, total_amount, type, status, created_at, student_id, students(profiles(full_name))')
+      .select('id, total_amount, type, status, created_at, student_id, students(profiles:profiles!students_id_fkey(full_name))')
       .eq('operator_id', operatorId)
       .order('created_at', ascending: false);
 

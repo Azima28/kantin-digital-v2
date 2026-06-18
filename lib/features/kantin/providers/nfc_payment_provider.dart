@@ -91,7 +91,7 @@ class NfcPaymentNotifier extends StateNotifier<NfcPaymentState> {
       // Query student profiles
       final Map<String, dynamic>? student = await client
           .from('students')
-          .select('id, class, balance, is_active, daily_limit, profiles(full_name)')
+          .select('id, class, balance, is_active, daily_limit, profiles:profiles!students_id_fkey(full_name)')
           .eq('rfid_uid', rfidUid)
           .maybeSingle();
 

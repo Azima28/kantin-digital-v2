@@ -37,3 +37,19 @@ Dokumen ini mencatat riwayat kendala teknis yang ditemukan selama pengembangan a
 *   **Masalah**: Saat aplikasi dijalankan pertama kali, teks di layar placeholder utama tampil berwarna merah tebal dengan dua garis bawah kuning.
 *   **Penyebab**: Kelas `_PlaceholderScreen` menggunakan widget iOS `CupertinoPageScaffold` di bawah konfigurasi `MaterialApp.router`. Karena tidak dibungkus oleh parent widget bertipe `Material` (seperti `Scaffold` atau `Material` canvas), Flutter tidak dapat menemukan konteks tipe data dan gaya teks bawaan (*default typography*).
 *   **Solusi**: Mengubah modul visual placeholder di [app_router.dart](file:///C:/Work/Project%20PKL/sistem%20kantin%20digital/lib/core/router/app_router.dart) untuk menggunakan widget **`Scaffold`** dan **`AppBar`** standar Material. Perubahan ini secara otomatis mewarisi konfigurasi tema font `Inter` dari `AppTheme.lightTheme`.
+
+---
+
+### 4. Error RLS: `new row violates row-level security policy for table 'audit_logs'` (Code 42501)
+*   **Masalah**: Saat Admin Keuangan menekan tombol "KUNCI & PROSES KOREKSI" di layar Koreksi Saldo, muncul error:
+    ```text
+    PostgreSQLException(message: new row violates row-level security policy for table 'audit_logs', code: 42501)
+    ```
+*   **Penyebab (2 lapis)**:
+    1.  **Tabel `audit_logs` tidak memiliki policy INSERT** di migrasi awal. Policy RLS hanya mengizinkan `SELECT` untuk role `admin` dan `super_admin`, tanpa policy `INSERT` sama sekali untuk role `petugas_keuangan`.
+    2.  **AuthService tidak menggunakan Supabase Auth** — file `lib/features/auth/services/auth_service.dart` hanya melakukan query langsung ke tabel `profiles` dengan kolom `password`, tanpa pernah memanggil `Supabase.auth.signInWithPassword()`. Akibatnya, session JWT tidak terbentuk dan `auth.uid()` di RLS selalu bernilai `NULL`, sehingga semua policy yang bergantung pada `auth.uid()` gagal.
+*   **Solusi**:
+    1.  Membuat file migrasi baru [20260617000400_fix_rls_policies_keuangan.sql](file:///C:/Work/Project%20PKL/sistem%20kantin%20digital/supabase/migrations/20260617000400_fix_rls_policies_keuangan.sql) yang menambahkan policy `INSERT` dan `UPDATE` untuk role `petugas_keuangan` dan `admin` pada tabel: `audit_logs`, `students`, `notifications`, `transactions`, `profiles`, `canteen_operators`, dan `finance_officers`.
+    2.  Menulis ulang [auth_service.dart](file:///C:/Work/Project%20PKL/sistem%20kantin%20digital/lib/features/auth/services/auth_service.dart) agar memanggil `Supabase.auth.signInWithPassword()` terlebih dahulu sebelum mengambil profil dari database. Hal ini menjamin session JWT terbentuk sehingga `auth.uid()` berfungsi dengan benar di semua policy RLS. Method `currentSession` dan `signOut` juga diperbaiki agar menggunakan Supabase Auth secara penuh.
+    
+    **File migrasi SQL ini WAJIB dijalankan di Supabase SQL Editor** agar perubahan RLS berlaku di database online.

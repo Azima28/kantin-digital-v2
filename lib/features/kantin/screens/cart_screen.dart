@@ -443,7 +443,7 @@ class _NfcPaymentModalState extends ConsumerState<_NfcPaymentModal> {
     final paymentState = ref.watch(nfcPaymentProvider);
     final authState = ref.watch(authNotifierProvider);
     final cartState = ref.watch(cartProvider);
-    final String operatorId = authState.profile?['id'] ?? '';
+    final String? operatorId = authState.profile?['id'];
 
     // Auto-close modal on success after 2 seconds
     if (paymentState.status == NfcPaymentStatus.success) {
@@ -724,13 +724,15 @@ class _NfcPaymentModalState extends ConsumerState<_NfcPaymentModal> {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   elevation: 0,
                 ),
-                onPressed: () {
-                  ref.read(nfcPaymentProvider.notifier).confirmPurchase(
-                    operatorId: operatorId,
-                    items: cartState.items,
-                    totalAmount: widget.totalAmount,
-                  );
-                },
+                onPressed: operatorId == null || operatorId.isEmpty
+                    ? null
+                    : () {
+                        ref.read(nfcPaymentProvider.notifier).confirmPurchase(
+                          operatorId: operatorId!,
+                          items: cartState.items,
+                          totalAmount: widget.totalAmount,
+                        );
+                      },
                 child: const Text(
                   'KONFIRMASI BAYAR',
                   style: TextStyle(

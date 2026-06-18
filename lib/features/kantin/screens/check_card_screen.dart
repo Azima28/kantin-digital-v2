@@ -70,7 +70,7 @@ class _CheckCardScreenState extends ConsumerState<CheckCardScreen> {
       // Query student profiles
       final Map<String, dynamic>? student = await client
           .from('students')
-          .select('id, class, balance, is_active, profiles(full_name, email)')
+          .select('id, class, balance, is_active, profiles:profiles!students_id_fkey(full_name, email)')
           .eq('rfid_uid', rfidUid)
           .maybeSingle();
 

@@ -6,7 +6,9 @@ class AuthService {
 
   AuthService(this._client);
 
-  // Sign In using email and password queried directly from profiles table
+  // Sign In with dual-path strategy:
+  //   1. Primary: Supabase Auth (signInWithPassword) — establishes JWT session for RLS
+  //   2. Fallback: Profiles-based password check — keeps app usable if Auth is down
   Future<Map<String, dynamic>> signIn({
     required String email,
     required String password,
@@ -14,8 +16,8 @@ class AuthService {
   }) async {
     try {
       final String rawInput = email.trim();
-      String queryEmail = rawInput.toLowerCase();
-      
+      final String inputLower = rawInput.toLowerCase();
+
       // Validation for parent expected role: must be a numeric NISN
       if (expectedRole == 'parent') {
         final isNumeric = RegExp(r'^\d+$').hasMatch(rawInput);
@@ -24,59 +26,131 @@ class AuthService {
         }
       }
 
-      // If it looks like a NIS (numeric or doesn't have @), append domain suffix
-      if (!queryEmail.contains('@')) {
-        queryEmail = '$queryEmail@sekolah.sch.id';
-      }
+      // --- Step 1: Resolve the actual email and find the profile ---
+      // Users may log in with email, username, or NISN.
+      String resolvedEmail = inputLower;
+      Map<String, dynamic>? preloadedProfile;
 
-      // Mock Parent Account
-      if ((queryEmail == '20260012@sekolah.sch.id' || queryEmail == 'orangtua@sekolah.sch.id') && password == 'parent123') {
-        if (expectedRole != 'parent') {
-          throw Exception('Akses ditolak: Silakan gunakan tab login Orang Tua.');
+      if (!inputLower.contains('@')) {
+        // Try to find profile by username
+        try {
+          preloadedProfile = await _client
+              .from('profiles')
+              .select()
+              .eq('username', rawInput)
+              .maybeSingle();
+        } catch (_) {
+          preloadedProfile = null;
         }
-        final parentProfile = {
-          'id': 'parent-id-wali-ahmad',
-          'email': 'orangtua@sekolah.sch.id',
-          'full_name': 'Budi Subarjo (Wali Ahmad)',
-          'role': 'parent',
-          'student_id': '03525ad9-d9e3-4f55-8ee6-7ff5b06d2025'
-        };
-        _currentProfile = parentProfile;
-        return parentProfile;
+
+        // Try by NISN if username didn't match
+        if (preloadedProfile == null) {
+          try {
+            preloadedProfile = await _client
+                .from('profiles')
+                .select()
+                .eq('nisn', rawInput)
+                .maybeSingle();
+          } catch (_) {
+            preloadedProfile = null;
+          }
+        }
+
+        if (preloadedProfile != null && preloadedProfile['email'] != null) {
+          resolvedEmail = preloadedProfile['email'] as String;
+        } else {
+          resolvedEmail = '$inputLower@sekolah.sch.id';
+        }
       }
 
-      Map<String, dynamic>? profile;
+      // --- Step 2: Try Supabase Auth (Primary Path) ---
+      bool authSessionEstablished = false;
       try {
-        // Query profiles: try matching email, username, or nisn
-        profile = await _client
-            .from('profiles')
-            .select()
-            .or('email.eq.$queryEmail,username.eq.$rawInput,nisn.eq.$rawInput')
-            .eq('password', password)
-            .maybeSingle();
-      } catch (e) {
-        // Graceful fallback if username or nisn columns don't exist yet
-        profile = await _client
-            .from('profiles')
-            .select()
-            .eq('email', queryEmail)
-            .eq('password', password)
-            .maybeSingle();
+        await _client.auth.signInWithPassword(
+          email: resolvedEmail,
+          password: password,
+        );
+        authSessionEstablished = true;
+      } on AuthException catch (authErr) {
+        final errMsg = authErr.message;
+        // If credentials are wrong, reject immediately
+        if (errMsg.contains('Invalid login credentials') ||
+            errMsg.contains('invalid_credentials')) {
+          throw Exception('Email/Username/NISN atau kata sandi salah.');
+        }
+        // For infrastructure errors (Database error querying schema, etc.),
+        // fall through to the fallback path below
+      } catch (_) {
+        // Other unexpected errors — fall through to fallback
+      }
+
+      // --- Step 3: Fetch or use preloaded profile ---
+      Map<String, dynamic>? profile = preloadedProfile;
+
+      if (authSessionEstablished) {
+        // Auth succeeded — fetch profile by user ID for most accurate data
+        final String userId = _client.auth.currentUser?.id ?? '';
+        if (userId.isNotEmpty && profile == null) {
+          profile = await _client
+              .from('profiles')
+              .select()
+              .eq('id', userId)
+              .maybeSingle();
+        }
+        if (profile == null) {
+          profile = await _client
+              .from('profiles')
+              .select()
+              .eq('email', resolvedEmail)
+              .maybeSingle();
+        }
+      }
+
+      // --- Step 4: Fallback — profiles-based password verification ---
+      if (!authSessionEstablished) {
+        if (profile == null) {
+          // Try to find profile by email for fallback auth
+          try {
+            profile = await _client
+                .from('profiles')
+                .select()
+                .eq('email', resolvedEmail)
+                .maybeSingle();
+          } catch (_) {
+            profile = null;
+          }
+        }
+
+        if (profile == null) {
+          throw Exception('Email/Username/NISN atau kata sandi salah.');
+        }
+
+        // Verify password against the profiles.password column
+        final String storedPassword = profile['password']?.toString() ?? '';
+        if (storedPassword != password) {
+          throw Exception('Email/Username/NISN atau kata sandi salah.');
+        }
+        // Note: In fallback mode, no Supabase Auth session is established.
+        // auth.uid() will be NULL in RLS policies. Some write operations
+        // (audit_logs, corrections) may fail until Supabase Auth is restored.
       }
 
       if (profile == null) {
-        throw Exception('Email/Username/NISN atau kata sandi salah.');
+        if (authSessionEstablished) await _client.auth.signOut();
+        throw Exception('Profil pengguna tidak ditemukan di database.');
       }
 
       final String role = profile['role'] ?? '';
-      
+
       // Prevent parent login on general siswa/staff tab
       if (role == 'parent' && expectedRole != 'parent') {
+        if (authSessionEstablished) await _client.auth.signOut();
         throw Exception('Akses ditolak: Silakan gunakan pilihan login Orang Tua.');
       }
 
       // Authorization check: must match expected role if provided
       if (expectedRole.isNotEmpty && role != expectedRole) {
+        if (authSessionEstablished) await _client.auth.signOut();
         if (expectedRole == 'petugas_kantin') {
           throw Exception('Akses ditolak: Hanya petugas/operator kantin yang dapat masuk ke Kasir.');
         } else if (expectedRole == 'student') {
@@ -88,24 +162,13 @@ class AuthService {
 
       _currentProfile = profile;
       return profile;
-    } on PostgrestException catch (e) {
-      // Menangkap error jika kolom password tidak ditemukan di database
-      if (e.code == '42703' || e.message.contains('password')) {
-        throw Exception(
-          'Konfigurasi database belum lengkap. Kolom "password" belum ditambahkan ke tabel "profiles". '
-          'Silakan jalankan query migrasi SQL yang saya berikan di Supabase.',
-        );
-      }
-      throw Exception('Gagal menghubungi database (${e.code}): ${e.message}');
     } catch (e) {
       final String errString = e.toString();
-      // Menangkap error koneksi internet
       if (errString.contains('SocketException') || errString.contains('Failed host lookup')) {
         throw Exception(
           'Gagal menghubungkan ke server. Periksa koneksi internet Anda atau pastikan URL Supabase sudah benar.',
         );
       }
-      // Meneruskan exception jika sudah berupa custom Exception
       if (e is Exception) {
         rethrow;
       }
@@ -113,16 +176,37 @@ class AuthService {
     }
   }
 
-  // Sign Out current session
+  // Sign Out current session (both Supabase Auth and local profile cache)
   Future<void> signOut() async {
     _currentProfile = null;
+    try {
+      await _client.auth.signOut();
+    } catch (_) {
+      // Ignore sign-out errors
+    }
   }
 
-  // Check if session is active
-  Session? get currentSession => null;
+  // Check if session is active via Supabase Auth
+  Session? get currentSession => _client.auth.currentSession;
 
   // Get current authenticated user profile
   Future<Map<String, dynamic>?> getCurrentProfile() async {
-    return _currentProfile;
+    if (_currentProfile != null) return _currentProfile;
+
+    final session = _client.auth.currentSession;
+    if (session != null) {
+      try {
+        final profile = await _client
+            .from('profiles')
+            .select()
+            .eq('id', session.user.id)
+            .maybeSingle();
+        _currentProfile = profile;
+        return profile;
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
   }
 }

@@ -35,6 +35,17 @@ import 'package:kantin_digital/features/admin/screens/admin_finance_detail_scree
 import 'package:kantin_digital/features/admin/screens/admin_parent_detail_screen.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_main_layout.dart';
 
+import 'package:kantin_digital/features/keuangan/screens/keuangan_dashboard_screen.dart';
+import 'package:kantin_digital/features/keuangan/screens/keuangan_students_screen.dart';
+import 'package:kantin_digital/features/keuangan/screens/keuangan_student_detail_screen.dart';
+import 'package:kantin_digital/features/keuangan/screens/keuangan_card_registration_screen.dart';
+import 'package:kantin_digital/features/keuangan/screens/keuangan_topup_screen.dart';
+import 'package:kantin_digital/features/keuangan/screens/keuangan_correction_screen.dart';
+import 'package:kantin_digital/features/keuangan/screens/keuangan_history_screen.dart';
+import 'package:kantin_digital/features/keuangan/screens/keuangan_report_screen.dart';
+import 'package:kantin_digital/features/keuangan/screens/keuangan_profile_screen.dart';
+import 'package:kantin_digital/features/keuangan/widgets/keuangan_main_layout.dart';
+
 class AppRouter {
   AppRouter._();
 
@@ -76,6 +87,17 @@ class AppRouter {
   static const String adminMerchantDetail = '/admin/users/merchant/:merchantId';
   static const String adminFinanceDetail = '/admin/users/finance/:officerId';
   static const String adminParentDetail = '/admin/users/parent/:parentId';
+
+  // Keuangan App Routes
+  static const String financeHome = '/finance';
+  static const String financeStudents = '/finance/students';
+  static const String financeStudentDetail = '/finance/students/:studentId';
+  static const String financeCardReg = '/finance/students/:studentId/card';
+  static const String financeTopUp = '/finance/topup';
+  static const String financeCorrection = '/finance/correction';
+  static const String financeHistory = '/finance/history';
+  static const String financeReport = '/finance/report';
+  static const String financeProfile = '/finance/profile';
 
   static final GoRouter router = GoRouter(
     initialLocation: splash,
@@ -254,6 +276,63 @@ class AppRouter {
         builder: (BuildContext context, GoRouterState state) => AdminParentDetailScreen(
           parentId: state.pathParameters['parentId']!,
         ),
+      ),
+
+      // Keuangan Main layout with bottom tabs (Beranda, Siswa, Transaksi, Laporan)
+      ShellRoute(
+        builder: (BuildContext context, GoRouterState state, Widget child) {
+          return KeuanganMainLayout(child: child);
+        },
+        routes: <RouteBase>[
+          GoRoute(
+            path: financeHome,
+            builder: (BuildContext context, GoRouterState state) => const KeuanganDashboardScreen(),
+          ),
+          GoRoute(
+            path: financeStudents,
+            builder: (BuildContext context, GoRouterState state) => const KeuanganStudentsScreen(),
+          ),
+          GoRoute(
+            path: financeHistory,
+            builder: (BuildContext context, GoRouterState state) => const KeuanganHistoryScreen(),
+          ),
+          GoRoute(
+            path: financeReport,
+            builder: (BuildContext context, GoRouterState state) => const KeuanganReportScreen(),
+          ),
+        ],
+      ),
+
+      // Keuangan sub-pages (without bottom tab bar)
+      GoRoute(
+        path: financeStudentDetail,
+        builder: (BuildContext context, GoRouterState state) => KeuanganStudentDetailScreen(
+          studentId: state.pathParameters['studentId']!,
+        ),
+      ),
+      GoRoute(
+        path: financeCardReg,
+        builder: (BuildContext context, GoRouterState state) => KeuanganCardRegistrationScreen(
+          studentId: state.pathParameters['studentId']!,
+        ),
+      ),
+      GoRoute(
+        path: financeTopUp,
+        builder: (BuildContext context, GoRouterState state) {
+          final student = state.extra as Map<String, dynamic>?;
+          return KeuanganTopupScreen(prefilledStudent: student);
+        },
+      ),
+      GoRoute(
+        path: financeCorrection,
+        builder: (BuildContext context, GoRouterState state) {
+          final student = state.extra as Map<String, dynamic>?;
+          return KeuanganCorrectionScreen(prefilledStudent: student);
+        },
+      ),
+      GoRoute(
+        path: financeProfile,
+        builder: (BuildContext context, GoRouterState state) => const KeuanganProfileScreen(),
       ),
     ],
   );
