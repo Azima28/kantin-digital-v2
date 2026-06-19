@@ -7,28 +7,77 @@ import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
-final adminAuditLogsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final client = ref.read(supabaseClientProvider);
-  
-  final List<dynamic> res = await client
-      .from('audit_logs')
-      .select('id, actor_id, actor_name, action_type, description, target_id, old_value, new_value, ip_address, user_agent, created_at')
-      .order('created_at', ascending: false);
-      
-  return List<Map<String, dynamic>>.from(res);
-});
+final adminAuditLogsProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+      final client = ref.read(supabaseClientProvider);
+
+      final List<dynamic> res = await client
+          .from('audit_logs')
+          .select(
+            'id, actor_id, actor_name, action_type, description, target_id, old_value, new_value, ip_address, user_agent, created_at',
+          )
+          .order('created_at', ascending: false);
+
+      return List<Map<String, dynamic>>.from(res);
+    });
 
 class AdminAuditLogScreen extends ConsumerStatefulWidget {
   const AdminAuditLogScreen({super.key});
 
   @override
-  ConsumerState<AdminAuditLogScreen> createState() => _AdminAuditLogScreenState();
+  ConsumerState<AdminAuditLogScreen> createState() =>
+      _AdminAuditLogScreenState();
 }
 
 class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
   String _selectedAction = 'All Actions';
 
-  final List<String> _actions = ['All Actions', 'Balance Correction', 'Card Registration', 'System Settings'];
+  final List<String> _actions = [
+    'All Actions',
+    'Balance Correction',
+    'Card Registration',
+    'System Settings',
+  ];
+
+  /// Normalizes JSON data for display. Handles:
+  /// - String input (parses JSON if possible)
+  /// - Map/List input (recursively normalizes)
+  /// - Doubles that are whole numbers → converts to int
+  dynamic _normalizeJsonValue(dynamic value) {
+    if (value == null) return null;
+
+    // If Supabase returns JSONB as a String, try parsing it first
+    if (value is String) {
+      try {
+        value = jsonDecode(value);
+      } catch (_) {
+        return value; // not JSON, return as-is
+      }
+    }
+
+    if (value is Map) {
+      return value.map(
+        (k, v) => MapEntry(k.toString(), _normalizeJsonValue(v)),
+      );
+    } else if (value is List) {
+      return value.map(_normalizeJsonValue).toList();
+    } else if (value is double && value == value.toInt()) {
+      return value.toInt();
+    }
+    return value;
+  }
+
+  /// Formats a normalized JSON value as a pretty-printed JSON string.
+  String _formatJson(dynamic value) {
+    try {
+      final normalized = _normalizeJsonValue(value);
+      if (normalized == null) return '{}';
+      return const JsonEncoder.withIndent('  ').convert(normalized);
+    } catch (_) {
+      // Fallback: return raw toString if encoding fails
+      return value?.toString() ?? '{}';
+    }
+  }
 
   String _mapActionTypeToFilter(String filter) {
     switch (filter) {
@@ -52,8 +101,8 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
-        final date = log['created_at'] != null 
-            ? DateTime.parse(log['created_at']).toLocal() 
+        final date = log['created_at'] != null
+            ? DateTime.parse(log['created_at']).toLocal()
             : DateTime.now();
 
         return DraggableScrollableSheet(
@@ -94,9 +143,18 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
 
                   // Metadata cards
                   _buildMetadataRow('Pelaksana', log['actor_name']),
-                  _buildMetadataRow('Tanggal & Waktu', DateFormat('dd MMM yyyy, HH:mm:ss').format(date)),
-                  _buildMetadataRow('IP Address', log['ip_address'] ?? '127.0.0.1'),
-                  _buildMetadataRow('User Agent', log['user_agent'] ?? 'Unknown Client'),
+                  _buildMetadataRow(
+                    'Tanggal & Waktu',
+                    DateFormat('dd MMM yyyy, HH:mm:ss').format(date),
+                  ),
+                  _buildMetadataRow(
+                    'IP Address',
+                    log['ip_address'] ?? '127.0.0.1',
+                  ),
+                  _buildMetadataRow(
+                    'User Agent',
+                    log['user_agent'] ?? 'Unknown Client',
+                  ),
                   const SizedBox(height: 24),
 
                   // JSON Diff Header
@@ -135,7 +193,7 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                const JsonEncoder.withIndent('  ').convert(log['old_value']),
+                                _formatJson(log['old_value']),
                                 style: const TextStyle(
                                   fontFamily: 'Courier',
                                   fontSize: 10,
@@ -168,7 +226,7 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                const JsonEncoder.withIndent('  ').convert(log['new_value']),
+                                _formatJson(log['new_value']),
                                 style: const TextStyle(
                                   fontFamily: 'Courier',
                                   fontSize: 10,
@@ -191,7 +249,7 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
     );
   }
 
-  Widget _buildMetadataRow(String label, String value) {
+  Widget _buildMetadataRow(String label, dynamic value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
@@ -210,7 +268,7 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
           ),
           Expanded(
             child: Text(
-              value,
+              (value ?? '-').toString(),
               style: GoogleFonts.beVietnamPro(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
@@ -248,7 +306,10 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
         children: [
           // Subtitle & Dropdowns
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20.0,
+              vertical: 8.0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -260,7 +321,7 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Action Filter
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -272,7 +333,11 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                     child: DropdownButton<String>(
                       value: _selectedAction,
                       isExpanded: true,
-                      icon: const Icon(CupertinoIcons.chevron_down, size: 16, color: primaryTeal),
+                      icon: const Icon(
+                        CupertinoIcons.chevron_down,
+                        size: 16,
+                        color: primaryTeal,
+                      ),
                       style: GoogleFonts.beVietnamPro(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -305,7 +370,9 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
 
                 if (_selectedAction != 'All Actions') {
                   final dbActionKey = _mapActionTypeToFilter(_selectedAction);
-                  filtered = filtered.where((l) => l['action_type'] == dbActionKey).toList();
+                  filtered = filtered
+                      .where((l) => l['action_type'] == dbActionKey)
+                      .toList();
                 }
 
                 if (filtered.isEmpty) {
@@ -326,15 +393,18 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                   },
                   color: primaryTeal,
                   child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
                     itemCount: filtered.length,
                     itemBuilder: (context, index) {
                       final log = filtered[index];
                       final String actionType = log['action_type'] ?? '';
                       final String desc = log['description'] ?? '';
                       final String actor = log['actor_name'] ?? 'System';
-                      final date = log['created_at'] != null 
-                          ? DateTime.parse(log['created_at']).toLocal() 
+                      final date = log['created_at'] != null
+                          ? DateTime.parse(log['created_at']).toLocal()
                           : DateTime.now();
 
                       // Format time relative
@@ -352,7 +422,8 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                       IconData actionIcon = CupertinoIcons.settings;
                       if (actionType == 'KOREKSI_SALDO') {
                         actionColor = const Color(0xFFBA1A1A);
-                        actionIcon = CupertinoIcons.exclamationmark_triangle_fill;
+                        actionIcon =
+                            CupertinoIcons.exclamationmark_triangle_fill;
                       } else if (actionType == 'REGISTRASI_KARTU') {
                         actionColor = const Color(0xFF003718);
                         actionIcon = CupertinoIcons.creditcard_fill;
@@ -378,8 +449,14 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                             // Icon Badge
                             CircleAvatar(
                               radius: 18,
-                              backgroundColor: actionColor.withValues(alpha: 0.1),
-                              child: Icon(actionIcon, color: actionColor, size: 18),
+                              backgroundColor: actionColor.withValues(
+                                alpha: 0.1,
+                              ),
+                              child: Icon(
+                                actionIcon,
+                                color: actionColor,
+                                size: 18,
+                              ),
                             ),
                             const SizedBox(width: 12),
 
@@ -389,14 +466,22 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Flexible(
                                         child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 2,
+                                          ),
                                           decoration: BoxDecoration(
-                                            color: actionColor.withValues(alpha: 0.1),
-                                            borderRadius: BorderRadius.circular(99),
+                                            color: actionColor.withValues(
+                                              alpha: 0.1,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              99,
+                                            ),
                                           ),
                                           child: Text(
                                             actionType.replaceAll('_', ' '),
@@ -468,7 +553,9 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                   ),
                 );
               },
-              loading: () => const Center(child: CupertinoActivityIndicator(color: primaryTeal)),
+              loading: () => const Center(
+                child: CupertinoActivityIndicator(color: primaryTeal),
+              ),
               error: (err, stack) => Center(child: Text('Error: $err')),
             ),
           ),

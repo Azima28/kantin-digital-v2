@@ -16,12 +16,15 @@ class KeuanganCorrectionScreen extends ConsumerStatefulWidget {
   const KeuanganCorrectionScreen({super.key, this.prefilledStudent});
 
   @override
-  ConsumerState<KeuanganCorrectionScreen> createState() => _KeuanganCorrectionScreenState();
+  ConsumerState<KeuanganCorrectionScreen> createState() =>
+      _KeuanganCorrectionScreenState();
 }
 
-class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScreen> {
-  int _currentStep = 1; // 1: Search, 2: Correction details, 3: Confirm, 4: Success
-  
+class _KeuanganCorrectionScreenState
+    extends ConsumerState<KeuanganCorrectionScreen> {
+  int _currentStep =
+      1; // 1: Search, 2: Correction details, 3: Confirm, 4: Success
+
   // Step 1: Search
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
@@ -110,11 +113,13 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
 
     try {
       final client = ref.read(supabaseClientProvider);
-      
+
       // Query profiles for student matching NISN or name (fuzzy search)
       final List<dynamic> res = await client
           .from('profiles')
-          .select('id, full_name, nisn, is_active, students:students!students_id_fkey(class, balance, rfid_uid)')
+          .select(
+            'id, full_name, nisn, is_active, students:students!students_id_fkey(class, balance, rfid_uid)',
+          )
           .eq('role', 'student')
           .or('nisn.ilike."%$query%",full_name.ilike."%$query%"')
           .limit(5);
@@ -127,7 +132,9 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Pencarian gagal: ${e.toString().replaceAll('Exception: ', '')}'),
+            content: Text(
+              'Pencarian gagal: ${e.toString().replaceAll('Exception: ', '')}',
+            ),
             backgroundColor: dangerRed,
             behavior: SnackBarBehavior.floating,
           ),
@@ -179,7 +186,7 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
       final profile = ref.read(authNotifierProvider).profile;
       final actorName = profile?['full_name'] ?? 'Admin Keuangan';
       final actorId = profile?['id'];
-      
+
       final studentId = _selectedStudent!['id'];
       final double amount = _getAmount();
       final double finalNewBalance = _getNewBalance();
@@ -196,17 +203,19 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
         'actor_id': actorId,
         'actor_name': actorName,
         'action_type': 'KOREKSI_SALDO',
-        'description': 'Koreksi saldo ${_isAddition ? "penambahan" : "pengurangan"} sebesar Rp ${NumberFormat.decimalPattern("id_ID").format(amount)} untuk $_studentName. Alasan: $reason',
+        'description':
+            'Koreksi saldo ${_isAddition ? "penambahan" : "pengurangan"} sebesar Rp ${NumberFormat.decimalPattern("id_ID").format(amount)} untuk $_studentName. Alasan: $reason',
         'target_id': studentId,
-        'old_value': {'balance': _studentBalance},
-        'new_value': {'balance': finalNewBalance, 'reason': reason},
+        'old_value': {'balance': _studentBalance.toInt()},
+        'new_value': {'balance': finalNewBalance.toInt(), 'reason': reason},
       });
 
       // 3. Send system notification to student
       await client.from('notifications').insert({
         'student_id': studentId,
         'title': 'Koreksi Saldo!',
-        'message': 'Saldo Anda telah disesuaikan oleh admin menjadi Rp ${NumberFormat.decimalPattern("id_ID").format(finalNewBalance)}. Alasan: $reason',
+        'message':
+            'Saldo Anda telah disesuaikan oleh admin menjadi Rp ${NumberFormat.decimalPattern("id_ID").format(finalNewBalance)}. Alasan: $reason',
         'type': 'system',
       });
 
@@ -217,7 +226,8 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
 
       final now = DateTime.now();
       setState(() {
-        _refCode = 'ADJ-${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}-${Random().nextInt(9000) + 1000}';
+        _refCode =
+            'ADJ-${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}-${Random().nextInt(9000) + 1000}';
         _successTime = DateFormat('dd MMM yyyy, HH:mm:ss').format(now);
         _currentStep = 4; // success screen
       });
@@ -242,11 +252,19 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
 
   String get _studentName => _selectedStudent?['full_name'] ?? 'Siswa';
   String get _studentClass => _selectedStudent?['students']?['class'] ?? '-';
-  double get _studentBalance => double.tryParse(_selectedStudent?['students']?['balance']?.toString() ?? '0') ?? 0.0;
+  double get _studentBalance =>
+      double.tryParse(
+        _selectedStudent?['students']?['balance']?.toString() ?? '0',
+      ) ??
+      0.0;
 
   @override
   Widget build(BuildContext context) {
-    final fmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    final fmt = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFFBF9F8),
@@ -256,7 +274,11 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
         scrolledUnderElevation: 0,
         title: Text(
           'Koreksi Saldo',
-          style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, color: primaryTeal, fontSize: 18),
+          style: GoogleFonts.beVietnamPro(
+            fontWeight: FontWeight.bold,
+            color: primaryTeal,
+            fontSize: 18,
+          ),
         ),
         leading: _currentStep == 4
             ? const SizedBox() // Disable back button on success screen
@@ -289,7 +311,10 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
 
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
                 child: _buildStepContent(fmt),
               ),
             ),
@@ -309,9 +334,13 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
             _currentStep == 1
                 ? 'LANGKAH 1 DARI 3 — Cari Siswa'
                 : _currentStep == 2
-                    ? 'LANGKAH 2 DARI 3 — Detail Koreksi'
-                    : 'LANGKAH 3 DARI 3 — Konfirmasi',
-            style: GoogleFonts.beVietnamPro(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF6F7978)),
+                ? 'LANGKAH 2 DARI 3 — Detail Koreksi'
+                : 'LANGKAH 3 DARI 3 — Konfirmasi',
+            style: GoogleFonts.beVietnamPro(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF6F7978),
+            ),
           ),
           const SizedBox(height: 6),
           Row(
@@ -330,7 +359,9 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
                 child: Container(
                   height: 4,
                   decoration: BoxDecoration(
-                    color: _currentStep >= 2 ? primaryTeal : const Color(0xFFE4E2E1),
+                    color: _currentStep >= 2
+                        ? primaryTeal
+                        : const Color(0xFFE4E2E1),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -340,7 +371,9 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
                 child: Container(
                   height: 4,
                   decoration: BoxDecoration(
-                    color: _currentStep >= 3 ? primaryTeal : const Color(0xFFE4E2E1),
+                    color: _currentStep >= 3
+                        ? primaryTeal
+                        : const Color(0xFFE4E2E1),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -374,7 +407,11 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
         const SizedBox(height: 8),
         Text(
           'Masukkan NISN atau Nama Siswa:',
-          style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.w600, color: const Color(0xFF1B1C1B), fontSize: 14),
+          style: GoogleFonts.beVietnamPro(
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF1B1C1B),
+            fontSize: 14,
+          ),
         ),
         const SizedBox(height: 8),
         TextField(
@@ -388,10 +425,16 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
           },
           decoration: InputDecoration(
             hintText: 'Masukkan NISN atau Nama Lengkap...',
-            hintStyle: GoogleFonts.beVietnamPro(color: const Color(0xFF6F7978), fontSize: 14),
+            hintStyle: GoogleFonts.beVietnamPro(
+              color: const Color(0xFF6F7978),
+              fontSize: 14,
+            ),
             filled: true,
             fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: Color(0xFFE4E2E1)),
@@ -410,18 +453,29 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
                     child: SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: primaryTeal),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: primaryTeal,
+                      ),
                     ),
                   )
                 : _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(CupertinoIcons.clear_circled_solid, color: Color(0xFF6F7978), size: 18),
-                        onPressed: () {
-                          _searchController.clear();
-                          _searchStudent('');
-                        },
-                      )
-                    : const Icon(CupertinoIcons.search, color: Color(0xFF6F7978), size: 20),
+                ? IconButton(
+                    icon: const Icon(
+                      CupertinoIcons.clear_circled_solid,
+                      color: Color(0xFF6F7978),
+                      size: 18,
+                    ),
+                    onPressed: () {
+                      _searchController.clear();
+                      _searchStudent('');
+                    },
+                  )
+                : const Icon(
+                    CupertinoIcons.search,
+                    color: Color(0xFF6F7978),
+                    size: 20,
+                  ),
           ),
         ),
         const SizedBox(height: 20),
@@ -439,14 +493,22 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Text(
                 'Siswa tidak ditemukan.',
-                style: GoogleFonts.beVietnamPro(color: dangerRed, fontSize: 13, fontWeight: FontWeight.w500),
+                style: GoogleFonts.beVietnamPro(
+                  color: dangerRed,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           )
         else if (_searchResults.isNotEmpty) ...[
           Text(
             'Hasil Pencarian (${_searchResults.length}):',
-            style: GoogleFonts.beVietnamPro(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF6F7978)),
+            style: GoogleFonts.beVietnamPro(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF6F7978),
+            ),
           ),
           const SizedBox(height: 8),
           ListView.separated(
@@ -459,7 +521,7 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
               final name = student['full_name'] ?? 'Tanpa Nama';
               final nisn = student['nisn'] ?? '-';
               final className = student['students']?['class'] ?? '-';
-              
+
               return Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -474,17 +536,30 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
                   ],
                 ),
                 child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
                   title: Text(
                     name,
-                    style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, color: primaryTeal, fontSize: 14),
+                    style: GoogleFonts.beVietnamPro(
+                      fontWeight: FontWeight.bold,
+                      color: primaryTeal,
+                      fontSize: 14,
+                    ),
                   ),
                   subtitle: Text(
                     'NISN: $nisn • Kelas $className',
-                    style: GoogleFonts.beVietnamPro(color: const Color(0xFF6F7978), fontSize: 12),
+                    style: GoogleFonts.beVietnamPro(
+                      color: const Color(0xFF6F7978),
+                      fontSize: 12,
+                    ),
                   ),
                   trailing: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: primaryTeal.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(20),
@@ -514,11 +589,18 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
               padding: const EdgeInsets.symmetric(vertical: 40),
               child: Column(
                 children: [
-                  Icon(CupertinoIcons.search, size: 48, color: primaryTeal.withValues(alpha: 0.2)),
+                  Icon(
+                    CupertinoIcons.search,
+                    size: 48,
+                    color: primaryTeal.withValues(alpha: 0.2),
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     'Ketik nama atau NISN siswa\nuntuk memulai pencarian.',
-                    style: GoogleFonts.beVietnamPro(color: const Color(0xFF6F7978), fontSize: 13),
+                    style: GoogleFonts.beVietnamPro(
+                      color: const Color(0xFF6F7978),
+                      fontSize: 13,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -556,9 +638,17 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
           child: Column(
             children: [
               _buildInfoRow('Nama Siswa', _studentName),
-              const Divider(height: 16, thickness: 0.5, color: Color(0xFFE4E2E1)),
+              const Divider(
+                height: 16,
+                thickness: 0.5,
+                color: Color(0xFFE4E2E1),
+              ),
               _buildInfoRow('Kelas', 'Kelas $_studentClass'),
-              const Divider(height: 16, thickness: 0.5, color: Color(0xFFE4E2E1)),
+              const Divider(
+                height: 16,
+                thickness: 0.5,
+                color: Color(0xFFE4E2E1),
+              ),
               _buildInfoRow('Saldo Saat Ini', fmt.format(_studentBalance)),
             ],
           ),
@@ -568,7 +658,11 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
         // Type of correction
         Text(
           'Jenis Koreksi',
-          style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, color: const Color(0xFF1B1C1B), fontSize: 13),
+          style: GoogleFonts.beVietnamPro(
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF1B1C1B),
+            fontSize: 13,
+          ),
         ),
         const SizedBox(height: 8),
         Row(
@@ -583,16 +677,22 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
-                    color: !_isAddition ? dangerRed.withValues(alpha: 0.08) : Colors.white,
+                    color: !_isAddition
+                        ? dangerRed.withValues(alpha: 0.08)
+                        : Colors.white,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: !_isAddition ? dangerRed : const Color(0xFFE4E2E1)),
+                    border: Border.all(
+                      color: !_isAddition ? dangerRed : const Color(0xFFE4E2E1),
+                    ),
                   ),
                   child: Center(
                     child: Text(
                       'Kurangi Saldo',
                       style: GoogleFonts.beVietnamPro(
                         fontWeight: FontWeight.bold,
-                        color: !_isAddition ? dangerRed : const Color(0xFF6F7978),
+                        color: !_isAddition
+                            ? dangerRed
+                            : const Color(0xFF6F7978),
                         fontSize: 13,
                       ),
                     ),
@@ -611,16 +711,24 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
-                    color: _isAddition ? successGreen.withValues(alpha: 0.08) : Colors.white,
+                    color: _isAddition
+                        ? successGreen.withValues(alpha: 0.08)
+                        : Colors.white,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _isAddition ? successGreen : const Color(0xFFE4E2E1)),
+                    border: Border.all(
+                      color: _isAddition
+                          ? successGreen
+                          : const Color(0xFFE4E2E1),
+                    ),
                   ),
                   child: Center(
                     child: Text(
                       'Tambah Saldo',
                       style: GoogleFonts.beVietnamPro(
                         fontWeight: FontWeight.bold,
-                        color: _isAddition ? successGreen : const Color(0xFF6F7978),
+                        color: _isAddition
+                            ? successGreen
+                            : const Color(0xFF6F7978),
                         fontSize: 13,
                       ),
                     ),
@@ -635,7 +743,11 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
         // Nominal
         Text(
           'Nominal Koreksi',
-          style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, color: const Color(0xFF1B1C1B), fontSize: 13),
+          style: GoogleFonts.beVietnamPro(
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF1B1C1B),
+            fontSize: 13,
+          ),
         ),
         const SizedBox(height: 8),
         TextField(
@@ -644,12 +756,21 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
           onChanged: (_) => setState(() {}),
           decoration: InputDecoration(
             prefixText: 'Rp ',
-            prefixStyle: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, color: const Color(0xFF1B1C1B)),
+            prefixStyle: GoogleFonts.beVietnamPro(
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF1B1C1B),
+            ),
             hintText: '0',
-            hintStyle: GoogleFonts.beVietnamPro(color: const Color(0xFF6F7978), fontSize: 14),
+            hintStyle: GoogleFonts.beVietnamPro(
+              color: const Color(0xFF6F7978),
+              fontSize: 14,
+            ),
             filled: true,
             fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: Color(0xFFE4E2E1)),
@@ -670,7 +791,11 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
               '⚠️ Saldo tidak mencukupi untuk pengurangan.',
-              style: GoogleFonts.beVietnamPro(color: dangerRed, fontSize: 12, fontWeight: FontWeight.w600),
+              style: GoogleFonts.beVietnamPro(
+                color: dangerRed,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
 
@@ -687,7 +812,11 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
         // Reason
         Text(
           'Alasan Koreksi (Wajib)',
-          style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, color: const Color(0xFF1B1C1B), fontSize: 13),
+          style: GoogleFonts.beVietnamPro(
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF1B1C1B),
+            fontSize: 13,
+          ),
         ),
         const SizedBox(height: 8),
         TextField(
@@ -696,7 +825,10 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
           onChanged: (_) => setState(() {}),
           decoration: InputDecoration(
             hintText: 'Masukkan alasan koreksi secara detail...',
-            hintStyle: GoogleFonts.beVietnamPro(color: const Color(0xFF6F7978), fontSize: 14),
+            hintStyle: GoogleFonts.beVietnamPro(
+              color: const Color(0xFF6F7978),
+              fontSize: 14,
+            ),
             filled: true,
             fillColor: Colors.white,
             contentPadding: const EdgeInsets.all(16),
@@ -737,7 +869,9 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryTeal,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               elevation: 0,
             ),
             child: Text(
@@ -781,24 +915,53 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
             children: [
               Text(
                 '⚠️ RINGKASAN KOREKSI SALDO',
-                style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, color: dangerRed, fontSize: 14),
+                style: GoogleFonts.beVietnamPro(
+                  fontWeight: FontWeight.bold,
+                  color: dangerRed,
+                  fontSize: 14,
+                ),
               ),
               const SizedBox(height: 16),
               _buildInfoRow('Nama Siswa', _studentName),
-              const Divider(height: 16, thickness: 0.5, color: Color(0xFFE4E2E1)),
+              const Divider(
+                height: 16,
+                thickness: 0.5,
+                color: Color(0xFFE4E2E1),
+              ),
               _buildInfoRow('Kelas', 'Kelas $_studentClass'),
-              const Divider(height: 16, thickness: 0.5, color: Color(0xFFE4E2E1)),
+              const Divider(
+                height: 16,
+                thickness: 0.5,
+                color: Color(0xFFE4E2E1),
+              ),
               _buildInfoRow('Saldo Lama', fmt.format(_studentBalance)),
-              const Divider(height: 16, thickness: 0.5, color: Color(0xFFE4E2E1)),
+              const Divider(
+                height: 16,
+                thickness: 0.5,
+                color: Color(0xFFE4E2E1),
+              ),
               _buildInfoRow(
                 'Koreksi',
                 '${_isAddition ? "+" : "-"}${fmt.format(amount)}',
                 valueColor: _isAddition ? successGreen : dangerRed,
                 isBold: true,
               ),
-              const Divider(height: 16, thickness: 0.5, color: Color(0xFFE4E2E1)),
-              _buildInfoRow('Saldo Baru', fmt.format(newBalance), isBold: true, valueColor: primaryTeal),
-              const Divider(height: 16, thickness: 0.5, color: Color(0xFFE4E2E1)),
+              const Divider(
+                height: 16,
+                thickness: 0.5,
+                color: Color(0xFFE4E2E1),
+              ),
+              _buildInfoRow(
+                'Saldo Baru',
+                fmt.format(newBalance),
+                isBold: true,
+                valueColor: primaryTeal,
+              ),
+              const Divider(
+                height: 16,
+                thickness: 0.5,
+                color: Color(0xFFE4E2E1),
+              ),
               _buildInfoRow('Alasan Koreksi', _reasonController.text.trim()),
             ],
           ),
@@ -812,7 +975,9 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
             style: ElevatedButton.styleFrom(
               backgroundColor: dangerRed,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               elevation: 0,
             ),
             child: _isLoading
@@ -832,7 +997,10 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
         Center(
           child: Text(
             'Aksi ini memerlukan konfirmasi keamanan tambahan.',
-            style: GoogleFonts.beVietnamPro(fontSize: 12, color: const Color(0xFF6F7978)),
+            style: GoogleFonts.beVietnamPro(
+              fontSize: 12,
+              color: const Color(0xFF6F7978),
+            ),
           ),
         ),
       ],
@@ -895,18 +1063,34 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
           child: Column(
             children: [
               _buildInfoRow('Saldo Sebelum', fmt.format(_studentBalance)),
-              const Divider(height: 16, thickness: 0.5, color: Color(0xFFE4E2E1)),
+              const Divider(
+                height: 16,
+                thickness: 0.5,
+                color: Color(0xFFE4E2E1),
+              ),
               _buildInfoRow(
                 'Penyesuaian',
                 '${_isAddition ? "+" : "-"}${fmt.format(amount)}',
                 valueColor: _isAddition ? successGreen : dangerRed,
                 isBold: true,
               ),
-              const Divider(height: 16, thickness: 0.5, color: Color(0xFFE4E2E1)),
+              const Divider(
+                height: 16,
+                thickness: 0.5,
+                color: Color(0xFFE4E2E1),
+              ),
               _buildInfoRow('Saldo Baru', fmt.format(newBalance), isBold: true),
-              const Divider(height: 16, thickness: 0.5, color: Color(0xFFE4E2E1)),
+              const Divider(
+                height: 16,
+                thickness: 0.5,
+                color: Color(0xFFE4E2E1),
+              ),
               _buildInfoRow('Waktu Transaksi', _successTime),
-              const Divider(height: 16, thickness: 0.5, color: Color(0xFFE4E2E1)),
+              const Divider(
+                height: 16,
+                thickness: 0.5,
+                color: Color(0xFFE4E2E1),
+              ),
               _buildInfoRow('Kode Koreksi', _refCode),
             ],
           ),
@@ -922,7 +1106,9 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryTeal,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               elevation: 0,
             ),
             child: Text(
@@ -939,13 +1125,21 @@ class _KeuanganCorrectionScreenState extends ConsumerState<KeuanganCorrectionScr
     );
   }
 
-  Widget _buildInfoRow(String label, String value, {bool isBold = false, Color? valueColor}) {
+  Widget _buildInfoRow(
+    String label,
+    String value, {
+    bool isBold = false,
+    Color? valueColor,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: GoogleFonts.beVietnamPro(color: const Color(0xFF6F7978), fontSize: 13),
+          style: GoogleFonts.beVietnamPro(
+            color: const Color(0xFF6F7978),
+            fontSize: 13,
+          ),
         ),
         Flexible(
           child: Text(

@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
@@ -175,9 +176,40 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
     }
   }
 
+  void _showLogoutDialog(BuildContext context, WidgetRef ref) {
+    showCupertinoDialog(
+      context: context,
+      builder: (BuildContext ctx) => CupertinoAlertDialog(
+        title: const Text('Keluar dari Akun'),
+        content: const Text(
+            'Apakah Anda yakin ingin keluar dari Master Control?'),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('Batal'),
+            onPressed: () => Navigator.pop(ctx),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await ref.read(authNotifierProvider.notifier).logout();
+              if (context.mounted) {
+                context.go('/login');
+              }
+            },
+            child: const Text('Keluar'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final settingsAsync = ref.watch(adminSettingsProvider);
+    final authState = ref.watch(authNotifierProvider);
+    final String fullName = authState.profile?['full_name'] ?? 'Super Admin';
+    final String email = authState.profile?['email'] ?? 'admin@kantindigital.com';
     const Color primaryTeal = Color(0xFF003434);
     const Color accentOrange = Color(0xFF904D00);
 
@@ -195,6 +227,15 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
             color: primaryTeal,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(CupertinoIcons.square_arrow_right,
+                color: AppColors.error, size: 22),
+            tooltip: 'Keluar',
+            onPressed: () => _showLogoutDialog(context, ref),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: settingsAsync.when(
         data: (settings) {
@@ -612,6 +653,140 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                   label: const Text(
                     'SIMPAN SETELAN GLOBAL',
                     style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Account & Logout Card
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 20,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: primaryTeal.withValues(alpha: 0.1),
+                            child: const Icon(CupertinoIcons.person_solid,
+                                color: primaryTeal, size: 18),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Akun & Keamanan',
+                            style: GoogleFonts.beVietnamPro(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: primaryTeal,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // User info row
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5F3F2),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 20,
+                              backgroundColor: primaryTeal.withValues(alpha: 0.1),
+                              child: Text(
+                                fullName.isNotEmpty
+                                    ? fullName[0].toUpperCase()
+                                    : 'S',
+                                style: GoogleFonts.beVietnamPro(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryTeal,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    fullName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.beVietnamPro(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFF1B1C1B),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    email,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.beVietnamPro(
+                                      fontSize: 11,
+                                      color: AppColors.textGray,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: primaryTeal.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(99),
+                              ),
+                              child: Text(
+                                'Super Admin',
+                                style: GoogleFonts.beVietnamPro(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryTeal,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Logout Button
+                      ElevatedButton.icon(
+                        onPressed: () => _showLogoutDialog(context, ref),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFFDAD6),
+                          foregroundColor: const Color(0xFFBA1A1A),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          elevation: 0,
+                        ),
+                        icon: const Icon(CupertinoIcons.square_arrow_right,
+                            size: 18),
+                        label: const Text(
+                          'KELUAR DARI AKUN',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

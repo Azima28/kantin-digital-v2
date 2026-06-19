@@ -71,15 +71,12 @@ class AuthService {
           password: password,
         );
         authSessionEstablished = true;
-      } on AuthException catch (authErr) {
-        final errMsg = authErr.message;
-        // If credentials are wrong, reject immediately
-        if (errMsg.contains('Invalid login credentials') ||
-            errMsg.contains('invalid_credentials')) {
-          throw Exception('Email/Username/NISN atau kata sandi salah.');
-        }
-        // For infrastructure errors (Database error querying schema, etc.),
-        // fall through to the fallback path below
+      } on AuthException {
+        // All Supabase Auth errors (including "Invalid login credentials")
+        // fall through to the fallback profiles-based password check below.
+        // This ensures login works even if a user exists in profiles but
+        // not yet in auth.users, or if the auth.users password differs
+        // from the profiles.password column.
       } catch (_) {
         // Other unexpected errors — fall through to fallback
       }
@@ -97,13 +94,11 @@ class AuthService {
               .eq('id', userId)
               .maybeSingle();
         }
-        if (profile == null) {
-          profile = await _client
+        profile ??= await _client
               .from('profiles')
               .select()
               .eq('email', resolvedEmail)
               .maybeSingle();
-        }
       }
 
       // --- Step 4: Fallback — profiles-based password verification ---

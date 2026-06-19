@@ -728,7 +728,7 @@ class _NfcPaymentModalState extends ConsumerState<_NfcPaymentModal> {
                     ? null
                     : () {
                         ref.read(nfcPaymentProvider.notifier).confirmPurchase(
-                          operatorId: operatorId!,
+                          operatorId: operatorId,
                           items: cartState.items,
                           totalAmount: widget.totalAmount,
                         );
