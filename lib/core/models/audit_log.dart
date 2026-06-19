@@ -33,11 +33,11 @@ class AuditLog {
 
   factory AuditLog.fromJson(Map<String, dynamic> json) {
     return AuditLog(
-      id: json['id'] as String,
+      id: (json['id'] ?? '').toString(),
       actorId: json['actor_id'] as String?,
-      actorName: json['actor_name'] as String,
-      actionType: json['action_type'] as String,
-      description: json['description'] as String,
+      actorName: (json['actor_name'] ?? '').toString(),
+      actionType: (json['action_type'] ?? '').toString(),
+      description: (json['description'] ?? '').toString(),
       targetId: json['target_id'] as String?,
       oldValue: _parseJsonb(json['old_value']),
       newValue: _parseJsonb(json['new_value']),

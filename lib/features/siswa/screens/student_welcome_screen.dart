@@ -205,7 +205,7 @@ class _StudentWelcomeScreenState extends State<StudentWelcomeScreen>
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
-                            context.push('/login');
+                            context.go('/login?from=/welcome');
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,

@@ -33,7 +33,40 @@ class AuthService {
       String resolvedEmail = inputLower;
       Map<String, dynamic>? preloadedProfile;
 
-      if (!inputLower.contains('@')) {
+      if (expectedRole == 'parent') {
+        // Resolve parent profile by looking up student's NISN
+        final studentProfile = await _client
+            .from('profiles')
+            .select()
+            .eq('nisn', rawInput)
+            .eq('role', 'student')
+            .maybeSingle();
+        if (studentProfile == null) {
+          throw Exception('NISN Anak tidak terdaftar.');
+        }
+
+        final link = await _client
+            .from('parent_students')
+            .select('parent_id')
+            .eq('student_id', studentProfile['id'])
+            .maybeSingle();
+        if (link == null) {
+          throw Exception('Akun Orang Tua belum dikaitkan dengan siswa ini.');
+        }
+
+        final parentId = link['parent_id'];
+        final parentProfile = await _client
+            .from('profiles')
+            .select()
+            .eq('id', parentId)
+            .maybeSingle();
+        if (parentProfile == null) {
+          throw Exception('Profil Orang Tua tidak ditemukan.');
+        }
+
+        preloadedProfile = parentProfile;
+        resolvedEmail = parentProfile['email'] as String;
+      } else if (!inputLower.contains('@')) {
         // Try to find profile by username
         try {
           preloadedProfile = await _client
@@ -158,8 +191,22 @@ class AuthService {
         }
       }
 
+      if (profile['role'] == 'parent') {
+        try {
+          final link = await _client
+              .from('parent_students')
+              .select('student_id')
+              .eq('parent_id', profile['id'])
+              .maybeSingle();
+          if (link != null) {
+            profile = Map<String, dynamic>.from(profile);
+            profile['student_id'] = link['student_id'];
+          }
+        } catch (_) {}
+      }
+
       _currentProfile = profile;
-      return profile;
+      return profile!;
     } catch (e) {
       final String errString = e.toString();
       if (errString.contains('SocketException') ||
@@ -195,11 +242,26 @@ class AuthService {
     final session = _client.auth.currentSession;
     if (session != null) {
       try {
-        final profile = await _client
+        var profile = await _client
             .from('profiles')
             .select()
             .eq('id', session.user.id)
             .maybeSingle();
+        
+        if (profile != null && profile['role'] == 'parent') {
+          try {
+            final link = await _client
+                .from('parent_students')
+                .select('student_id')
+                .eq('parent_id', profile['id'])
+                .maybeSingle();
+            if (link != null) {
+              profile = Map<String, dynamic>.from(profile);
+              profile['student_id'] = link['student_id'];
+            }
+          } catch (_) {}
+        }
+
         _currentProfile = profile;
         return profile;
       } catch (_) {

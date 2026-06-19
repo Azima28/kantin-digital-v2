@@ -124,7 +124,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
       // 3. Log Audit
       await client.from('audit_logs').insert({
         'actor_name': 'Super Admin',
-        'action_type': 'SETELAN_SISTEM',
+        'action_type': 'UBAH_SETELAN',
         'description': 'Super Admin memperbarui setelan global platform (Pemeliharaan & API)',
         'old_value': {
           'maintenance_mode': oldSettings['maintenance_mode'],

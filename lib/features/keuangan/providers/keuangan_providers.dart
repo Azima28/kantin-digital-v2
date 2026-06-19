@@ -29,7 +29,63 @@ final keuanganDashboardProvider =
         };
       }
 
-      // Recent audit logs by this officer
+      // Awal hari ini (UTC)
+      final now = DateTime.now().toLocal();
+      final todayStr =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      final startOfDayUtc = '${todayStr}T00:00:00+07:00';
+
+      // 1. Total saldo beredar semua siswa (data real dari DB)
+      double totalSaldo = 0.0;
+      try {
+        final List<dynamic> balances =
+            await client.from('students').select('balance');
+        for (final row in balances) {
+          totalSaldo +=
+              double.tryParse(row['balance']?.toString() ?? '0') ?? 0.0;
+        }
+      } catch (_) {}
+
+      // 2. Top-up hari ini
+      double topupToday = 0.0;
+      int topupCount = 0;
+      try {
+        final List<dynamic> topups = await client
+            .from('transactions')
+            .select('total_amount')
+            .eq('type', 'topup')
+            .eq('status', 'success')
+            .gte('created_at', startOfDayUtc);
+        topupCount = topups.length;
+        for (final tx in topups) {
+          topupToday +=
+              double.tryParse(tx['total_amount']?.toString() ?? '0') ?? 0.0;
+        }
+      } catch (_) {}
+
+      // 3. Koreksi saldo hari ini (audit_logs KOREKSI_SALDO)
+      int koreksCount = 0;
+      double koreksNet = 0.0;
+      try {
+        final List<dynamic> koreksi = await client
+            .from('audit_logs')
+            .select('old_value, new_value')
+            .eq('action_type', 'KOREKSI_SALDO')
+            .eq('actor_id', officerId)
+            .gte('created_at', startOfDayUtc);
+        koreksCount = koreksi.length;
+        for (final log in koreksi) {
+          final oldVal = log['old_value'] as Map<String, dynamic>? ?? {};
+          final newVal = log['new_value'] as Map<String, dynamic>? ?? {};
+          final double oldBal =
+              double.tryParse(oldVal['balance']?.toString() ?? '0') ?? 0.0;
+          final double newBal =
+              double.tryParse(newVal['balance']?.toString() ?? '0') ?? 0.0;
+          koreksNet += (newBal - oldBal);
+        }
+      } catch (_) {}
+
+      // 4. Recent audit logs by this officer
       final List<dynamic> logs = await client
           .from('audit_logs')
           .select('actor_name, action_type, description, created_at')
@@ -40,12 +96,11 @@ final keuanganDashboardProvider =
       return {
         'profile': profile,
         'school': school,
-        'totalSaldo':
-            14520000.0, // mock - in real: SUM(students.balance) by school
-        'topupToday': 1250000.0,
-        'topupCount': 18,
-        'koreksCount': 3,
-        'koreksNet': -35000.0,
+        'totalSaldo': totalSaldo,
+        'topupToday': topupToday,
+        'topupCount': topupCount,
+        'koreksCount': koreksCount,
+        'koreksNet': koreksNet,
         'recentLogs': List<Map<String, dynamic>>.from(logs),
       };
     });
@@ -157,7 +212,7 @@ final keuanganStudentsProvider =
       final List<dynamic> res = await client
           .from('profiles')
           .select(
-            'id, full_name, email, nisn, is_active, students:students!students_id_fkey(class, balance, rfid_uid)',
+            'id, full_name, email, nisn, is_active, students:students!students_id_fkey(class, balance, rfid_uid, is_active)',
           )
           .eq('role', 'student')
           .order('full_name', ascending: true);
@@ -222,7 +277,7 @@ final keuanganParentsProvider =
       final List<dynamic> res = await client
           .from('profiles')
           .select(
-            'id, full_name, email, phone_number, is_active, created_at, parent_students!parent_id(students(id, class, profiles(full_name, nisn)))',
+            'id, full_name, email, phone_number, is_active, created_at, parent_students!parent_id(students!parent_students_student_id_fkey(id, class, profiles:profiles!students_id_fkey(full_name, nisn)))',
           )
           .eq('role', 'parent')
           .order('full_name', ascending: true);
@@ -237,7 +292,7 @@ final keuanganStaffProvider =
       final List<dynamic> res = await client
           .from('profiles')
           .select(
-            'id, full_name, username, phone_number, is_active, last_sign_in_at, canteen_operators(canteen_name, balance_earned, transaction_count)',
+            'id, full_name, username, phone_number, is_active, canteen_operators(canteen_name, balance_earned)',
           )
           .eq('role', 'petugas_kantin')
           .order('full_name', ascending: true);

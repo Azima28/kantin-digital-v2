@@ -12,7 +12,7 @@ final keuanganStudentsProvider = FutureProvider.autoDispose<List<Map<String, dyn
   // Fetch profiles that are students and join student details
   final List<dynamic> res = await client
       .from('profiles')
-      .select('id, full_name, email, nisn, is_active, students:students!students_id_fkey(class, balance, rfid_uid)')
+      .select('id, full_name, email, nisn, is_active, students:students!students_id_fkey(class, balance, rfid_uid, is_active)')
       .eq('role', 'student')
       .order('full_name', ascending: true);
       
@@ -176,9 +176,9 @@ class _KeuanganStudentsScreenState extends ConsumerState<KeuanganStudentsScreen>
                                   items: const [
                                     DropdownMenuItem(value: 'Semua', child: Text('Semua Status')),
                                     DropdownMenuItem(value: 'Aktif', child: Text('Aktif')),
-                                    DropdownMenuItem(value: 'Diblokir', child: Text('Diblokir')),
-                                    DropdownMenuItem(value: 'Terhubung', child: Text('Kartu Terhubung')),
-                                    DropdownMenuItem(value: 'Belum Terhubung', child: Text('Belum Ada Kartu')),
+                                    DropdownMenuItem(value: 'Akun Diblokir', child: Text('Akun Diblokir')),
+                                    DropdownMenuItem(value: 'Kartu Diblokir', child: Text('Kartu Diblokir')),
+                                    DropdownMenuItem(value: 'Belum Aktif', child: Text('Belum Aktif')),
                                     DropdownMenuItem(value: 'Saldo Rendah', child: Text('Saldo Rendah (<5k)')),
                                   ],
                                 ),
@@ -226,13 +226,13 @@ class _KeuanganStudentsScreenState extends ConsumerState<KeuanganStudentsScreen>
                       // Status filter matching
                       bool matchesStatus = true;
                       if (_selectedStatus == 'Aktif') {
-                        matchesStatus = isAc;
-                      } else if (_selectedStatus == 'Diblokir') {
-                        matchesStatus = !isAc;
-                      } else if (_selectedStatus == 'Terhubung') {
-                        matchesStatus = rfid != null;
-                      } else if (_selectedStatus == 'Belum Terhubung') {
-                        matchesStatus = rfid == null;
+                        matchesStatus = isAc && rfid != null && rfid.isNotEmpty && (studentData?['is_active'] == true);
+                      } else if (_selectedStatus == 'Akun Diblokir') {
+                        matchesStatus = !isAc && rfid != null && rfid.isNotEmpty;
+                      } else if (_selectedStatus == 'Kartu Diblokir') {
+                        matchesStatus = isAc && (studentData?['is_active'] == false) && rfid != null && rfid.isNotEmpty;
+                      } else if (_selectedStatus == 'Belum Aktif') {
+                        matchesStatus = rfid == null || rfid.isEmpty;
                       } else if (_selectedStatus == 'Saldo Rendah') {
                         matchesStatus = sBalance < 5000;
                       }
@@ -354,34 +354,6 @@ class _KeuanganStudentsScreenState extends ConsumerState<KeuanganStudentsScreen>
                                           const SizedBox(height: 6),
                                           Row(
                                             children: [
-                                              // Card status pill
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                                decoration: BoxDecoration(
-                                                  color: hasCard ? successGreen.withValues(alpha: 0.08) : const Color(0xFFE4E2E1),
-                                                  borderRadius: BorderRadius.circular(12),
-                                                ),
-                                                child: Row(
-                                                  children: [
-                                                    Icon(
-                                                      hasCard ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.clear_circled_solid,
-                                                      size: 10,
-                                                      color: hasCard ? successGreen : const Color(0xFF6F7978),
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      hasCard ? 'TERHUBUNG' : 'BELUM LINK',
-                                                      style: GoogleFonts.beVietnamPro(
-                                                        fontSize: 9,
-                                                        fontWeight: FontWeight.bold,
-                                                        color: hasCard ? successGreen : const Color(0xFF6F7978),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              // Account status block
                                               if (!isActive)
                                                 Container(
                                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -389,13 +361,85 @@ class _KeuanganStudentsScreenState extends ConsumerState<KeuanganStudentsScreen>
                                                     color: dangerRed.withValues(alpha: 0.08),
                                                     borderRadius: BorderRadius.circular(12),
                                                   ),
-                                                  child: Text(
-                                                    'DIBLOKIR',
-                                                    style: GoogleFonts.beVietnamPro(
-                                                      fontSize: 9,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: dangerRed,
-                                                    ),
+                                                  child: Row(
+                                                    children: [
+                                                      const Icon(CupertinoIcons.clear_circled_solid, size: 10, color: dangerRed),
+                                                      const SizedBox(width: 4),
+                                                      Text(
+                                                        'AKUN DIBLOKIR',
+                                                        style: GoogleFonts.beVietnamPro(
+                                                          fontSize: 9,
+                                                          fontWeight: FontWeight.bold,
+                                                          color: dangerRed,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                )
+                                              else if (!hasCard)
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(0xFFE4E2E1),
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                  child: Row(
+                                                    children: [
+                                                      const Icon(CupertinoIcons.info_circle_fill, size: 10, color: Color(0xFF6F7978)),
+                                                      const SizedBox(width: 4),
+                                                      Text(
+                                                        'BELUM AKTIF',
+                                                        style: GoogleFonts.beVietnamPro(
+                                                          fontSize: 9,
+                                                          fontWeight: FontWeight.bold,
+                                                          color: const Color(0xFF6F7978),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                )
+                                              else if (studentData?['is_active'] != true)
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(0xFFFFF9E6),
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                  child: Row(
+                                                    children: [
+                                                      const Icon(CupertinoIcons.exclamationmark_circle_fill, size: 10, color: Color(0xFF8F6B00)),
+                                                      const SizedBox(width: 4),
+                                                      Text(
+                                                        'KARTU DIBLOKIR',
+                                                        style: GoogleFonts.beVietnamPro(
+                                                          fontSize: 9,
+                                                          fontWeight: FontWeight.bold,
+                                                          color: const Color(0xFF8F6B00),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                )
+                                              else
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: successGreen.withValues(alpha: 0.08),
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                  child: Row(
+                                                    children: [
+                                                      const Icon(CupertinoIcons.checkmark_circle_fill, size: 10, color: successGreen),
+                                                      const SizedBox(width: 4),
+                                                      Text(
+                                                        'AKTIF',
+                                                        style: GoogleFonts.beVietnamPro(
+                                                          fontSize: 9,
+                                                          fontWeight: FontWeight.bold,
+                                                          color: successGreen,
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ),
                                                 ),
                                             ],
@@ -537,9 +581,9 @@ class _KeuanganStudentsScreenState extends ConsumerState<KeuanganStudentsScreen>
                       onPressed: () => setLocal(() => passCtrl.text = 'siswa${_randomSuffix()}'),
                     )),
                 const SizedBox(height: 20),
-                _sectionLabel('KARTU RFID / NFC (OPSIONAL)'),
+                _sectionLabel('KARTU RFID / NFC'),
                 const SizedBox(height: 8),
-                _buildFormField(rfidCtrl, 'RFID UID / Nomor Kartu (jika ada)'),
+                _buildFormField(rfidCtrl, 'RFID UID / Nomor Kartu *'),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
@@ -555,9 +599,10 @@ class _KeuanganStudentsScreenState extends ConsumerState<KeuanganStudentsScreen>
                             final name = nameCtrl.text.trim();
                             final nisn = nisnCtrl.text.trim();
                             final password = passCtrl.text.trim();
-                            if (name.isEmpty || nisn.isEmpty || password.isEmpty) {
+                            final rfid = rfidCtrl.text.trim();
+                            if (name.isEmpty || nisn.isEmpty || password.isEmpty || rfid.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Nama, NISN, dan password wajib diisi')),
+                                const SnackBar(content: Text('Nama, NISN, password, dan nomor kartu RFID wajib diisi')),
                               );
                               return;
                             }
@@ -578,29 +623,45 @@ class _KeuanganStudentsScreenState extends ConsumerState<KeuanganStudentsScreen>
                                   ? rfidCtrl.text.trim()
                                   : null;
 
-                              // 1. Insert into profiles table
-                              final newProfile = await client.from('profiles').insert({
-                                'full_name': name,
-                                'email': email,
-                                'phone_number': parentPhone,
-                                'username': username,
-                                'role': 'student',
-                                'is_active': true,
-                                'password': password,
-                                'nisn': nisn,
-                              }).select().single();
+                              // 1. Call RPC function to create the user account
+                              final newProfile = await client.rpc('create_user_account', params: {
+                                'p_email': email,
+                                'p_password': password,
+                                'p_full_name': name,
+                                'p_role': 'student',
+                                'p_phone_number': parentPhone,
+                                'p_username': username,
+                                'p_nisn': nisn,
+                                'p_class': selectedClass,
+                                'p_is_active': true,
+                                'p_rfid_uid': rfid,
+                                'p_parent_phone': parentPhone,
+                              });
 
                               final String studentId = newProfile['id'];
 
-                              // 2. Insert into students table
-                              await client.from('students').insert({
-                                'id': studentId,
-                                'class': selectedClass,
-                                'balance': 0.0,
-                                'is_active': true,
-                                'rfid_uid': rfid,
-                                'parent_phone': parentPhone,
-                              });
+                              // 3. Write to audit logs
+                              try {
+                                final authProfile = ref.read(authNotifierProvider).profile;
+                                final actorName = authProfile?['full_name'] ?? 'Admin Keuangan';
+                                final actorId = authProfile?['id'];
+
+                                await client.from('audit_logs').insert({
+                                  'actor_id': actorId,
+                                  'actor_name': actorName,
+                                  'action_type': 'TAMBAH_PENGGUNA',
+                                  'description': 'Menambahkan siswa baru secara manual: $name (NISN: $nisn)',
+                                  'target_id': studentId,
+                                  'new_value': {
+                                    'full_name': name,
+                                    'email': email,
+                                    'nisn': nisn,
+                                    'class': selectedClass,
+                                    'rfid_uid': rfid,
+                                    'is_active': true,
+                                  },
+                                });
+                              } catch (_) {}
 
                               ref.invalidate(keuanganStudentsProvider);
 

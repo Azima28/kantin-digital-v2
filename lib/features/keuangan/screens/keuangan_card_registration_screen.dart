@@ -217,18 +217,26 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
         }
       }
 
-      // 2. Update students table rfid_uid
-      await client.from('students').update({'rfid_uid': uid}).eq('id', widget.studentId);
+      // 2. Update students table rfid_uid and set active
+      await client.from('students').update({
+        'rfid_uid': uid,
+        'is_active': true,
+      }).eq('id', widget.studentId);
+
+      // 2b. Update profiles table is_active to true
+      await client.from('profiles').update({
+        'is_active': true,
+      }).eq('id', widget.studentId);
 
       // 3. Write to audit logs
       await client.from('audit_logs').insert({
         'actor_id': actorId,
         'actor_name': actorName,
         'action_type': 'REGISTRASI_KARTU',
-        'description': 'Menautkan kartu RFID ($uid) ke siswa: $_fullName',
+        'description': 'Menautkan kartu RFID ($uid) dan mengaktifkan siswa: $_fullName',
         'target_id': widget.studentId,
-        'old_value': {'rfid_uid': _oldRfid},
-        'new_value': {'rfid_uid': uid},
+        'old_value': {'rfid_uid': _oldRfid, 'is_active': false},
+        'new_value': {'rfid_uid': uid, 'is_active': true},
       });
 
       // Update details
@@ -495,7 +503,7 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
               ),
               const SizedBox(height: 24),
               Text(
-                'Kartu Terhubung!',
+                'Kartu Berhasil Diaktifkan!',
                 style: GoogleFonts.beVietnamPro(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -504,7 +512,7 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
               ),
               const SizedBox(height: 12),
               Text(
-                'Kartu NFC berhasil ditautkan ke profil siswa.',
+                'Kartu NFC berhasil ditautkan dan akun siswa aktif.',
                 style: GoogleFonts.beVietnamPro(
                   fontSize: 14,
                   color: const Color(0xFF6F7978),

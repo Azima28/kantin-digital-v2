@@ -9,16 +9,19 @@ import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/features/shared/screens/student_transactions_screen.dart';
 
 class AdminStudentDetailScreen extends ConsumerStatefulWidget {
   final String studentId;
   const AdminStudentDetailScreen({super.key, required this.studentId});
 
   @override
-  ConsumerState<AdminStudentDetailScreen> createState() => _AdminStudentDetailScreenState();
+  ConsumerState<AdminStudentDetailScreen> createState() =>
+      _AdminStudentDetailScreenState();
 }
 
-class _AdminStudentDetailScreenState extends ConsumerState<AdminStudentDetailScreen> {
+class _AdminStudentDetailScreenState
+    extends ConsumerState<AdminStudentDetailScreen> {
   final _passwordController = TextEditingController();
 
   @override
@@ -33,17 +36,35 @@ class _AdminStudentDetailScreenState extends ConsumerState<AdminStudentDetailScr
 
     final client = ref.read(supabaseClientProvider);
     try {
-      await client.from('profiles').update({'password': password}).eq('id', profileId);
-      
+      await client
+          .from('profiles')
+          .update({'password': password})
+          .eq('id', profileId);
+
       // Update encrypted_password in auth.users if possible
       try {
-        await client.rpc('update_auth_user_password', params: {
-          'user_id': profileId,
-          'new_password': password,
-        });
+        await client.rpc(
+          'update_auth_user_password',
+          params: {'user_id': profileId, 'new_password': password},
+        );
       } catch (_) {
         // Fallback: local db may not have this RPC function.
       }
+
+      // Write to audit logs
+      try {
+        final authProfile = ref.read(authNotifierProvider).profile;
+        final actorName = authProfile?['full_name'] ?? 'Super Admin';
+        final actorId = authProfile?['id'];
+
+        await client.from('audit_logs').insert({
+          'actor_id': actorId,
+          'actor_name': actorName,
+          'action_type': 'UBAH_PASSWORD',
+          'description': 'Super Admin mengubah kata sandi siswa dengan ID: $profileId',
+          'target_id': profileId,
+        });
+      } catch (_) {}
 
       if (mounted) {
         Navigator.pop(context); // Close dialog
@@ -75,18 +96,39 @@ class _AdminStudentDetailScreenState extends ConsumerState<AdminStudentDetailScr
 
     try {
       // 1. Update students table is_active field
-      await client.from('students').update({'is_active': newStatus}).eq('id', studentId);
-      
-      // 2. Also update profiles table is_active field
-      await client.from('profiles').update({'is_active': newStatus}).eq('id', studentId);
+      await client
+          .from('students')
+          .update({'is_active': newStatus})
+          .eq('id', studentId);
+
+      // Write to audit logs
+      try {
+        final authProfile = ref.read(authNotifierProvider).profile;
+        final actorName = authProfile?['full_name'] ?? 'Super Admin';
+        final actorId = authProfile?['id'];
+
+        await client.from('audit_logs').insert({
+          'actor_id': actorId,
+          'actor_name': actorName,
+          'action_type': newStatus ? 'AKTIFKAN_KARTU' : 'BLOKIR_KARTU',
+          'description': 'Super Admin ${newStatus ? "mengaktifkan kembali" : "membekukan"} kartu RFID siswa dengan ID: $studentId',
+          'target_id': studentId,
+          'old_value': {'is_active': currentStatus},
+          'new_value': {'is_active': newStatus},
+        });
+      } catch (_) {}
 
       ref.invalidate(adminStudentDetailProvider(widget.studentId));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Kartu RFID berhasil ${newStatus ? "diaktifkan kembali" : "dibekukan"}.'),
-            backgroundColor: newStatus ? const Color(0xFF006A35) : const Color(0xFF904D00),
+            content: Text(
+              'Kartu RFID berhasil ${newStatus ? "diaktifkan kembali" : "dibekukan"}.',
+            ),
+            backgroundColor: newStatus
+                ? const Color(0xFF006A35)
+                : const Color(0xFF904D00),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -136,149 +178,29 @@ class _AdminStudentDetailScreenState extends ConsumerState<AdminStudentDetailScr
     );
   }
 
-  Future<List<Map<String, dynamic>>> _fetchAllTransactions(String studentId) async {
-    final client = ref.read(supabaseClientProvider);
-    final List<dynamic> txs = await client
-        .from('transactions')
-        .select('id, total_amount, type, status, created_at, canteen_operators(canteen_name)')
-        .eq('student_id', studentId)
-        .order('created_at', ascending: false);
-
-    return List<Map<String, dynamic>>.from(txs);
-  }
-
-  void _showAllTransactionsSheet({
+  void _openAllTransactionsScreen({
     required String studentId,
     required Color primaryTeal,
     required Color accentOrange,
   }) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => StudentTransactionsScreen(
+          studentId: studentId,
+          primaryColor: primaryTeal,
+          accentColor: accentOrange,
+        ),
       ),
-      builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.82,
-          minChildSize: 0.45,
-          maxChildSize: 0.95,
-          expand: false,
-          builder: (context, scrollController) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 36,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFBFC8C8),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    'Semua Transaksi',
-                    style: GoogleFonts.beVietnamPro(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: primaryTeal,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: FutureBuilder<List<Map<String, dynamic>>>(
-                      future: _fetchAllTransactions(studentId),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CupertinoActivityIndicator());
-                        }
-                        if (snapshot.hasError) {
-                          return Center(child: Text('Gagal memuat transaksi: ${snapshot.error}'));
-                        }
-
-                        final txs = snapshot.data ?? [];
-                        if (txs.isEmpty) {
-                          return Center(
-                            child: Text(
-                              'Belum ada transaksi.',
-                              style: GoogleFonts.beVietnamPro(color: AppColors.textGray),
-                            ),
-                          );
-                        }
-
-                        return ListView.separated(
-                          controller: scrollController,
-                          itemCount: txs.length,
-                          separatorBuilder: (_, _) => const SizedBox(height: 10),
-                          itemBuilder: (context, index) {
-                            final tx = txs[index];
-                            final amount = double.tryParse(tx['total_amount'].toString()) ?? 0.0;
-                            final type = tx['type'] ?? 'purchase';
-                            final isTopup = type == 'topup';
-                            final canteen = tx['canteen_operators']?['canteen_name'] ?? 'Stan Kantin';
-                            final date = tx['created_at'] != null
-                                ? DateTime.parse(tx['created_at']).toLocal()
-                                : DateTime.now();
-
-                            return ListTile(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              tileColor: const Color(0xFFF8F7F6),
-                              leading: CircleAvatar(
-                                backgroundColor: isTopup
-                                    ? const Color(0xFFFFDCC3)
-                                    : primaryTeal.withValues(alpha: 0.1),
-                                child: Icon(
-                                  isTopup ? CupertinoIcons.creditcard : Icons.shopping_bag,
-                                  color: isTopup ? accentOrange : primaryTeal,
-                                  size: 18,
-                                ),
-                              ),
-                              title: Text(
-                                isTopup ? 'Top-up Saldo' : canteen,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.beVietnamPro(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              subtitle: Text(
-                                DateFormat('dd MMM yyyy, HH:mm').format(date),
-                                style: GoogleFonts.beVietnamPro(fontSize: 11, color: AppColors.textGray),
-                              ),
-                              trailing: Text(
-                                '${isTopup ? "+" : "-"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
-                                style: GoogleFonts.beVietnamPro(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: isTopup ? const Color(0xFF006A35) : const Color(0xFFBA1A1A),
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
     );
   }
 
+
+
   @override
   Widget build(BuildContext context) {
-    final studentAsync = ref.watch(adminStudentDetailProvider(widget.studentId));
+    final studentAsync = ref.watch(
+      adminStudentDetailProvider(widget.studentId),
+    );
     const Color primaryTeal = Color(0xFF003434);
     const Color accentOrange = Color(0xFF904D00);
 
@@ -341,7 +263,11 @@ class _AdminStudentDetailScreenState extends ConsumerState<AdminStudentDetailScr
                       CircleAvatar(
                         radius: 36,
                         backgroundColor: primaryTeal.withValues(alpha: 0.1),
-                        child: const Icon(CupertinoIcons.person, color: primaryTeal, size: 36),
+                        child: const Icon(
+                          CupertinoIcons.person,
+                          color: primaryTeal,
+                          size: 36,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Text(
@@ -383,23 +309,51 @@ class _AdminStudentDetailScreenState extends ConsumerState<AdminStudentDetailScr
                   child: Column(
                     children: [
                       _buildInfoRow('Status Kartu', isCardActive),
-                      const Divider(height: 24, thickness: 0.5, color: Color(0xFFE4E2E1)),
+                      const Divider(
+                        height: 24,
+                        thickness: 0.5,
+                        color: Color(0xFFE4E2E1),
+                      ),
                       _buildTextInfoRow('UID RFID', rfidUid, isMonospace: true),
-                      const Divider(height: 24, thickness: 0.5, color: Color(0xFFE4E2E1)),
-                      _buildTextInfoRow('Username', username.isNotEmpty ? username : '-'),
-                      const Divider(height: 24, thickness: 0.5, color: Color(0xFFE4E2E1)),
-                      _buildTextInfoRow('Email', email.isNotEmpty ? email : '-'),
-                      const Divider(height: 24, thickness: 0.5, color: Color(0xFFE4E2E1)),
+                      const Divider(
+                        height: 24,
+                        thickness: 0.5,
+                        color: Color(0xFFE4E2E1),
+                      ),
+                      _buildTextInfoRow(
+                        'Username',
+                        username.isNotEmpty ? username : '-',
+                      ),
+                      const Divider(
+                        height: 24,
+                        thickness: 0.5,
+                        color: Color(0xFFE4E2E1),
+                      ),
+                      _buildTextInfoRow(
+                        'Email',
+                        email.isNotEmpty ? email : '-',
+                      ),
+                      const Divider(
+                        height: 24,
+                        thickness: 0.5,
+                        color: Color(0xFFE4E2E1),
+                      ),
                       _buildTextInfoRow(
                         'Saldo',
                         CurrencyFormatter.format(balance),
                         highlightColor: primaryTeal,
                         isBold: true,
                       ),
-                      const Divider(height: 24, thickness: 0.5, color: Color(0xFFE4E2E1)),
+                      const Divider(
+                        height: 24,
+                        thickness: 0.5,
+                        color: Color(0xFFE4E2E1),
+                      ),
                       _buildTextInfoRow(
                         'Batas Harian',
-                        dailyLimit != null ? CurrencyFormatter.format(dailyLimit) : 'Tidak Terbatas',
+                        dailyLimit != null
+                            ? CurrencyFormatter.format(dailyLimit)
+                            : 'Tidak Terbatas',
                       ),
                     ],
                   ),
@@ -439,16 +393,17 @@ class _AdminStudentDetailScreenState extends ConsumerState<AdminStudentDetailScr
                     const SizedBox(width: 12),
                     Expanded(
                       child: GestureDetector(
-                        onTap: () => _toggleFreezeCard(profile.id, isCardActive),
+                        onTap: () =>
+                            _toggleFreezeCard(profile.id, isCardActive),
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           decoration: BoxDecoration(
-                            color: isCardActive 
-                                ? const Color(0xFFFFDAD6) 
+                            color: isCardActive
+                                ? const Color(0xFFFFDAD6)
                                 : const Color(0xFFEAF9EE),
                             border: Border.all(
-                              color: isCardActive 
-                                  ? const Color(0xFFFFDAD6) 
+                              color: isCardActive
+                                  ? const Color(0xFFFFDAD6)
                                   : const Color(0xFFEAF9EE),
                               width: 1,
                             ),
@@ -457,17 +412,25 @@ class _AdminStudentDetailScreenState extends ConsumerState<AdminStudentDetailScr
                           child: Column(
                             children: [
                               Icon(
-                                isCardActive ? CupertinoIcons.snow : CupertinoIcons.checkmark_circle,
-                                color: isCardActive ? const Color(0xFFBA1A1A) : const Color(0xFF006A35),
+                                isCardActive
+                                    ? CupertinoIcons.snow
+                                    : CupertinoIcons.checkmark_circle,
+                                color: isCardActive
+                                    ? const Color(0xFFBA1A1A)
+                                    : const Color(0xFF006A35),
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                isCardActive ? 'Bekukan\nKartu RFID' : 'Aktifkan\nKartu RFID',
+                                isCardActive
+                                    ? 'Bekukan\nKartu RFID'
+                                    : 'Aktifkan\nKartu RFID',
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.beVietnamPro(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                                  color: isCardActive ? const Color(0xFFBA1A1A) : const Color(0xFF006A35),
+                                  color: isCardActive
+                                      ? const Color(0xFFBA1A1A)
+                                      : const Color(0xFF006A35),
                                 ),
                               ),
                             ],
@@ -492,7 +455,7 @@ class _AdminStudentDetailScreenState extends ConsumerState<AdminStudentDetailScr
                       ),
                     ),
                     TextButton(
-                      onPressed: () => _showAllTransactionsSheet(
+                      onPressed: () => _openAllTransactionsScreen(
                         studentId: widget.studentId,
                         primaryTeal: primaryTeal,
                         accentOrange: accentOrange,
@@ -520,7 +483,9 @@ class _AdminStudentDetailScreenState extends ConsumerState<AdminStudentDetailScr
                     child: Center(
                       child: Text(
                         'Belum ada transaksi.',
-                        style: GoogleFonts.beVietnamPro(color: AppColors.textGray),
+                        style: GoogleFonts.beVietnamPro(
+                          color: AppColors.textGray,
+                        ),
                       ),
                     ),
                   )
@@ -550,11 +515,13 @@ class _AdminStudentDetailScreenState extends ConsumerState<AdminStudentDetailScr
                           children: [
                             CircleAvatar(
                               radius: 18,
-                              backgroundColor: isTopup 
-                                  ? const Color(0xFFFFDCC3) 
+                              backgroundColor: isTopup
+                                  ? const Color(0xFFFFDCC3)
                                   : primaryTeal.withValues(alpha: 0.1),
                               child: Icon(
-                                isTopup ? CupertinoIcons.creditcard : Icons.shopping_bag,
+                                isTopup
+                                    ? CupertinoIcons.creditcard
+                                    : Icons.shopping_bag,
                                 color: isTopup ? accentOrange : primaryTeal,
                                 size: 18,
                               ),
@@ -573,7 +540,9 @@ class _AdminStudentDetailScreenState extends ConsumerState<AdminStudentDetailScr
                                     ),
                                   ),
                                   Text(
-                                    DateFormat('dd MMM yyyy, HH:mm').format(date),
+                                    DateFormat(
+                                      'dd MMM yyyy, HH:mm',
+                                    ).format(date),
                                     style: GoogleFonts.beVietnamPro(
                                       fontSize: 11,
                                       color: AppColors.textGray,
@@ -587,7 +556,9 @@ class _AdminStudentDetailScreenState extends ConsumerState<AdminStudentDetailScr
                               style: GoogleFonts.beVietnamPro(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                color: isTopup ? const Color(0xFF006A35) : const Color(0xFFBA1A1A),
+                                color: isTopup
+                                    ? const Color(0xFF006A35)
+                                    : const Color(0xFFBA1A1A),
                               ),
                             ),
                           ],
@@ -599,7 +570,8 @@ class _AdminStudentDetailScreenState extends ConsumerState<AdminStudentDetailScr
             ),
           );
         },
-        loading: () => const Center(child: CupertinoActivityIndicator(color: primaryTeal)),
+        loading: () =>
+            const Center(child: CupertinoActivityIndicator(color: primaryTeal)),
         error: (err, stack) => Center(child: Text('Error: $err')),
       ),
     );
@@ -624,9 +596,7 @@ class _AdminStudentDetailScreenState extends ConsumerState<AdminStudentDetailScr
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: isActive 
-                ? const Color(0xFFEAF9EE) 
-                : const Color(0xFFFFDAD6),
+            color: isActive ? const Color(0xFFEAF9EE) : const Color(0xFFFFDAD6),
             borderRadius: BorderRadius.circular(99),
           ),
           child: Text(
@@ -634,7 +604,9 @@ class _AdminStudentDetailScreenState extends ConsumerState<AdminStudentDetailScr
             style: GoogleFonts.beVietnamPro(
               fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: isActive ? const Color(0xFF006A35) : const Color(0xFFBA1A1A),
+              color: isActive
+                  ? const Color(0xFF006A35)
+                  : const Color(0xFFBA1A1A),
             ),
           ),
         ),
@@ -672,7 +644,7 @@ class _AdminStudentDetailScreenState extends ConsumerState<AdminStudentDetailScr
             textAlign: TextAlign.end,
             overflow: TextOverflow.ellipsis,
             maxLines: 2,
-            style: isMonospace 
+            style: isMonospace
                 ? TextStyle(
                     fontFamily: 'Courier',
                     fontSize: 14,

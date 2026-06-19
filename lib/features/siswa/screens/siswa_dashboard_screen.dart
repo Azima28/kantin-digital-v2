@@ -5,10 +5,12 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/services/pdf_service.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 import 'package:intl/intl.dart';
+
 
 class SiswaDashboardScreen extends ConsumerWidget {
   const SiswaDashboardScreen({super.key});
@@ -249,6 +251,62 @@ class SiswaDashboardScreen extends ConsumerWidget {
                           'Simpan Struk PDF',
                           style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 14),
                         ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // PDF Share button
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.primary),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        try {
+                          final List<Map<String, dynamic>> itemsForPdf =
+                              (itemsAsync.asData?.value ?? []).map((item) => {
+                                'product_name': item.productName,
+                                'quantity': item.quantity,
+                                'unit_price': item.unitPrice,
+                              }).toList();
+
+                          await PdfService.shareReceipt(
+                            transactionId: txId,
+                            type: type,
+                            amount: amount,
+                            studentName: tx.studentName ?? 'Siswa',
+                            canteenOrLocation:
+                                type == 'topup' ? 'QRIS / Koperasi' : canteenName,
+                            dateTime: tx.createdAt ?? DateTime.now(),
+                            items: itemsForPdf,
+                          );
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Gagal membuat struk PDF: $e'),
+                                backgroundColor: AppColors.error,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(CupertinoIcons.share, color: AppColors.primary, size: 16),
+                          SizedBox(width: 8),
+                          Text(
+                            'Bagikan Struk PDF',
+                            style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 14),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 16),

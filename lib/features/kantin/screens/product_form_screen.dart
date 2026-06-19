@@ -154,6 +154,20 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         await client.from('products').insert(data);
       }
 
+      // Write to audit logs
+      try {
+        final actorName = authState.profile?['full_name'] ?? 'Petugas Kantin';
+        await client.from('audit_logs').insert({
+          'actor_id': operatorId,
+          'actor_name': actorName,
+          'action_type': isEdit ? 'UBAH_PRODUK' : 'TAMBAH_PRODUK',
+          'description': isEdit
+              ? 'Mengubah data produk jajanan: $name'
+              : 'Menambahkan produk jajanan baru: $name',
+          'new_value': data,
+        });
+      } catch (_) {}
+
       // Refresh list providers
       ref.invalidate(posProductsProvider);
       ref.invalidate(manageProductsProvider);

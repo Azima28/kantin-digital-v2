@@ -8,6 +8,7 @@ import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/features/shared/screens/officer_activities_screen.dart';
 
 class AdminFinanceDetailScreen extends ConsumerStatefulWidget {
   final String officerId;
@@ -90,154 +91,6 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
     );
   }
 
-  Future<List<Map<String, dynamic>>> _fetchAllOfficerLogs({
-    required String officerId,
-    required String actorName,
-  }) async {
-    final client = ref.read(supabaseClientProvider);
-    final List<dynamic> logs = await client
-        .from('audit_logs')
-        .select('action_type, description, created_at')
-        .or('actor_id.eq.$officerId,actor_name.eq.$actorName')
-        .order('created_at', ascending: false);
-
-    return List<Map<String, dynamic>>.from(logs);
-  }
-
-  void _showAllOfficerLogsSheet({
-    required String officerId,
-    required String actorName,
-    required Color primaryTeal,
-    required Color accentOrange,
-    required Color successGreen,
-  }) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.82,
-          minChildSize: 0.45,
-          maxChildSize: 0.95,
-          expand: false,
-          builder: (context, scrollController) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 36,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFBFC8C8),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    'Semua Aktivitas',
-                    style: GoogleFonts.beVietnamPro(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: primaryTeal,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: FutureBuilder<List<Map<String, dynamic>>>(
-                      future: _fetchAllOfficerLogs(
-                        officerId: officerId,
-                        actorName: actorName,
-                      ),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CupertinoActivityIndicator());
-                        }
-                        if (snapshot.hasError) {
-                          return Center(child: Text('Gagal memuat aktivitas: ${snapshot.error}'));
-                        }
-
-                        final logs = snapshot.data ?? [];
-                        if (logs.isEmpty) {
-                          return Center(
-                            child: Text(
-                              'Belum ada aktivitas transaksi manual.',
-                              style: GoogleFonts.beVietnamPro(color: AppColors.textGray),
-                            ),
-                          );
-                        }
-
-                        return ListView.separated(
-                          controller: scrollController,
-                          itemCount: logs.length,
-                          separatorBuilder: (_, _) => const SizedBox(height: 10),
-                          itemBuilder: (context, index) {
-                            final log = logs[index];
-                            final actionType = log['action_type'] ?? '';
-                            final desc = log['description'] ?? '';
-                            final date = log['created_at'] != null
-                                ? DateTime.parse(log['created_at']).toLocal()
-                                : DateTime.now();
-
-                            IconData logIcon = CupertinoIcons.doc_text;
-                            Color logColor = primaryTeal;
-                            if (actionType.contains('KOREKSI')) {
-                              logIcon = CupertinoIcons.refresh;
-                              logColor = accentOrange;
-                            } else if (actionType.contains('REGISTRASI')) {
-                              logIcon = CupertinoIcons.creditcard;
-                              logColor = successGreen;
-                            }
-
-                            return ListTile(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              tileColor: const Color(0xFFF8F7F6),
-                              leading: CircleAvatar(
-                                backgroundColor: logColor.withValues(alpha: 0.1),
-                                child: Icon(logIcon, color: logColor, size: 18),
-                              ),
-                              title: Text(
-                                actionType.replaceAll('_', ' '),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.beVietnamPro(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: logColor,
-                                ),
-                              ),
-                              subtitle: Text(
-                                desc,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.beVietnamPro(fontSize: 12),
-                              ),
-                              trailing: Text(
-                                DateFormat('HH:mm').format(date),
-                                style: GoogleFonts.beVietnamPro(fontSize: 11, color: AppColors.textGray),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -439,13 +292,18 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                       ),
                     ),
                     TextButton(
-                      onPressed: () => _showAllOfficerLogsSheet(
-                        officerId: widget.officerId,
-                        actorName: fullName,
-                        primaryTeal: primaryTeal,
-                        accentOrange: accentOrange,
-                        successGreen: successGreen,
-                      ),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => OfficerActivitiesScreen(
+                              officerId: widget.officerId,
+                              actorName: fullName,
+                              primaryColor: primaryTeal,
+                              accentColor: accentOrange,
+                            ),
+                          ),
+                        );
+                      },
                       child: Text(
                         'Lihat Semua',
                         style: GoogleFonts.beVietnamPro(

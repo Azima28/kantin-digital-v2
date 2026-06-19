@@ -28,14 +28,60 @@ dynamic _normalizeJsonValue(dynamic value) {
   return value;
 }
 
-/// Format JSON value for display with proper normalization.
-String _formatJson(dynamic value) {
+/// Format value to readable plain text key-value format.
+String _formatToPlainText(dynamic value) {
+  if (value == null) return '-';
+  dynamic normalized;
   try {
-    final normalized = _normalizeJsonValue(value);
-    return const JsonEncoder.withIndent('  ').convert(normalized);
+    normalized = _normalizeJsonValue(value);
   } catch (_) {
-    return value?.toString() ?? '-';
+    normalized = value;
   }
+  if (normalized == null) return '-';
+
+  if (normalized is Map) {
+    if (normalized.isEmpty) return '-';
+    final buffer = StringBuffer();
+    normalized.forEach((key, val) {
+      if (buffer.isNotEmpty) buffer.write('\n');
+
+      // Make key user-friendly
+      String keyLabel = key.toString();
+      if (keyLabel == 'balance') keyLabel = 'Saldo';
+      if (keyLabel == 'is_active') keyLabel = 'Status Aktif';
+      if (keyLabel == 'class') keyLabel = 'Kelas';
+      if (keyLabel == 'rfid_uid') keyLabel = 'RFID UID';
+      if (keyLabel == 'imported_count') keyLabel = 'Jumlah Diimport';
+      if (keyLabel == 'name') keyLabel = 'Nama';
+      if (keyLabel == 'price') keyLabel = 'Harga';
+      if (keyLabel == 'category') keyLabel = 'Kategori';
+      if (keyLabel == 'relation') keyLabel = 'Hubungan';
+      if (keyLabel == 'phone_number') keyLabel = 'No. Telepon';
+      if (keyLabel == 'email') keyLabel = 'Email';
+      if (keyLabel == 'username') keyLabel = 'Username';
+      if (keyLabel == 'password') keyLabel = 'Kata Sandi';
+      if (keyLabel == 'nisn') keyLabel = 'NISN';
+
+      // Format value
+      String valStr = val?.toString() ?? '-';
+      if (key == 'balance' || key == 'price' || key == 'amount') {
+        final double? numVal = double.tryParse(val.toString());
+        if (numVal != null) {
+          valStr = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(numVal);
+        }
+      } else if (key == 'is_active') {
+        valStr = val == true ? 'Aktif' : 'Nonaktif';
+      }
+
+      buffer.write('$keyLabel: $valStr');
+    });
+    return buffer.toString();
+  } else if (normalized is List) {
+    if (normalized.isEmpty) return '-';
+    return normalized.join(', ');
+  }
+
+  return normalized.toString();
 }
 
 class AdminAuditLogScreen extends ConsumerStatefulWidget {
@@ -51,19 +97,57 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
 
   final List<String> _actions = [
     'All Actions',
-    'Balance Correction',
-    'Card Registration',
-    'System Settings',
+    'Registrasi Kartu',
+    'Tautan Kartu',
+    'Hapus Tautan Kartu',
+    'Ubah Kata Sandi',
+    'Blokir Akun',
+    'Aktifkan Akun',
+    'Blokir Kartu',
+    'Aktifkan Kartu',
+    'Koreksi Saldo',
+    'Import Siswa',
+    'Top-Up Saldo',
+    'Tambah Menu',
+    'Ubah Menu',
+    'Refund Transaksi',
+    'Tambah Pengguna',
+    'Ubah Setelan',
   ];
 
   String _mapActionTypeToFilter(String filter) {
     switch (filter) {
-      case 'Balance Correction':
-        return 'KOREKSI_SALDO';
-      case 'Card Registration':
+      case 'Registrasi Kartu':
+      case 'Tautan Kartu':
         return 'REGISTRASI_KARTU';
-      case 'System Settings':
-        return 'SETELAN_SISTEM';
+      case 'Hapus Tautan Kartu':
+        return 'UNLINK_KARTU';
+      case 'Ubah Kata Sandi':
+        return 'UBAH_PASSWORD';
+      case 'Blokir Akun':
+        return 'BLOKIR_AKUN';
+      case 'Aktifkan Akun':
+        return 'AKTIFKAN_AKUN';
+      case 'Blokir Kartu':
+        return 'BLOKIR_KARTU';
+      case 'Aktifkan Kartu':
+        return 'AKTIFKAN_KARTU';
+      case 'Koreksi Saldo':
+        return 'KOREKSI_SALDO';
+      case 'Import Siswa':
+        return 'IMPORT_SISWA';
+      case 'Top-Up Saldo':
+        return 'TOPUP_TUNAI';
+      case 'Tambah Menu':
+        return 'TAMBAH_PRODUK';
+      case 'Ubah Menu':
+        return 'UBAH_PRODUK';
+      case 'Refund Transaksi':
+        return 'REFUND_TRANSAKSI';
+      case 'Tambah Pengguna':
+        return 'TAMBAH_PENGGUNA';
+      case 'Ubah Setelan':
+        return 'UBAH_SETELAN';
       default:
         return filter;
     }
@@ -131,7 +215,7 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
 
                   // JSON Diff Header
                   Text(
-                    'Perubahan Data (JSON Diff)',
+                    'Perubahan Data',
                     style: GoogleFonts.beVietnamPro(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
@@ -150,7 +234,7 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'BEFORE',
+                              'SEBELUM',
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
@@ -159,17 +243,18 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                             ),
                             const SizedBox(height: 6),
                             Container(
+                              width: double.infinity,
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFFDAD6),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                _formatJson(log.oldValue),
-                                style: const TextStyle(
-                                  fontFamily: 'Courier',
-                                  fontSize: 10,
-                                  color: Color(0xFF93000A),
+                                _formatToPlainText(log.oldValue),
+                                style: GoogleFonts.beVietnamPro(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF93000A),
                                 ),
                               ),
                             ),
@@ -183,7 +268,7 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'AFTER',
+                              'SESUDAH',
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
@@ -192,17 +277,18 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                             ),
                             const SizedBox(height: 6),
                             Container(
+                              width: double.infinity,
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFEAF9EE),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                _formatJson(log.newValue),
-                                style: const TextStyle(
-                                  fontFamily: 'Courier',
-                                  fontSize: 10,
-                                  color: Color(0xFF005026),
+                                _formatToPlainText(log.newValue),
+                                style: GoogleFonts.beVietnamPro(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF005026),
                                 ),
                               ),
                             ),

@@ -72,6 +72,8 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
 
     try {
       final client = ref.read(supabaseClientProvider);
+      final ParentDashboardData? oldData = ref.read(parentDashboardProvider(widget.studentId)).value;
+      final bool oldIsActive = oldData?.student.isActive ?? true;
 
       final double? newLimit = _dailyLimitActive 
           ? double.tryParse(_limitController.text.trim()) ?? 0.0
@@ -86,6 +88,25 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
         'wa_notifications_enabled': newWaEnabled,
         'parent_phone': newParentPhone.isNotEmpty ? newParentPhone : null,
       }).eq('id', widget.studentId);
+
+      // Audit Log for freeze/unfreeze card by Parent
+      if (oldIsActive != newIsActive) {
+        try {
+          final authProfile = ref.read(authNotifierProvider).profile;
+          final actorName = authProfile?['full_name'] ?? 'Orang Tua';
+          final actorId = authProfile?['id'];
+
+          await client.from('audit_logs').insert({
+            'actor_id': actorId,
+            'actor_name': actorName,
+            'action_type': newIsActive ? 'AKTIFKAN_KARTU' : 'BLOKIR_KARTU',
+            'description': 'Orang Tua ${newIsActive ? "mengaktifkan" : "membekukan"} kartu RFID anak: ${oldData?.profile.fullName ?? widget.studentId}',
+            'target_id': widget.studentId,
+            'old_value': {'is_active': oldIsActive},
+            'new_value': {'is_active': newIsActive},
+          });
+        } catch (_) {}
+      }
 
       ref.invalidate(parentDashboardProvider(widget.studentId));
 
@@ -104,6 +125,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
           SnackBar(
             content: Text('Gagal menyimpan pengaturan: $e'),
             backgroundColor: const Color(0xFFBA1A1A),
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -403,9 +425,29 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
         const SizedBox(height: 24),
 
         // Aktivitas Terakhir
-        Text(
-          'AKTIVITAS TERAKHIR HARI INI',
-          style: GoogleFonts.beVietnamPro(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textDark, letterSpacing: 0.5),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'AKTIVITAS TERAKHIR HARI INI',
+              style: GoogleFonts.beVietnamPro(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textDark, letterSpacing: 0.5),
+            ),
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _currentIndex = 2; // Switch to Riwayat tab
+                });
+              },
+              child: const Text(
+                'Lihat Semua',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: primaryTeal,
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         if (todayTxs.isEmpty)

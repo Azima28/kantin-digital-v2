@@ -118,7 +118,7 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
                                   minimumSize: Size.zero,
                                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                 ),
-                                onPressed: () => context.go('/student/welcome'),
+                                onPressed: () => context.go('/welcome'),
                                 icon: const Icon(CupertinoIcons.left_chevron, size: 14, color: AppColors.primary),
                                 label: const Text(
                                   'Kembali',

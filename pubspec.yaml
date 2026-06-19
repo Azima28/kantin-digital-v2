@@ -18,6 +18,14 @@ dependencies:
   intl: ^0.19.0
   image_picker: ^1.2.2
   connectivity_plus: ^7.1.1
+  # PDF generation & sharing
+  pdf: ^3.11.0
+  printing: ^5.13.0
+  # Local file & storage
+  path_provider: ^2.1.4
+  shared_preferences: ^2.3.5
+  # URL launcher (for phone & WhatsApp links in public screens)
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:

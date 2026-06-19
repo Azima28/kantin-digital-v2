@@ -111,6 +111,7 @@ class StudentWithProfile {
   final String? class_;
   final double balance;
   final String? rfidUid;
+  final bool cardIsActive;
 
   const StudentWithProfile({
     required this.id,
@@ -121,10 +122,11 @@ class StudentWithProfile {
     this.class_,
     this.balance = 0.0,
     this.rfidUid,
+    this.cardIsActive = true,
   });
 
   /// Parse dari query Supabase:
-  /// `profiles.select('id, full_name, email, nisn, is_active, students:students!students_id_fkey(class, balance, rfid_uid)')`
+  /// `profiles.select('id, full_name, email, nisn, is_active, students:students!students_id_fkey(class, balance, rfid_uid, is_active)')`
   factory StudentWithProfile.fromJoinedJson(Map<String, dynamic> json) {
     final studentData = json['students'] is List
         ? (json['students'] as List).firstOrNull as Map<String, dynamic>?
@@ -140,6 +142,7 @@ class StudentWithProfile {
       balance:
           double.tryParse(studentData?['balance']?.toString() ?? '0') ?? 0.0,
       rfidUid: studentData?['rfid_uid'] as String?,
+      cardIsActive: studentData?['is_active'] == true,
     );
   }
 

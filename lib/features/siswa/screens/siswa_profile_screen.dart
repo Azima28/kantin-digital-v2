@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/services/storage_service.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 
@@ -29,7 +31,7 @@ class SiswaProfileScreen extends ConsumerWidget {
               Navigator.pop(ctx);
               await ref.read(authNotifierProvider.notifier).logout();
               if (context.mounted) {
-                context.go('/student/welcome');
+                context.go('/welcome');
               }
             },
             child: const Text('Keluar'),
@@ -81,6 +83,86 @@ class SiswaProfileScreen extends ConsumerWidget {
     );
   }
 
+  Future<void> _handleAvatarChange(BuildContext context, WidgetRef ref) async {
+    // Show action sheet to pick source
+    await showCupertinoModalPopup<void>(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        title: const Text('Ubah Foto Profil'),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _uploadAvatar(context, ref, ImageSource.camera);
+            },
+            child: const Text('Ambil Foto dari Kamera'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _uploadAvatar(context, ref, ImageSource.gallery);
+            },
+            child: const Text('Pilih dari Galeri'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDestructiveAction: true,
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _uploadAvatar(
+      BuildContext context, WidgetRef ref, ImageSource source) async {
+    final authState = ref.read(authNotifierProvider);
+    final String? userId = authState.profile?['id'];
+    if (userId == null) return;
+
+    final client = ref.read(supabaseClientProvider);
+    final storageService = StorageService(client);
+
+    final imageFile = await storageService.pickImage(source: source);
+    if (imageFile == null) return;
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mengupload foto...'),
+          duration: Duration(seconds: 60),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+
+    try {
+      await storageService.uploadAvatar(userId: userId, imageFile: imageFile);
+      ref.invalidate(siswaStudentProvider);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Foto profil berhasil diperbarui!'),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal upload foto: $e'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final studentAsync = ref.watch(siswaStudentProvider);
@@ -99,8 +181,8 @@ class SiswaProfileScreen extends ConsumerWidget {
       orElse: () => '08123456789',
     );
 
-    const String avatarUrl =
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuD6arrvyi-ml6AobqY9iRVH-bAtGVKv5rVu0nJZT7i59FPT_OmA4PkCVPZcxohJcnFeNHKKxMlEGwczp9sGTCXSBRwZ53UWn6wqnvQJ6ESGLnCiLIiN_siAQAl3ysBbcCnbqsWvVJQgzGe7XPjzFZ9SP8Jo8H1m8mKOOxLJ4D4ztLEW7kLenZqki4o7cC7O6heqxWa4pbHjqDA0xw5v3YHUJmVtFdFT1-1kR5VAk7w4jCOrdL8gf41TENBbruzO8EieiPGMS_p5etA';
+    // Avatar URL from profile (dari Supabase Storage)
+    final String? avatarUrl = authState.profile?['avatar_url'] as String?;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -145,24 +227,53 @@ class SiswaProfileScreen extends ConsumerWidget {
                             Center(
                               child: Column(
                                 children: [
-                                  Container(
-                                    width: 80,
-                                    height: 80,
-                                    decoration: const BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: Color(0xFFE5E5EA),
-                                    ),
-                                    child: ClipOval(
-                                      child: Image.network(
-                                        avatarUrl,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) =>
-                                            const Icon(
-                                              CupertinoIcons.person,
+                                  GestureDetector(
+                                    onTap: () => _handleAvatarChange(context, ref),
+                                    child: Stack(
+                                      children: [
+                                        Container(
+                                          width: 80,
+                                          height: 80,
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Color(0xFFE5E5EA),
+                                          ),
+                                          child: ClipOval(
+                                            child: avatarUrl != null && avatarUrl.isNotEmpty
+                                                ? Image.network(
+                                                    avatarUrl,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder: (_, __, ___) =>
+                                                        const Icon(
+                                                          CupertinoIcons.person,
+                                                          color: AppColors.primary,
+                                                          size: 40,
+                                                        ),
+                                                  )
+                                                : const Icon(
+                                                    CupertinoIcons.person,
+                                                    color: AppColors.primary,
+                                                    size: 40,
+                                                  ),
+                                          ),
+                                        ),
+                                        Positioned(
+                                          bottom: 0,
+                                          right: 0,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: const BoxDecoration(
                                               color: AppColors.primary,
-                                              size: 40,
+                                              shape: BoxShape.circle,
                                             ),
-                                      ),
+                                            child: const Icon(
+                                              CupertinoIcons.camera,
+                                              color: Colors.white,
+                                              size: 14,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                   const SizedBox(height: 12),
@@ -444,6 +555,10 @@ class _ChangePasswordPanelState extends ConsumerState<_ChangePasswordPanel> {
       return;
     }
 
+    // Simpan reference sebelum async gap untuk menghindari context warning
+    final messenger = ScaffoldMessenger.of(widget.parentContext);
+    final nav = Navigator.of(context);
+
     try {
       final client = ref.read(supabaseClientProvider);
 
@@ -454,9 +569,9 @@ class _ChangePasswordPanelState extends ConsumerState<_ChangePasswordPanel> {
           .eq('id', profileId)
           .single();
 
+      if (!mounted) return;
       if (profile['password'] != oldPwd) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(
             content: Text('Sandi lama yang dimasukkan salah.'),
             backgroundColor: AppColors.error,
@@ -474,8 +589,8 @@ class _ChangePasswordPanelState extends ConsumerState<_ChangePasswordPanel> {
           .eq('id', profileId);
 
       if (!mounted) return;
-      Navigator.pop(context); // close dialog
-      ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+      nav.pop(); // close dialog
+      messenger.showSnackBar(
         const SnackBar(
           content: Text('Kata sandi berhasil diperbarui!'),
           backgroundColor: AppColors.success,
@@ -484,7 +599,7 @@ class _ChangePasswordPanelState extends ConsumerState<_ChangePasswordPanel> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text('Gagal mengubah kata sandi: $e'),
           backgroundColor: AppColors.error,

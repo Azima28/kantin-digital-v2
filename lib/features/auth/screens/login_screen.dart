@@ -8,7 +8,8 @@ import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+  final String? from;
+  const LoginScreen({super.key, this.from});
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -187,7 +188,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         scrolledUnderElevation: 0,
         leadingWidth: 100,
         leading: GestureDetector(
-          onTap: () => context.go('/student/welcome'),
+          onTap: () {
+            if (widget.from != null && widget.from!.isNotEmpty) {
+              context.go(widget.from!);
+            } else {
+              context.go('/welcome');
+            }
+          },
           child: Row(
             children: const [
               SizedBox(width: 8),

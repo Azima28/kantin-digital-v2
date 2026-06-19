@@ -14,15 +14,15 @@ class KeuanganMainLayout extends ConsumerWidget {
   int _getSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).uri.toString();
     if (location.startsWith('/finance/settings')) {
-      return 5;
+      return 4;
     } else if (location.startsWith('/finance/students')) {
       return 1;
     } else if (location.startsWith('/finance/users')) {
-      return 2;
+      return 1;
     } else if (location.startsWith('/finance/history')) {
-      return 3;
+      return 2;
     } else if (location.startsWith('/finance/report')) {
-      return 4;
+      return 3;
     }
     return 0; // default to /finance (dashboard)
   }
@@ -33,18 +33,15 @@ class KeuanganMainLayout extends ConsumerWidget {
         context.go('/finance');
         break;
       case 1:
-        context.go('/finance/students');
-        break;
-      case 2:
         context.go('/finance/users');
         break;
-      case 3:
+      case 2:
         context.go('/finance/history');
         break;
-      case 4:
+      case 3:
         context.go('/finance/report');
         break;
-      case 5:
+      case 4:
         context.go('/finance/settings');
         break;
     }
@@ -62,11 +59,13 @@ class KeuanganMainLayout extends ConsumerWidget {
           children: [
             // Left sidebar
             _buildSidebar(context, ref, selectedIndex),
-            const VerticalDivider(width: 0.5, thickness: 0.5, color: Color(0xFFE4E2E1)),
-            // Right content
-            Expanded(
-              child: child,
+            const VerticalDivider(
+              width: 0.5,
+              thickness: 0.5,
+              color: Color(0xFFE4E2E1),
             ),
+            // Right content
+            Expanded(child: child),
           ],
         ),
       );
@@ -76,9 +75,7 @@ class KeuanganMainLayout extends ConsumerWidget {
       body: child,
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
-          border: Border(
-            top: BorderSide(color: Color(0xFFE4E2E1), width: 0.5),
-          ),
+          border: Border(top: BorderSide(color: Color(0xFFE4E2E1), width: 0.5)),
         ),
         child: BottomNavigationBar(
           currentIndex: selectedIndex,
@@ -87,19 +84,20 @@ class KeuanganMainLayout extends ConsumerWidget {
           backgroundColor: Colors.white,
           selectedItemColor: primaryTeal,
           unselectedItemColor: const Color(0xFF6F7978),
-          selectedLabelStyle: GoogleFonts.beVietnamPro(fontWeight: FontWeight.w600, fontSize: 11),
-          unselectedLabelStyle: GoogleFonts.beVietnamPro(fontWeight: FontWeight.w500, fontSize: 11),
+          selectedLabelStyle: GoogleFonts.beVietnamPro(
+            fontWeight: FontWeight.w600,
+            fontSize: 11,
+          ),
+          unselectedLabelStyle: GoogleFonts.beVietnamPro(
+            fontWeight: FontWeight.w500,
+            fontSize: 11,
+          ),
           elevation: 0,
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
               icon: Icon(CupertinoIcons.house, size: 22),
               activeIcon: Icon(CupertinoIcons.house_fill, size: 22),
               label: 'Beranda',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.person_2, size: 22),
-              activeIcon: Icon(CupertinoIcons.person_2_fill, size: 22),
-              label: 'Siswa',
             ),
             BottomNavigationBarItem(
               icon: Icon(CupertinoIcons.group, size: 22),
@@ -130,7 +128,8 @@ class KeuanganMainLayout extends ConsumerWidget {
   Widget _buildSidebar(BuildContext context, WidgetRef ref, int selectedIndex) {
     final authState = ref.watch(authNotifierProvider);
     final String fullName = authState.profile?['full_name'] ?? 'Admin Keuangan';
-    final String school = authState.profile?['assigned_school'] ?? 'SMP Terpadu';
+    final String school =
+        authState.profile?['assigned_school'] ?? 'SMP Terpadu';
 
     return Container(
       width: 260,
@@ -202,20 +201,11 @@ class KeuanganMainLayout extends ConsumerWidget {
                 const SizedBox(height: 8),
                 _buildSidebarItem(
                   context: context,
-                  icon: CupertinoIcons.person_2,
-                  activeIcon: CupertinoIcons.person_2_fill,
-                  label: 'Siswa',
-                  isSelected: selectedIndex == 1,
-                  onTap: () => _onItemTapped(1, context),
-                ),
-                const SizedBox(height: 8),
-                _buildSidebarItem(
-                  context: context,
                   icon: CupertinoIcons.group,
                   activeIcon: CupertinoIcons.group_solid,
                   label: 'Pengguna',
-                  isSelected: selectedIndex == 2,
-                  onTap: () => _onItemTapped(2, context),
+                  isSelected: selectedIndex == 1,
+                  onTap: () => _onItemTapped(1, context),
                 ),
                 const SizedBox(height: 8),
                 _buildSidebarItem(
@@ -223,8 +213,8 @@ class KeuanganMainLayout extends ConsumerWidget {
                   icon: CupertinoIcons.list_bullet,
                   activeIcon: CupertinoIcons.list_bullet,
                   label: 'Transaksi',
-                  isSelected: selectedIndex == 3,
-                  onTap: () => _onItemTapped(3, context),
+                  isSelected: selectedIndex == 2,
+                  onTap: () => _onItemTapped(2, context),
                 ),
                 const SizedBox(height: 8),
                 _buildSidebarItem(
@@ -232,8 +222,8 @@ class KeuanganMainLayout extends ConsumerWidget {
                   icon: CupertinoIcons.chart_bar,
                   activeIcon: CupertinoIcons.chart_bar_fill,
                   label: 'Laporan',
-                  isSelected: selectedIndex == 4,
-                  onTap: () => _onItemTapped(4, context),
+                  isSelected: selectedIndex == 3,
+                  onTap: () => _onItemTapped(3, context),
                 ),
                 const SizedBox(height: 8),
                 _buildSidebarItem(
@@ -241,8 +231,8 @@ class KeuanganMainLayout extends ConsumerWidget {
                   icon: CupertinoIcons.gear,
                   activeIcon: CupertinoIcons.gear_solid,
                   label: 'Settings',
-                  isSelected: selectedIndex == 5,
-                  onTap: () => _onItemTapped(5, context),
+                  isSelected: selectedIndex == 4,
+                  onTap: () => _onItemTapped(4, context),
                 ),
               ],
             ),
@@ -295,13 +285,19 @@ class KeuanganMainLayout extends ConsumerWidget {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(CupertinoIcons.square_arrow_right, color: Color(0xFFBA1A1A), size: 20),
+                  icon: const Icon(
+                    CupertinoIcons.square_arrow_right,
+                    color: Color(0xFFBA1A1A),
+                    size: 20,
+                  ),
                   onPressed: () {
                     showCupertinoDialog(
                       context: context,
                       builder: (BuildContext ctx) => CupertinoAlertDialog(
                         title: const Text('Keluar dari Akun'),
-                        content: const Text('Apakah Anda yakin ingin keluar dari akun keuangan ini?'),
+                        content: const Text(
+                          'Apakah Anda yakin ingin keluar dari akun keuangan ini?',
+                        ),
                         actions: [
                           CupertinoDialogAction(
                             child: const Text('Batal'),
@@ -311,7 +307,9 @@ class KeuanganMainLayout extends ConsumerWidget {
                             isDestructiveAction: true,
                             onPressed: () async {
                               Navigator.pop(ctx);
-                              await ref.read(authNotifierProvider.notifier).logout();
+                              await ref
+                                  .read(authNotifierProvider.notifier)
+                                  .logout();
                               if (context.mounted) {
                                 context.go('/login');
                               }
@@ -347,7 +345,9 @@ class KeuanganMainLayout extends ConsumerWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? primaryTeal.withValues(alpha: 0.08) : Colors.transparent,
+            color: isSelected
+                ? primaryTeal.withValues(alpha: 0.08)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(

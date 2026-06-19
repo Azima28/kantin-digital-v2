@@ -24,13 +24,13 @@ class Product {
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
-      id: json['id'] as String,
-      operatorId: json['operator_id'] as String,
-      name: json['name'] as String,
+      id: json['id']?.toString() ?? '',
+      operatorId: json['operator_id']?.toString() ?? '',
+      name: json['name']?.toString() ?? 'Produk',
       price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
-      category: json['category'] as String,
+      category: json['category']?.toString() ?? 'makanan',
       isAvailable: json['is_available'] as bool? ?? true,
-      imageUrl: json['image_url'] as String?,
+      imageUrl: json['image_url']?.toString(),
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
@@ -38,15 +38,15 @@ class Product {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'operator_id': operatorId,
-        'name': name,
-        'price': price,
-        'category': category,
-        'is_available': isAvailable,
-        'image_url': imageUrl,
-        'created_at': createdAt?.toIso8601String(),
-      };
+    'id': id,
+    'operator_id': operatorId,
+    'name': name,
+    'price': price,
+    'category': category,
+    'is_available': isAvailable,
+    'image_url': imageUrl,
+    'created_at': createdAt?.toIso8601String(),
+  };
 
   Product copyWith({
     String? id,

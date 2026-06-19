@@ -318,12 +318,12 @@ class AdminDashboardScreen extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 24),
-                      // Mockup SVG Line overlay representation in CustomPaint
+                      // Real Trend Line Chart representation in CustomPaint
                       SizedBox(
                         height: 120,
                         width: double.infinity,
                         child: CustomPaint(
-                          painter: TrendChartPainter(primaryTeal),
+                          painter: TrendChartPainter(primaryTeal, data.dailyTrend),
                         ),
                       ),
                     ],
@@ -564,10 +564,11 @@ class AdminDashboardScreen extends ConsumerWidget {
   }
 }
 
-// Trend Chart Painter to draw a smooth area trend line with teal gradient
+// Trend Chart Painter to draw a dynamic trend line based on real daily volume data
 class TrendChartPainter extends CustomPainter {
   final Color primaryColor;
-  TrendChartPainter(this.primaryColor);
+  final List<double> data;
+  TrendChartPainter(this.primaryColor, this.data);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -587,24 +588,38 @@ class TrendChartPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
+    if (data.isEmpty) {
+      // Draw a default flat line if no data is available
+      final path = Path();
+      path.moveTo(0, size.height * 0.8);
+      path.lineTo(size.width, size.height * 0.8);
+      canvas.drawPath(path, linePaint);
+      path.lineTo(size.width, size.height);
+      path.lineTo(0, size.height);
+      path.close();
+      canvas.drawPath(path, fillPaint);
+      return;
+    }
+
+    final double maxVal = data.reduce((a, b) => a > b ? a : b);
+    final double minVal = data.reduce((a, b) => a < b ? a : b);
+    final double range = maxVal - minVal == 0 ? 1.0 : maxVal - minVal;
+
     final path = Path();
-    path.moveTo(0, size.height * 0.8);
-    path.cubicTo(
-      size.width * 0.1, size.height * 0.7,
-      size.width * 0.2, size.height * 0.75,
-      size.width * 0.3, size.height * 0.6,
-    );
-    path.cubicTo(
-      size.width * 0.4, size.height * 0.4,
-      size.width * 0.5, size.height * 0.65,
-      size.width * 0.6, size.height * 0.5,
-    );
-    path.cubicTo(
-      size.width * 0.7, size.height * 0.3,
-      size.width * 0.8, size.height * 0.4,
-      size.width * 0.9, size.height * 0.2,
-    );
-    path.lineTo(size.width, size.height * 0.15);
+    final double stepX = size.width / (data.length - 1 == 0 ? 1 : data.length - 1);
+
+    for (int i = 0; i < data.length; i++) {
+      final double normalizedY = (data[i] - minVal) / range;
+      // Map normalized Y value to height with 10% padding
+      final double y = size.height - (normalizedY * size.height * 0.8 + size.height * 0.1);
+      final double x = i * stepX;
+
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
 
     // Draw line
     canvas.drawPath(path, linePaint);
@@ -619,5 +634,7 @@ class TrendChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant TrendChartPainter oldDelegate) {
+    return oldDelegate.primaryColor != primaryColor || oldDelegate.data != data;
+  }
 }

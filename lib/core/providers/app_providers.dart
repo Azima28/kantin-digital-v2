@@ -1,7 +1,9 @@
 import 'dart:async';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:kantin_digital/core/services/offline_queue_service.dart';
+import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 // ============================================================================
 // REACTIVE APP STATE - Menggunakan StateNotifier (mutable, efficient)
@@ -54,7 +56,8 @@ class AppState {
 }
 
 class AppStateNotifier extends StateNotifier<AppState> {
-  AppStateNotifier() : super(const AppState()) {
+  final Ref _ref;
+  AppStateNotifier(this._ref) : super(const AppState()) {
     _monitorConnectivity();
   }
 
@@ -63,16 +66,17 @@ class AppStateNotifier extends StateNotifier<AppState> {
   void _monitorConnectivity() {
     _connectivitySub = Connectivity()
         .onConnectivityChanged
-        .listen((List<ConnectivityResult> results) {
+        .listen((List<ConnectivityResult> results) async {
       final hasConnection =
           results.any((r) => r != ConnectivityResult.none);
+
       state = state.copyWith(
         isNetworkAvailable: hasConnection,
         syncStatus: hasConnection ? 'online' : 'offline',
       );
 
       if (hasConnection && state.pendingSyncCount > 0) {
-        _syncPendingData();
+        await _syncPendingData();
       }
     });
   }
@@ -85,14 +89,62 @@ class AppStateNotifier extends StateNotifier<AppState> {
     state = state.copyWith(pendingSyncCount: state.pendingSyncCount + 1);
   }
 
+  void decrementPendingSync(int count) {
+    final remaining = (state.pendingSyncCount - count).clamp(0, 9999);
+    state = state.copyWith(pendingSyncCount: remaining);
+  }
+
+  /// Proses antrian operasi offline yang tersimpan secara lokal.
+  /// Dipanggil otomatis saat koneksi internet pulih.
   Future<void> _syncPendingData() async {
     state = state.copyWith(syncStatus: 'syncing');
-    await Future.delayed(const Duration(seconds: 1));
-    state = state.copyWith(
-      syncStatus: 'synced',
-      pendingSyncCount: 0,
-      lastSyncTime: DateTime.now(),
-    );
+    try {
+      final client = _ref.read(supabaseClientProvider);
+      final queueService = await OfflineQueueService.create(client);
+
+      final int synced = await queueService.processQueue();
+      final int remaining = queueService.pendingCount;
+
+      state = state.copyWith(
+        syncStatus: remaining > 0 ? 'partial' : 'synced',
+        pendingSyncCount: remaining,
+        lastSyncTime: DateTime.now(),
+      );
+
+      debugPrint(
+          'AppStateNotifier: Synced $synced operations, $remaining remaining.');
+    } catch (e) {
+      debugPrint('AppStateNotifier: Sync failed: $e');
+      state = state.copyWith(syncStatus: 'error');
+    }
+  }
+
+  /// Enqueue operasi update untuk dieksekusi saat online.
+  Future<void> enqueueUpdate({
+    required String table,
+    required Map<String, dynamic> data,
+    required String whereColumn,
+    required String whereValue,
+  }) async {
+    try {
+      final client = _ref.read(supabaseClientProvider);
+      final queueService = await OfflineQueueService.create(client);
+      await queueService.enqueue(OfflineQueueService.makeUpdate(
+        table: table,
+        data: data,
+        whereColumn: whereColumn,
+        whereValue: whereValue,
+      ));
+      state = state.copyWith(pendingSyncCount: state.pendingSyncCount + 1);
+    } catch (e) {
+      debugPrint('AppStateNotifier.enqueueUpdate error: $e');
+    }
+  }
+
+  /// Trigger manual sync dari UI.
+  Future<void> manualSync() async {
+    if (!state.isNetworkAvailable) return;
+    await _syncPendingData();
   }
 
   @override
@@ -105,7 +157,7 @@ class AppStateNotifier extends StateNotifier<AppState> {
 /// Provider utama untuk state aplikasi global.
 final appStateProvider =
     StateNotifierProvider<AppStateNotifier, AppState>((ref) {
-  return AppStateNotifier();
+  return AppStateNotifier(ref);
 });
 
 // ============================================================================

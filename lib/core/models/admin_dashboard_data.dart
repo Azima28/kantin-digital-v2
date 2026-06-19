@@ -7,20 +7,24 @@ class AdminDashboardData {
   final double globalBalance;
   final double dailyVolume;
   final int txCountToday;
+  final List<double> dailyTrend;
 
   const AdminDashboardData({
     this.userCount = 0,
     this.globalBalance = 0.0,
     this.dailyVolume = 0.0,
     this.txCountToday = 0,
+    this.dailyTrend = const [],
   });
 
   factory AdminDashboardData.fromJson(Map<String, dynamic> json) {
+    final trendList = json['daily_trend'] as List<dynamic>? ?? [];
     return AdminDashboardData(
       userCount: (json['user_count'] as num?)?.toInt() ?? 0,
       globalBalance: double.tryParse(json['global_balance']?.toString() ?? '0') ?? 0.0,
       dailyVolume: double.tryParse(json['daily_volume']?.toString() ?? '0') ?? 0.0,
       txCountToday: (json['tx_count_today'] as num?)?.toInt() ?? 0,
+      dailyTrend: trendList.map((e) => double.tryParse(e.toString()) ?? 0.0).toList(),
     );
   }
 
@@ -29,6 +33,7 @@ class AdminDashboardData {
         'global_balance': globalBalance,
         'daily_volume': dailyVolume,
         'tx_count_today': txCountToday,
+        'daily_trend': dailyTrend,
       };
 
   String get formattedGlobalBalance =>

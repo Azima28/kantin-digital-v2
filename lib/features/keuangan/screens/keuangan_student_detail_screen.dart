@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
+import 'package:kantin_digital/features/shared/screens/student_transactions_screen.dart';
 
 // keuanganStudentDetailProvider is defined in keuangan_providers.dart
 
@@ -15,10 +16,12 @@ class KeuanganStudentDetailScreen extends ConsumerStatefulWidget {
   const KeuanganStudentDetailScreen({super.key, required this.studentId});
 
   @override
-  ConsumerState<KeuanganStudentDetailScreen> createState() => _KeuanganStudentDetailScreenState();
+  ConsumerState<KeuanganStudentDetailScreen> createState() =>
+      _KeuanganStudentDetailScreenState();
 }
 
-class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDetailScreen> {
+class _KeuanganStudentDetailScreenState
+    extends ConsumerState<KeuanganStudentDetailScreen> {
   static const Color primaryTeal = Color(0xFF003434);
   static const Color successGreen = Color(0xFF006A35);
   static const Color dangerRed = Color(0xFFBA1A1A);
@@ -38,12 +41,30 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
 
     final client = ref.read(supabaseClientProvider);
     try {
-      await client.from('profiles').update({'password': password}).eq('id', profileId);
-      
+      await client
+          .from('profiles')
+          .update({'password': password})
+          .eq('id', profileId);
+
       try {
-        await client.rpc('update_auth_user_password', params: {
-          'user_id': profileId,
-          'new_password': password,
+        await client.rpc(
+          'update_auth_user_password',
+          params: {'user_id': profileId, 'new_password': password},
+        );
+      } catch (_) {}
+
+      // Write to audit logs
+      try {
+        final authProfile = ref.read(authNotifierProvider).profile;
+        final actorName = authProfile?['full_name'] ?? 'Admin Keuangan';
+        final actorId = authProfile?['id'];
+
+        await client.from('audit_logs').insert({
+          'actor_id': actorId,
+          'actor_name': actorName,
+          'action_type': 'UBAH_PASSWORD',
+          'description': 'Mengubah kata sandi siswa dengan ID: $profileId',
+          'target_id': profileId,
         });
       } catch (_) {}
 
@@ -103,9 +124,21 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
     );
   }
 
+  void _openAllTransactionsScreen() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => StudentTransactionsScreen(
+          studentId: widget.studentId,
+          primaryColor: primaryTeal,
+          accentColor: const Color(0xFF904D00),
+        ),
+      ),
+    );
+  }
+
   Future<void> _toggleAccountStatus(bool currentStatus) async {
     final bool newStatus = !currentStatus;
-    
+
     showCupertinoDialog(
       context: context,
       builder: (BuildContext ctx) => CupertinoAlertDialog(
@@ -135,17 +168,24 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
                 final actorId = profile?['id'];
 
                 // 1. Update profiles is_active
-                await client.from('profiles').update({'is_active': newStatus}).eq('id', widget.studentId);
-                
+                await client
+                    .from('profiles')
+                    .update({'is_active': newStatus})
+                    .eq('id', widget.studentId);
+
                 // 2. Update students is_active
-                await client.from('students').update({'is_active': newStatus}).eq('id', widget.studentId);
+                await client
+                    .from('students')
+                    .update({'is_active': newStatus})
+                    .eq('id', widget.studentId);
 
                 // 3. Write to audit logs
                 await client.from('audit_logs').insert({
                   'actor_id': actorId,
                   'actor_name': actorName,
                   'action_type': newStatus ? 'AKTIFKAN_AKUN' : 'BLOKIR_AKUN',
-                  'description': '${newStatus ? "Mengaktifkan" : "Memblokir"} akun siswa dengan ID: ${widget.studentId}',
+                  'description':
+                      '${newStatus ? "Mengaktifkan" : "Memblokir"} akun siswa dengan ID: ${widget.studentId}',
                   'target_id': widget.studentId,
                   'old_value': {'is_active': currentStatus},
                   'new_value': {'is_active': newStatus},
@@ -156,7 +196,9 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Akun siswa berhasil ${newStatus ? "diaktifkan" : "diblokir"}.'),
+                      content: Text(
+                        'Akun siswa berhasil ${newStatus ? "diaktifkan" : "diblokir"}.',
+                      ),
                       backgroundColor: newStatus ? successGreen : dangerRed,
                       behavior: SnackBarBehavior.floating,
                     ),
@@ -189,8 +231,14 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
 
   @override
   Widget build(BuildContext context) {
-    final detailAsync = ref.watch(keuanganStudentDetailProvider(widget.studentId));
-    final fmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    final detailAsync = ref.watch(
+      keuanganStudentDetailProvider(widget.studentId),
+    );
+    final fmt = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFFBF9F8),
@@ -200,7 +248,11 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
         scrolledUnderElevation: 0,
         title: Text(
           'Profil Siswa',
-          style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, color: primaryTeal, fontSize: 18),
+          style: GoogleFonts.beVietnamPro(
+            fontWeight: FontWeight.bold,
+            color: primaryTeal,
+            fontSize: 18,
+          ),
         ),
       ),
       body: SafeArea(
@@ -213,23 +265,32 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
             final fullName = profile.fullName ?? 'Siswa';
             final email = profile.email ?? '-';
             final nisn = profile.nisn ?? '-';
-            final isActive = profile.isActive == true && student.isActive;
+            final isAccountActive = profile.isActive == true;
+            final isCardActive = student.isActive == true;
 
             final sClass = student.class_ ?? 'Belum Diisi';
             final double balance = student.balance;
             final String? rfid = student.rfidUid;
             final hasCard = rfid != null && rfid.isNotEmpty;
 
-            final String lastTapStr = txs.isNotEmpty && txs.first.createdAt != null
-                ? DateFormat('dd MMM yyyy, HH:mm').format(txs.first.createdAt!.toLocal())
+            final String lastTapStr =
+                txs.isNotEmpty && txs.first.createdAt != null
+                ? DateFormat(
+                    'dd MMM yyyy, HH:mm',
+                  ).format(txs.first.createdAt!.toLocal())
                 : '-';
 
             return RefreshIndicator(
-              onRefresh: () async => ref.invalidate(keuanganStudentDetailProvider(widget.studentId)),
+              onRefresh: () async => ref.invalidate(
+                keuanganStudentDetailProvider(widget.studentId),
+              ),
               color: primaryTeal,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -252,9 +313,13 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
                         children: [
                           CircleAvatar(
                             radius: 32,
-                            backgroundColor: primaryTeal.withValues(alpha: 0.08),
+                            backgroundColor: primaryTeal.withValues(
+                              alpha: 0.08,
+                            ),
                             child: Text(
-                              fullName.isNotEmpty ? fullName[0].toUpperCase() : 'S',
+                              fullName.isNotEmpty
+                                  ? fullName[0].toUpperCase()
+                                  : 'S',
                               style: GoogleFonts.beVietnamPro(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
@@ -273,29 +338,58 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                           Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
-                              color: isActive ? successGreen.withValues(alpha: 0.08) : dangerRed.withValues(alpha: 0.08),
+                              color: !isAccountActive
+                                  ? dangerRed.withValues(alpha: 0.08)
+                                  : (!hasCard
+                                      ? const Color(0xFFE4E2E1)
+                                      : (!isCardActive
+                                          ? const Color(0xFFFFF9E6)
+                                          : successGreen.withValues(alpha: 0.08))),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
-                              isActive ? 'AKTIF' : 'DIBLOKIR',
+                              !isAccountActive
+                                  ? 'AKUN DIBLOKIR'
+                                  : (!hasCard
+                                      ? 'BELUM AKTIF'
+                                      : (!isCardActive ? 'KARTU DIBLOKIR' : 'AKTIF')),
                               style: GoogleFonts.beVietnamPro(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: isActive ? successGreen : dangerRed,
+                                color: !isAccountActive
+                                    ? dangerRed
+                                    : (!hasCard
+                                        ? const Color(0xFF6F7978)
+                                        : (!isCardActive ? const Color(0xFF8F6B00) : successGreen)),
                               ),
                             ),
                           ),
                           const SizedBox(height: 16),
-                          const Divider(height: 1, thickness: 0.5, color: Color(0xFFE4E2E1)),
+                          const Divider(
+                            height: 1,
+                            thickness: 0.5,
+                            color: Color(0xFFE4E2E1),
+                          ),
                           const SizedBox(height: 16),
                           _buildProfileRow(CupertinoIcons.mail, 'Email', email),
                           const SizedBox(height: 10),
-                          _buildProfileRow(CupertinoIcons.book, 'Kelas', 'Kelas $sClass'),
+                          _buildProfileRow(
+                            CupertinoIcons.book,
+                            'Kelas',
+                            'Kelas $sClass',
+                          ),
                           const SizedBox(height: 10),
-                          _buildProfileRow(CupertinoIcons.creditcard, 'NISN', nisn),
+                          _buildProfileRow(
+                            CupertinoIcons.creditcard,
+                            'NISN',
+                            nisn,
+                          ),
                         ],
                       ),
                     ),
@@ -331,12 +425,19 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('Saldo Aktif', style: GoogleFonts.beVietnamPro(color: const Color(0xFF6F7978))),
+                              Text(
+                                'Saldo Aktif',
+                                style: GoogleFonts.beVietnamPro(
+                                  color: const Color(0xFF6F7978),
+                                ),
+                              ),
                               Text(
                                 fmt.format(balance),
                                 style: GoogleFonts.beVietnamPro(
                                   fontWeight: FontWeight.bold,
-                                  color: balance < 5000 ? dangerRed : const Color(0xFF1B1C1B),
+                                  color: balance < 5000
+                                      ? dangerRed
+                                      : const Color(0xFF1B1C1B),
                                 ),
                               ),
                             ],
@@ -345,12 +446,19 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('Status Kartu', style: GoogleFonts.beVietnamPro(color: const Color(0xFF6F7978))),
                               Text(
-                                hasCard ? 'TERHUBUNG' : 'BELUM TERHUBUNG',
+                                'Status Kartu',
+                                style: GoogleFonts.beVietnamPro(
+                                  color: const Color(0xFF6F7978),
+                                ),
+                              ),
+                              Text(
+                                hasCard ? 'AKTIF' : 'BELUM AKTIF',
                                 style: GoogleFonts.beVietnamPro(
                                   fontWeight: FontWeight.bold,
-                                  color: hasCard ? successGreen : const Color(0xFF6F7978),
+                                  color: hasCard
+                                      ? successGreen
+                                      : const Color(0xFF6F7978),
                                 ),
                               ),
                             ],
@@ -359,7 +467,12 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('UID Kartu', style: GoogleFonts.beVietnamPro(color: const Color(0xFF6F7978))),
+                              Text(
+                                'UID Kartu',
+                                style: GoogleFonts.beVietnamPro(
+                                  color: const Color(0xFF6F7978),
+                                ),
+                              ),
                               Text(
                                 rfid ?? '-',
                                 style: GoogleFonts.beVietnamPro(
@@ -373,7 +486,12 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('Terakhir Tap', style: GoogleFonts.beVietnamPro(color: const Color(0xFF6F7978))),
+                              Text(
+                                'Terakhir Tap',
+                                style: GoogleFonts.beVietnamPro(
+                                  color: const Color(0xFF6F7978),
+                                ),
+                              ),
                               Text(
                                 lastTapStr,
                                 style: GoogleFonts.beVietnamPro(
@@ -406,7 +524,12 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Padding(
-                            padding: const EdgeInsets.only(left: 20, top: 16, right: 20, bottom: 8),
+                            padding: const EdgeInsets.only(
+                              left: 20,
+                              top: 16,
+                              right: 20,
+                              bottom: 8,
+                            ),
                             child: Text(
                               'Aksi Admin',
                               style: GoogleFonts.beVietnamPro(
@@ -426,15 +549,24 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
                                 fullName: fullName,
                                 email: email,
                                 nisn: nisn,
-                                isActive: isActive,
+                                isActive: isAccountActive,
                                 class_: sClass,
                                 balance: balance,
                                 rfidUid: rfid,
+                                cardIsActive: isCardActive,
                               );
-                              context.push('/finance/topup', extra: studentProfile);
+                              context.push(
+                                '/finance/topup',
+                                extra: studentProfile,
+                              );
                             },
                           ),
-                          const Divider(height: 1, thickness: 0.5, indent: 56, color: Color(0xFFE4E2E1)),
+                          const Divider(
+                            height: 1,
+                            thickness: 0.5,
+                            indent: 56,
+                            color: Color(0xFFE4E2E1),
+                          ),
                           _buildActionTile(
                             icon: CupertinoIcons.arrow_right_arrow_left_circle,
                             iconColor: dangerRed,
@@ -445,24 +577,40 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
                                 fullName: fullName,
                                 email: email,
                                 nisn: nisn,
-                                isActive: isActive,
+                                isActive: isAccountActive,
                                 class_: sClass,
                                 balance: balance,
                                 rfidUid: rfid,
+                                cardIsActive: isCardActive,
                               );
-                              context.push('/finance/correction', extra: studentProfile);
+                              context.push(
+                                '/finance/correction',
+                                extra: studentProfile,
+                              );
                             },
                           ),
-                          const Divider(height: 1, thickness: 0.5, indent: 56, color: Color(0xFFE4E2E1)),
+                          const Divider(
+                            height: 1,
+                            thickness: 0.5,
+                            indent: 56,
+                            color: Color(0xFFE4E2E1),
+                          ),
                           _buildActionTile(
                             icon: CupertinoIcons.wifi,
                             iconColor: primaryTeal,
                             title: 'Registrasi / Ganti Kartu NFC',
                             onTap: () {
-                              context.push('/finance/students/${widget.studentId}/card');
+                              context.push(
+                                '/finance/students/${widget.studentId}/card',
+                              );
                             },
                           ),
-                          const Divider(height: 1, thickness: 0.5, indent: 56, color: Color(0xFFE4E2E1)),
+                          const Divider(
+                            height: 1,
+                            thickness: 0.5,
+                            indent: 56,
+                            color: Color(0xFFE4E2E1),
+                          ),
                           _buildActionTile(
                             icon: Icons.key,
                             iconColor: const Color(0xFF904D00),
@@ -492,13 +640,30 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Riwayat Transaksi (10 Terakhir)',
-                            style: GoogleFonts.beVietnamPro(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: const Color(0xFF1B1C1B),
-                            ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Riwayat Transaksi (10 Terakhir)',
+                                  style: GoogleFonts.beVietnamPro(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: const Color(0xFF1B1C1B),
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: _openAllTransactionsScreen,
+                                child: Text(
+                                  'Lihat Semua',
+                                  style: GoogleFonts.beVietnamPro(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: primaryTeal,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 12),
                           if (txs.isEmpty)
@@ -507,7 +672,9 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
                               child: Center(
                                 child: Text(
                                   'Belum ada transaksi.',
-                                  style: GoogleFonts.beVietnamPro(color: const Color(0xFF6F7978)),
+                                  style: GoogleFonts.beVietnamPro(
+                                    color: const Color(0xFF6F7978),
+                                  ),
                                 ),
                               ),
                             )
@@ -517,45 +684,66 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
                                 final isTopup = tx.isTopup;
                                 final isSuccess = tx.isSuccess;
                                 final double amount = tx.totalAmount;
-                                final timestamp = tx.createdAt?.toLocal() ?? DateTime.now();
-                                final timeStr = DateFormat('dd MMM, HH:mm').format(timestamp);
+                                final timestamp =
+                                    tx.createdAt?.toLocal() ?? DateTime.now();
+                                final timeStr = DateFormat(
+                                  'dd MMM, HH:mm',
+                                ).format(timestamp);
                                 final canteenName = tx.canteenName ?? 'Top-up';
 
                                 return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 8,
+                                  ),
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Row(
                                         children: [
                                           CircleAvatar(
                                             radius: 14,
                                             backgroundColor: isTopup
-                                                ? successGreen.withValues(alpha: 0.08)
-                                                : primaryTeal.withValues(alpha: 0.08),
+                                                ? successGreen.withValues(
+                                                    alpha: 0.08,
+                                                  )
+                                                : primaryTeal.withValues(
+                                                    alpha: 0.08,
+                                                  ),
                                             child: Icon(
-                                              isTopup ? CupertinoIcons.arrow_up : CupertinoIcons.cart,
+                                              isTopup
+                                                  ? CupertinoIcons.arrow_up
+                                                  : CupertinoIcons.cart,
                                               size: 14,
-                                              color: isTopup ? successGreen : primaryTeal,
+                                              color: isTopup
+                                                  ? successGreen
+                                                  : primaryTeal,
                                             ),
                                           ),
                                           const SizedBox(width: 10),
                                           Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                isTopup ? 'Top-Up Saldo' : canteenName,
+                                                isTopup
+                                                    ? 'Top-Up Saldo'
+                                                    : canteenName,
                                                 style: GoogleFonts.beVietnamPro(
                                                   fontWeight: FontWeight.w600,
                                                   fontSize: 13,
-                                                  color: const Color(0xFF1B1C1B),
+                                                  color: const Color(
+                                                    0xFF1B1C1B,
+                                                  ),
                                                 ),
                                               ),
                                               Text(
                                                 timeStr,
                                                 style: GoogleFonts.beVietnamPro(
                                                   fontSize: 11,
-                                                  color: const Color(0xFF6F7978),
+                                                  color: const Color(
+                                                    0xFF6F7978,
+                                                  ),
                                                 ),
                                               ),
                                             ],
@@ -563,19 +751,24 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
                                         ],
                                       ),
                                       Column(
-                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
                                         children: [
                                           Text(
                                             '${isTopup ? "+" : "-"}${fmt.format(amount)}',
                                             style: GoogleFonts.beVietnamPro(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 13,
-                                              color: isTopup ? successGreen : primaryTeal,
+                                              color: isTopup
+                                                  ? successGreen
+                                                  : primaryTeal,
                                             ),
                                           ),
                                           if (!isSuccess)
                                             Text(
-                                              tx.status.toString().toUpperCase(),
+                                              tx.status
+                                                  .toString()
+                                                  .toUpperCase(),
                                               style: GoogleFonts.beVietnamPro(
                                                 fontSize: 9,
                                                 fontWeight: FontWeight.bold,
@@ -598,25 +791,33 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
                     SizedBox(
                       width: double.infinity,
                       child: TextButton(
-                        onPressed: _isUpdatingStatus ? null : () => _toggleAccountStatus(isActive),
+                        onPressed: _isUpdatingStatus
+                            ? null
+                            : () => _toggleAccountStatus(isAccountActive),
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          backgroundColor: isActive ? dangerRed.withValues(alpha: 0.08) : successGreen.withValues(alpha: 0.08),
+                          backgroundColor: isAccountActive
+                              ? dangerRed.withValues(alpha: 0.08)
+                              : successGreen.withValues(alpha: 0.08),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                             side: BorderSide(
-                              color: isActive ? dangerRed.withValues(alpha: 0.2) : successGreen.withValues(alpha: 0.2),
+                              color: isAccountActive
+                                  ? dangerRed.withValues(alpha: 0.2)
+                                  : successGreen.withValues(alpha: 0.2),
                             ),
                           ),
                         ),
                         child: _isUpdatingStatus
                             ? const CupertinoActivityIndicator()
                             : Text(
-                                isActive ? '🚫 BLOKIR AKUN SISWA' : '✔ AKTIFKAN AKUN SISWA',
+                                isAccountActive
+                                    ? '🚫 BLOKIR AKUN SISWA'
+                                    : '✔ AKTIFKAN AKUN SISWA',
                                 style: GoogleFonts.beVietnamPro(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
-                                  color: isActive ? dangerRed : successGreen,
+                                  color: isAccountActive ? dangerRed : successGreen,
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -655,12 +856,19 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
         const SizedBox(width: 12),
         Text(
           label,
-          style: GoogleFonts.beVietnamPro(fontSize: 13, color: const Color(0xFF6F7978)),
+          style: GoogleFonts.beVietnamPro(
+            fontSize: 13,
+            color: const Color(0xFF6F7978),
+          ),
         ),
         const Spacer(),
         Text(
           value,
-          style: GoogleFonts.beVietnamPro(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF1B1C1B)),
+          style: GoogleFonts.beVietnamPro(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF1B1C1B),
+          ),
         ),
       ],
     );
@@ -686,7 +894,11 @@ class _KeuanganStudentDetailScreenState extends ConsumerState<KeuanganStudentDet
           color: const Color(0xFF1B1C1B),
         ),
       ),
-      trailing: const Icon(CupertinoIcons.chevron_forward, size: 16, color: Color(0xFF6F7978)),
+      trailing: const Icon(
+        CupertinoIcons.chevron_forward,
+        size: 16,
+        color: Color(0xFF6F7978),
+      ),
       onTap: onTap,
     );
   }

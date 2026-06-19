@@ -47,7 +47,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         context.go('/student');
       }
     } else {
-      context.go('/login');
+      context.go('/welcome');
     }
   }
 

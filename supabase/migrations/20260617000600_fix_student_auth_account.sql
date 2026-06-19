@@ -11,7 +11,7 @@
 -- 1. UPDATE PASSWORD JIKA auth.users SUDAH ADA (by email atau id)
 -- =====================================================================
 UPDATE auth.users
-SET encrypted_password = crypt('password123', gen_salt('bf')),
+SET encrypted_password = extensions.crypt('password123', extensions.gen_salt('bf')),
     email = '20260012@sekolah.sch.id',
     updated_at = now()
 WHERE email = '20260012@sekolah.sch.id'
@@ -25,7 +25,7 @@ SELECT
     '03525ad9-d9e3-4f55-8ee6-7ff5b06d2025'::uuid,
     '00000000-0000-0000-0000-000000000000'::uuid,
     '20260012@sekolah.sch.id',
-    crypt('password123', gen_salt('bf')),
+    extensions.crypt('password123', extensions.gen_salt('bf')),
     now(),
     '{"provider": "email", "providers": ["email"]}'::jsonb,
     '{"full_name": "Ahmad Subarjo", "role": "student"}'::jsonb,

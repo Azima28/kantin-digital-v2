@@ -266,7 +266,7 @@ class SiswaMainLayout extends ConsumerWidget {
                               Navigator.pop(ctx);
                               await ref.read(authNotifierProvider.notifier).logout();
                               if (context.mounted) {
-                                context.go('/student/welcome');
+                                context.go('/welcome');
                               }
                             },
                             child: const Text('Keluar'),
