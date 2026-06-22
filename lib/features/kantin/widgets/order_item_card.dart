@@ -66,8 +66,9 @@ class OrderItemCard extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Left color stripe
             Container(
@@ -265,6 +266,7 @@ class OrderItemCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
