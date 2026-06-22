@@ -58,7 +58,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
 
   AuthNotifier(this._authService) : super(const AuthState()) {
-    _checkInitialSession();
+    // Delay ke post-frame biar gak trigger rebuild mid-layout
+    Future.microtask(_checkInitialSession);
   }
 
   // Cek sesi login saat inisialisasi awal

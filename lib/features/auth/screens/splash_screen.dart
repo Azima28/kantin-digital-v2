@@ -17,20 +17,19 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _checkAuth();
+    // Navigasi setelah frame pertama selesai dibangun (post-frame callback)
+    // untuk menghindari layout crash cascade akibat route change saat build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _redirectAfterSplash();
+    });
   }
 
-  Future<void> _checkAuth() async {
-    // Memberikan waktu sedikit untuk splash animation
-    await Future<void>.delayed(const Duration(milliseconds: 1500));
-    
+  void _redirectAfterSplash() {
     if (!mounted) return;
-
     try {
-      final AuthState authState = ref.read(authNotifierProvider);
-
+      final authState = ref.read(authNotifierProvider);
       if (authState.isAuthenticated) {
-        final String role = authState.profile?['role'] ?? '';
+        final role = authState.profile?['role'] ?? '';
         if (role == 'petugas_kantin') {
           context.go('/pos');
         } else if (role == 'petugas_keuangan') {
@@ -38,7 +37,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         } else if (role == 'super_admin') {
           context.go('/admin');
         } else if (role == 'parent') {
-          final String studentId = authState.profile?['student_id'] ?? '';
+          final studentId = authState.profile?['student_id'] ?? '';
           if (studentId.isNotEmpty) {
             context.go('/parent/dashboard/$studentId');
           } else {
@@ -51,9 +50,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         context.go('/welcome');
       }
     } catch (_) {
-      if (mounted) {
-        context.go('/welcome');
-      }
+      if (mounted) context.go('/welcome');
     }
   }
 
