@@ -1,0 +1,97 @@
+{
+  "passed": false,
+  "security_concerns": [
+    {
+      "severity": "HIGH",
+      "file": "lib/features/auth/screens/login_screen.dart",
+      "lines": "490-566",
+      "issue": "Hardcoded test credentials visible in production login UI",
+      "detail": "The PREVIEW AKUN UJI COBA overlay displays 5 sets of hardcoded usernames/passwords: petugas/password123, budi_fin/budi123, 20260012/password123, superadmin/admin123, 20260012/parent123. Visible to anyone on the login screen."
+    },
+    {
+      "severity": "HIGH",
+      "file": "lib/features/admin/screens/admin_student_detail_screen.dart",
+      "lines": "37-42",
+      "issue": "Plaintext password written to profiles table; silent-fail fallback for auth.password update",
+      "detail": "_changePassword writes raw password to `profiles` table via client.from(profiles).update({password: password}). The RPC call to update auth.password is in a silent try/catch. Same pattern in admin_parent_detail_screen.dart line 34. If the RPC does not exist, the password is stored in plaintext in profiles without updating the auth user password."
+    },
+    {
+      "severity": "MEDIUM",
+      "file": "lib/features/admin/screens/admin_users_screen.dart",
+      "lines": "361,558,763",
+      "issue": "Weak predictable password generation for new user accounts",
+      "detail": "Default passwords use _randomSuffix() returning `${now.second}${now.millisecond % 100}` (~6000 combinations). Patterns: siswa{suffix}, kantin{suffix}, keu{suffix}. Easily guessable."
+    },
+    {
+      "severity": "MEDIUM",
+      "file": "lib/features/admin/screens/admin_audit_log_screen.dart",
+      "line": "62",
+      "issue": "Audit log formatter could display passwords in plaintext",
+      "detail": "_formatToPlainText() labels the 'password' key as 'Kata Sandi' and displays its value. If any audit log entry contains password data in old_value/new_value, it would be visible in the audit detail bottom sheet."
+    },
+    {
+      "severity": "LOW",
+      "file": "lib/features/admin/screens/admin_settings_screen.dart",
+      "lines": "23-24",
+      "issue": "Mock API keys in source code (placeholder risk)",
+      "detail": "Mock Midtrans client keys are hardcoded (SB-Mid-client-..., PR-Mid-client-...). Currently placeholders for dev, but if real keys were substituted here they could leak via the show/hide toggle."
+    }
+  ],
+  "logic_errors": [
+    {
+      "severity": "MEDIUM",
+      "file": "lib/features/admin/screens/admin_users_screen.dart + admin_user_list_tile.dart",
+      "lines": "65,93,120",
+      "issue": "Missing double-tap protection on status toggle operations",
+      "detail": "CupertinoSwitch fires onToggleStatus on every tap with no isProcessing guard. Rapid taps trigger concurrent Supabase UPDATEs. Same issue with card freeze toggle in admin_student_detail_screen.dart lines 93-146."
+    },
+    {
+      "severity": "MEDIUM",
+      "file": "lib/features/admin/screens/admin_settings_screen.dart",
+      "lines": "607-614",
+      "issue": "Maintenance mode toggle changes local state without confirmation",
+      "detail": "The CupertinoSwitch for _isMaintenanceMode updates state immediately. An accidental toggle could block all non-admin logins even before the save button is pressed."
+    },
+    {
+      "severity": "LOW",
+      "file": "lib/features/admin/screens/admin_dashboard_screen.dart",
+      "lines": "104-106,214-216",
+      "issue": "Hardcoded fallback values that misrepresent empty dashboard data",
+      "detail": "When data.globalBalance is 0, it falls back to Rp 102,500,000. When dailyVolume is 0, it shows 42.5K. These HTML mockup values could mislead admins into thinking there is data when there is none."
+    },
+    {
+      "severity": "LOW",
+      "file": "lib/features/admin/screens/admin_student_detail_screen.dart",
+      "line": "186",
+      "issue": "GoRouter bypass via direct Navigator.push for StudentTransactionsScreen",
+      "detail": "Uses Navigator.of(context).push(MaterialPageRoute(...)) instead of GoRouter context.push(...). This bypasses route guards and loses GoRouter state."
+    },
+    {
+      "severity": "INFO",
+      "file": "lib/features/admin/screens/admin_users_screen.dart",
+      "lines": "410,607,813",
+      "issue": "No email format validation in user creation forms",
+      "detail": "Add-user bottom sheets accept any input for email fields. Client-side email validation would improve UX."
+    },
+    {
+      "severity": "INFO",
+      "file": "lib/features/admin/screens/admin_student_detail_screen.dart",
+      "lines": "149-179",
+      "issue": "Change password dialog lacks confirmation field",
+      "detail": "The dialog only has a single password field with no 'confirm password' input, which could lead to user typos being unrecoverable."
+    }
+  ],
+  "suggestions": [
+    "Gate the test credential preview panel behind kReleaseMode check",
+    "Use dart:math Random.secure() for password generation",
+    "Add isProcessing state to all CupertinoSwitch toggle operations",
+    "Add confirmation dialog before maintenance mode toggle",
+    "Add email format validation in user creation forms",
+    "Use route name constants instead of hardcoded path strings",
+    "Strip password keys from audit log display or ensure DB never logs them",
+    "Add password strength indicator when creating users",
+    "Use RPC that atomically updates both profiles and auth.users for password changes",
+    "Add confirm-password field in change-password dialogs"
+  ],
+  "summary": "2 HIGH (hardcoded login credentials, plaintext password in profiles table), 2 MEDIUM (weak password generation, audit log exposure), 2 LOW (fallback dashboard values, GoRouter bypass), 2 INFO; should not deploy to production without fixing the two HIGH issues and adding double-tap protection."
+}

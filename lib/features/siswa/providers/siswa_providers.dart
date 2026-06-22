@@ -34,7 +34,8 @@ final AutoDisposeFutureProvider<List<OperatorTransaction>>
       .select(
           'id, student_id, operator_id, total_amount, type, status, created_at, canteen_operators(canteen_name)')
       .eq('student_id', profileId)
-      .order('created_at', ascending: false);
+      .order('created_at', ascending: false)
+      .limit(50);
 
   return response
       .map((e) => OperatorTransaction.fromSiswaJson(e as Map<String, dynamic>))
@@ -71,7 +72,8 @@ final AutoDisposeFutureProvider<List<AppNotification>>
       .from('notifications')
       .select('*')
       .eq('student_id', profileId)
-      .order('created_at', ascending: false);
+      .order('created_at', ascending: false)
+      .limit(50);
 
   return response
       .map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
@@ -103,17 +105,14 @@ final AutoDisposeFutureProvider<Map<String, String>?> siswaParentContactProvider
 
       if (parentProfile != null) {
         return {
-          'email': parentProfile['email']?.toString() ?? 'budi.subarjo@gmail.com',
-          'phone': parentProfile['phone_number']?.toString() ?? '08123456789',
+          'email': parentProfile['email']?.toString() ?? '',
+          'phone': parentProfile['phone_number']?.toString() ?? '',
         };
       }
     }
   } catch (_) {
-    // Fallback to default mock values if database query fails
+    // Database query failed
   }
 
-  return {
-    'email': 'budi.subarjo@gmail.com',
-    'phone': '08123456789',
-  };
+  return null;
 });

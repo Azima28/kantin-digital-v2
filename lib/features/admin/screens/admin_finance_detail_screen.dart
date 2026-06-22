@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
@@ -33,15 +35,24 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
 
     final client = ref.read(supabaseClientProvider);
     try {
-      await client.from('profiles').update({'password': password}).eq('id', profileId);
+      // Client-side role check before RPC call
+      final currentUserRole = ref.read(authNotifierProvider).profile?['role'];
+      if (currentUserRole != 'super_admin' && currentUserRole != 'admin' && currentUserRole != 'petugas_keuangan') {
+        throw Exception('Tidak memiliki izin untuk mengubah password');
+      }
+
+      await client.rpc('update_auth_user_password', params: {
+        'p_user_id': profileId,
+        'p_new_password': password,
+      });
 
       if (mounted) {
         Navigator.pop(context); // Close dialog
         _passwordController.clear();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Kata sandi petugas keuangan berhasil diperbarui!'),
-            backgroundColor: Color(0xFF006A35),
+            content: Text(AppStrings.successPasswordUpdated),
+            backgroundColor: AppColors.successGreen,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -50,8 +61,8 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal mengubah kata sandi: $e'),
-            backgroundColor: const Color(0xFFBA1A1A),
+            content: Text(AppStrings.labelFailedChangePassword),
+            backgroundColor: AppColors.errorRed2,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -63,7 +74,7 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text('Ubah Kata Sandi'),
+        title: const Text(AppStrings.adminChangePassword),
         content: Padding(
           padding: const EdgeInsets.only(top: 12.0),
           child: CupertinoTextField(
@@ -75,7 +86,7 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
         ),
         actions: [
           CupertinoDialogAction(
-            child: const Text('Batal'),
+            child: const Text(AppStrings.buttonCancel),
             onPressed: () {
               _passwordController.clear();
               Navigator.pop(context);
@@ -84,7 +95,7 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
           CupertinoDialogAction(
             isDestructiveAction: true,
             onPressed: () => _changePassword(profileId),
-            child: const Text('Simpan'),
+            child: const Text(AppStrings.buttonSave),
           ),
         ],
       ),
@@ -95,26 +106,23 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
   @override
   Widget build(BuildContext context) {
     final detailAsync = ref.watch(adminFinanceDetailProvider(widget.officerId));
-    const Color primaryTeal = Color(0xFF003434);
-    const Color accentOrange = Color(0xFF904D00);
-    const Color successGreen = Color(0xFF006A35);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF9F8),
+      backgroundColor: AppColors.offWhite,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF9F8),
+        backgroundColor: AppColors.offWhite,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.left_chevron, color: primaryTeal),
+          icon: const Icon(CupertinoIcons.left_chevron, color: AppColors.darkTeal),
           onPressed: () => context.pop(),
         ),
         title: Text(
           'Profile Pegawai',
-          style: GoogleFonts.beVietnamPro(
+          style: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: primaryTeal,
+            color: AppColors.darkTeal,
           ),
         ),
       ),
@@ -138,11 +146,11 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.white,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
+                        color: AppColors.black.withValues(alpha: 0.04),
                         blurRadius: 20,
                         offset: const Offset(0, 4),
                       ),
@@ -152,8 +160,8 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                     children: [
                       CircleAvatar(
                         radius: 36,
-                        backgroundColor: primaryTeal.withValues(alpha: 0.1),
-                        child: const Icon(CupertinoIcons.person_solid, color: primaryTeal, size: 36),
+                        backgroundColor: AppColors.darkTeal.withValues(alpha: 0.1),
+                        child: const Icon(CupertinoIcons.person_solid, color: AppColors.darkTeal, size: 36),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -162,16 +170,16 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                           children: [
                             Text(
                               fullName,
-                              style: GoogleFonts.beVietnamPro(
+                              style: GoogleFonts.inter(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
-                                color: const Color(0xFF1B1C1B),
+                                color: AppColors.nearBlack,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Staf Tata Usaha',
-                              style: GoogleFonts.beVietnamPro(
+                              style: GoogleFonts.inter(
                                 fontSize: 13,
                                 color: AppColors.textGray,
                                 fontWeight: FontWeight.w500,
@@ -181,15 +189,15 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF5F3F2),
+                                color: AppColors.offWhite2,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Text(
                                 'USN: $username',
-                                style: GoogleFonts.beVietnamPro(
+                                style: GoogleFonts.inter(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF6F7978),
+                                  color: AppColors.mutedGray,
                                 ),
                               ),
                             ),
@@ -205,8 +213,8 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                 ElevatedButton.icon(
                   onPressed: () => _showChangePasswordDialog(profile.id),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryTeal,
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppColors.darkTeal,
+                    foregroundColor: AppColors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -214,7 +222,7 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                   ),
                   icon: const Icon(CupertinoIcons.lock_shield),
                   label: const Text(
-                    'Ubah Kata Sandi',
+                    AppStrings.adminChangePassword,
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -224,11 +232,11 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.white,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
+                        color: AppColors.black.withValues(alpha: 0.04),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -250,10 +258,10 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                       const SizedBox(height: 12),
                       Text(
                         'Officer $authorityLevel',
-                        style: GoogleFonts.beVietnamPro(
+                        style: GoogleFonts.inter(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
-                          color: const Color(0xFF1B1C1B),
+                          color: AppColors.nearBlack,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -264,12 +272,12 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                           return Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: primaryTeal.withValues(alpha: 0.1),
+                              color: AppColors.darkTeal.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               f.toString(),
-                              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: primaryTeal),
+                              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.darkTeal),
                             ),
                           );
                         }).toList(),
@@ -285,10 +293,10 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                   children: [
                     Text(
                       'Aktivitas Transaksi',
-                      style: GoogleFonts.beVietnamPro(
+                      style: GoogleFonts.inter(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1B1C1B),
+                        color: AppColors.nearBlack,
                       ),
                     ),
                     TextButton(
@@ -298,18 +306,18 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                             builder: (_) => OfficerActivitiesScreen(
                               officerId: widget.officerId,
                               actorName: fullName,
-                              primaryColor: primaryTeal,
-                              accentColor: accentOrange,
+                              primaryColor: AppColors.darkTeal,
+                              accentColor: AppColors.darkOrange,
                             ),
                           ),
                         );
                       },
                       child: Text(
                         'Lihat Semua',
-                        style: GoogleFonts.beVietnamPro(
+                        style: GoogleFonts.inter(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: primaryTeal,
+                          color: AppColors.darkTeal,
                         ),
                       ),
                     ),
@@ -321,15 +329,12 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                   Container(
                     padding: const EdgeInsets.symmetric(vertical: 32),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.white,
                       borderRadius: BorderRadius.circular(24),
                     ),
-                    child: Center(
-                      child: Text(
-                        'Belum ada aktivitas transaksi manual.',
-                        style: GoogleFonts.beVietnamPro(color: AppColors.textGray),
-                      ),
-                    ),
+                    child: EmptyStateWidget(
+                      message: 'Belum ada aktivitas transaksi manual.',
+                    )
                   )
                 else
                   Column(
@@ -340,24 +345,24 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
 
                       // Set specific icon & color for action types
                       IconData logIcon = CupertinoIcons.doc_text;
-                      Color logColor = primaryTeal;
+                      Color logColor = AppColors.darkTeal;
                       if (actionType.contains('KOREKSI')) {
                         logIcon = CupertinoIcons.refresh;
-                        logColor = accentOrange;
+                        logColor = AppColors.darkOrange;
                       } else if (actionType.contains('REGISTRASI')) {
                         logIcon = CupertinoIcons.creditcard;
-                        logColor = successGreen;
+                        logColor = AppColors.successGreen;
                       }
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.white,
                           borderRadius: BorderRadius.circular(24),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
+                              color: AppColors.black.withValues(alpha: 0.04),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -381,15 +386,15 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                                     children: [
                                       Text(
                                         actionType.replaceAll('_', ' '),
-                                        style: GoogleFonts.beVietnamPro(
+                                        style: GoogleFonts.inter(
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
                                           color: logColor,
                                         ),
                                       ),
                                       Text(
-                                        DateFormat('HH:mm').format(date),
-                                        style: GoogleFonts.beVietnamPro(
+                                        DateFormat('HH:mm', 'id_ID').format(date),
+                                        style: GoogleFonts.inter(
                                           fontSize: 11,
                                           color: AppColors.textGray,
                                         ),
@@ -399,10 +404,10 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                                   const SizedBox(height: 4),
                                   Text(
                                     desc,
-                                    style: GoogleFonts.beVietnamPro(
+                                    style: GoogleFonts.inter(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,
-                                      color: const Color(0xFF1B1C1B),
+                                      color: AppColors.nearBlack,
                                     ),
                                   ),
                                 ],
@@ -417,8 +422,22 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
             ),
           );
         },
-        loading: () => const Center(child: CupertinoActivityIndicator(color: primaryTeal)),
-        error: (err, stack) => Center(child: Text('Error: $err')),
+        loading: () => const Center(child: CupertinoActivityIndicator(color: AppColors.darkTeal)),
+        error: (err, stack) => Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+              const SizedBox(height: 12),
+              Text('${AppStrings.labelFailed} memuat data'),
+              const SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: () => ref.invalidate(adminFinanceDetailProvider(widget.officerId)),
+                child: const Text(AppStrings.buttonRetry),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

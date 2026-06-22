@@ -15,8 +15,8 @@ class ParentStudent {
 
   factory ParentStudent.fromJson(Map<String, dynamic> json) {
     return ParentStudent(
-      parentId: json['parent_id'] as String,
-      studentId: json['student_id'] as String,
+      parentId: json['parent_id']?.toString() ?? '',
+      studentId: json['student_id']?.toString() ?? '',
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
@@ -28,6 +28,18 @@ class ParentStudent {
         'student_id': studentId,
         'created_at': createdAt?.toIso8601String(),
       };
+
+  ParentStudent copyWith({
+    String? parentId,
+    String? studentId,
+    DateTime? createdAt,
+  }) {
+    return ParentStudent(
+      parentId: parentId ?? this.parentId,
+      studentId: studentId ?? this.studentId,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 
   @override
   String toString() =>

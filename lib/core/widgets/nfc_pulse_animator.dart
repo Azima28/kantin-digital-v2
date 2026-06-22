@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kantin_digital/core/constants/app_colors.dart';
 
 class NfcPulseAnimator extends StatefulWidget {
   final Widget child;
@@ -9,7 +10,7 @@ class NfcPulseAnimator extends StatefulWidget {
     super.key,
     required this.child,
     this.size = 140.0,
-    this.color = const Color(0xFF006767), // Default AppColors.primary
+    this.color = AppColors.primary,
   });
 
   @override

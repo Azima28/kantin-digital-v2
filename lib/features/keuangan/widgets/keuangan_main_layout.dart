@@ -3,13 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+
+import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
 
 class KeuanganMainLayout extends ConsumerWidget {
   final Widget child;
   const KeuanganMainLayout({super.key, required this.child});
 
-  static const Color primaryTeal = Color(0xFF003434);
 
   int _getSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).uri.toString();
@@ -62,7 +65,7 @@ class KeuanganMainLayout extends ConsumerWidget {
             const VerticalDivider(
               width: 0.5,
               thickness: 0.5,
-              color: Color(0xFFE4E2E1),
+              color: AppColors.borderGray,
             ),
             // Right content
             Expanded(child: child),
@@ -75,20 +78,20 @@ class KeuanganMainLayout extends ConsumerWidget {
       body: child,
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: Color(0xFFE4E2E1), width: 0.5)),
+          border: Border(top: BorderSide(color: AppColors.borderGray, width: 0.5)),
         ),
         child: BottomNavigationBar(
           currentIndex: selectedIndex,
           onTap: (int index) => _onItemTapped(index, context),
           type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          selectedItemColor: primaryTeal,
-          unselectedItemColor: const Color(0xFF6F7978),
-          selectedLabelStyle: GoogleFonts.beVietnamPro(
+          backgroundColor: AppColors.white,
+          selectedItemColor: AppColors.darkTeal,
+          unselectedItemColor: AppColors.mutedGray,
+          selectedLabelStyle: GoogleFonts.inter(
             fontWeight: FontWeight.w600,
             fontSize: 11,
           ),
-          unselectedLabelStyle: GoogleFonts.beVietnamPro(
+          unselectedLabelStyle: GoogleFonts.inter(
             fontWeight: FontWeight.w500,
             fontSize: 11,
           ),
@@ -102,12 +105,12 @@ class KeuanganMainLayout extends ConsumerWidget {
             BottomNavigationBarItem(
               icon: Icon(CupertinoIcons.group, size: 22),
               activeIcon: Icon(CupertinoIcons.group_solid, size: 22),
-              label: 'Pengguna',
+              label: AppStrings.adminUsers,
             ),
             BottomNavigationBarItem(
               icon: Icon(CupertinoIcons.list_bullet, size: 22),
               activeIcon: Icon(CupertinoIcons.list_bullet, size: 22),
-              label: 'Transaksi',
+              label: AppStrings.labelTransaction,
             ),
             BottomNavigationBarItem(
               icon: Icon(CupertinoIcons.chart_bar, size: 22),
@@ -133,7 +136,7 @@ class KeuanganMainLayout extends ConsumerWidget {
 
     return Container(
       width: 260,
-      color: Colors.white,
+      color: AppColors.white,
       child: Column(
         children: [
           // Sidebar Header (Logo & Title)
@@ -144,12 +147,12 @@ class KeuanganMainLayout extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: primaryTeal.withValues(alpha: 0.1),
+                    color: AppColors.darkTeal.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
                     CupertinoIcons.money_rubl_circle_fill, // Finance/money icon
-                    color: primaryTeal,
+                    color: AppColors.darkTeal,
                     size: 24,
                   ),
                 ),
@@ -160,19 +163,19 @@ class KeuanganMainLayout extends ConsumerWidget {
                     children: [
                       Text(
                         'KANTIN',
-                        style: GoogleFonts.beVietnamPro(
+                        style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
-                          color: primaryTeal,
+                          color: AppColors.darkTeal,
                           letterSpacing: 1.2,
                         ),
                       ),
                       Text(
                         'DIGITAL',
-                        style: GoogleFonts.beVietnamPro(
+                        style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
-                          color: const Color(0xFF1B1C1B),
+                          color: AppColors.nearBlack,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -182,7 +185,7 @@ class KeuanganMainLayout extends ConsumerWidget {
               ],
             ),
           ),
-          const Divider(height: 1, thickness: 0.5, color: Color(0xFFE4E2E1)),
+          const Divider(height: 1, thickness: 0.5, color: AppColors.borderGray),
           const SizedBox(height: 16),
 
           // Sidebar Navigation Items
@@ -203,7 +206,7 @@ class KeuanganMainLayout extends ConsumerWidget {
                   context: context,
                   icon: CupertinoIcons.group,
                   activeIcon: CupertinoIcons.group_solid,
-                  label: 'Pengguna',
+                  label: AppStrings.adminUsers,
                   isSelected: selectedIndex == 1,
                   onTap: () => _onItemTapped(1, context),
                 ),
@@ -212,7 +215,7 @@ class KeuanganMainLayout extends ConsumerWidget {
                   context: context,
                   icon: CupertinoIcons.list_bullet,
                   activeIcon: CupertinoIcons.list_bullet,
-                  label: 'Transaksi',
+                  label: AppStrings.labelTransaction,
                   isSelected: selectedIndex == 2,
                   onTap: () => _onItemTapped(2, context),
                 ),
@@ -239,20 +242,20 @@ class KeuanganMainLayout extends ConsumerWidget {
           ),
 
           // User Profile Card & Logout at bottom
-          const Divider(height: 1, thickness: 0.5, color: Color(0xFFE4E2E1)),
+          const Divider(height: 1, thickness: 0.5, color: AppColors.borderGray),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: primaryTeal.withValues(alpha: 0.1),
+                  backgroundColor: AppColors.darkTeal.withValues(alpha: 0.1),
                   child: Text(
                     fullName.isNotEmpty ? fullName[0].toUpperCase() : 'A',
-                    style: GoogleFonts.beVietnamPro(
+                    style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: primaryTeal,
+                      color: AppColors.darkTeal,
                     ),
                   ),
                 ),
@@ -266,19 +269,19 @@ class KeuanganMainLayout extends ConsumerWidget {
                         fullName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.beVietnamPro(
+                        style: GoogleFonts.inter(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1B1C1B),
+                          color: AppColors.nearBlack,
                         ),
                       ),
                       Text(
                         'Keuangan · $school',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.beVietnamPro(
+                        style: GoogleFonts.inter(
                           fontSize: 10,
-                          color: const Color(0xFF6F7978),
+                          color: AppColors.mutedGray,
                         ),
                       ),
                     ],
@@ -287,38 +290,19 @@ class KeuanganMainLayout extends ConsumerWidget {
                 IconButton(
                   icon: const Icon(
                     CupertinoIcons.square_arrow_right,
-                    color: Color(0xFFBA1A1A),
+                    color: AppColors.errorRed2,
                     size: 20,
                   ),
-                  onPressed: () {
-                    showCupertinoDialog(
-                      context: context,
-                      builder: (BuildContext ctx) => CupertinoAlertDialog(
-                        title: const Text('Keluar dari Akun'),
-                        content: const Text(
-                          'Apakah Anda yakin ingin keluar dari akun keuangan ini?',
-                        ),
-                        actions: [
-                          CupertinoDialogAction(
-                            child: const Text('Batal'),
-                            onPressed: () => Navigator.pop(ctx),
-                          ),
-                          CupertinoDialogAction(
-                            isDestructiveAction: true,
-                            onPressed: () async {
-                              Navigator.pop(ctx);
-                              await ref
-                                  .read(authNotifierProvider.notifier)
-                                  .logout();
-                              if (context.mounted) {
-                                context.go('/login');
-                              }
-                            },
-                            child: const Text('Keluar'),
-                          ),
-                        ],
-                      ),
-                    );
+                  onPressed: () async {
+                    final confirmed = await showLogoutConfirmationDialog(context);
+                    if (confirmed) {
+                      await ref
+                          .read(authNotifierProvider.notifier)
+                          .logout();
+                      if (context.mounted) {
+                        context.go('/login');
+                      }
+                    }
                   },
                 ),
               ],
@@ -346,7 +330,7 @@ class KeuanganMainLayout extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: isSelected
-                ? primaryTeal.withValues(alpha: 0.08)
+                ? AppColors.darkTeal.withValues(alpha: 0.08)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
           ),
@@ -354,17 +338,17 @@ class KeuanganMainLayout extends ConsumerWidget {
             children: [
               Icon(
                 isSelected ? activeIcon : icon,
-                color: isSelected ? primaryTeal : const Color(0xFF6F7978),
+                color: isSelected ? AppColors.darkTeal : AppColors.mutedGray,
                 size: 20,
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   label,
-                  style: GoogleFonts.beVietnamPro(
+                  style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? primaryTeal : const Color(0xFF1B1C1B),
+                    color: isSelected ? AppColors.darkTeal : AppColors.nearBlack,
                   ),
                 ),
               ),

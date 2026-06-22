@@ -34,6 +34,22 @@ class TransactionType {
         'created_at': createdAt?.toIso8601String(),
       };
 
+  TransactionType copyWith({
+    String? id,
+    String? name,
+    String? description,
+    String? type,
+    DateTime? createdAt,
+  }) {
+    return TransactionType(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      type: type ?? this.type,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
   @override
   String toString() => 'TransactionType(id: $id, name: $name)';
 

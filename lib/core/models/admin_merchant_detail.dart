@@ -48,11 +48,46 @@ class AdminMerchantDetail {
 
   int get productCount => products.length;
 
+  Map<String, dynamic> toJson() => {
+        'profile': profile.toJson(),
+        'operator': operator,
+        'products': products.map((e) => e.toJson()).toList(),
+        'transactions': recentTransactions.map((e) => e.toJson()).toList(),
+        'daily_sales_aggregated': dailySales,
+        'monthly_sales_aggregated': monthlySales,
+      };
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AdminMerchantDetail && profile.id == other.profile.id;
+
+  @override
+  int get hashCode => profile.id.hashCode;
+
   String get formattedDailySales =>
       'Rp ${dailySales.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
 
   String get formattedMonthlySales =>
       'Rp ${monthlySales.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
+
+  AdminMerchantDetail copyWith({
+    UserProfile? profile,
+    Map<String, dynamic>? operator,
+    List<Product>? products,
+    List<OperatorTransaction>? recentTransactions,
+    double? dailySales,
+    double? monthlySales,
+  }) {
+    return AdminMerchantDetail(
+      profile: profile ?? this.profile,
+      operator: operator ?? this.operator,
+      products: products ?? this.products,
+      recentTransactions: recentTransactions ?? this.recentTransactions,
+      dailySales: dailySales ?? this.dailySales,
+      monthlySales: monthlySales ?? this.monthlySales,
+    );
+  }
 
   @override
   String toString() =>

@@ -1,9 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 class ParentPortalScreen extends ConsumerStatefulWidget {
@@ -37,19 +41,28 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
     try {
       final client = ref.read(supabaseClientProvider);
       
-      // Query profiles table to find matching student NISN
-      final profile = await client
-          .from('profiles')
-          .select('id, role, full_name')
-          .eq('nisn', nisInput)
-          .maybeSingle();
-
-      if (profile == null) {
+      // Use RPC for NISN lookup (bypasses RLS)
+      final response = await client.rpc('get_student_by_nisn', params: {
+        'p_nisn': nisInput,
+      });
+      
+      Map<String, dynamic> result;
+      if (response is Map<String, dynamic>) {
+        result = response;
+      } else if (response is String) {
+        result = jsonDecode(response) as Map<String, dynamic>;
+      } else {
+        result = {};
+      }
+      
+      if (result['found'] == false) {
         setState(() {
           _errorMessage = 'NIS / Kode Unik Siswa tidak ditemukan';
         });
         return;
       }
+      
+      final profile = result;
 
       final String role = profile['role'] ?? '';
       final String studentId = profile['id'];
@@ -121,7 +134,7 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
                                 onPressed: () => context.go('/welcome'),
                                 icon: const Icon(CupertinoIcons.left_chevron, size: 14, color: AppColors.primary),
                                 label: const Text(
-                                  'Kembali',
+                                  AppStrings.buttonBack,
                                   style: TextStyle(color: AppColors.primary, fontSize: 14, fontWeight: FontWeight.w500),
                                 ),
                               ),
@@ -145,7 +158,7 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
                             const SizedBox(height: 16),
                             Text(
                               'KANTIN DIGITAL',
-                              style: GoogleFonts.beVietnamPro(
+                              style: GoogleFonts.inter(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.primary,
@@ -155,7 +168,7 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
                             const SizedBox(height: 4),
                             Text(
                               'Portal Orang Tua Siswa',
-                              style: GoogleFonts.beVietnamPro(
+                              style: GoogleFonts.inter(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.textGray,
@@ -166,7 +179,7 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
                             // Heading
                             Text(
                               'Cek Saldo & Aktivitas Anak',
-                              style: GoogleFonts.beVietnamPro(
+                              style: GoogleFonts.inter(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textDark,
@@ -177,7 +190,7 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
                             // Input field
                             Container(
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: AppColors.white,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: _errorMessage != null ? AppColors.error : AppColors.borderLight,
@@ -193,14 +206,14 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
                                     child: TextFormField(
                                       controller: _nisController,
                                       keyboardType: TextInputType.number,
-                                      style: GoogleFonts.beVietnamPro(
+                                      style: GoogleFonts.inter(
                                         fontSize: 16,
                                         fontWeight: FontWeight.normal,
                                         color: AppColors.textDark,
                                       ),
                                       decoration: InputDecoration(
                                         hintText: 'Masukkan NIS / Kode Unik Siswa',
-                                        hintStyle: GoogleFonts.beVietnamPro(color: AppColors.textGray.withValues(alpha: 0.7), fontSize: 15),
+                                        hintStyle: GoogleFonts.inter(color: AppColors.textGray.withValues(alpha: 0.7), fontSize: 15),
                                         border: InputBorder.none,
                                         enabledBorder: InputBorder.none,
                                         focusedBorder: InputBorder.none,
@@ -229,7 +242,7 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
                                   padding: const EdgeInsets.only(left: 4.0),
                                   child: Text(
                                     _errorMessage!,
-                                    style: GoogleFonts.beVietnamPro(
+                                    style: GoogleFonts.inter(
                                       color: AppColors.error,
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,
@@ -253,21 +266,21 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
                                 ),
                                 onPressed: _isLoading ? null : _checkNis,
                                 child: _isLoading
-                                    ? const CupertinoActivityIndicator(color: Colors.white)
+                                    ? const CupertinoActivityIndicator(color: AppColors.white)
                                     : Row(
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
                                           Text(
                                             'CEK SALDO & AKTIVITAS ANAK',
-                                            style: GoogleFonts.beVietnamPro(
-                                              color: Colors.white,
+                                            style: GoogleFonts.inter(
+                                              color: AppColors.white,
                                               fontWeight: FontWeight.w700,
                                               fontSize: 14,
                                               letterSpacing: 0.5,
                                             ),
                                           ),
                                           const SizedBox(width: 8),
-                                          const Icon(CupertinoIcons.arrow_right, color: Colors.white, size: 16),
+                                          const Icon(CupertinoIcons.arrow_right, color: AppColors.white, size: 16),
                                         ],
                                       ),
                               ),
@@ -285,7 +298,7 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
                             Text(
                               'Sistem Informasi Pembayaran Terintegrasi',
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.beVietnamPro(
+                              style: GoogleFonts.inter(
                                 fontSize: 12,
                                 color: AppColors.textGray,
                                 fontWeight: FontWeight.w400,
@@ -294,7 +307,7 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
                             const SizedBox(height: 4),
                             Text(
                               '© 2024 Kantin Digital',
-                              style: GoogleFonts.beVietnamPro(
+                              style: GoogleFonts.inter(
                                 fontSize: 12,
                                 color: AppColors.textGray,
                                 fontWeight: FontWeight.w500,
@@ -314,7 +327,7 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       body: isWide
           ? Row(
               children: [
@@ -323,9 +336,9 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
                   child: Stack(
                     children: [
                       Container(
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           image: DecorationImage(
-                            image: NetworkImage(bgImageUrl),
+                            image: CachedNetworkImageProvider(bgImageUrl),
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -347,9 +360,9 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
               children: [
                 // Background image
                 Container(
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     image: DecorationImage(
-                      image: NetworkImage(bgImageUrl),
+                      image: CachedNetworkImageProvider(bgImageUrl),
                       fit: BoxFit.cover,
                     ),
                   ),

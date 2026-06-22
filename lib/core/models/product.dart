@@ -5,7 +5,7 @@ class Product {
   final String id;
   final String operatorId;
   final String name;
-  final double price;
+  final int price;
   final String category;
   final bool isAvailable;
   final String? imageUrl;
@@ -24,10 +24,10 @@ class Product {
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
-      id: json['id']?.toString() ?? '',
+      id: json['id'] as String,
       operatorId: json['operator_id']?.toString() ?? '',
       name: json['name']?.toString() ?? 'Produk',
-      price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
+      price: int.tryParse(json['price']?.toString() ?? '0') ?? 0,
       category: json['category']?.toString() ?? 'makanan',
       isAvailable: json['is_available'] as bool? ?? true,
       imageUrl: json['image_url']?.toString(),
@@ -52,7 +52,7 @@ class Product {
     String? id,
     String? operatorId,
     String? name,
-    double? price,
+    int? price,
     String? category,
     bool? isAvailable,
     String? imageUrl,

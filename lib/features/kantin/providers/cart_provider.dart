@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class CartItem {
   final String? productId; // null for custom extra charge
   final String name;
-  final double price;
+  final int price;
   final int quantity;
   final String? notes;
 
@@ -15,12 +15,12 @@ class CartItem {
     this.notes,
   });
 
-  double get total => price * quantity;
+  int get total => price * quantity;
 
   CartItem copyWith({
     String? productId,
     String? name,
-    double? price,
+    int? price,
     int? quantity,
     String? notes,
   }) {
@@ -39,8 +39,8 @@ class CartState {
 
   const CartState({this.items = const <CartItem>[]});
 
-  double get totalAmount {
-    return items.fold(0.0, (double sum, CartItem item) => sum + item.total);
+  int get totalAmount {
+    return items.fold(0, (int sum, CartItem item) => sum + item.total);
   }
 
   int get totalItems {
@@ -51,7 +51,7 @@ class CartState {
 class CartNotifier extends StateNotifier<CartState> {
   CartNotifier() : super(const CartState());
 
-  void addProduct(String id, String name, double price) {
+  void addProduct(String id, String name, int price) {
     final List<CartItem> items = List<CartItem>.from(state.items);
     final int index = items.indexWhere((CartItem item) => item.productId == id);
 
@@ -68,7 +68,7 @@ class CartNotifier extends StateNotifier<CartState> {
     state = CartState(items: items);
   }
 
-  void addCustomCharge(String name, double price) {
+  void addCustomCharge(String name, int price) {
     final List<CartItem> items = List<CartItem>.from(state.items);
     final int index = items.indexWhere((CartItem item) => item.productId == null && item.name == name);
 

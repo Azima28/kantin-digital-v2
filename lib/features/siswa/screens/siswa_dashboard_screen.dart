@@ -3,361 +3,52 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
 import 'package:kantin_digital/core/models/models.dart';
-import 'package:kantin_digital/core/services/pdf_service.dart';
-import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
-import 'package:intl/intl.dart';
+import 'package:kantin_digital/features/siswa/widgets/siswa_transaction_detail_sheet.dart';
+import 'package:kantin_digital/features/siswa/widgets/siswa_freeze_card_dialog.dart';
 
 
 class SiswaDashboardScreen extends ConsumerWidget {
   const SiswaDashboardScreen({super.key});
 
-  Future<void> _toggleFreeze(BuildContext context, WidgetRef ref, bool currentStatus, String studentId) async {
-    // Show confirmation dialog first
-    showCupertinoDialog(
-      context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: Text(currentStatus ? 'Bekukan Kartu' : 'Aktifkan Kartu'),
-        content: Text(currentStatus
-            ? 'Apakah Anda yakin ingin membekukan kartu? Kartu tidak akan bisa digunakan jajan sementara waktu.'
-            : 'Apakah Anda yakin ingin mengaktifkan kembali kartu Anda?'),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text('Batal'),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: currentStatus,
-            onPressed: () async {
-              Navigator.pop(ctx);
-              try {
-                final client = ref.read(supabaseClientProvider);
-                await client
-                    .from('students')
-                    .update({'is_active': !currentStatus})
-                    .eq('id', studentId);
-                
-                ref.invalidate(siswaStudentProvider);
-                
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(!currentStatus ? 'Kartu berhasil diaktifkan kembali!' : 'Kartu Anda telah dibekukan sementara.'),
-                      backgroundColor: !currentStatus ? AppColors.success : AppColors.error,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Gagal memproses status kartu: $e'),
-                      backgroundColor: AppColors.error,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              }
-            },
-            child: Text(currentStatus ? 'Bekukan' : 'Aktifkan'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Open transaction detail bottom sheet
-  void _showTransactionDetail(BuildContext context, WidgetRef ref, OperatorTransaction tx) {
-    final String txId = tx.id;
-    final String type = tx.type ?? 'purchase';
-    final double amount = tx.totalAmount;
-    final String timeStr = tx.createdAt != null 
-        ? DateFormat('dd MMM yyyy, HH:mm').format(tx.createdAt!.toLocal())
-        : '-';
-    final String canteenName = tx.canteenName ?? 'Kantin';
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      backgroundColor: Colors.white,
-      builder: (context) {
-        return Consumer(
-          builder: (context, ref, child) {
-            final itemsAsync = ref.watch(transactionDetailsProvider(txId));
-
-            return SingleChildScrollView(
-              child: Container(
-                padding: EdgeInsets.only(
-                  left: 24,
-                  right: 24,
-                  top: 16,
-                  bottom: MediaQuery.of(context).padding.bottom + 16,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // iOS Grab Handle
-                    Center(
-                      child: Container(
-                        width: 36,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Center(
-                      child: Text(
-                        'Detail Transaksi',
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textDark,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Success Centered Checkmark/Plus
-                    Center(
-                      child: Column(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: type == 'topup' ? AppColors.primary.withAlpha(20) : AppColors.success.withAlpha(20),
-                            ),
-                            child: Icon(
-                              type == 'topup' ? CupertinoIcons.square_arrow_down : CupertinoIcons.check_mark_circled,
-                              color: type == 'topup' ? AppColors.primary : AppColors.success,
-                              size: 36,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            type == 'topup' ? 'Top-Up Saldo Sukses' : 'Pembayaran Sukses',
-                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Details
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('ID Transaksi', style: TextStyle(color: AppColors.textGray, fontSize: 13)),
-                        Text(txId.substring(0, 10).toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
-                      ],
-                    ),
-                    const Divider(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Waktu', style: TextStyle(color: AppColors.textGray, fontSize: 13)),
-                        Text(timeStr, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
-                      ],
-                    ),
-                    const Divider(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Metode/Lokasi', style: TextStyle(color: AppColors.textGray, fontSize: 13)),
-                        Text(type == 'topup' ? 'QRIS / Koperasi' : canteenName, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
-                      ],
-                    ),
-                    
-                    if (type == 'purchase') ...[
-                      const Divider(height: 20),
-                      const Text('Rincian Pembelian:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textDark)),
-                      const SizedBox(height: 8),
-                      itemsAsync.when(
-                        data: (items) {
-                          return Container(
-                            constraints: const BoxConstraints(maxHeight: 120),
-                            child: ListView.builder(
-                              shrinkWrap: true,
-                              itemCount: items.length,
-                              itemBuilder: (context, i) {
-                                final item = items[i];
-                                final String name = item.productName;
-                                final double itemPrice = item.unitPrice;
-                                final int qty = item.quantity;
-
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 4),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text('$qty x  $name', style: const TextStyle(fontSize: 13, color: AppColors.textDark)),
-                                      Text(CurrencyFormatter.format(itemPrice * qty), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          );
-                        },
-                        loading: () => const Center(child: CupertinoActivityIndicator()),
-                        error: (err, stack) => Text('Gagal memuat detail barang: $err', style: const TextStyle(color: AppColors.error, fontSize: 11)),
-                      ),
-                    ],
-
-                    const Divider(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(type == 'topup' ? 'Total Masuk Saldo:' : 'Total Potong Saldo:', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-                        Text(
-                          CurrencyFormatter.format(amount),
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
-                            color: type == 'topup' ? AppColors.primary : AppColors.textDark,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    
-                    // PDF Download button
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.primary),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Struk PDF berhasil diunduh'), backgroundColor: AppColors.success, behavior: SnackBarBehavior.floating),
-                          );
-                          Navigator.pop(context);
-                        },
-                        child: const Text(
-                          'Simpan Struk PDF',
-                          style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 14),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  // PDF Share button
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.primary),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      onPressed: () async {
-                        Navigator.pop(context);
-                        try {
-                          final List<Map<String, dynamic>> itemsForPdf =
-                              (itemsAsync.asData?.value ?? []).map((item) => {
-                                'product_name': item.productName,
-                                'quantity': item.quantity,
-                                'unit_price': item.unitPrice,
-                              }).toList();
-
-                          await PdfService.shareReceipt(
-                            transactionId: txId,
-                            type: type,
-                            amount: amount,
-                            studentName: tx.studentName ?? 'Siswa',
-                            canteenOrLocation:
-                                type == 'topup' ? 'QRIS / Koperasi' : canteenName,
-                            dateTime: tx.createdAt ?? DateTime.now(),
-                            items: itemsForPdf,
-                          );
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Gagal membuat struk PDF: $e'),
-                                backgroundColor: AppColors.error,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
-                        }
-                      },
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(CupertinoIcons.share, color: AppColors.primary, size: 16),
-                          SizedBox(width: 8),
-                          Text(
-                            'Bagikan Struk PDF',
-                            style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authNotifierProvider);
-    final String fullName = authState.profile?['full_name'] ?? 'Siswa';
+    final profile = authState.profile != null ? UserProfile.fromJson(authState.profile!) : null;
+    final String fullName = profile?.fullName ?? AppStrings.adminStudents;
+    final String? profilePhotoUrl = authState.profile?['avatar_url'];
     final studentAsync = ref.watch(siswaStudentProvider);
     final transactionsAsync = ref.watch(siswaTransactionsProvider);
 
-    const String avatarUrl =
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuD6arrvyi-ml6AobqY9iRVH-bAtGVKv5rVu0nJZT7i59FPT_OmA4PkCVPZcxohJcnFeNHKKxMlEGwczp9sGTCXSBRwZ53UWn6wqnvQJ6ESGLnCiLIiN_siAQAl3ysBbcCnbqsWvVJQgzGe7XPjzFZ9SP8Jo8H1m8mKOOxLJ4D4ztLEW7kLenZqki4o7cC7O6heqxWa4pbHjqDA0xw5v3YHUJmVtFdFT1-1kR5VAk7w4jCOrdL8gf41TENBbruzO8EieiPGMS_p5etA';
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F7),
+      backgroundColor: AppColors.systemBackground,
       appBar: AppBar(
         toolbarHeight: 64,
         titleSpacing: 16,
-        backgroundColor: const Color(0xFFF9F9FE),
+        backgroundColor: AppColors.systemBackground,
         elevation: 0,
         scrolledUnderElevation: 0,
         shape: Border(
-          bottom: BorderSide(color: const Color(0xFFBDC9C8).withValues(alpha: 0.3), width: 0.5),
+          bottom: BorderSide(color: AppColors.gray400.withValues(alpha: 0.3), width: 0.5),
         ),
         title: Row(
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0xFFE5E5EA),
-              ),
-              child: ClipOval(
-                child: Image.network(
-                  avatarUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const Icon(CupertinoIcons.person, color: Color(0xFF006767)),
-                ),
-              ),
+            CircleAvatar(
+              radius: 20,
+              backgroundImage: profilePhotoUrl != null
+                  ? CachedNetworkImageProvider(profilePhotoUrl)
+                  : null,
+              child: profilePhotoUrl == null
+                  ? const Icon(Icons.person, color: AppColors.teal)
+                  : null,
             ),
             const SizedBox(width: 12),
             Column(
@@ -365,7 +56,7 @@ class SiswaDashboardScreen extends ConsumerWidget {
               children: [
                 Text(
                   'Halo, $fullName!',
-                  style: const TextStyle(fontSize: 13, color: Color(0xFF3D4949), fontWeight: FontWeight.w500),
+                  style: const TextStyle(fontSize: 13, color: AppColors.darkGray, fontWeight: FontWeight.w500),
                 ),
                 Text(
                   'Beranda',
@@ -373,7 +64,7 @@ class SiswaDashboardScreen extends ConsumerWidget {
                     textStyle: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF006767),
+                      color: AppColors.teal,
                     ),
                   ),
                 ),
@@ -383,7 +74,7 @@ class SiswaDashboardScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(CupertinoIcons.bell, color: Color(0xFF006767)),
+            icon: const Icon(CupertinoIcons.bell, color: AppColors.teal),
             onPressed: () => context.push('/student/notifications'),
           ),
           const SizedBox(width: 8),
@@ -408,7 +99,7 @@ class SiswaDashboardScreen extends ConsumerWidget {
               studentAsync.when(
                 data: (student) {
                   if (student == null) return const SizedBox();
-                  final double balance = student.balance;
+                  final int balance = student.balance;
                   final bool isActive = student.isActive;
                   final String studentId = student.id;
 
@@ -422,9 +113,9 @@ class SiswaDashboardScreen extends ConsumerWidget {
                           width: double.infinity,
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.white,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFFE5E5EA), width: 1),
+                            border: Border.all(color: AppColors.borderLight, width: 1),
                           ),
                           child: Stack(
                             clipBehavior: Clip.none,
@@ -438,7 +129,7 @@ class SiswaDashboardScreen extends ConsumerWidget {
                                   height: 128,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    color: const Color(0xFF72D6D6).withValues(alpha: 0.2),
+                                    color: AppColors.softTeal.withValues(alpha: 0.2),
                                   ),
                                 ),
                               ),
@@ -453,7 +144,7 @@ class SiswaDashboardScreen extends ConsumerWidget {
                                         style: TextStyle(
                                           fontSize: 13,
                                           fontWeight: FontWeight.w500,
-                                          color: Color(0xFF3D4949),
+                                          color: AppColors.darkGray,
                                           letterSpacing: 1.1,
                                         ),
                                       ),
@@ -461,8 +152,8 @@ class SiswaDashboardScreen extends ConsumerWidget {
                                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                                         decoration: BoxDecoration(
                                           color: isActive
-                                              ? const Color(0xFF006767).withValues(alpha: 0.1)
-                                              : const Color(0xFFBA1A1A).withValues(alpha: 0.1),
+                                              ? AppColors.teal.withValues(alpha: 0.1)
+                                              : AppColors.errorRed2.withValues(alpha: 0.1),
                                           borderRadius: BorderRadius.circular(999),
                                         ),
                                         child: Row(
@@ -473,14 +164,14 @@ class SiswaDashboardScreen extends ConsumerWidget {
                                               style: TextStyle(
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.w500,
-                                                color: isActive ? const Color(0xFF006767) : const Color(0xFFBA1A1A),
+                                                color: isActive ? AppColors.teal : AppColors.errorRed2,
                                               ),
                                             ),
                                             const SizedBox(width: 4),
                                             Icon(
                                               isActive ? CupertinoIcons.checkmark_seal_fill : CupertinoIcons.lock_fill,
                                               size: 14,
-                                              color: isActive ? const Color(0xFF006767) : const Color(0xFFBA1A1A),
+                                              color: isActive ? AppColors.teal : AppColors.errorRed2,
                                             ),
                                           ],
                                         ),
@@ -497,7 +188,7 @@ class SiswaDashboardScreen extends ConsumerWidget {
                                         style: TextStyle(
                                           fontSize: 20,
                                           fontWeight: FontWeight.w600,
-                                          color: Color(0xFF1A1C1F),
+                                          color: AppColors.textDark,
                                         ),
                                       ),
                                       const SizedBox(width: 4),
@@ -506,7 +197,7 @@ class SiswaDashboardScreen extends ConsumerWidget {
                                         style: const TextStyle(
                                           fontSize: 34,
                                           fontWeight: FontWeight.w700,
-                                          color: Color(0xFF006767),
+                                          color: AppColors.teal,
                                           letterSpacing: -0.5,
                                         ),
                                       ),
@@ -529,18 +220,18 @@ class SiswaDashboardScreen extends ConsumerWidget {
                               child: Container(
                                 height: 48,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF006767),
+                                  color: AppColors.teal,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: const [
-                                    Icon(CupertinoIcons.add, color: Colors.white, size: 20),
+                                    Icon(CupertinoIcons.add, color: AppColors.white, size: 20),
                                     SizedBox(width: 8),
                                     Text(
                                       'Isi Saldo',
                                       style: TextStyle(
-                                        color: Colors.white,
+                                        color: AppColors.white,
                                         fontWeight: FontWeight.w600,
                                         fontSize: 17,
                                       ),
@@ -553,11 +244,11 @@ class SiswaDashboardScreen extends ConsumerWidget {
                           const SizedBox(width: 12),
                           Expanded(
                             child: GestureDetector(
-                              onTap: () => _toggleFreeze(context, ref, isActive, studentId),
+                              onTap: () => showFreezeCardDialog(context, ref, isActive, studentId),
                               child: Container(
                                 height: 48,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFE2E2E7),
+                                  color: AppColors.grayLight,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Row(
@@ -565,14 +256,14 @@ class SiswaDashboardScreen extends ConsumerWidget {
                                   children: [
                                     Icon(
                                       isActive ? CupertinoIcons.lock : CupertinoIcons.lock_open,
-                                      color: const Color(0xFF1A1C1F),
+                                      color: AppColors.textDark,
                                       size: 20,
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
                                       isActive ? 'Bekukan' : 'Aktifkan',
                                       style: const TextStyle(
-                                        color: Color(0xFF1A1C1F),
+                                        color: AppColors.textDark,
                                         fontWeight: FontWeight.w600,
                                         fontSize: 17,
                                       ),
@@ -588,7 +279,17 @@ class SiswaDashboardScreen extends ConsumerWidget {
                   );
                 },
                 loading: () => const Center(child: Padding(padding: EdgeInsets.all(24), child: CupertinoActivityIndicator())),
-                error: (err, stack) => Text('Gagal memuat saldo: $err', style: const TextStyle(color: AppColors.error)),
+                error: (err, stack) => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('${AppStrings.labelFailed} memuat saldo', style: TextStyle(color: AppColors.error)),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: () => ref.invalidate(siswaStudentProvider),
+                        child: const Text(AppStrings.buttonRetry),
+                      ),
+                    ],
+                  ),
               ),
               const SizedBox(height: 28),
 
@@ -628,49 +329,33 @@ class SiswaDashboardScreen extends ConsumerWidget {
                   }).toList();
 
                   if (todayTxs.isEmpty) {
-                    return Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 40),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE5E5EA), width: 0.5),
-                      ),
-                      child: Column(
-                        children: [
-                          const Icon(CupertinoIcons.tray, color: Color(0xFF7A7A7A), size: 36),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Belum ada transaksi hari ini',
-                            style: TextStyle(fontSize: 13, color: Color(0xFF7A7A7A)),
-                          ),
-                        ],
-                      ),
+                    return const EmptyStateWidget(
+                      message: AppStrings.labelNoData,
                     );
                   }
 
                   return Column(
                     children: todayTxs.map((tx) {
                       final String type = tx.type ?? 'purchase';
-                      final double amount = tx.totalAmount;
+                      final int amount = tx.totalAmount;
                       final String canteenName = tx.canteenName ?? 'Kantin';
                       
                       final txTime = tx.createdAt != null 
-                          ? DateFormat('HH:mm').format(tx.createdAt!.toLocal())
+                          ? DateFormat('HH:mm', 'id_ID').format(tx.createdAt!.toLocal())
                           : '-';
 
                       final bool isTopup = type == 'topup';
 
                       return InkWell(
-                        onTap: () => _showTransactionDetail(context, ref, tx),
+                        onTap: () => showTransactionDetailSheet(context, ref, tx),
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
                           margin: const EdgeInsets.only(bottom: 12),
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.white,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE5E5EA), width: 1),
+                            border: Border.all(color: AppColors.borderLight, width: 1),
                           ),
                           child: Row(
                             children: [
@@ -679,13 +364,13 @@ class SiswaDashboardScreen extends ConsumerWidget {
                                 height: 48,
                                 decoration: BoxDecoration(
                                   color: isTopup
-                                      ? const Color(0xFF006767).withValues(alpha: 0.1)
-                                      : const Color(0xFFF2F2F7),
+                                      ? AppColors.teal.withValues(alpha: 0.1)
+                                      : AppColors.systemBackground,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Icon(
                                   isTopup ? CupertinoIcons.square_arrow_down : Icons.restaurant,
-                                  color: isTopup ? const Color(0xFF006767) : const Color(0xFF1A1C1F),
+                                  color: isTopup ? AppColors.teal : AppColors.textDark,
                                   size: 20,
                                 ),
                               ),
@@ -699,14 +384,14 @@ class SiswaDashboardScreen extends ConsumerWidget {
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 17,
-                                        color: Color(0xFF1A1C1F),
+                                        color: AppColors.textDark,
                                       ),
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
                                       '$txTime WIB \u2022 ${isTopup ? "Koperasi" : "Jajan"}',
                                       style: const TextStyle(
-                                        color: Color(0xFF3D4949),
+                                        color: AppColors.darkGray,
                                         fontSize: 11,
                                       ),
                                     ),
@@ -722,14 +407,14 @@ class SiswaDashboardScreen extends ConsumerWidget {
                                     style: TextStyle(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 17,
-                                      color: isTopup ? const Color(0xFF006767) : const Color(0xFFBA1A1A),
+                                      color: isTopup ? AppColors.teal : AppColors.errorRed2,
                                     ),
                                   ),
                                   const SizedBox(width: 2),
                                   Icon(
                                     isTopup ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down,
                                     size: 12,
-                                    color: isTopup ? const Color(0xFF006767) : const Color(0xFFBA1A1A),
+                                    color: isTopup ? AppColors.teal : AppColors.errorRed2,
                                   ),
                                 ],
                               ),
@@ -741,7 +426,17 @@ class SiswaDashboardScreen extends ConsumerWidget {
                   );
                 },
                 loading: () => const Center(child: CupertinoActivityIndicator()),
-                error: (err, stack) => Text('Gagal memuat transaksi: $err', style: const TextStyle(color: AppColors.error)),
+                error: (err, stack) => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('${AppStrings.labelFailed} memuat transaksi', style: TextStyle(color: AppColors.error)),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: () => ref.invalidate(siswaTransactionsProvider),
+                        child: const Text(AppStrings.buttonRetry),
+                      ),
+                    ],
+                  ),
               ),
             ],
           ),

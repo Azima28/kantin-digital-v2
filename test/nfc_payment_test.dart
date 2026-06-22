@@ -109,21 +109,21 @@ void main() {
       final state = container.read(nfcPaymentProvider);
       expect(state.status, equals(NfcPaymentStatus.idle));
       expect(state.studentUid, isNull);
-      expect(state.studentBalance, equals(0.0));
+      expect(state.studentBalance, equals(0));
     });
 
     test('SimulateTagTap transitions to confirmingPayment when balance is sufficient', () async {
       fakeClient.studentToReturn = {
         'id': 'student-123',
         'class': '9A',
-        'balance': 15000.0,
+        'balance': 15000,
         'is_active': true,
         'daily_limit': 0,
         'profiles': {'full_name': 'Budi'},
       };
 
       final notifier = container.read(nfcPaymentProvider.notifier);
-      notifier.simulateTagTap('rfid-uid-111', 10000.0);
+      notifier.simulateTagTap('rfid-uid-111', 10000);
 
       // Yield control to let async code process
       await Future.delayed(Duration.zero);
@@ -133,42 +133,42 @@ void main() {
       expect(state.status, equals(NfcPaymentStatus.confirmingPayment));
       expect(state.studentUid, equals('rfid-uid-111'));
       expect(state.studentName, equals('Budi'));
-      expect(state.studentBalance, equals(15000.0));
+      expect(state.studentBalance, equals(15000));
     });
 
     test('SimulateTagTap transitions to insufficientBalance when balance is low', () async {
       fakeClient.studentToReturn = {
         'id': 'student-123',
         'class': '9A',
-        'balance': 5000.0,
+        'balance': 5000,
         'is_active': true,
         'daily_limit': 0,
         'profiles': {'full_name': 'Budi'},
       };
 
       final notifier = container.read(nfcPaymentProvider.notifier);
-      notifier.simulateTagTap('rfid-uid-111', 10000.0);
+      notifier.simulateTagTap('rfid-uid-111', 10000);
 
       // Yield control
       await Future.delayed(Duration.zero);
 
       final state = container.read(nfcPaymentProvider);
       expect(state.status, equals(NfcPaymentStatus.insufficientBalance));
-      expect(state.studentBalance, equals(5000.0));
+      expect(state.studentBalance, equals(5000));
     });
 
     test('SimulateTagTap fails when card is inactive', () async {
       fakeClient.studentToReturn = {
         'id': 'student-123',
         'class': '9A',
-        'balance': 15000.0,
+        'balance': 15000,
         'is_active': false,
         'daily_limit': 0,
         'profiles': {'full_name': 'Budi'},
       };
 
       final notifier = container.read(nfcPaymentProvider.notifier);
-      notifier.simulateTagTap('rfid-uid-111', 10000.0);
+      notifier.simulateTagTap('rfid-uid-111', 10000);
 
       // Yield control
       await Future.delayed(Duration.zero);

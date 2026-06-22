@@ -21,11 +21,36 @@ class AdminParentDetail {
       profile: profileData is Map<String, dynamic>
           ? UserProfile.fromJson(profileData)
           : const UserProfile(id: ''),
-      children: childrenData.cast<Map<String, dynamic>>(),
+      children: childrenData
+          .map((e) => e as Map<String, dynamic>)
+          .toList(),
     );
   }
 
   int get childCount => children.length;
+
+  Map<String, dynamic> toJson() => {
+        'profile': profile.toJson(),
+        'children': children,
+      };
+
+  AdminParentDetail copyWith({
+    UserProfile? profile,
+    List<Map<String, dynamic>>? children,
+  }) {
+    return AdminParentDetail(
+      profile: profile ?? this.profile,
+      children: children ?? this.children,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AdminParentDetail && profile.id == other.profile.id;
+
+  @override
+  int get hashCode => profile.id.hashCode;
 
   @override
   String toString() =>

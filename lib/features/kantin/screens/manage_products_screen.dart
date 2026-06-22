@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
@@ -33,7 +34,7 @@ class ManageProductsScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal memperbarui status produk: $e'),
+            content: Text('${AppStrings.labelFailed} memperbarui status produk'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -56,7 +57,7 @@ class ManageProductsScreen extends ConsumerWidget {
         content: Text('Apakah Anda yakin ingin menghapus "$productName" dari katalog stan Anda?'),
         actions: [
           CupertinoDialogAction(
-            child: const Text('Batal'),
+            child: const Text(AppStrings.buttonCancel),
             onPressed: () => Navigator.pop(ctx),
           ),
           CupertinoDialogAction(
@@ -74,7 +75,7 @@ class ManageProductsScreen extends ConsumerWidget {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Jajanan berhasil dihapus'),
+                      content: Text(AppStrings.successProductDeleted),
                       backgroundColor: AppColors.success,
                       behavior: SnackBarBehavior.floating,
                     ),
@@ -84,14 +85,14 @@ class ManageProductsScreen extends ConsumerWidget {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Gagal menghapus jajanan: $e'),
+                      content: Text('${AppStrings.labelFailed} menghapus jajanan'),
                       backgroundColor: AppColors.error,
                     ),
                   );
                 }
               }
             },
-            child: const Text('Hapus'),
+            child: const Text(AppStrings.buttonDelete),
           ),
         ],
       ),
@@ -146,11 +147,11 @@ class ManageProductsScreen extends ConsumerWidget {
                         onPressed: () {
                           context.push('/pos/products/form');
                         },
-                        icon: const Icon(CupertinoIcons.add, color: Colors.white, size: 18),
+                        icon: const Icon(CupertinoIcons.add, color: AppColors.white, size: 18),
                         label: const Text(
                           AppStrings.buttonAddProduct,
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
                           ),
@@ -200,7 +201,7 @@ class ManageProductsScreen extends ConsumerWidget {
                             final String id = product.id;
                             final String name = product.name;
                             final String category = product.category;
-                            final double price = product.price;
+                            final int price = product.price;
                             final bool isAvailable = product.isAvailable;
                             final String? imageUrl = product.imageUrl;
 
@@ -225,10 +226,11 @@ class ManageProductsScreen extends ConsumerWidget {
                                     child: imageUrl != null && imageUrl.isNotEmpty
                                         ? ClipRRect(
                                             borderRadius: BorderRadius.circular(10),
-                                            child: Image.network(
-                                              imageUrl,
+                                            child: CachedNetworkImage(
+                                              imageUrl: imageUrl,
                                               fit: BoxFit.cover,
-                                              errorBuilder: (context, error, stackTrace) => Center(
+                                              placeholder: (c, i) => const Center(child: CupertinoActivityIndicator()),
+                                              errorWidget: (c, i, e) => Center(
                                                 child: Text(
                                                   category.toLowerCase() == 'makanan' ? '🍔' : '🍹',
                                                   style: const TextStyle(fontSize: 24),
@@ -368,9 +370,19 @@ class ManageProductsScreen extends ConsumerWidget {
                     child: Center(
                       child: Padding(
                         padding: const EdgeInsets.all(32),
-                        child: Text(
-                          'Gagal memuat daftar produk: $err',
-                          style: const TextStyle(color: AppColors.error, fontSize: 13),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${AppStrings.labelFailed} memuat daftar produk',
+                              style: TextStyle(color: AppColors.error, fontSize: 13),
+                            ),
+                            const SizedBox(height: 12),
+                            ElevatedButton(
+                              onPressed: () => ref.invalidate(manageProductsProvider),
+                              child: const Text(AppStrings.buttonRetry),
+                            ),
+                          ],
                         ),
                       ),
                     ),

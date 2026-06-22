@@ -1,8 +1,7 @@
-/// Data model untuk tabel `audit_logs`.
-///
-/// Mencatat riwayat audit/aktivitas penting di sistem.
-library;
+// Data model untuk tabel `audit_logs`.
+// Mencatat riwayat audit/aktivitas penting di sistem.
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 class AuditLog {
   final String id;
@@ -110,7 +109,9 @@ class AuditLog {
       try {
         final decoded = jsonDecode(value);
         if (decoded is Map) return Map<String, dynamic>.from(decoded);
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('AuditLog._parseJsonb: $e');
+      }
     }
     return {};
   }

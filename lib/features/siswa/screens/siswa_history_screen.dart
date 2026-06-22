@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
@@ -22,9 +23,9 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
   void _showTransactionDetail(BuildContext context, OperatorTransaction tx) {
     final String txId = tx.id;
     final String type = tx.type ?? 'purchase';
-    final double amount = tx.totalAmount;
+    final int amount = tx.totalAmount;
     final String timeStr = tx.createdAt != null 
-        ? DateFormat('dd MMM yyyy, HH:mm').format(tx.createdAt!.toLocal())
+        ? DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(tx.createdAt!.toLocal())
         : '-';
     final String canteenName = tx.canteenName ?? 'Kantin';
 
@@ -34,7 +35,7 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       builder: (context) {
         return Consumer(
           builder: (context, ref, child) {
@@ -65,7 +66,7 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
                     const SizedBox(height: 16),
                     Center(
                       child: Text(
-                        'Detail Transaksi',
+                        '${AppStrings.titleDetail} Transaksi',
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -93,7 +94,7 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            type == 'topup' ? 'Top-Up Saldo Sukses' : 'Pembayaran Sukses',
+                            type == 'topup' ? 'Top-Up Saldo Berhasil' : 'Pembayaran Berhasil',
                             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                           ),
                         ],
@@ -139,7 +140,7 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
                               itemBuilder: (context, i) {
                                 final item = items[i];
                                 final String name = item.productName;
-                                final double itemPrice = item.unitPrice;
+                                final int itemPrice = item.unitPrice;
                                 final int qty = item.quantity;
 
                                 return Padding(
@@ -157,7 +158,17 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
                           );
                         },
                         loading: () => const Center(child: CupertinoActivityIndicator()),
-                        error: (err, stack) => Text('Gagal memuat detail barang: $err', style: const TextStyle(color: AppColors.error, fontSize: 11)),
+                        error: (err, stack) => Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('${AppStrings.labelFailed} memuat detail barang', style: TextStyle(color: AppColors.error, fontSize: 11)),
+                                const SizedBox(height: 4),
+                                TextButton(
+                                  onPressed: () => ref.invalidate(transactionDetailsProvider(txId)),
+                                  child: const Text(AppStrings.buttonRetry, style: TextStyle(fontSize: 11)),
+                                ),
+                              ],
+                            ),
                       ),
                     ],
 
@@ -189,7 +200,7 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
                         ),
                         onPressed: () {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Struk PDF berhasil diunduh'), backgroundColor: AppColors.success, behavior: SnackBarBehavior.floating),
+                            const SnackBar(content: Text(AppStrings.successPdfDownloaded), backgroundColor: AppColors.success, behavior: SnackBarBehavior.floating),
                           );
                           Navigator.pop(context);
                         },
@@ -214,13 +225,13 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
   Map<String, List<OperatorTransaction>> _groupTransactionsByDate(List<OperatorTransaction> txs) {
     final Map<String, List<OperatorTransaction>> groups = {};
     final now = DateTime.now();
-    final todayStr = DateFormat('yyyy-MM-dd').format(now);
-    final yesterdayStr = DateFormat('yyyy-MM-dd').format(now.subtract(const Duration(days: 1)));
+    final todayStr = DateFormat('yyyy-MM-dd', 'id_ID').format(now);
+    final yesterdayStr = DateFormat('yyyy-MM-dd', 'id_ID').format(now.subtract(const Duration(days: 1)));
 
     for (var tx in txs) {
       if (tx.createdAt == null) continue;
       final txDate = tx.createdAt!.toLocal();
-      final dateKey = DateFormat('yyyy-MM-dd').format(txDate);
+      final dateKey = DateFormat('yyyy-MM-dd', 'id_ID').format(txDate);
 
       String sectionTitle;
       if (dateKey == todayStr) {
@@ -277,7 +288,7 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
                       // Search Bar Input
                       Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE9E9EB),
+                          color: AppColors.grayLight,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
@@ -312,7 +323,7 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
                       // Pill segmented filter (Semua, Jajan, Top-Up)
                       Row(
                         children: [
-                          _buildFilterPill(0, 'Semua'),
+                          _buildFilterPill(0, AppStrings.labelAll),
                           const SizedBox(width: 8),
                           _buildFilterPill(1, 'Jajan'),
                           const SizedBox(width: 8),
@@ -347,24 +358,18 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
                       }).toList();
 
                       if (filteredTxs.isEmpty) {
-                        return ListView(
-                          children: const [
-                            Padding(
-                              padding: EdgeInsets.symmetric(vertical: 80),
-                              child: Center(
-                                child: Column(
-                                  children: [
-                                    Icon(CupertinoIcons.tray, color: AppColors.textGray, size: 48),
-                                    SizedBox(height: 12),
-                                    Text(
-                                      'Tidak ada riwayat transaksi',
-                                      style: TextStyle(fontSize: 14, color: AppColors.textGray, fontWeight: FontWeight.bold),
-                                    ),
-                                  ],
-                                ),
+                        return Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(CupertinoIcons.tray, color: AppColors.textGray, size: 48),
+                              SizedBox(height: 12),
+                              Text(
+                                'Tidak ada riwayat transaksi',
+                                style: TextStyle(fontSize: 14, color: AppColors.textGray, fontWeight: FontWeight.bold),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         );
                       }
 
@@ -397,7 +402,7 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
                               // Cards block container
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(color: AppColors.borderLight, width: 0.5),
                                 ),
@@ -413,11 +418,11 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
                                   itemBuilder: (context, index) {
                                     final tx = sectionItems[index];
                                     final String type = tx.type ?? 'purchase';
-                                    final double amount = tx.totalAmount;
+                                    final int amount = tx.totalAmount;
                                     final String canteenName = tx.canteenName ?? 'Kantin';
                                     final bool isTopup = type == 'topup';
                                     final String timeStr = tx.createdAt != null 
-                                        ? DateFormat('HH:mm').format(tx.createdAt!.toLocal())
+                                        ? DateFormat('HH:mm', 'id_ID').format(tx.createdAt!.toLocal())
                                         : '-';
 
                                     return ListTile(
@@ -430,7 +435,7 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
                                           shape: BoxShape.circle,
                                           color: isTopup
                                               ? AppColors.primary.withAlpha(20)
-                                              : const Color(0xFFF2F2F7),
+                                              : AppColors.systemBackground,
                                         ),
                                         child: Icon(
                                           isTopup ? CupertinoIcons.square_arrow_down : Icons.restaurant,
@@ -476,7 +481,19 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
                       );
                     },
                     loading: () => const Center(child: CupertinoActivityIndicator()),
-                    error: (err, stack) => Center(child: Text('Gagal memuat riwayat: $err', style: const TextStyle(color: AppColors.error))),
+                    error: (err, stack) => Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('${AppStrings.labelFailed} memuat riwayat', style: TextStyle(color: AppColors.error)),
+                            const SizedBox(height: 8),
+                            ElevatedButton(
+                              onPressed: () => ref.invalidate(siswaTransactionsProvider),
+                              child: const Text(AppStrings.buttonRetry),
+                            ),
+                          ],
+                        ),
+                      ),
                   ),
                 ),
               ],
@@ -500,7 +517,7 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary : const Color(0xFFF2F2F7),
+            color: isSelected ? AppColors.primary : AppColors.systemBackground,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
@@ -509,7 +526,7 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: isSelected ? Colors.white : AppColors.textGray,
+              color: isSelected ? AppColors.white : AppColors.textGray,
             ),
           ),
         ),

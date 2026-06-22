@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 class AdminMainLayout extends ConsumerWidget {
@@ -43,14 +44,13 @@ class AdminMainLayout extends ConsumerWidget {
     final int selectedIndex = _getSelectedIndex(context);
     final double width = MediaQuery.of(context).size.width;
     final bool isDesktop = width >= 768;
-    const Color primaryTeal = Color(0xFF003434);
 
     if (isDesktop) {
       return Scaffold(
         body: Row(
           children: [
             // Left sidebar
-            _buildSidebar(context, ref, selectedIndex, primaryTeal),
+            _buildSidebar(context, ref, selectedIndex),
             const VerticalDivider(width: 0.5, thickness: 0.5, color: AppColors.borderLight),
             // Right content
             Expanded(
@@ -74,7 +74,7 @@ class AdminMainLayout extends ConsumerWidget {
           onTap: (int index) => _onItemTapped(index, context),
           type: BottomNavigationBarType.fixed,
           backgroundColor: AppColors.cardBackground,
-          selectedItemColor: primaryTeal,
+          selectedItemColor: AppColors.darkTeal,
           unselectedItemColor: AppColors.textGray,
           selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
           unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
@@ -106,14 +106,14 @@ class AdminMainLayout extends ConsumerWidget {
     );
   }
 
-  Widget _buildSidebar(BuildContext context, WidgetRef ref, int selectedIndex, Color primaryTeal) {
+  Widget _buildSidebar(BuildContext context, WidgetRef ref, int selectedIndex) {
     final authState = ref.watch(authNotifierProvider);
     final String fullName = authState.profile?['full_name'] ?? 'Super Admin';
     final String email = authState.profile?['email'] ?? 'admin@kantindigital.com';
 
     return Container(
       width: 260,
-      color: Colors.white,
+      color: AppColors.white,
       child: Column(
         children: [
           // Sidebar Header
@@ -124,12 +124,12 @@ class AdminMainLayout extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: primaryTeal.withValues(alpha: 0.1),
+                    color: AppColors.darkTeal.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     CupertinoIcons.shield_fill,
-                    color: primaryTeal,
+                    color: AppColors.darkTeal,
                     size: 24,
                   ),
                 ),
@@ -143,7 +143,7 @@ class AdminMainLayout extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
-                          color: primaryTeal,
+                          color: AppColors.darkTeal,
                           letterSpacing: 1.2,
                         ),
                       ),
@@ -177,7 +177,6 @@ class AdminMainLayout extends ConsumerWidget {
                   label: 'Home',
                   isSelected: selectedIndex == 0,
                   onTap: () => _onItemTapped(0, context),
-                  primaryTeal: primaryTeal,
                 ),
                 const SizedBox(height: 8),
                 _buildSidebarItem(
@@ -187,7 +186,6 @@ class AdminMainLayout extends ConsumerWidget {
                   label: 'Users',
                   isSelected: selectedIndex == 1,
                   onTap: () => _onItemTapped(1, context),
-                  primaryTeal: primaryTeal,
                 ),
                 const SizedBox(height: 8),
                 _buildSidebarItem(
@@ -197,7 +195,6 @@ class AdminMainLayout extends ConsumerWidget {
                   label: 'Audit Log',
                   isSelected: selectedIndex == 2,
                   onTap: () => _onItemTapped(2, context),
-                  primaryTeal: primaryTeal,
                 ),
                 const SizedBox(height: 8),
                 _buildSidebarItem(
@@ -207,7 +204,6 @@ class AdminMainLayout extends ConsumerWidget {
                   label: 'Settings',
                   isSelected: selectedIndex == 3,
                   onTap: () => _onItemTapped(3, context),
-                  primaryTeal: primaryTeal,
                 ),
               ],
             ),
@@ -221,8 +217,8 @@ class AdminMainLayout extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: primaryTeal.withValues(alpha: 0.1),
-                  child: Icon(CupertinoIcons.person_solid, color: primaryTeal, size: 18),
+                  backgroundColor: AppColors.darkTeal.withValues(alpha: 0.1),
+                  child: Icon(CupertinoIcons.person_solid, color: AppColors.darkTeal, size: 18),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -254,31 +250,14 @@ class AdminMainLayout extends ConsumerWidget {
                 ),
                 IconButton(
                   icon: const Icon(CupertinoIcons.square_arrow_right, color: AppColors.error, size: 20),
-                  onPressed: () {
-                    showCupertinoDialog(
-                      context: context,
-                      builder: (BuildContext ctx) => CupertinoAlertDialog(
-                        title: const Text('Keluar dari Akun'),
-                        content: const Text('Apakah Anda yakin ingin keluar dari Master Control?'),
-                        actions: [
-                          CupertinoDialogAction(
-                            child: const Text('Batal'),
-                            onPressed: () => Navigator.pop(ctx),
-                          ),
-                          CupertinoDialogAction(
-                            isDestructiveAction: true,
-                            onPressed: () async {
-                              Navigator.pop(ctx);
-                              await ref.read(authNotifierProvider.notifier).logout();
-                              if (context.mounted) {
-                                context.go('/login');
-                              }
-                            },
-                            child: const Text('Keluar'),
-                          ),
-                        ],
-                      ),
-                    );
+                  onPressed: () async {
+                    final confirmed = await showLogoutConfirmationDialog(context);
+                    if (confirmed) {
+                      await ref.read(authNotifierProvider.notifier).logout();
+                      if (context.mounted) {
+                        context.go('/login');
+                      }
+                    }
                   },
                 ),
               ],
@@ -296,7 +275,6 @@ class AdminMainLayout extends ConsumerWidget {
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
-    required Color primaryTeal,
   }) {
     return Material(
       color: Colors.transparent,
@@ -306,14 +284,14 @@ class AdminMainLayout extends ConsumerWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? primaryTeal.withValues(alpha: 0.1) : Colors.transparent,
+            color: isSelected ? AppColors.darkTeal.withValues(alpha: 0.1) : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
             children: [
               Icon(
                 isSelected ? activeIcon : icon,
-                color: isSelected ? primaryTeal : AppColors.textGray,
+                color: isSelected ? AppColors.darkTeal : AppColors.textGray,
                 size: 20,
               ),
               const SizedBox(width: 12),
@@ -323,7 +301,7 @@ class AdminMainLayout extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? primaryTeal : AppColors.textDark,
+                    color: isSelected ? AppColors.darkTeal : AppColors.textDark,
                   ),
                 ),
               ),

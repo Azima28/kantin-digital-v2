@@ -1,10 +1,31 @@
+import 'dart:convert';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../core/services/secure_session_service.dart';
+import '../../../core/constants/app_strings.dart';
 
 class AuthService {
   final SupabaseClient _client;
   Map<String, dynamic>? _currentProfile;
 
   AuthService(this._client);
+
+  /// Initialise session persistence: save/restore session tokens
+  /// via flutter_secure_storage whenever Supabase auth state changes.
+  void init() {
+    _client.auth.onAuthStateChange.listen((data) {
+      if (data.event == AuthChangeEvent.signedIn) {
+        final sessionJson = jsonEncode({
+          'access_token': data.session?.accessToken,
+          'refresh_token': data.session?.refreshToken,
+        });
+        SecureSessionService.saveSession(sessionJson);
+      } else if (data.event == AuthChangeEvent.signedOut) {
+        SecureSessionService.clearSession();
+      }
+    });
+  }
 
   // Sign In with dual-path strategy:
   //   1. Primary: Supabase Auth (signInWithPassword) — establishes JWT session for RLS
@@ -34,66 +55,49 @@ class AuthService {
       Map<String, dynamic>? preloadedProfile;
 
       if (expectedRole == 'parent') {
-        // Resolve parent profile by looking up student's NISN
-        final studentProfile = await _client
-            .from('profiles')
-            .select()
-            .eq('nisn', rawInput)
-            .eq('role', 'student')
-            .maybeSingle();
-        if (studentProfile == null) {
-          throw Exception('NISN Anak tidak terdaftar.');
-        }
+        // Resolve parent login via RPC (bypasses RLS restrictions)
+        final parentResult = await _client.rpc('resolve_parent_login', params: {
+          'p_student_nisn': rawInput,
+        });
 
-        final link = await _client
-            .from('parent_students')
-            .select('parent_id')
-            .eq('student_id', studentProfile['id'])
-            .maybeSingle();
-        if (link == null) {
-          throw Exception('Akun Orang Tua belum dikaitkan dengan siswa ini.');
-        }
-
-        final parentId = link['parent_id'];
-        final parentProfile = await _client
-            .from('profiles')
-            .select()
-            .eq('id', parentId)
-            .maybeSingle();
-        if (parentProfile == null) {
-          throw Exception('Profil Orang Tua tidak ditemukan.');
-        }
-
-        preloadedProfile = parentProfile;
-        resolvedEmail = parentProfile['email'] as String;
-      } else if (!inputLower.contains('@')) {
-        // Try to find profile by username
-        try {
-          preloadedProfile = await _client
-              .from('profiles')
-              .select()
-              .eq('username', rawInput)
-              .maybeSingle();
-        } catch (_) {
-          preloadedProfile = null;
-        }
-
-        // Try by NISN if username didn't match
-        if (preloadedProfile == null) {
-          try {
-            preloadedProfile = await _client
-                .from('profiles')
-                .select()
-                .eq('nisn', rawInput)
-                .maybeSingle();
-          } catch (_) {
-            preloadedProfile = null;
-          }
-        }
-
-        if (preloadedProfile != null && preloadedProfile['email'] != null) {
-          resolvedEmail = preloadedProfile['email'] as String;
+        final Map<String, dynamic> result;
+        if (parentResult is Map<String, dynamic>) {
+          result = parentResult;
+        } else if (parentResult is String) {
+          result = jsonDecode(parentResult) as Map<String, dynamic>;
         } else {
+          result = {};
+        }
+
+        if (result['found'] != true) {
+          throw Exception(result['error'] ?? 'NISN Anak tidak terdaftar.');
+        }
+
+        preloadedProfile = result;
+        resolvedEmail = result['email'] as String;
+      } else if (!inputLower.contains('@')) {
+        // Try to find profile by username via RPC (bypasses RLS)
+        try {
+          final identityResult = await _client.rpc('get_email_for_login', params: {
+            'p_input': rawInput,
+          });
+
+          final Map<String, dynamic> result;
+          if (identityResult is Map<String, dynamic>) {
+            result = identityResult;
+          } else if (identityResult is String) {
+            result = jsonDecode(identityResult) as Map<String, dynamic>;
+          } else {
+            result = {};
+          }
+
+          if (result['found'] == true) {
+            preloadedProfile = result;
+            resolvedEmail = result['email'] as String;
+          } else {
+            resolvedEmail = '$inputLower@sekolah.sch.id';
+          }
+        } catch (_) {
           resolvedEmail = '$inputLower@sekolah.sch.id';
         }
       }
@@ -133,33 +137,63 @@ class AuthService {
             .maybeSingle();
       }
 
-      // --- Step 4: Fallback — profiles-based password verification ---
+      // --- Step 4: Fallback — profile-based password verification via RPC ---
       if (!authSessionEstablished) {
-        if (profile == null) {
-          // Try to find profile by email for fallback auth
-          try {
-            profile = await _client
-                .from('profiles')
-                .select()
-                .eq('email', resolvedEmail)
-                .maybeSingle();
-          } catch (_) {
-            profile = null;
+        try {
+          final response = await _client.rpc('verify_password', params: {
+            'p_email': resolvedEmail,
+            'p_password': password,
+          });
+          
+          final Map<String, dynamic> result;
+          if (response is Map<String, dynamic>) {
+            result = response;
+          } else if (response is String) {
+            result = jsonDecode(response) as Map<String, dynamic>;
+          } else {
+            result = {};
           }
-        }
+          
+          if (result['found'] == false || result['password_valid'] == false) {
+            throw Exception('Email/Username/NISN atau kata sandi salah.');
+          }
+          
+          // Build profile from RPC response (exclude internal fields)
+          // verify_password returns nested {found, password_valid, profile: {...}}
+          if (result['profile'] != null && result['profile'] is Map) {
+            profile = Map<String, dynamic>.from(result['profile'] as Map);
+          } else {
+            profile = Map<String, dynamic>.from(result);
+          }
 
-        if (profile == null) {
+          // Try to establish a real Supabase Auth session so RLS works.
+          // The password is validated above, so this should succeed.
+          try {
+            await _client.auth.signInWithPassword(
+              email: resolvedEmail,
+              password: password,
+            );
+            authSessionEstablished = true;
+            // Re-fetch profile via authenticated session for accuracy
+            final String userId = _client.auth.currentUser?.id ?? '';
+            if (userId.isNotEmpty) {
+              final authedProfile = await _client
+                  .from('profiles')
+                  .select()
+                  .eq('id', userId)
+                  .maybeSingle();
+              if (authedProfile != null) {
+                profile = Map<String, dynamic>.from(authedProfile);
+              }
+            }
+          } catch (_) {
+            // Session establishment failed — continue with profile from RPC.
+            // App will work but some RLS-dependent features may be limited.
+          }
+        } catch (e) {
+          if (e is Exception) rethrow;
           throw Exception('Email/Username/NISN atau kata sandi salah.');
         }
-
-        // Verify password against the profiles.password column
-        final String storedPassword = profile['password']?.toString() ?? '';
-        if (storedPassword != password) {
-          throw Exception('Email/Username/NISN atau kata sandi salah.');
-        }
-        // Note: In fallback mode, no Supabase Auth session is established.
-        // auth.uid() will be NULL in RLS policies. Some write operations
-        // (audit_logs, corrections) may fail until Supabase Auth is restored.
       }
 
       if (profile == null) {
@@ -212,7 +246,7 @@ class AuthService {
       if (errString.contains('SocketException') ||
           errString.contains('Failed host lookup')) {
         throw Exception(
-          'Gagal menghubungkan ke server. Periksa koneksi internet Anda atau pastikan URL Supabase sudah benar.',
+          '${AppStrings.labelFailed} menghubungkan ke server. Periksa koneksi internet Anda atau pastikan URL Supabase sudah benar.',
         );
       }
       if (e is Exception) {
@@ -222,9 +256,11 @@ class AuthService {
     }
   }
 
-  // Sign Out current session (both Supabase Auth and local profile cache)
+  // Sign Out current session (both Supabase Auth, local profile cache,
+  // and secure storage)
   Future<void> signOut() async {
     _currentProfile = null;
+    await SecureSessionService.clearSession();
     try {
       await _client.auth.signOut();
     } catch (_) {
@@ -244,9 +280,15 @@ class AuthService {
       try {
         var profile = await _client
             .from('profiles')
-            .select()
+            .select('*')
             .eq('id', session.user.id)
             .maybeSingle();
+
+        // Remove password hash from profile (never needed after auth)
+        if (profile != null && profile.containsKey('password')) {
+          profile = Map<String, dynamic>.from(profile);
+          profile.remove('password');
+        }
         
         if (profile != null && profile['role'] == 'parent') {
           try {

@@ -2,11 +2,14 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
+import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/features/keuangan/widgets/keuangan_card_registration_form.dart';
+import 'package:kantin_digital/features/keuangan/widgets/keuangan_card_registration_success.dart';
 
 class KeuanganCardRegistrationScreen extends ConsumerStatefulWidget {
   final String studentId;
@@ -29,10 +32,6 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
   String _class = '';
   String? _oldRfid;
 
-  static const Color primaryTeal = Color(0xFF003434);
-  static const Color successGreen = Color(0xFF006A35);
-  static const Color dangerRed = Color(0xFFBA1A1A);
-
   @override
   void initState() {
     super.initState();
@@ -51,21 +50,21 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
     });
     try {
       final client = ref.read(supabaseClientProvider);
-      final profile = await client.from('profiles').select().eq('id', widget.studentId).single();
-      final student = await client.from('students').select().eq('id', widget.studentId).single();
+      final profile = await client.from('profiles').select().eq('id', widget.studentId).maybeSingle();
+      final student = await client.from('students').select().eq('id', widget.studentId).maybeSingle();
 
       setState(() {
-        _fullName = profile['full_name'] ?? '';
-        _nisn = profile['nisn'] ?? '';
-        _class = student['class'] ?? '';
-        _oldRfid = student['rfid_uid'];
+        _fullName = profile?['full_name'] ?? '';
+        _nisn = profile?['nisn'] ?? '';
+        _class = student?['class'] ?? '';
+        _oldRfid = student?['rfid_uid'];
       });
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal memuat profil: $e'),
-            backgroundColor: dangerRed,
+            content: Text('${AppStrings.labelFailed} memuat profil'),
+            backgroundColor: AppColors.errorRed2,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -92,7 +91,7 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Kartu terdeteksi: $mockUid'),
-        backgroundColor: successGreen,
+        backgroundColor: AppColors.successGreen,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),
@@ -107,7 +106,7 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
         content: const Text('Apakah Anda yakin ingin menghapus tautan kartu dari siswa ini? Kartu tidak akan bisa digunakan lagi.'),
         actions: [
           CupertinoDialogAction(
-            child: const Text('Batal'),
+            child: const Text(AppStrings.buttonCancel),
             onPressed: () => Navigator.pop(ctx),
           ),
           CupertinoDialogAction(
@@ -149,8 +148,8 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Tautan kartu berhasil dihapus.'),
-                      backgroundColor: successGreen,
+                      content: Text(AppStrings.successCardUnlinked),
+                      backgroundColor: AppColors.successGreen,
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -159,8 +158,8 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Gagal menghapus tautan kartu: $e'),
-                      backgroundColor: dangerRed,
+                      content: Text('${AppStrings.labelFailed} menghapus tautan kartu'),
+                      backgroundColor: AppColors.errorRed2,
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -173,7 +172,7 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
                 }
               }
             },
-            child: const Text('Hapus'),
+            child: const Text(AppStrings.buttonDelete),
           ),
         ],
       ),
@@ -185,8 +184,8 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
     if (uid.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('UID kartu tidak boleh kosong.'),
-          backgroundColor: dangerRed,
+          content: Text(AppStrings.errorRfidRequired),
+          backgroundColor: AppColors.errorRed2,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -244,15 +243,15 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
 
       setState(() {
         _savedUid = uid;
-        _successTime = DateFormat('dd MMM yyyy, HH:mm').format(DateTime.now());
+        _successTime = DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(DateTime.now());
         _isSuccess = true;
       });
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal menghubungkan kartu: ${e.toString().replaceAll('Exception: ', '')}'),
-            backgroundColor: dangerRed,
+            content: Text('${AppStrings.labelFailed} menghubungkan kartu'),
+            backgroundColor: AppColors.errorRed2,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -271,24 +270,32 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
     if (_isLoading && _fullName.isEmpty) {
       return const Scaffold(
         body: Center(
-          child: CupertinoActivityIndicator(color: primaryTeal),
+          child: CupertinoActivityIndicator(color: AppColors.darkTeal),
         ),
       );
     }
 
     if (_isSuccess) {
-      return _buildSuccessScreen();
+      return KeuanganCardRegistrationSuccess(
+        fullName: _fullName,
+        studentClass: _class,
+        savedUid: _savedUid,
+        successTime: _successTime,
+      );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF9F8),
+      backgroundColor: AppColors.offWhite,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF9F8),
+        backgroundColor: AppColors.offWhite,
         elevation: 0,
         scrolledUnderElevation: 0,
         title: Text(
           'Registrasi Kartu NFC',
-          style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, color: primaryTeal, fontSize: 18),
+          style: GoogleFonts.inter(
+              fontWeight: FontWeight.bold,
+              color: AppColors.darkTeal,
+              fontSize: 18),
         ),
       ),
       body: SafeArea(
@@ -299,272 +306,24 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
             children: [
               Text(
                 'Siswa: $_fullName (NISN: $_nisn)',
-                style: GoogleFonts.beVietnamPro(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF1B1C1B)),
+                style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.nearBlack),
               ),
               Text(
                 'Kelas: $_class · SMP Terpadu',
-                style: GoogleFonts.beVietnamPro(fontSize: 13, color: const Color(0xFF6F7978)),
+                style: GoogleFonts.inter(
+                    fontSize: 13, color: AppColors.mutedGray),
               ),
               const SizedBox(height: 20),
-
-              // ─── Scan NFC Bento Card ───
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 15,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      '📶 SIAP MEMINDAI',
-                      style: GoogleFonts.beVietnamPro(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: primaryTeal,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Tempelkan kartu siswa ke sensor NFC perangkat ini atau gunakan tombol simulasi di bawah.',
-                      style: GoogleFonts.beVietnamPro(
-                        fontSize: 13,
-                        color: const Color(0xFF6F7978),
-                        height: 1.4,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    // Animated ripple design
-                    GestureDetector(
-                      onTap: _simulateNfcScan,
-                      child: Container(
-                        height: 100,
-                        width: 100,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: primaryTeal.withValues(alpha: 0.05),
-                          border: Border.all(color: primaryTeal.withValues(alpha: 0.15), width: 1.5),
-                        ),
-                        child: const Center(
-                          child: Icon(
-                            CupertinoIcons.antenna_radiowaves_left_right,
-                            color: primaryTeal,
-                            size: 44,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextButton.icon(
-                      onPressed: _simulateNfcScan,
-                      icon: const Icon(CupertinoIcons.play_circle_fill, size: 18),
-                      label: Text(
-                        'Simulasikan Tap Kartu',
-                        style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold),
-                      ),
-                      style: TextButton.styleFrom(foregroundColor: primaryTeal),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // ─── Input UID Manual ───
-              Text(
-                'UID Kartu (Manual Fallback)',
-                style: GoogleFonts.beVietnamPro(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: const Color(0xFF1B1C1B),
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _uidController,
-                decoration: InputDecoration(
-                  hintText: 'Contoh: 04:F8:A1:22',
-                  hintStyle: GoogleFonts.beVietnamPro(color: const Color(0xFF6F7978), fontSize: 14),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFE4E2E1)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFE4E2E1)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: primaryTeal, width: 1.5),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              if (_oldRfid != null && _oldRfid!.isNotEmpty)
-                Text(
-                  'ℹ UID Lama: $_oldRfid (aktif)',
-                  style: GoogleFonts.beVietnamPro(
-                    fontSize: 12,
-                    color: const Color(0xFF6F7978),
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              const SizedBox(height: 32),
-
-              // ─── Action Buttons ───
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _linkCard,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryTeal,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    elevation: 0,
-                  ),
-                  child: _isLoading
-                      ? const CupertinoActivityIndicator(color: Colors.white)
-                      : Text(
-                          'HUBUNGKAN KARTU',
-                          style: GoogleFonts.beVietnamPro(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: Colors.white,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              if (_oldRfid != null && _oldRfid!.isNotEmpty)
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: _isLoading ? null : _unlinkCard,
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: dangerRed),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    ),
-                    child: Text(
-                      'Hapus Tautan Kartu',
-                      style: GoogleFonts.beVietnamPro(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: dangerRed,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSuccessScreen() {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFBF9F8),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(),
-              // Success Icon
-              Container(
-                height: 80,
-                width: 80,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0xFFEAF9EE),
-                ),
-                child: const Center(
-                  child: Icon(
-                    CupertinoIcons.checkmark_alt_circle_fill,
-                    color: successGreen,
-                    size: 56,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Kartu Berhasil Diaktifkan!',
-                style: GoogleFonts.beVietnamPro(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: primaryTeal,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Kartu NFC berhasil ditautkan dan akun siswa aktif.',
-                style: GoogleFonts.beVietnamPro(
-                  fontSize: 14,
-                  color: const Color(0xFF6F7978),
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-
-              // Detail Card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFE4E2E1)),
-                ),
-                child: Column(
-                  children: [
-                    _buildSuccessRow('Nama Siswa', _fullName),
-                    const Divider(height: 16, thickness: 0.5, color: Color(0xFFE4E2E1)),
-                    _buildSuccessRow('Kelas', 'Kelas $_class'),
-                    const Divider(height: 16, thickness: 0.5, color: Color(0xFFE4E2E1)),
-                    _buildSuccessRow('UID Kartu', _savedUid),
-                    const Divider(height: 16, thickness: 0.5, color: Color(0xFFE4E2E1)),
-                    _buildSuccessRow('Waktu Tautan', _successTime),
-                  ],
-                ),
-              ),
-
-              const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    context.pop(); // Returns to Student Detail Screen
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryTeal,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'KEMBALI KE PROFIL SISWA',
-                    style: GoogleFonts.beVietnamPro(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+              KeuanganCardRegistrationForm(
+                uidController: _uidController,
+                oldRfid: _oldRfid,
+                isLoading: _isLoading,
+                onSimulateNfcScan: _simulateNfcScan,
+                onLinkCard: _linkCard,
+                onUnlinkCard: _unlinkCard,
               ),
             ],
           ),
@@ -573,27 +332,4 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
     );
   }
 
-  Widget _buildSuccessRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.beVietnamPro(color: const Color(0xFF6F7978), fontSize: 13),
-        ),
-        Flexible(
-          child: Text(
-            value,
-            style: GoogleFonts.beVietnamPro(
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF1B1C1B),
-              fontSize: 13,
-            ),
-            textAlign: TextAlign.right,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
-  }
 }

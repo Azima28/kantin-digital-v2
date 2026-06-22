@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 
@@ -25,7 +26,7 @@ class SiswaCardsScreen extends ConsumerWidget {
             : 'Apakah Anda yakin ingin mengaktifkan kembali kartu Anda?'),
         actions: [
           CupertinoDialogAction(
-            child: const Text('Batal'),
+            child: const Text(AppStrings.buttonCancel),
             onPressed: () => Navigator.pop(ctx),
           ),
           CupertinoDialogAction(
@@ -67,7 +68,7 @@ class SiswaCardsScreen extends ConsumerWidget {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Gagal memperbarui kartu: $e'),
+                      content: Text('${AppStrings.labelFailed} memperbarui kartu: $e'),
                       backgroundColor: AppColors.error,
                       behavior: SnackBarBehavior.floating,
                     ),
@@ -86,7 +87,7 @@ class SiswaCardsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final studentAsync = ref.watch(siswaStudentProvider);
     final authState = ref.watch(authNotifierProvider);
-    final String fullName = authState.profile?['full_name'] ?? 'Siswa';
+    final String fullName = authState.profile?['full_name'] ?? AppStrings.adminStudents;
     final String email = authState.profile?['email'] ?? '';
     final String nis = email.split('@').first;
 
@@ -137,7 +138,7 @@ class SiswaCardsScreen extends ConsumerWidget {
                         height: 200,
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [AppColors.primary, Color(0xFF008282)],
+                            colors: [AppColors.primary, AppColors.primary],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -169,7 +170,7 @@ class SiswaCardsScreen extends ConsumerWidget {
                                 ),
                                 const Icon(
                                   CupertinoIcons.wifi,
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                   size: 20,
                                 ),
                               ],
@@ -180,7 +181,7 @@ class SiswaCardsScreen extends ConsumerWidget {
                                 Text(
                                   fullName,
                                   style: GoogleFonts.inter(
-                                    color: Colors.white,
+                                    color: AppColors.white,
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -216,7 +217,7 @@ class SiswaCardsScreen extends ConsumerWidget {
                                   child: Text(
                                     isActive ? 'Aktif' : 'Beku',
                                     style: const TextStyle(
-                                      color: Colors.white,
+                                      color: AppColors.white,
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -233,7 +234,7 @@ class SiswaCardsScreen extends ConsumerWidget {
                       // IOS List Group
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.white,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(color: AppColors.borderLight, width: 0.5),
                         ),
@@ -288,7 +289,7 @@ class SiswaCardsScreen extends ConsumerWidget {
                 ),
                 error: (err, stack) => Center(
                   child: Text(
-                    'Gagal memuat status kartu: $err',
+                    '${AppStrings.labelFailed} memuat status kartu: $err',
                     style: const TextStyle(color: AppColors.error),
                   ),
                 ),

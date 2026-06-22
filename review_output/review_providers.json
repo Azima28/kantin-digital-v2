@@ -1,0 +1,115 @@
+{
+  "passed": false,
+  "security_concerns": [
+    {
+      "file": "lib/features/auth/services/auth_service.dart",
+      "line": 156,
+      "description": "CRITICAL: Plaintext password comparison in fallback auth path. 'profile[\"password\"]' compared directly against provided password, indicating passwords stored in plaintext in the DB. If Supabase Auth is down, this path exposes passwords in the clear."
+    },
+    {
+      "file": "lib/features/auth/services/auth_service.dart",
+      "line": 97,
+      "description": "Email constructed from raw NISN/username input ('$inputLower@sekolah.sch.id'). If fabricated email doesn't exist in Supabase Auth, primary auth path always fails and falls through to plaintext password comparison."
+    },
+    {
+      "file": "lib/features/admin/providers/admin_providers.dart",
+      "line": 378,
+      "description": "String interpolation inside .or() Supabase filter. '$actorName' interpolated directly: actorName containing ',' or '.eq.' could mutate query filter semantics. Low risk since source is DB, but filter-injection vector."
+    },
+    {
+      "file": "lib/features/admin/providers/admin_providers.dart",
+      "line": 13,
+      "description": "No role verification in adminDashboardProvider — relies solely on RLS. A non-admin session with compromised RLS bypass could access admin dashboard aggregation (all students balance, all transactions, all profiles)."
+    },
+    {
+      "file": "lib/features/auth/services/auth_service.dart",
+      "line": 45,
+      "description": "Info leakage: distinct error messages reveal whether an NISN exists in the system ('NISN Anak tidak terdaftar' vs 'Akun Orang Tua belum dikaitkan')."
+    }
+  ],
+  "logic_errors": [
+    {
+      "file": "lib/features/kantin/providers/nfc_payment_provider.dart",
+      "line": 184,
+      "description": "confirmPurchase accepts operatorId as parameter without verifying it matches the authenticated user's profile ID. Any caller could pass an arbitrary operatorId."
+    },
+    {
+      "file": "lib/features/keuangan/providers/keuangan_providers.dart",
+      "line": 165,
+      "description": "keuanganReportProvider fetches ALL transactions with no limit or date range filter. At scale this could retrieve millions of rows, causing OOM or timeout."
+    },
+    {
+      "file": "lib/features/keuangan/providers/keuangan_providers.dart",
+      "line": 52,
+      "description": "Errors in saldo/topup/koreksi sub-queries are silently swallowed (only debugPrint). User sees incomplete/zeroed dashboard data with no indication of failure."
+    },
+    {
+      "file": "lib/features/keuangan/providers/keuangan_providers.dart",
+      "line": 287,
+      "description": "keuanganParentsProvider and keuanganStaffProvider have zero try/catch blocks. A network error will throw an unhandled exception and crash the provider, propagating up as an uncaught error in the widget tree."
+    },
+    {
+      "file": "lib/features/siswa/providers/siswa_providers.dart",
+      "line": 113,
+      "description": "Empty catch block in siswaParentContactProvider silently hides all errors. User sees no contact info and no error message if the query fails."
+    },
+    {
+      "file": "lib/features/kantin/providers/nfc_payment_provider.dart",
+      "line": 117,
+      "description": "daily_limit parsed via .toString() + double.tryParse(). Numeric DB columns should use direct numeric access (e.g. (student['daily_limit'] as num).toDouble()) for correctness."
+    },
+    {
+      "file": "lib/features/keuangan/providers/keuangan_providers.dart",
+      "line": 246,
+      "description": "keuanganStudentDetailProvider duplicates the exact same logic as admin_providers.dart adminStudentDetailProvider. Both load profile+student+transactions identically."
+    },
+    {
+      "file": "lib/features/kantin/providers/nfc_payment_provider.dart",
+      "line": 221,
+      "description": "confirmPurchase invalidates todayRevenueProvider and operatorTransactionsProvider but does NOT invalidate posProductsProvider or manageProductsProvider. If a purchase changes product stock/availability, the product list will be stale."
+    }
+  ],
+  "suggestions": [
+    {
+      "file": "lib/features/auth/services/auth_service.dart",
+      "description": "Remove plaintext password fallback entirely. Use Supabase Auth as the sole auth mechanism. If offline fallback is required, hash passwords with bcrypt/argon2."
+    },
+    {
+      "file": "lib/features/admin/providers/admin_providers.dart",
+      "description": "Add role check guard at the top of every admin provider: 'if (profile?['role'] != 'super_admin') throw UnauthorizedException()'."
+    },
+    {
+      "file": "lib/features/admin/providers/admin_providers.dart",
+      "description": "Replace string interpolation in .or() with two separate .eq() calls or use Supabase's PostgrestFilterBuilder .or() with validated parameters."
+    },
+    {
+      "file": "lib/features/kantin/providers/nfc_payment_provider.dart",
+      "description": "Read operatorId from authNotifierProvider inside confirmPurchase instead of accepting it as a parameter, to prevent caller spoofing."
+    },
+    {
+      "file": "lib/features/keuangan/providers/keuangan_providers.dart",
+      "description": "Add date-range filtering and LIMIT clause to keuanganReportProvider's transaction query. Consider pagination."
+    },
+    {
+      "file": "lib/features/keuangan/providers/keuangan_providers.dart",
+      "description": "Add try/catch with rethrow or fallback to keuanganParentsProvider and keuanganStaffProvider to prevent provider crashes on network errors."
+    },
+    {
+      "file": "lib/features/siswa/providers/siswa_providers.dart",
+      "description": "Replace empty catch with proper error logging and state propagation so users see connection errors."
+    },
+    {
+      "file": "lib/features/kantin/providers/nfc_payment_provider.dart",
+      "description": "Invalidate posProductsProvider and manageProductsProvider after successful purchase to reflect stock/availability changes."
+    },
+    {
+      "file": "lib/features/keuangan/providers/keuangan_providers.dart",
+      "description": "Return typed models instead of Map<String, dynamic> for keuanganDashboardProvider, keuanganReportProvider, keuanganParentsProvider, and keuanganStaffProvider."
+    },
+    {
+      "file": "lib/features/kantin/providers/nfc_payment_provider.dart",
+      "description": "Cast daily_limit as (student['daily_limit'] as num?)?.toDouble() ?? 0.0 instead of toString()+tryParse for numeric precision."
+    }
+  ],
+  "summary": "Provider code is architecturally sound with proper autoDispose usage and correct RPC-based balance mutations, but has CRITICAL plaintext password storage in the fallback auth path, filter-injection risk in admin_providers, missing role checks in admin providers, uneven error handling across keuangan/siswa providers, and a performance concern in keuanganReportProvider's unbounded transaction fetch."
+}

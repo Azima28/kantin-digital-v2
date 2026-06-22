@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 class KantinMainLayout extends ConsumerWidget {
@@ -39,28 +40,13 @@ class KantinMainLayout extends ConsumerWidget {
   }
 
   Future<void> _handleLogout(BuildContext context, WidgetRef ref) async {
-    showCupertinoDialog(
-      context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: const Text('Keluar Aplikasi'),
-        content: const Text('Apakah Anda yakin ingin keluar dari akun kasir?'),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text('Batal'),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () {
-              Navigator.pop(ctx);
-              ref.read(authNotifierProvider.notifier).logout();
-              context.go('/login');
-            },
-            child: const Text('Keluar'),
-          ),
-        ],
-      ),
-    );
+    final confirmed = await showLogoutConfirmationDialog(context);
+    if (confirmed) {
+      await ref.read(authNotifierProvider.notifier).logout();
+      if (context.mounted) {
+        context.go('/login');
+      }
+    }
   }
 
   @override
@@ -88,116 +74,45 @@ class KantinMainLayout extends ConsumerWidget {
     return Scaffold(
       body: child,
       bottomNavigationBar: Container(
-        height: 64 + MediaQuery.of(context).padding.bottom,
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).padding.bottom + 8,
-          top: 8,
-          left: 12,
-          right: 12,
-        ),
         decoration: const BoxDecoration(
-          color: Colors.white,
           border: Border(
             top: BorderSide(color: AppColors.borderLight, width: 0.5),
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildBottomNavItem(
-              index: 0,
-              selectedIndex: selectedIndex,
-              icon: CupertinoIcons.home,
-              activeIcon: CupertinoIcons.house_fill,
+        child: BottomNavigationBar(
+          currentIndex: selectedIndex,
+          onTap: (int index) => _onItemTapped(index, context),
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: AppColors.cardBackground,
+          selectedItemColor: AppColors.primary,
+          unselectedItemColor: AppColors.textGray,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
+          elevation: 0,
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.home, size: 22),
+              activeIcon: Icon(CupertinoIcons.house_fill, size: 22),
               label: 'Beranda',
-              onTap: () => _onItemTapped(0, context),
             ),
-            _buildBottomNavItem(
-              index: 1,
-              selectedIndex: selectedIndex,
-              icon: CupertinoIcons.cart,
-              activeIcon: CupertinoIcons.cart_fill,
+            BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.cart, size: 22),
+              activeIcon: Icon(CupertinoIcons.cart_fill, size: 22),
               label: 'Pesanan',
-              onTap: () => _onItemTapped(1, context),
             ),
-            _buildBottomNavItem(
-              index: 2,
-              selectedIndex: selectedIndex,
-              icon: Icons.restaurant,
-              activeIcon: Icons.restaurant,
+            BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.tray_full, size: 22),
+              activeIcon: Icon(CupertinoIcons.tray_full_fill, size: 22),
               label: 'Menu',
-              onTap: () => _onItemTapped(2, context),
             ),
-            _buildBottomNavItem(
-              index: 3,
-              selectedIndex: selectedIndex,
-              icon: Icons.history,
-              activeIcon: Icons.history,
+            BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.time, size: 22),
+              activeIcon: Icon(CupertinoIcons.time_solid, size: 22),
               label: 'Riwayat',
-              onTap: () => _onItemTapped(3, context),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildBottomNavItem({
-    required int index,
-    required int selectedIndex,
-    required IconData icon,
-    required IconData activeIcon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    final bool isSelected = index == selectedIndex;
-    final Color activeColor = const Color(0xFF006767);
-    final Color inactiveColor = const Color(0xFF7A7A7A);
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: isSelected
-          ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFD6F0F0),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(activeIcon, color: activeColor, size: 20),
-                  const SizedBox(width: 6),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: activeColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(icon, color: inactiveColor, size: 22),
-                  const SizedBox(height: 4),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: inactiveColor,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
     );
   }
 
@@ -208,7 +123,7 @@ class KantinMainLayout extends ConsumerWidget {
 
     return Container(
       width: 260,
-      color: Colors.white,
+      color: AppColors.white,
       child: Column(
         children: [
           // Sidebar Header (Logo & Title)

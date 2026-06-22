@@ -5,9 +5,14 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/models/models.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
+import 'package:kantin_digital/features/keuangan/widgets/student_detail_header.dart';
+import 'package:kantin_digital/features/keuangan/widgets/student_detail_password_change.dart';
+import 'package:kantin_digital/features/keuangan/widgets/student_detail_status_toggle.dart';
 import 'package:kantin_digital/features/shared/screens/student_transactions_screen.dart';
+
+import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
 
 // keuanganStudentDetailProvider is defined in keuangan_providers.dart
 
@@ -22,106 +27,17 @@ class KeuanganStudentDetailScreen extends ConsumerStatefulWidget {
 
 class _KeuanganStudentDetailScreenState
     extends ConsumerState<KeuanganStudentDetailScreen> {
-  static const Color primaryTeal = Color(0xFF003434);
-  static const Color successGreen = Color(0xFF006A35);
-  static const Color dangerRed = Color(0xFFBA1A1A);
 
-  final _passwordController = TextEditingController();
-  bool _isUpdatingStatus = false;
+  @override
+  void initState() {
+    super.initState();
+    // Ensure password controller is disposed when this screen is disposed
+  }
 
   @override
   void dispose() {
-    _passwordController.dispose();
+    StudentDetailPasswordChange.dispose();
     super.dispose();
-  }
-
-  Future<void> _changePassword(String profileId) async {
-    final String password = _passwordController.text.trim();
-    if (password.isEmpty) return;
-
-    final client = ref.read(supabaseClientProvider);
-    try {
-      await client
-          .from('profiles')
-          .update({'password': password})
-          .eq('id', profileId);
-
-      try {
-        await client.rpc(
-          'update_auth_user_password',
-          params: {'user_id': profileId, 'new_password': password},
-        );
-      } catch (_) {}
-
-      // Write to audit logs
-      try {
-        final authProfile = ref.read(authNotifierProvider).profile;
-        final actorName = authProfile?['full_name'] ?? 'Admin Keuangan';
-        final actorId = authProfile?['id'];
-
-        await client.from('audit_logs').insert({
-          'actor_id': actorId,
-          'actor_name': actorName,
-          'action_type': 'UBAH_PASSWORD',
-          'description': 'Mengubah kata sandi siswa dengan ID: $profileId',
-          'target_id': profileId,
-        });
-      } catch (_) {}
-
-      if (mounted) {
-        Navigator.pop(context);
-        _passwordController.clear();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Kata sandi berhasil diperbarui!'),
-            backgroundColor: Color(0xFF006A35),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal mengubah kata sandi: $e'),
-            backgroundColor: const Color(0xFFBA1A1A),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
-  }
-
-  void _showChangePasswordDialog(String profileId) {
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Ubah Kata Sandi'),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 12.0),
-          child: CupertinoTextField(
-            controller: _passwordController,
-            placeholder: 'Masukkan sandi baru',
-            obscureText: true,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          ),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text('Batal'),
-            onPressed: () {
-              _passwordController.clear();
-              Navigator.pop(context);
-            },
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () => _changePassword(profileId),
-            child: const Text('Simpan'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _openAllTransactionsScreen() {
@@ -129,102 +45,9 @@ class _KeuanganStudentDetailScreenState
       MaterialPageRoute(
         builder: (_) => StudentTransactionsScreen(
           studentId: widget.studentId,
-          primaryColor: primaryTeal,
-          accentColor: const Color(0xFF904D00),
+          primaryColor: AppColors.darkTeal,
+          accentColor: AppColors.darkOrange,
         ),
-      ),
-    );
-  }
-
-  Future<void> _toggleAccountStatus(bool currentStatus) async {
-    final bool newStatus = !currentStatus;
-
-    showCupertinoDialog(
-      context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: Text(newStatus ? 'Aktifkan Akun' : 'Blokir Akun'),
-        content: Text(
-          newStatus
-              ? 'Apakah Anda yakin ingin mengaktifkan kembali akun siswa ini?'
-              : 'Apakah Anda yakin ingin memblokir akun siswa ini? Siswa tidak akan bisa melakukan transaksi jajan atau top-up.',
-        ),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text('Batal'),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: !newStatus,
-            onPressed: () async {
-              Navigator.pop(ctx);
-              setState(() {
-                _isUpdatingStatus = true;
-              });
-
-              try {
-                final client = ref.read(supabaseClientProvider);
-                final profile = ref.read(authNotifierProvider).profile;
-                final actorName = profile?['full_name'] ?? 'Admin Keuangan';
-                final actorId = profile?['id'];
-
-                // 1. Update profiles is_active
-                await client
-                    .from('profiles')
-                    .update({'is_active': newStatus})
-                    .eq('id', widget.studentId);
-
-                // 2. Update students is_active
-                await client
-                    .from('students')
-                    .update({'is_active': newStatus})
-                    .eq('id', widget.studentId);
-
-                // 3. Write to audit logs
-                await client.from('audit_logs').insert({
-                  'actor_id': actorId,
-                  'actor_name': actorName,
-                  'action_type': newStatus ? 'AKTIFKAN_AKUN' : 'BLOKIR_AKUN',
-                  'description':
-                      '${newStatus ? "Mengaktifkan" : "Memblokir"} akun siswa dengan ID: ${widget.studentId}',
-                  'target_id': widget.studentId,
-                  'old_value': {'is_active': currentStatus},
-                  'new_value': {'is_active': newStatus},
-                });
-
-                ref.invalidate(keuanganStudentDetailProvider(widget.studentId));
-
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Akun siswa berhasil ${newStatus ? "diaktifkan" : "diblokir"}.',
-                      ),
-                      backgroundColor: newStatus ? successGreen : dangerRed,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Gagal memperbarui status: $e'),
-                      backgroundColor: dangerRed,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              } finally {
-                if (mounted) {
-                  setState(() {
-                    _isUpdatingStatus = false;
-                  });
-                }
-              }
-            },
-            child: Text(newStatus ? 'Aktifkan' : 'Blokir'),
-          ),
-        ],
       ),
     );
   }
@@ -241,16 +64,16 @@ class _KeuanganStudentDetailScreenState
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF9F8),
+      backgroundColor: AppColors.offWhite,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF9F8),
+        backgroundColor: AppColors.offWhite,
         elevation: 0,
         scrolledUnderElevation: 0,
         title: Text(
           'Profil Siswa',
-          style: GoogleFonts.beVietnamPro(
+          style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
-            color: primaryTeal,
+            color: AppColors.darkTeal,
             fontSize: 18,
           ),
         ),
@@ -262,21 +85,21 @@ class _KeuanganStudentDetailScreenState
             final student = data.student;
             final txs = data.recentTransactions;
 
-            final fullName = profile.fullName ?? 'Siswa';
+            final fullName = profile.fullName ?? AppStrings.adminStudents;
             final email = profile.email ?? '-';
             final nisn = profile.nisn ?? '-';
             final isAccountActive = profile.isActive == true;
             final isCardActive = student.isActive == true;
 
             final sClass = student.class_ ?? 'Belum Diisi';
-            final double balance = student.balance;
+            final int balance = student.balance;
             final String? rfid = student.rfidUid;
             final hasCard = rfid != null && rfid.isNotEmpty;
 
             final String lastTapStr =
                 txs.isNotEmpty && txs.first.createdAt != null
                 ? DateFormat(
-                    'dd MMM yyyy, HH:mm',
+                    'dd MMM yyyy, HH:mm', 'id_ID',
                   ).format(txs.first.createdAt!.toLocal())
                 : '-';
 
@@ -284,7 +107,7 @@ class _KeuanganStudentDetailScreenState
               onRefresh: () async => ref.invalidate(
                 keuanganStudentDetailProvider(widget.studentId),
               ),
-              color: primaryTeal,
+              color: AppColors.darkTeal,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.symmetric(
@@ -294,215 +117,18 @@ class _KeuanganStudentDetailScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ─── Profile Summary Bento Card ───
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
-                            blurRadius: 15,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          CircleAvatar(
-                            radius: 32,
-                            backgroundColor: primaryTeal.withValues(
-                              alpha: 0.08,
-                            ),
-                            child: Text(
-                              fullName.isNotEmpty
-                                  ? fullName[0].toUpperCase()
-                                  : 'S',
-                              style: GoogleFonts.beVietnamPro(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: primaryTeal,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            fullName,
-                            style: GoogleFonts.beVietnamPro(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF1B1C1B),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 6),
-                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: !isAccountActive
-                                  ? dangerRed.withValues(alpha: 0.08)
-                                  : (!hasCard
-                                      ? const Color(0xFFE4E2E1)
-                                      : (!isCardActive
-                                          ? const Color(0xFFFFF9E6)
-                                          : successGreen.withValues(alpha: 0.08))),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              !isAccountActive
-                                  ? 'AKUN DIBLOKIR'
-                                  : (!hasCard
-                                      ? 'BELUM AKTIF'
-                                      : (!isCardActive ? 'KARTU DIBLOKIR' : 'AKTIF')),
-                              style: GoogleFonts.beVietnamPro(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: !isAccountActive
-                                    ? dangerRed
-                                    : (!hasCard
-                                        ? const Color(0xFF6F7978)
-                                        : (!isCardActive ? const Color(0xFF8F6B00) : successGreen)),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          const Divider(
-                            height: 1,
-                            thickness: 0.5,
-                            color: Color(0xFFE4E2E1),
-                          ),
-                          const SizedBox(height: 16),
-                          _buildProfileRow(CupertinoIcons.mail, 'Email', email),
-                          const SizedBox(height: 10),
-                          _buildProfileRow(
-                            CupertinoIcons.book,
-                            'Kelas',
-                            'Kelas $sClass',
-                          ),
-                          const SizedBox(height: 10),
-                          _buildProfileRow(
-                            CupertinoIcons.creditcard,
-                            'NISN',
-                            nisn,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ─── Saldo & Card Info Card ───
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
-                            blurRadius: 15,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Informasi Saldo & Kartu',
-                            style: GoogleFonts.beVietnamPro(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: const Color(0xFF1B1C1B),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Saldo Aktif',
-                                style: GoogleFonts.beVietnamPro(
-                                  color: const Color(0xFF6F7978),
-                                ),
-                              ),
-                              Text(
-                                fmt.format(balance),
-                                style: GoogleFonts.beVietnamPro(
-                                  fontWeight: FontWeight.bold,
-                                  color: balance < 5000
-                                      ? dangerRed
-                                      : const Color(0xFF1B1C1B),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Status Kartu',
-                                style: GoogleFonts.beVietnamPro(
-                                  color: const Color(0xFF6F7978),
-                                ),
-                              ),
-                              Text(
-                                hasCard ? 'AKTIF' : 'BELUM AKTIF',
-                                style: GoogleFonts.beVietnamPro(
-                                  fontWeight: FontWeight.bold,
-                                  color: hasCard
-                                      ? successGreen
-                                      : const Color(0xFF6F7978),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'UID Kartu',
-                                style: GoogleFonts.beVietnamPro(
-                                  color: const Color(0xFF6F7978),
-                                ),
-                              ),
-                              Text(
-                                rfid ?? '-',
-                                style: GoogleFonts.beVietnamPro(
-                                  fontWeight: FontWeight.bold,
-                                  color: const Color(0xFF1B1C1B),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Terakhir Tap',
-                                style: GoogleFonts.beVietnamPro(
-                                  color: const Color(0xFF6F7978),
-                                ),
-                              ),
-                              Text(
-                                lastTapStr,
-                                style: GoogleFonts.beVietnamPro(
-                                  fontWeight: FontWeight.bold,
-                                  color: const Color(0xFF1B1C1B),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                    StudentDetailHeader(
+                      fullName: fullName,
+                      email: email,
+                      nisn: nisn,
+                      isAccountActive: isAccountActive,
+                      isCardActive: isCardActive,
+                      hasCard: hasCard,
+                      sClass: sClass,
+                      balance: balance,
+                      rfid: rfid,
+                      lastTapStr: lastTapStr,
+                      fmt: fmt,
                     ),
                     const SizedBox(height: 16),
 
@@ -510,11 +136,11 @@ class _KeuanganStudentDetailScreenState
                     Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.white,
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
+                            color: AppColors.black.withValues(alpha: 0.04),
                             blurRadius: 15,
                             offset: const Offset(0, 4),
                           ),
@@ -532,16 +158,16 @@ class _KeuanganStudentDetailScreenState
                             ),
                             child: Text(
                               'Aksi Admin',
-                              style: GoogleFonts.beVietnamPro(
+                              style: GoogleFonts.inter(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
-                                color: const Color(0xFF1B1C1B),
+                                color: AppColors.nearBlack,
                               ),
                             ),
                           ),
                           _buildActionTile(
                             icon: CupertinoIcons.arrow_up_circle,
-                            iconColor: successGreen,
+                            iconColor: AppColors.successGreen,
                             title: 'Top-Up Saldo Tunai',
                             onTap: () {
                               final studentProfile = StudentWithProfile(
@@ -565,12 +191,12 @@ class _KeuanganStudentDetailScreenState
                             height: 1,
                             thickness: 0.5,
                             indent: 56,
-                            color: Color(0xFFE4E2E1),
+                            color: AppColors.borderGray,
                           ),
                           _buildActionTile(
                             icon: CupertinoIcons.arrow_right_arrow_left_circle,
-                            iconColor: dangerRed,
-                            title: 'Koreksi Saldo',
+                            iconColor: AppColors.errorRed2,
+                            title: AppStrings.keuanganKoreksiSaldo,
                             onTap: () {
                               final studentProfile = StudentWithProfile(
                                 id: widget.studentId,
@@ -593,11 +219,11 @@ class _KeuanganStudentDetailScreenState
                             height: 1,
                             thickness: 0.5,
                             indent: 56,
-                            color: Color(0xFFE4E2E1),
+                            color: AppColors.borderGray,
                           ),
                           _buildActionTile(
                             icon: CupertinoIcons.wifi,
-                            iconColor: primaryTeal,
+                            iconColor: AppColors.darkTeal,
                             title: 'Registrasi / Ganti Kartu NFC',
                             onTap: () {
                               context.push(
@@ -609,13 +235,15 @@ class _KeuanganStudentDetailScreenState
                             height: 1,
                             thickness: 0.5,
                             indent: 56,
-                            color: Color(0xFFE4E2E1),
+                            color: AppColors.borderGray,
                           ),
                           _buildActionTile(
                             icon: Icons.key,
-                            iconColor: const Color(0xFF904D00),
-                            title: 'Ubah Kata Sandi',
-                            onTap: () => _showChangePasswordDialog(profile.id),
+                            iconColor: AppColors.darkOrange,
+                            title: AppStrings.adminChangePassword,
+                            onTap: () => StudentDetailPasswordChange.show(
+                              context, ref, profile.id,
+                            ),
                           ),
                         ],
                       ),
@@ -627,11 +255,11 @@ class _KeuanganStudentDetailScreenState
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.white,
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
+                            color: AppColors.black.withValues(alpha: 0.04),
                             blurRadius: 15,
                             offset: const Offset(0, 4),
                           ),
@@ -645,10 +273,10 @@ class _KeuanganStudentDetailScreenState
                               Expanded(
                                 child: Text(
                                   'Riwayat Transaksi (10 Terakhir)',
-                                  style: GoogleFonts.beVietnamPro(
+                                  style: GoogleFonts.inter(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
-                                    color: const Color(0xFF1B1C1B),
+                                    color: AppColors.nearBlack,
                                   ),
                                 ),
                               ),
@@ -656,10 +284,10 @@ class _KeuanganStudentDetailScreenState
                                 onPressed: _openAllTransactionsScreen,
                                 child: Text(
                                   'Lihat Semua',
-                                  style: GoogleFonts.beVietnamPro(
+                                  style: GoogleFonts.inter(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
-                                    color: primaryTeal,
+                                    color: AppColors.darkTeal,
                                   ),
                                 ),
                               ),
@@ -671,9 +299,9 @@ class _KeuanganStudentDetailScreenState
                               padding: const EdgeInsets.all(16),
                               child: Center(
                                 child: Text(
-                                  'Belum ada transaksi.',
-                                  style: GoogleFonts.beVietnamPro(
-                                    color: const Color(0xFF6F7978),
+                                  AppStrings.noTransactions,
+                                  style: GoogleFonts.inter(
+                                    color: AppColors.mutedGray,
                                   ),
                                 ),
                               ),
@@ -683,11 +311,11 @@ class _KeuanganStudentDetailScreenState
                               children: txs.map((tx) {
                                 final isTopup = tx.isTopup;
                                 final isSuccess = tx.isSuccess;
-                                final double amount = tx.totalAmount;
+                                final int amount = tx.totalAmount;
                                 final timestamp =
                                     tx.createdAt?.toLocal() ?? DateTime.now();
                                 final timeStr = DateFormat(
-                                  'dd MMM, HH:mm',
+                                  'dd MMM, HH:mm', 'id_ID',
                                 ).format(timestamp);
                                 final canteenName = tx.canteenName ?? 'Top-up';
 
@@ -704,10 +332,10 @@ class _KeuanganStudentDetailScreenState
                                           CircleAvatar(
                                             radius: 14,
                                             backgroundColor: isTopup
-                                                ? successGreen.withValues(
+                                                ? AppColors.successGreen.withValues(
                                                     alpha: 0.08,
                                                   )
-                                                : primaryTeal.withValues(
+                                                : AppColors.darkTeal.withValues(
                                                     alpha: 0.08,
                                                   ),
                                             child: Icon(
@@ -716,8 +344,8 @@ class _KeuanganStudentDetailScreenState
                                                   : CupertinoIcons.cart,
                                               size: 14,
                                               color: isTopup
-                                                  ? successGreen
-                                                  : primaryTeal,
+                                                  ? AppColors.successGreen
+                                                  : AppColors.darkTeal,
                                             ),
                                           ),
                                           const SizedBox(width: 10),
@@ -729,7 +357,7 @@ class _KeuanganStudentDetailScreenState
                                                 isTopup
                                                     ? 'Top-Up Saldo'
                                                     : canteenName,
-                                                style: GoogleFonts.beVietnamPro(
+                                                style: GoogleFonts.inter(
                                                   fontWeight: FontWeight.w600,
                                                   fontSize: 13,
                                                   color: const Color(
@@ -739,7 +367,7 @@ class _KeuanganStudentDetailScreenState
                                               ),
                                               Text(
                                                 timeStr,
-                                                style: GoogleFonts.beVietnamPro(
+                                                style: GoogleFonts.inter(
                                                   fontSize: 11,
                                                   color: const Color(
                                                     0xFF6F7978,
@@ -756,12 +384,12 @@ class _KeuanganStudentDetailScreenState
                                         children: [
                                           Text(
                                             '${isTopup ? "+" : "-"}${fmt.format(amount)}',
-                                            style: GoogleFonts.beVietnamPro(
+                                            style: GoogleFonts.inter(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 13,
                                               color: isTopup
-                                                  ? successGreen
-                                                  : primaryTeal,
+                                                  ? AppColors.successGreen
+                                                  : AppColors.darkTeal,
                                             ),
                                           ),
                                           if (!isSuccess)
@@ -769,10 +397,10 @@ class _KeuanganStudentDetailScreenState
                                               tx.status
                                                   .toString()
                                                   .toUpperCase(),
-                                              style: GoogleFonts.beVietnamPro(
+                                              style: GoogleFonts.inter(
                                                 fontSize: 9,
                                                 fontWeight: FontWeight.bold,
-                                                color: dangerRed,
+                                                color: AppColors.errorRed2,
                                               ),
                                             ),
                                         ],
@@ -788,40 +416,9 @@ class _KeuanganStudentDetailScreenState
                     const SizedBox(height: 20),
 
                     // ─── Block Account Button ───
-                    SizedBox(
-                      width: double.infinity,
-                      child: TextButton(
-                        onPressed: _isUpdatingStatus
-                            ? null
-                            : () => _toggleAccountStatus(isAccountActive),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          backgroundColor: isAccountActive
-                              ? dangerRed.withValues(alpha: 0.08)
-                              : successGreen.withValues(alpha: 0.08),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            side: BorderSide(
-                              color: isAccountActive
-                                  ? dangerRed.withValues(alpha: 0.2)
-                                  : successGreen.withValues(alpha: 0.2),
-                            ),
-                          ),
-                        ),
-                        child: _isUpdatingStatus
-                            ? const CupertinoActivityIndicator()
-                            : Text(
-                                isAccountActive
-                                    ? '🚫 BLOKIR AKUN SISWA'
-                                    : '✔ AKTIFKAN AKUN SISWA',
-                                style: GoogleFonts.beVietnamPro(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                  color: isAccountActive ? dangerRed : successGreen,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                      ),
+                    StudentDetailStatusToggle(
+                      studentId: widget.studentId,
+                      isAccountActive: isAccountActive,
                     ),
                     const SizedBox(height: 24),
                   ],
@@ -832,45 +429,29 @@ class _KeuanganStudentDetailScreenState
           loading: () => const Center(
             child: Padding(
               padding: EdgeInsets.all(40),
-              child: CupertinoActivityIndicator(color: primaryTeal),
+              child: CupertinoActivityIndicator(color: AppColors.darkTeal),
             ),
           ),
           error: (e, _) => Center(
             child: Padding(
               padding: const EdgeInsets.all(20),
-              child: Text(
-                'Gagal memuat profil: $e',
-                style: GoogleFonts.beVietnamPro(color: Colors.red),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+                  const SizedBox(height: 12),
+                  Text('${AppStrings.labelFailed} memuat profil'),
+                  const SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: () => ref.invalidate(keuanganStudentDetailProvider(widget.studentId)),
+                    child: const Text(AppStrings.buttonRetry),
+                  ),
+                ],
               ),
             ),
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildProfileRow(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: const Color(0xFF6F7978)),
-        const SizedBox(width: 12),
-        Text(
-          label,
-          style: GoogleFonts.beVietnamPro(
-            fontSize: 13,
-            color: const Color(0xFF6F7978),
-          ),
-        ),
-        const Spacer(),
-        Text(
-          value,
-          style: GoogleFonts.beVietnamPro(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF1B1C1B),
-          ),
-        ),
-      ],
     );
   }
 
@@ -888,16 +469,16 @@ class _KeuanganStudentDetailScreenState
       ),
       title: Text(
         title,
-        style: GoogleFonts.beVietnamPro(
+        style: GoogleFonts.inter(
           fontWeight: FontWeight.w600,
           fontSize: 14,
-          color: const Color(0xFF1B1C1B),
+          color: AppColors.nearBlack,
         ),
       ),
       trailing: const Icon(
         CupertinoIcons.chevron_forward,
         size: 16,
-        color: Color(0xFF6F7978),
+        color: AppColors.mutedGray,
       ),
       onTap: onTap,
     );

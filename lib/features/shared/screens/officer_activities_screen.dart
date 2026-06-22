@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 class OfficerActivitiesScreen extends ConsumerStatefulWidget {
@@ -17,8 +20,8 @@ class OfficerActivitiesScreen extends ConsumerStatefulWidget {
     required this.officerId,
     required this.actorName,
     this.title = 'Semua Aktivitas',
-    this.primaryColor = const Color(0xFF003434),
-    this.accentColor = const Color(0xFF904D00),
+    this.primaryColor = AppColors.darkTeal,
+    this.accentColor = AppColors.darkOrange,
   });
 
   @override
@@ -31,8 +34,6 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
   int? _selectedMonth;
   int? _selectedYear;
 
-  static const Color successGreen = Color(0xFF006A35);
-  static const Color textGray = Color(0xFF6F7978);
 
   @override
   void initState() {
@@ -132,9 +133,9 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF9F8),
+      backgroundColor: AppColors.offWhite,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF9F8),
+        backgroundColor: AppColors.offWhite,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -143,7 +144,7 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
         ),
         title: Text(
           widget.title,
-          style: GoogleFonts.beVietnamPro(
+          style: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: widget.primaryColor,
@@ -169,9 +170,9 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Gagal memuat aktivitas: ${snapshot.error}',
+                  '${AppStrings.labelFailed} memuat aktivitas: ${snapshot.error}',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.beVietnamPro(color: const Color(0xFFBA1A1A)),
+                  style: GoogleFonts.inter(color: AppColors.errorRed2),
                 ),
               ),
             );
@@ -193,9 +194,9 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
                       children: [
                         Text(
                           '${filtered.length} dari ${logs.length} aktivitas',
-                          style: GoogleFonts.beVietnamPro(
+                          style: GoogleFonts.inter(
                             fontSize: 12,
-                            color: textGray,
+                            color: AppColors.textGray,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -209,7 +210,7 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
                             label: const Text('Reset'),
                             style: TextButton.styleFrom(
                               foregroundColor: widget.primaryColor,
-                              textStyle: GoogleFonts.beVietnamPro(
+                              textStyle: GoogleFonts.inter(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -222,13 +223,8 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
               ),
               Expanded(
                 child: filtered.isEmpty
-                    ? Center(
-                        child: Text(
-                          logs.isEmpty
-                              ? 'Belum ada aktivitas transaksi manual.'
-                              : 'Tidak ada aktivitas sesuai filter.',
-                          style: GoogleFonts.beVietnamPro(color: textGray),
-                        ),
+                    ? const EmptyStateWidget(
+                        message: AppStrings.labelNoData,
                       )
                     : RefreshIndicator(
                         color: widget.primaryColor,
@@ -258,7 +254,7 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
             icon: CupertinoIcons.calendar,
             label: _selectedDate == null
                 ? 'Tanggal'
-                : DateFormat('dd MMM yyyy').format(_selectedDate!),
+                : DateFormat('dd MMM yyyy', 'id_ID').format(_selectedDate!),
             onTap: _pickDate,
           ),
           _filterDropdown<int>(
@@ -326,7 +322,7 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
     required VoidCallback onTap,
   }) {
     return Material(
-      color: Colors.white,
+      color: AppColors.white,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
@@ -336,7 +332,7 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE4E2E1)),
+            border: Border.all(color: AppColors.borderGray),
           ),
           child: Row(
             children: [
@@ -347,10 +343,10 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.beVietnamPro(
+                  style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1B1C1B),
+                    color: AppColors.nearBlack,
                   ),
                 ),
               ),
@@ -372,9 +368,9 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
       height: 48,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE4E2E1)),
+        border: Border.all(color: AppColors.borderGray),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
@@ -386,10 +382,10 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
             size: 16,
             color: widget.primaryColor,
           ),
-          style: GoogleFonts.beVietnamPro(
+          style: GoogleFonts.inter(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF1B1C1B),
+            color: AppColors.nearBlack,
           ),
           items: items
               .map(
@@ -423,13 +419,13 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
       logColor = widget.accentColor;
     } else if (actionType.contains('REGISTRASI')) {
       logIcon = CupertinoIcons.creditcard;
-      logColor = successGreen;
+      logColor = AppColors.successGreen;
     }
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -457,17 +453,17 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
                   children: [
                     Text(
                       actionType.replaceAll('_', ' '),
-                      style: GoogleFonts.beVietnamPro(
+                      style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: logColor,
                       ),
                     ),
                     Text(
-                      DateFormat('HH:mm').format(date),
-                      style: GoogleFonts.beVietnamPro(
+                      DateFormat('HH:mm', 'id_ID').format(date),
+                      style: GoogleFonts.inter(
                         fontSize: 11,
-                        color: textGray,
+                        color: AppColors.textGray,
                       ),
                     ),
                   ],
@@ -475,10 +471,10 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
                 const SizedBox(height: 4),
                 Text(
                   desc,
-                  style: GoogleFonts.beVietnamPro(
+                  style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFF1B1C1B),
+                    color: AppColors.nearBlack,
                   ),
                 ),
               ],

@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kantin Digital — Sistem Architecture Diagram</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'JetBrains Mono', monospace; background: #020617; min-height: 100vh; padding: 2rem; color: white; }
+    .container { max-width: 1300px; margin: 0 auto; }
+    .header { margin-bottom: 1.5rem; }
+    .header-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+    .pulse-dot { width: 12px; height: 12px; background: #22d3ee; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; }
+    .subtitle { color: #94a3b8; font-size: 0.875rem; margin-left: 1.75rem; }
+    .diagram-container { background: rgba(15,23,42,0.5); border-radius: 1rem; border: 1px solid #1e293b; padding: 1.5rem; overflow-x: auto; }
+    svg { width: 100%; display: block; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); gap: 1rem; margin-top: 1.5rem; }
+    .card { background: rgba(15,23,42,0.5); border-radius: 0.75rem; border: 1px solid #1e293b; padding: 1.25rem; }
+    .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .card-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .card-dot.cyan { background: #22d3ee; }
+    .card-dot.emerald { background: #34d399; }
+    .card-dot.violet { background: #a78bfa; }
+    .card-dot.amber { background: #fbbf24; }
+    .card-dot.rose { background: #fb7185; }
+    .card-dot.orange { background: #fb923c; }
+    .card h3 { font-size: 0.875rem; font-weight: 600; }
+    .card ul { list-style: none; color: #94a3b8; font-size: 0.75rem; }
+    .card li { margin-bottom: 0.375rem; }
+    .footer { text-align: center; margin-top: 1.5rem; color: #475569; font-size: 0.75rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-row">
+        <div class="pulse-dot"></div>
+        <h1>Kantin Digital — System Architecture</h1>
+      </div>
+      <p class="subtitle">Flutter + Supabase • RFID/NFC-based Digital Canteen System • Comprehensive Architecture Diagram</p>
+    </div>
+
+    <!-- Main Diagram -->
+    <div class="diagram-container">
+      <svg viewBox="0 0 1150 1150">
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#64748b"/>
+          </marker>
+          <marker id="arrowheadCyan" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#22d3ee"/>
+          </marker>
+          <marker id="arrowheadGreen" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#34d399"/>
+          </marker>
+          <marker id="arrowheadRose" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#fb7185"/>
+          </marker>
+          <marker id="arrowheadViolet" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#a78bfa"/>
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+
+        <!-- Background Grid -->
+        <rect width="100%" height="100%" fill="url(#grid)"/>
+
+        <!-- ====================================================================
+             TITLE BADGE
+             ==================================================================== -->
+        <rect x="30" y="10" width="200" height="28" rx="14" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1"/>
+        <text x="130" y="29" fill="#22d3ee" font-size="10" font-weight="600" text-anchor="middle">v0.1.0 • PKL 2026</text>
+
+        <!-- ====================================================================
+             SECTION 1: ACTORS / USER ROLES (y=55-140)
+             ==================================================================== -->
+        <text x="40" y="60" fill="white" font-size="11" font-weight="600">✦ AKTOR / USER ROLES</text>
+
+        <!-- Actor boxes -->
+        <!-- Siswa -->
+        <rect x="40" y="75" width="120" height="55" rx="8" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+        <text x="100" y="97" fill="white" font-size="11" font-weight="600" text-anchor="middle">👨‍🎓 Siswa</text>
+        <text x="100" y="115" fill="#94a3b8" font-size="8" text-anchor="middle">Student</text>
+
+        <!-- Orang Tua -->
+        <rect x="195" y="75" width="120" height="55" rx="8" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+        <text x="255" y="97" fill="white" font-size="11" font-weight="600" text-anchor="middle">👪 Orang Tua</text>
+        <text x="255" y="115" fill="#94a3b8" font-size="8" text-anchor="middle">Parent</text>
+
+        <!-- Kasir Kantin -->
+        <rect x="350" y="75" width="120" height="55" rx="8" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="410" y="97" fill="white" font-size="11" font-weight="600" text-anchor="middle">🏪 Kasir</text>
+        <text x="410" y="115" fill="#94a3b8" font-size="8" text-anchor="middle">Canteen Operator</text>
+
+        <!-- Petugas Keuangan -->
+        <rect x="505" y="75" width="120" height="55" rx="8" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="565" y="97" fill="white" font-size="11" font-weight="600" text-anchor="middle">💰 Keuangan</text>
+        <text x="565" y="115" fill="#94a3b8" font-size="8" text-anchor="middle">Finance Officer</text>
+
+        <!-- Admin -->
+        <rect x="660" y="75" width="120" height="55" rx="8" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+        <text x="720" y="97" fill="white" font-size="11" font-weight="600" text-anchor="middle">🛡️ Admin</text>
+        <text x="720" y="115" fill="#94a3b8" font-size="8" text-anchor="middle">Super Admin</text>
+
+        <!-- Publik -->
+        <rect x="815" y="75" width="120" height="55" rx="8" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="875" y="97" fill="white" font-size="11" font-weight="600" text-anchor="middle">🌐 Publik</text>
+        <text x="875" y="115" fill="#94a3b8" font-size="8" text-anchor="middle">Public Visitor</text>
+
+        <!-- NFC Device -->
+        <rect x="970" y="75" width="120" height="55" rx="8" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+        <text x="1030" y="97" fill="white" font-size="11" font-weight="600" text-anchor="middle">📡 RFID/NFC</text>
+        <text x="1030" y="115" fill="#94a3b8" font-size="8" text-anchor="middle">Card Reader</text>
+
+        <!-- Arrows: Actors down to Flutter App -->
+        <line x1="100" y1="130" x2="100" y2="162" stroke="#22d3ee" stroke-width="1" marker-end="url(#arrowheadCyan)" stroke-dasharray="4,3"/>
+        <line x1="255" y1="130" x2="255" y2="162" stroke="#22d3ee" stroke-width="1" marker-end="url(#arrowheadCyan)" stroke-dasharray="4,3"/>
+        <line x1="410" y1="130" x2="410" y2="162" stroke="#34d399" stroke-width="1" marker-end="url(#arrowheadGreen)" stroke-dasharray="4,3"/>
+        <line x1="565" y1="130" x2="565" y2="162" stroke="#34d399" stroke-width="1" marker-end="url(#arrowheadGreen)" stroke-dasharray="4,3"/>
+        <line x1="720" y1="130" x2="720" y2="162" stroke="#fb7185" stroke-width="1" marker-end="url(#arrowheadRose)" stroke-dasharray="4,3"/>
+        <line x1="875" y1="130" x2="875" y2="162" stroke="#94a3b8" stroke-width="1" marker-end="url(#arrowhead)" stroke-dasharray="4,3"/>
+        <line x1="1030" y1="130" x2="1030" y2="162" stroke="#fbbf24" stroke-width="1" marker-end="url(#arrowhead)" stroke-dasharray="4,3"/>
+
+        <!-- ====================================================================
+             SECTION 2: FLUTTER APPLICATION (y=165-550)
+             ==================================================================== -->
+        <rect x="30" y="165" width="1080" height="395" rx="12" fill="rgba(251,191,36,0.04)" stroke="#fbbf24" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="45" y="185" fill="#fbbf24" font-size="10" font-weight="600">PRESENTATION LAYER — Aplikasi Flutter (Mobile)</text>
+
+        <!-- ===== Core Services (y=198-235) ===== -->
+        <text x="45" y="208" fill="#94a3b8" font-size="9">Core Services</text>
+
+        <rect x="40" y="215" width="100" height="35" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1"/>
+        <text x="90" y="236" fill="white" font-size="9" font-weight="600" text-anchor="middle">GoRouter</text>
+
+        <rect x="150" y="215" width="100" height="35" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1"/>
+        <text x="200" y="236" fill="white" font-size="9" font-weight="600" text-anchor="middle">Riverpod</text>
+
+        <rect x="260" y="215" width="100" height="35" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1"/>
+        <text x="310" y="236" fill="white" font-size="9" font-weight="600" text-anchor="middle">AppTheme</text>
+
+        <rect x="370" y="215" width="100" height="35" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1"/>
+        <text x="420" y="236" fill="white" font-size="9" font-weight="600" text-anchor="middle">NFC Service</text>
+
+        <rect x="480" y="215" width="100" height="35" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1"/>
+        <text x="530" y="236" fill="white" font-size="9" font-weight="600" text-anchor="middle">Offline Queue</text>
+
+        <rect x="590" y="215" width="100" height="35" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1"/>
+        <text x="640" y="236" fill="white" font-size="9" font-weight="600" text-anchor="middle">PDF Service</text>
+
+        <rect x="700" y="215" width="100" height="35" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1"/>
+        <text x="750" y="236" fill="white" font-size="9" font-weight="600" text-anchor="middle">Storage</text>
+
+        <rect x="810" y="215" width="120" height="35" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1"/>
+        <text x="870" y="236" fill="white" font-size="9" font-weight="600" text-anchor="middle">CurrencyFormat</text>
+
+        <!-- ===== Auth Feature (y=250-290) ===== -->
+        <rect x="40" y="255" width="160" height="130" rx="8" fill="rgba(136,19,55,0.15)" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="60" y="272" fill="#fb7185" font-size="9" font-weight="600">🔐 Auth Feature</text>
+        <text x="60" y="290" fill="#94a3b8" font-size="8">• Login Screen</text>
+        <text x="60" y="306" fill="#94a3b8" font-size="8">• Splash Screen</text>
+        <text x="60" y="322" fill="#94a3b8" font-size="8">• Auth Provider</text>
+        <text x="60" y="338" fill="#94a3b8" font-size="8">• Auth Service</text>
+        <text x="60" y="358" fill="#fb7185" font-size="7">Supabase signInWithPassword</text>
+
+        <!-- ===== Kantin / POS Feature (y=255-400) ===== -->
+        <rect x="215" y="255" width="220" height="190" rx="8" fill="rgba(6,78,59,0.15)" stroke="#34d399" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="235" y="272" fill="#34d399" font-size="9" font-weight="600">🏪 Kantin / POS Feature</text>
+        <text x="235" y="292" fill="#94a3b8" font-size="8">• POS Dashboard Screen</text>
+        <text x="235" y="308" fill="#94a3b8" font-size="8">• POS Home Screen</text>
+        <text x="235" y="324" fill="#94a3b8" font-size="8">• Cart Screen</text>
+        <text x="235" y="340" fill="#94a3b8" font-size="8">• Check Card Screen</text>
+        <text x="235" y="356" fill="#94a3b8" font-size="8">• Manage Products Screen</text>
+        <text x="235" y="372" fill="#94a3b8" font-size="8">• Product Form Screen</text>
+        <text x="235" y="388" fill="#94a3b8" font-size="8">• Sales History Screen</text>
+        <text x="235" y="410" fill="#94a3b8" font-size="8">• Cart Provider (State)</text>
+        <text x="235" y="426" fill="#94a3b8" font-size="8">• NFC Payment Provider</text>
+        <text x="235" y="442" fill="#34d399" font-size="7">RPC: process_purchase</text>
+
+        <!-- ===== Keuangan Feature (y=255-400) ===== -->
+        <rect x="450" y="255" width="200" height="190" rx="8" fill="rgba(6,78,59,0.15)" stroke="#34d399" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="470" y="272" fill="#34d399" font-size="9" font-weight="600">💰 Keuangan Feature</text>
+        <text x="470" y="292" fill="#94a3b8" font-size="8">• Dashboard Screen</text>
+        <text x="470" y="308" fill="#94a3b8" font-size="8">• Topup Screen</text>
+        <text x="470" y="324" fill="#94a3b8" font-size="8">• Students List Screen</text>
+        <text x="470" y="340" fill="#94a3b8" font-size="8">• Student Detail Screen</text>
+        <text x="470" y="356" fill="#94a3b8" font-size="8">• Correction Screen</text>
+        <text x="470" y="372" fill="#94a3b8" font-size="8">• Report Screen (PDF)</text>
+        <text x="470" y="388" fill="#94a3b8" font-size="8">• History Screen</text>
+        <text x="470" y="404" fill="#94a3b8" font-size="8">• Card Registration</text>
+        <text x="470" y="420" fill="#94a3b8" font-size="8">• Users Screen</text>
+        <text x="470" y="436" fill="#94a3b8" font-size="8">• Settings Screen</text>
+
+        <!-- ===== Siswa Feature (y=255-360) ===== -->
+        <rect x="665" y="255" width="190" height="130" rx="8" fill="rgba(8,51,68,0.15)" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="685" y="272" fill="#22d3ee" font-size="9" font-weight="600">👨‍🎓 Siswa Feature</text>
+        <text x="685" y="292" fill="#94a3b8" font-size="8">• Welcome Screen</text>
+        <text x="685" y="308" fill="#94a3b8" font-size="8">• Dashboard Screen</text>
+        <text x="685" y="324" fill="#94a3b8" font-size="8">• History Screen</text>
+        <text x="685" y="340" fill="#94a3b8" font-size="8">• Topup Screen</text>
+        <text x="685" y="356" fill="#94a3b8" font-size="8">• Notifications Screen</text>
+        <text x="685" y="372" fill="#94a3b8" font-size="8">• Profile Screen</text>
+        <text x="685" y="388" fill="#94a3b8" font-size="8">• Cards Screen</text>
+
+        <!-- ===== Parent Feature (y=255-330) ===== -->
+        <rect x="870" y="255" width="200" height="100" rx="8" fill="rgba(8,51,68,0.15)" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="890" y="272" fill="#22d3ee" font-size="9" font-weight="600">👪 Orang Tua Feature</text>
+        <text x="890" y="292" fill="#94a3b8" font-size="8">• Dashboard Screen</text>
+        <text x="890" y="308" fill="#94a3b8" font-size="8">• Portal Screen</text>
+        <text x="890" y="324" fill="#94a3b8" font-size="8">• Receipt Screen</text>
+        <text x="890" y="340" fill="#94a3b8" font-size="8">• Topup Screen</text>
+
+        <!-- ===== Admin Feature (y=370-520) ===== -->
+        <rect x="870" y="370" width="200" height="140" rx="8" fill="rgba(136,19,55,0.15)" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="890" y="387" fill="#fb7185" font-size="9" font-weight="600">🛡️ Admin Feature</text>
+        <text x="890" y="407" fill="#94a3b8" font-size="8">• Secure Entry Screen</text>
+        <text x="890" y="423" fill="#94a3b8" font-size="8">• Dashboard Screen</text>
+        <text x="890" y="439" fill="#94a3b8" font-size="8">• Users Management</text>
+        <text x="890" y="455" fill="#94a3b8" font-size="8">• Student Detail</text>
+        <text x="890" y="471" fill="#94a3b8" font-size="8">• Finance Detail</text>
+        <text x="890" y="487" fill="#94a3b8" font-size="8">• Merchant Detail</text>
+        <text x="890" y="503" fill="#94a3b8" font-size="8">• Parent Detail</text>
+        <text x="890" y="519" fill="#94a3b8" font-size="8">• Audit Log • Settings</text>
+
+        <!-- ===== Public Feature (y=370-510) ===== -->
+        <rect x="665" y="400" width="190" height="110" rx="8" fill="rgba(30,41,59,0.2)" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="685" y="417" fill="#94a3b8" font-size="9" font-weight="600">🌐 Public Feature</text>
+        <text x="685" y="437" fill="#94a3b8" font-size="8">• Home Screen (Info Sekolah)</text>
+        <text x="685" y="453" fill="#94a3b8" font-size="8">• Menu Kantin Screen</text>
+        <text x="685" y="469" fill="#94a3b8" font-size="8">• School Info Screen</text>
+        <text x="685" y="489" fill="#94a3b8" font-size="8">Link WA & Telpon</text>
+
+        <!-- Arrows: Features to Supabase -->
+        <line x1="200" y1="385" x2="200" y2="585" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrowheadGreen)"/>
+        <line x1="550" y1="445" x2="550" y2="585" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrowheadGreen)"/>
+        <line x1="760" y1="388" x2="760" y2="585" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arrowheadCyan)"/>
+        <line x1="970" y1="510" x2="970" y2="585" stroke="#fb7185" stroke-width="1.5" marker-end="url(#arrowheadRose)"/>
+
+        <!-- ====================================================================
+             SECTION 3: SUPABASE BACKEND (y=570-810)
+             ==================================================================== -->
+        <rect x="30" y="570" width="1080" height="255" rx="12" fill="rgba(251,146,60,0.04)" stroke="#fb923c" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="45" y="590" fill="#fb923c" font-size="10" font-weight="600">API & BACKEND LAYER — Supabase Cloud</text>
+
+        <!-- Supabase Auth -->
+        <rect x="40" y="605" width="200" height="90" rx="8" fill="rgba(136,19,55,0.25)" stroke="#fb7185" stroke-width="1.5"/>
+        <text x="140" y="625" fill="#fb7185" font-size="10" font-weight="600" text-anchor="middle">Supabase Auth</text>
+        <text x="140" y="645" fill="#94a3b8" font-size="8" text-anchor="middle">signInWithPassword()</text>
+        <text x="140" y="661" fill="#94a3b8" font-size="8" text-anchor="middle">JWT Token</text>
+        <text x="140" y="677" fill="#94a3b8" font-size="8" text-anchor="middle">Session Management</text>
+        <text x="140" y="693" fill="#fb7185" font-size="7" text-anchor="middle">auth.uid() → RLS</text>
+
+        <!-- Arrow: Auth to RPC -->
+        <line x1="240" y1="650" x2="282" y2="650" stroke="#fb7185" stroke-width="1.5" marker-end="url(#arrowheadRose)"/>
+
+        <!-- RPC Functions -->
+        <rect x="285" y="605" width="220" height="90" rx="8" fill="rgba(6,78,59,0.25)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="395" y="625" fill="#34d399" font-size="10" font-weight="600" text-anchor="middle">RPC Functions</text>
+        
+        <rect x="295" y="635" width="195" height="25" rx="4" fill="rgba(6,78,59,0.3)" stroke="#34d399" stroke-width="0.8"/>
+        <text x="392" y="651" fill="#34d399" font-size="8" font-weight="500" text-anchor="middle">process_purchase()</text>
+        <text x="480" y="651" fill="#94a3b8" font-size="7">⭐</text>
+        
+        <rect x="295" y="664" width="195" height="25" rx="4" fill="rgba(6,78,59,0.3)" stroke="#34d399" stroke-width="0.8"/>
+        <text x="392" y="680" fill="#34d399" font-size="8" font-weight="500" text-anchor="middle">process_refund()</text>
+        <text x="480" y="680" fill="#94a3b8" font-size="7">⏱️ 10m</text>
+
+        <!-- PostgreSQL Database - Main -->
+        <rect x="530" y="605" width="250" height="140" rx="8" fill="rgba(76,29,149,0.25)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="655" y="625" fill="#a78bfa" font-size="10" font-weight="600" text-anchor="middle">PostgreSQL Database</text>
+        
+        <text x="545" y="648" fill="#94a3b8" font-size="8">students</text>
+        <text x="610" y="648" fill="#64748b" font-size="7">(saldo, nis, kelas)</text>
+        <text x="545" y="666" fill="#94a3b8" font-size="8">rfid_cards</text>
+        <text x="610" y="666" fill="#64748b" font-size="7">(uid, status, student_id)</text>
+        <text x="545" y="684" fill="#94a3b8" font-size="8">products</text>
+        <text x="610" y="684" fill="#64748b" font-size="7">(nama, harga, stok)</text>
+        <text x="545" y="702" fill="#94a3b8" font-size="8">transactions</text>
+        <text x="620" y="702" fill="#64748b" font-size="7">(total, status, timestamp)</text>
+        <text x="545" y="720" fill="#94a3b8" font-size="8">transaction_items</text>
+        <text x="635" y="720" fill="#64748b" font-size="7">(qty, subtotal)</text>
+        <text x="545" y="738" fill="#94a3b8" font-size="8">user_profiles</text>
+        <text x="620" y="738" fill="#64748b" font-size="7">(role, phone, email)</text>
+
+        <!-- Security: RLS -->
+        <rect x="795" y="605" width="180" height="60" rx="8" fill="rgba(136,19,55,0.15)" stroke="#fb7185" stroke-width="1" stroke-dasharray="4,3"/>
+        <text x="885" y="625" fill="#fb7185" font-size="9" font-weight="600" text-anchor="middle">🔒 Row Level Security</text>
+        <text x="885" y="643" fill="#94a3b8" font-size="8" text-anchor="middle">RLS Policies</text>
+        <text x="885" y="659" fill="#94a3b8" font-size="8" text-anchor="middle">auth.uid() = user_id</text>
+
+        <!-- Arrow: DB to RLS -->
+        <line x1="780" y1="635" x2="793" y2="635" stroke="#fb7185" stroke-width="1" marker-end="url(#arrowheadRose)"/>
+
+        <!-- Realtime -->
+        <rect x="795" y="675" width="180" height="45" rx="6" fill="rgba(251,146,60,0.2)" stroke="#fb923c" stroke-width="1"/>
+        <text x="885" y="695" fill="#fb923c" font-size="9" font-weight="600" text-anchor="middle">📡 Realtime</text>
+        <text x="885" y="712" fill="#94a3b8" font-size="8" text-anchor="middle">Live Updates</text>
+
+        <!-- Storage -->
+        <rect x="990" y="605" width="110" height="70" rx="6" fill="rgba(120,53,15,0.2)" stroke="#fbbf24" stroke-width="1"/>
+        <text x="1045" y="628" fill="#fbbf24" font-size="9" font-weight="600" text-anchor="middle">🗄️ Storage</text>
+        <text x="1045" y="648" fill="#94a3b8" font-size="8" text-anchor="middle">Images</text>
+        <text x="1045" y="664" fill="#94a3b8" font-size="8" text-anchor="middle">Product Photos</text>
+
+        <!-- Arrow: DB to Storage -->
+        <line x1="990" y1="640" x2="988" y2="640" stroke="#fbbf24" stroke-width="1"/>
+
+        <!-- Arrow: RPC to Database -->
+        <line x1="505" y1="650" x2="528" y2="650" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrowheadViolet)"/>
+
+        <!-- ====================================================================
+             SECTION 4: DATABASE ENTITIES (y=845-990)
+             ==================================================================== -->
+        <rect x="30" y="845" width="1080" height="155" rx="12" fill="rgba(76,29,149,0.04)" stroke="#a78bfa" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="45" y="863" fill="#a78bfa" font-size="10" font-weight="600">DATA LAYER — Entity Relationship Overview</text>
+
+        <!-- Entity boxes -->
+        <rect x="40" y="878" width="130" height="50" rx="6" fill="rgba(76,29,149,0.3)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="105" y="900" fill="white" font-size="10" font-weight="600" text-anchor="middle">students</text>
+        <text x="105" y="918" fill="#94a3b8" font-size="7" text-anchor="middle">PK: id, nis, saldo</text>
+
+        <rect x="185" y="878" width="130" height="50" rx="6" fill="rgba(76,29,149,0.3)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="250" y="900" fill="white" font-size="10" font-weight="600" text-anchor="middle">rfid_cards</text>
+        <text x="250" y="918" fill="#94a3b8" font-size="7" text-anchor="middle">PK: uid → student</text>
+
+        <rect x="330" y="878" width="130" height="50" rx="6" fill="rgba(76,29,149,0.3)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="395" y="900" fill="white" font-size="10" font-weight="600" text-anchor="middle">products</text>
+        <text x="395" y="918" fill="#94a3b8" font-size="7" text-anchor="middle">nama, harga, stok</text>
+
+        <rect x="475" y="878" width="140" height="50" rx="6" fill="rgba(76,29,149,0.3)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="545" y="900" fill="white" font-size="10" font-weight="600" text-anchor="middle">transactions</text>
+        <text x="545" y="918" fill="#94a3b8" font-size="7" text-anchor="middle">FK: student, operator</text>
+
+        <rect x="630" y="878" width="140" height="50" rx="6" fill="rgba(76,29,149,0.3)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="700" y="900" fill="white" font-size="10" font-weight="600" text-anchor="middle">transaction_items</text>
+        <text x="700" y="918" fill="#94a3b8" font-size="7" text-anchor="middle">FK: transaction, product</text>
+
+        <rect x="785" y="878" width="130" height="50" rx="6" fill="rgba(76,29,149,0.3)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="850" y="900" fill="white" font-size="10" font-weight="600" text-anchor="middle">user_profiles</text>
+        <text x="850" y="918" fill="#94a3b8" font-size="7" text-anchor="middle">role, phone, email</text>
+
+        <rect x="930" y="878" width="170" height="50" rx="6" fill="rgba(76,29,149,0.3)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="1015" y="900" fill="white" font-size="10" font-weight="600" text-anchor="middle">audit_logs</text>
+        <text x="1015" y="918" fill="#94a3b8" font-size="7" text-anchor="middle">action, table, user_id</text>
+
+        <!-- Also show the extra entities below -->
+        <text x="60" y="960" fill="#94a3b8" font-size="8">
+          balance_adjustments (FK: student, officer) • canteen_operators • finance_officers • parent_students • system_settings • app_notifications
+        </text>
+
+        <!-- Relationship lines -->
+        <line x1="170" y1="903" x2="183" y2="903" stroke="#a78bfa" stroke-width="1" marker-end="url(#arrowheadViolet)"/>
+        <text x="176" y="896" fill="#a78bfa" font-size="7" text-anchor="middle">1:N</text>
+
+        <line x1="460" y1="903" x2="473" y2="903" stroke="#a78bfa" stroke-width="1" marker-end="url(#arrowheadViolet)"/>
+        <text x="460" y="896" fill="#a78bfa" font-size="7">1:N</text>
+
+        <line x1="615" y1="903" x2="628" y2="903" stroke="#a78bfa" stroke-width="1" marker-end="url(#arrowheadViolet)"/>
+        <text x="616" y="896" fill="#a78bfa" font-size="7">1:N</text>
+
+        <!-- ====================================================================
+             KEY DATA FLOWS (annotations with curved arrows)
+             ==================================================================== -->
+        <!-- Flow 1: NFC Tap -> Check -> Purchase -->
+        <path d="M 400 448 L 400 470 Q 400 485 385 485 L 310 485 Q 295 485 295 500 L 295 603" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="360" y="480" fill="#fbbf24" font-size="8">① Tap NFC → Check Card</text>
+
+        <!-- Flow 2: Topup -->
+        <path d="M 550 450 L 550 510 Q 550 525 565 525 L 650 525 Q 665 525 665 540 L 665 603" fill="none" stroke="#34d399" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="555" y="510" fill="#34d399" font-size="8">② Topup → Update Saldo</text>
+
+        <!-- Flow 3: Auth Login -->
+        <path d="M 120 388 L 120 420 Q 120 435 135 435 L 80 435 Q 65 435 65 450 L 65 603" fill="none" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="15" y="520" fill="#fb7185" font-size="8">③ Auth → JWT → RLS</text>
+
+        <!-- ====================================================================
+             LEGEND
+             ==================================================================== -->
+        <rect x="40" y="1005" width="400" height="120" rx="8" fill="rgba(15,23,42,0.6)" stroke="#1e293b" stroke-width="1"/>
+        <text x="60" y="1022" fill="white" font-size="10" font-weight="600">Legend</text>
+
+        <rect x="60" y="1032" width="16" height="10" rx="2" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1"/>
+        <text x="82" y="1040" fill="#94a3b8" font-size="8">Frontend (Flutter App)</text>
+
+        <rect x="220" y="1032" width="16" height="10" rx="2" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1"/>
+        <text x="242" y="1040" fill="#94a3b8" font-size="8">Backend (Supabase)</text>
+
+        <rect x="60" y="1048" width="16" height="10" rx="2" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1"/>
+        <text x="82" y="1056" fill="#94a3b8" font-size="8">Database (PostgreSQL)</text>
+
+        <rect x="220" y="1048" width="16" height="10" rx="2" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1"/>
+        <text x="242" y="1056" fill="#94a3b8" font-size="8">Auth / Security</text>
+
+        <rect x="60" y="1064" width="16" height="10" rx="2" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1"/>
+        <text x="82" y="1072" fill="#94a3b8" font-size="8">NFC / RFID Hardware</text>
+
+        <rect x="220" y="1064" width="16" height="10" rx="2" fill="rgba(251,146,60,0.2)" stroke="#fb923c" stroke-width="1"/>
+        <text x="242" y="1072" fill="#94a3b8" font-size="8">Cloud Service</text>
+
+        <rect x="60" y="1080" width="16" height="10" rx="2" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1"/>
+        <text x="82" y="1088" fill="#94a3b8" font-size="8">External / Public</text>
+
+        <line x1="220" y1="1082" x2="236" y2="1082" stroke="#fb7185" stroke-width="1" stroke-dasharray="3,3"/>
+        <text x="242" y="1086" fill="#94a3b8" font-size="8">Security / Auth Flow</text>
+
+        <!-- Tech stack badge -->
+        <rect x="750" y="1005" width="300" height="60" rx="8" fill="rgba(15,23,42,0.6)" stroke="#1e293b" stroke-width="1"/>
+        <text x="770" y="1022" fill="white" font-size="10" font-weight="600">Tech Stack</text>
+        <text x="770" y="1040" fill="#22d3ee" font-size="8">Flutter SDK ^3.9.2</text>
+        <text x="770" y="1055" fill="#34d399" font-size="8">Supabase (PostgreSQL + Auth + RPC)</text>
+
+      </svg>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="cards">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot cyan"></div>
+          <h3>Frontend — Flutter App</h3>
+        </div>
+        <ul>
+          <li>• 7 feature modules (auth, kantin, keuangan, siswa, parent, admin, public)</li>
+          <li>• Riverpod state management</li>
+          <li>• GoRouter declarative navigation</li>
+          <li>• Feature-First architecture</li>
+          <li>• NFC Manager untuk RFID tap</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot emerald"></div>
+          <h3>Backend — Supabase</h3>
+        </div>
+        <ul>
+          <li>• PostgreSQL database with RLS policies</li>
+          <li>• RPC Functions: process_purchase, process_refund</li>
+          <li>• ACID transactions — double-spend prevention</li>
+          <li>• Supabase Auth (JWT, signInWithPassword)</li>
+          <li>• Realtime subscriptions for live updates</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot violet"></div>
+          <h3>Database — Key Tables (10+)</h3>
+        </div>
+        <ul>
+          <li>• students, products, transactions, transaction_items</li>
+          <li>• rfid_cards, balance_adjustments, user_profiles</li>
+          <li>• canteen_operators, finance_officers, parent_students</li>
+          <li>• audit_logs, system_settings, app_notifications</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <p class="footer">
+      Kantin Digital v0.1.0 • PKL 2026 • Flutter + Supabase • Architecture Diagram generated with Hermes Agent
+    </p>
+  </div>
+</body>
+</html>

@@ -4,25 +4,20 @@
 class CanteenOperator {
   final String id;
   final String canteenName;
-  final double balanceEarned;
-  final DateTime? createdAt;
+  final int balanceEarned;
 
   const CanteenOperator({
     required this.id,
     required this.canteenName,
-    this.balanceEarned = 0.0,
-    this.createdAt,
+    this.balanceEarned = 0,
   });
 
   factory CanteenOperator.fromJson(Map<String, dynamic> json) {
     return CanteenOperator(
       id: json['id'] as String,
-      canteenName: json['canteen_name'] as String,
+      canteenName: json['canteen_name']?.toString() ?? '',
       balanceEarned:
-          double.tryParse(json['balance_earned']?.toString() ?? '0') ?? 0.0,
-      createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'].toString())
-          : null,
+          int.tryParse(json['balance_earned']?.toString() ?? '0') ?? 0,
     );
   }
 
@@ -30,20 +25,17 @@ class CanteenOperator {
         'id': id,
         'canteen_name': canteenName,
         'balance_earned': balanceEarned,
-        'created_at': createdAt?.toIso8601String(),
       };
 
   CanteenOperator copyWith({
     String? id,
     String? canteenName,
-    double? balanceEarned,
-    DateTime? createdAt,
+    int? balanceEarned,
   }) {
     return CanteenOperator(
       id: id ?? this.id,
       canteenName: canteenName ?? this.canteenName,
       balanceEarned: balanceEarned ?? this.balanceEarned,
-      createdAt: createdAt ?? this.createdAt,
     );
   }
 

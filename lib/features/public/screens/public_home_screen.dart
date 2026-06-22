@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kantin_digital/core/constants/app_colors.dart';
 
 /// Halaman landing publik yang bisa diakses tanpa login.
 /// Menampilkan info singkat sistem kantin, CTA ke menu, dan tombol login.
@@ -11,7 +12,7 @@ class PublicHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F7),
+      backgroundColor: AppColors.systemBackground,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -24,7 +25,7 @@ class PublicHomeScreen extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFF003434), Color(0xFF006767)],
+                    colors: [AppColors.darkTeal, AppColors.teal],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -36,25 +37,25 @@ class PublicHomeScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
+                        color: AppColors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         '🍽️  Kantin Digital',
-                        style: GoogleFonts.beVietnamPro(
+                        style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: AppColors.white,
                         ),
                       ),
                     ),
                     const SizedBox(height: 20),
                     Text(
                       'Kantin Modern\nBerbasis Kartu Digital',
-                      style: GoogleFonts.beVietnamPro(
+                      style: GoogleFonts.inter(
                         fontSize: 32,
                         fontWeight: FontWeight.w800,
-                        color: Colors.white,
+                        color: AppColors.white,
                         height: 1.15,
                       ),
                     ),
@@ -62,9 +63,9 @@ class PublicHomeScreen extends StatelessWidget {
                     Text(
                       'Jajan lebih mudah, aman, dan tanpa uang tunai. '
                       'Cukup tap kartu RFID di kasir kantin.',
-                      style: GoogleFonts.beVietnamPro(
+                      style: GoogleFonts.inter(
                         fontSize: 14,
-                        color: Colors.white.withValues(alpha: 0.85),
+                        color: AppColors.white.withValues(alpha: 0.85),
                         height: 1.5,
                       ),
                     ),
@@ -80,12 +81,12 @@ class PublicHomeScreen extends StatelessWidget {
                                 size: 16),
                             label: Text(
                               'Lihat Menu',
-                              style: GoogleFonts.beVietnamPro(
+                              style: GoogleFonts.inter(
                                   fontWeight: FontWeight.w600),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: const Color(0xFF003434),
+                              backgroundColor: AppColors.white,
+                              foregroundColor: AppColors.darkTeal,
                               padding:
                                   const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
@@ -99,16 +100,16 @@ class PublicHomeScreen extends StatelessWidget {
                           child: OutlinedButton.icon(
                             onPressed: () => context.go('/login?from=/public'),
                             icon: const Icon(CupertinoIcons.person,
-                                size: 16, color: Colors.white),
+                                size: 16, color: AppColors.white),
                             label: Text(
                               'Masuk',
-                              style: GoogleFonts.beVietnamPro(
+                              style: GoogleFonts.inter(
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.white),
+                                  color: AppColors.white),
                             ),
                             style: OutlinedButton.styleFrom(
                               side: const BorderSide(
-                                  color: Colors.white, width: 1.5),
+                                  color: AppColors.white, width: 1.5),
                               padding:
                                   const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
@@ -130,16 +131,16 @@ class PublicHomeScreen extends StatelessWidget {
                   children: [
                     Text(
                       'Fitur Unggulan',
-                      style: GoogleFonts.beVietnamPro(
+                      style: GoogleFonts.inter(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1A1C1F),
+                        color: AppColors.textDark,
                       ),
                     ),
                     const SizedBox(height: 16),
                     _buildFeatureCard(
                       icon: CupertinoIcons.creditcard,
-                      color: const Color(0xFF006767),
+                      color: AppColors.teal,
                       title: 'Tap & Bayar',
                       desc:
                           'Cukup tempelkan kartu RFID di kasir. Transaksi selesai dalam 1 detik.',
@@ -147,7 +148,7 @@ class PublicHomeScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     _buildFeatureCard(
                       icon: CupertinoIcons.lock_shield,
-                      color: const Color(0xFF904D00),
+                      color: AppColors.darkOrange,
                       title: 'Aman & Terkontrol',
                       desc:
                           'Orang tua dapat memantau dan mengatur batas belanja harian anak.',
@@ -155,7 +156,7 @@ class PublicHomeScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     _buildFeatureCard(
                       icon: CupertinoIcons.chart_bar,
-                      color: const Color(0xFF006A35),
+                      color: AppColors.successGreen,
                       title: 'Laporan Real-time',
                       desc:
                           'Riwayat transaksi tersedia kapanpun. Tidak ada lagi uang hilang.',
@@ -165,10 +166,10 @@ class PublicHomeScreen extends StatelessWidget {
                     // Quick links
                     Text(
                       'Akses Cepat',
-                      style: GoogleFonts.beVietnamPro(
+                      style: GoogleFonts.inter(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1A1C1F),
+                        color: AppColors.textDark,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -214,7 +215,7 @@ class PublicHomeScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -241,18 +242,18 @@ class PublicHomeScreen extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.beVietnamPro(
+                  style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1A1C1F),
+                    color: AppColors.textDark,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   desc,
-                  style: GoogleFonts.beVietnamPro(
+                  style: GoogleFonts.inter(
                     fontSize: 12,
-                    color: const Color(0xFF6F7978),
+                    color: AppColors.mutedGray,
                     height: 1.4,
                   ),
                 ),
@@ -279,12 +280,12 @@ class PublicHomeScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: isHighlighted
-              ? const Color(0xFF006767).withValues(alpha: 0.07)
-              : Colors.white,
+              ? AppColors.teal.withValues(alpha: 0.07)
+              : AppColors.white,
           borderRadius: BorderRadius.circular(14),
           border: isHighlighted
               ? Border.all(
-                  color: const Color(0xFF006767).withValues(alpha: 0.3))
+                  color: AppColors.teal.withValues(alpha: 0.3))
               : null,
           boxShadow: [
             BoxShadow(
@@ -299,8 +300,8 @@ class PublicHomeScreen extends StatelessWidget {
             Icon(icon,
                 size: 20,
                 color: isHighlighted
-                    ? const Color(0xFF006767)
-                    : const Color(0xFF6F7978)),
+                    ? AppColors.teal
+                    : AppColors.mutedGray),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -308,19 +309,19 @@ class PublicHomeScreen extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: GoogleFonts.beVietnamPro(
+                    style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: isHighlighted
-                          ? const Color(0xFF006767)
-                          : const Color(0xFF1A1C1F),
+                          ? AppColors.teal
+                          : AppColors.textDark,
                     ),
                   ),
                   Text(
                     subtitle,
-                    style: GoogleFonts.beVietnamPro(
+                    style: GoogleFonts.inter(
                       fontSize: 11,
-                      color: const Color(0xFF6F7978),
+                      color: AppColors.mutedGray,
                     ),
                   ),
                 ],
@@ -330,8 +331,8 @@ class PublicHomeScreen extends StatelessWidget {
               CupertinoIcons.chevron_right,
               size: 14,
               color: isHighlighted
-                  ? const Color(0xFF006767)
-                  : const Color(0xFFC7C7CC),
+                  ? AppColors.teal
+                  : AppColors.textGray,
             ),
           ],
         ),

@@ -4,17 +4,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
+
+import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
 
 // keuanganDashboardProvider is defined in keuangan_providers.dart
 
 class KeuanganDashboardScreen extends ConsumerWidget {
   const KeuanganDashboardScreen({super.key});
 
-  static const Color primaryTeal = Color(0xFF003434);
-  static const Color accentOrange = Color(0xFF904D00);
-  static const Color successGreen = Color(0xFF006A35);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -28,11 +29,11 @@ class KeuanganDashboardScreen extends ConsumerWidget {
     final greeting = hour < 11 ? 'Selamat Pagi' : hour < 15 ? 'Selamat Siang' : 'Selamat Sore';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF9F8),
+      backgroundColor: AppColors.offWhite,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async => ref.invalidate(keuanganDashboardProvider),
-          color: primaryTeal,
+          color: AppColors.darkTeal,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -49,26 +50,26 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                         children: [
                           Text(
                             '$greeting, 👋',
-                            style: GoogleFonts.beVietnamPro(
+                            style: GoogleFonts.inter(
                               fontSize: 13,
-                              color: const Color(0xFF6F7978),
+                              color: AppColors.mutedGray,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             fullName,
-                            style: GoogleFonts.beVietnamPro(
+                            style: GoogleFonts.inter(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: primaryTeal,
+                              color: AppColors.darkTeal,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             'Admin Keuangan · $school',
-                            style: GoogleFonts.beVietnamPro(
+                            style: GoogleFonts.inter(
                               fontSize: 12,
-                              color: const Color(0xFF6F7978),
+                              color: AppColors.mutedGray,
                             ),
                           ),
                         ],
@@ -78,13 +79,13 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                       onTap: () => context.go('/finance/settings'),
                       child: CircleAvatar(
                         radius: 22,
-                        backgroundColor: primaryTeal.withValues(alpha: 0.1),
+                        backgroundColor: AppColors.darkTeal.withValues(alpha: 0.1),
                         child: Text(
                           fullName.isNotEmpty ? fullName[0].toUpperCase() : 'A',
-                          style: GoogleFonts.beVietnamPro(
+                          style: GoogleFonts.inter(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: primaryTeal,
+                            color: AppColors.darkTeal,
                           ),
                         ),
                       ),
@@ -98,12 +99,23 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                   loading: () => const Center(
                     child: Padding(
                       padding: EdgeInsets.all(40),
-                      child: CupertinoActivityIndicator(color: primaryTeal),
+                      child: CupertinoActivityIndicator(color: AppColors.darkTeal),
                     ),
                   ),
                   error: (e, _) => Center(
-                    child: Text('Gagal memuat data: $e',
-                      style: GoogleFonts.beVietnamPro(color: Colors.red)),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+                        const SizedBox(height: 12),
+                        Text('${AppStrings.labelFailed} memuat data'),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: () => ref.invalidate(keuanganDashboardProvider),
+                          child: const Text(AppStrings.buttonRetry),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -115,11 +127,11 @@ class KeuanganDashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildContent(BuildContext context, Map<String, dynamic> data, NumberFormat fmt) {
-    final totalSaldo = data['totalSaldo'] as double;
-    final topupToday = data['topupToday'] as double;
-    final topupCount = data['topupCount'] as int;
-    final koreksCount = data['koreksCount'] as int;
-    final koreksNet = data['koreksNet'] as double;
+    final totalSaldo = (data['totalSaldo'] as num?)?.toDouble() ?? 0.0;
+    final topupToday = (data['topupToday'] as num?)?.toDouble() ?? 0.0;
+    final topupCount = (data['topupCount'] as num?)?.toInt() ?? 0;
+    final koreksCount = (data['koreksCount'] as num?)?.toInt() ?? 0;
+    final koreksNet = (data['koreksNet'] as num?)?.toDouble() ?? 0.0;
     final logs = data['recentLogs'] as List<Map<String, dynamic>>;
 
     return Column(
@@ -131,7 +143,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF003434), Color(0xFF005A5A)],
+              colors: [AppColors.darkTeal, AppColors.darkTeal2],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -146,26 +158,26 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                   const SizedBox(width: 6),
                   Text(
                     'Total Saldo Beredar',
-                    style: GoogleFonts.beVietnamPro(fontSize: 13, color: Colors.white70),
+                    style: GoogleFonts.inter(fontSize: 13, color: Colors.white70),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
                 fmt.format(totalSaldo),
-                style: GoogleFonts.beVietnamPro(
+                style: GoogleFonts.inter(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: AppColors.white,
                 ),
               ),
               const SizedBox(height: 4),
               Row(
                 children: [
-                  const Icon(Icons.arrow_upward, color: Color(0xFF4FFFB0), size: 14),
+                  const Icon(Icons.arrow_upward, color: AppColors.success, size: 14),
                   Text(
                     ' +${fmt.format(topupToday)} hari ini',
-                    style: GoogleFonts.beVietnamPro(fontSize: 12, color: const Color(0xFF4FFFB0)),
+                    style: GoogleFonts.inter(fontSize: 12, color: AppColors.success),
                   ),
                 ],
               ),
@@ -180,7 +192,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
             Expanded(
               child: _buildStatCard(
                 icon: CupertinoIcons.arrow_up_circle_fill,
-                iconColor: const Color(0xFF006A35),
+                iconColor: AppColors.successGreen,
                 label: 'Top-Up Tunai',
                 value: fmt.format(topupToday),
                 sub: '$topupCount Transaksi',
@@ -190,7 +202,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
             Expanded(
               child: _buildStatCard(
                 icon: CupertinoIcons.arrow_right_arrow_left_circle_fill,
-                iconColor: const Color(0xFFBA1A1A),
+                iconColor: AppColors.errorRed2,
                 label: 'Koreksi Hari Ini',
                 value: fmt.format(koreksNet.abs()),
                 sub: '$koreksCount Transaksi',
@@ -203,10 +215,10 @@ class KeuanganDashboardScreen extends ConsumerWidget {
         // ─── Aksi Cepat ───
         Text(
           'Aksi Cepat',
-          style: GoogleFonts.beVietnamPro(
+          style: GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: const Color(0xFF1B1C1B),
+            color: AppColors.nearBlack,
           ),
         ),
         const SizedBox(height: 12),
@@ -215,7 +227,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
             Expanded(child: _buildQuickAction(
               context,
               icon: CupertinoIcons.arrow_up_circle_fill,
-              color: const Color(0xFF006A35),
+              color: AppColors.successGreen,
               label: 'Top-Up\nTunai',
               route: '/finance/topup',
             )),
@@ -223,7 +235,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
             Expanded(child: _buildQuickAction(
               context,
               icon: CupertinoIcons.arrow_right_arrow_left_circle_fill,
-              color: const Color(0xFFBA1A1A),
+              color: AppColors.errorRed2,
               label: 'Koreksi\nSaldo',
               route: '/finance/correction',
             )),
@@ -231,7 +243,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
             Expanded(child: _buildQuickAction(
               context,
               icon: CupertinoIcons.chart_bar_fill,
-              color: const Color(0xFF003434),
+              color: AppColors.darkTeal,
               label: 'Laporan\nKeuangan',
               route: '/finance/report',
             )),
@@ -245,20 +257,20 @@ class KeuanganDashboardScreen extends ConsumerWidget {
           children: [
             Text(
               'Aktivitas Terbaru',
-              style: GoogleFonts.beVietnamPro(
+              style: GoogleFonts.inter(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF1B1C1B),
+                color: AppColors.nearBlack,
               ),
             ),
             GestureDetector(
               onTap: () => context.push('/finance/history'),
               child: Text(
                 'Lihat Semua →',
-                style: GoogleFonts.beVietnamPro(
+                style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF003434),
+                  color: AppColors.darkTeal,
                 ),
               ),
             ),
@@ -271,24 +283,21 @@ class KeuanganDashboardScreen extends ConsumerWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.white,
               borderRadius: BorderRadius.circular(24),
             ),
-            child: Center(
-              child: Text(
-                'Belum ada aktivitas hari ini.',
-                style: GoogleFonts.beVietnamPro(color: const Color(0xFF6F7978)),
-              ),
+            child: const EmptyStateWidget(
+              message: AppStrings.labelNoData,
             ),
           )
         else
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.white,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
+                  color: AppColors.black.withValues(alpha: 0.04),
                   blurRadius: 20,
                   offset: const Offset(0, 4),
                 ),
@@ -303,18 +312,18 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                 final date = log['created_at'] != null
                     ? DateTime.parse(log['created_at']).toLocal()
                     : DateTime.now();
-                final timeStr = DateFormat('HH:mm').format(date);
+                final timeStr = DateFormat('HH:mm', 'id_ID').format(date);
 
-                Color dotColor = const Color(0xFF003434);
+                Color dotColor = AppColors.darkTeal;
                 IconData dotIcon = CupertinoIcons.doc_text_fill;
                 if (actionType.contains('TOPUP') || actionType.contains('TOP')) {
-                  dotColor = const Color(0xFF006A35);
+                  dotColor = AppColors.successGreen;
                   dotIcon = CupertinoIcons.arrow_up_circle_fill;
                 } else if (actionType.contains('KOREKSI')) {
-                  dotColor = const Color(0xFFBA1A1A);
+                  dotColor = AppColors.errorRed2;
                   dotIcon = CupertinoIcons.arrow_right_arrow_left_circle_fill;
                 } else if (actionType.contains('REGISTRASI')) {
-                  dotColor = const Color(0xFF904D00);
+                  dotColor = AppColors.darkOrange;
                   dotIcon = CupertinoIcons.creditcard_fill;
                 }
 
@@ -333,9 +342,9 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                           Expanded(
                             child: Text(
                               desc,
-                              style: GoogleFonts.beVietnamPro(
+                              style: GoogleFonts.inter(
                                 fontSize: 13,
-                                color: const Color(0xFF1B1C1B),
+                                color: AppColors.nearBlack,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -344,16 +353,16 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                           const SizedBox(width: 8),
                           Text(
                             timeStr,
-                            style: GoogleFonts.beVietnamPro(
+                            style: GoogleFonts.inter(
                               fontSize: 11,
-                              color: const Color(0xFF6F7978),
+                              color: AppColors.mutedGray,
                             ),
                           ),
                         ],
                       ),
                     ),
                     if (i < logs.length - 1)
-                      const Divider(height: 1, thickness: 0.5, indent: 16, color: Color(0xFFE4E2E1)),
+                      const Divider(height: 1, thickness: 0.5, indent: 16, color: AppColors.borderGray),
                   ],
                 );
               }).toList(),
@@ -374,11 +383,11 @@ class KeuanganDashboardScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppColors.black.withValues(alpha: 0.04),
             blurRadius: 15,
             offset: const Offset(0, 4),
           ),
@@ -391,21 +400,21 @@ class KeuanganDashboardScreen extends ConsumerWidget {
           const SizedBox(height: 10),
           Text(
             label,
-            style: GoogleFonts.beVietnamPro(fontSize: 11, color: const Color(0xFF6F7978)),
+            style: GoogleFonts.inter(fontSize: 11, color: AppColors.mutedGray),
           ),
           const SizedBox(height: 4),
           Text(
             value,
-            style: GoogleFonts.beVietnamPro(
+            style: GoogleFonts.inter(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: const Color(0xFF1B1C1B),
+              color: AppColors.nearBlack,
             ),
             overflow: TextOverflow.ellipsis,
           ),
           Text(
             sub,
-            style: GoogleFonts.beVietnamPro(fontSize: 11, color: const Color(0xFF6F7978)),
+            style: GoogleFonts.inter(fontSize: 11, color: AppColors.mutedGray),
           ),
         ],
       ),
@@ -435,7 +444,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
             Text(
               label,
               textAlign: TextAlign.center,
-              style: GoogleFonts.beVietnamPro(
+              style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: color,

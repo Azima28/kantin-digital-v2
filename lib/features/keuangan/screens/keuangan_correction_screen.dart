@@ -10,6 +10,14 @@ import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 
+import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/features/keuangan/widgets/correction_form.dart';
+import 'package:kantin_digital/features/keuangan/widgets/keuangan_correction_step_confirm.dart';
+import 'package:kantin_digital/features/keuangan/widgets/keuangan_correction_step_search.dart';
+import 'package:kantin_digital/features/keuangan/widgets/keuangan_correction_success_screen.dart';
+import 'package:kantin_digital/features/keuangan/widgets/keuangan_step_indicator.dart';
+
 class KeuanganCorrectionScreen extends ConsumerStatefulWidget {
   final StudentWithProfile? prefilledStudent;
   const KeuanganCorrectionScreen({super.key, this.prefilledStudent});
@@ -32,19 +40,16 @@ class _KeuanganCorrectionScreenState
   bool _hasSearched = false;
   Timer? _debounce;
 
-  // Step 2: Correction Details
-  final TextEditingController _amountController = TextEditingController();
-  final TextEditingController _reasonController = TextEditingController();
-  bool _isAddition = false; // false = reduce balance, true = add balance
+  // Step 2: Correction Details — state stored from CorrectionForm callback
+  int _storedAmount = 0;
+  bool _storedIsAddition = false;
+  String _storedReason = '';
 
   // Success details
   String _refCode = '';
   String _successTime = '';
   bool _isLoading = false;
 
-  static const Color primaryTeal = Color(0xFF003434);
-  static const Color successGreen = Color(0xFF006A35);
-  static const Color dangerRed = Color(0xFFBA1A1A);
 
   @override
   void initState() {
@@ -59,36 +64,10 @@ class _KeuanganCorrectionScreenState
   void dispose() {
     _debounce?.cancel();
     _searchController.dispose();
-    _amountController.dispose();
-    _reasonController.dispose();
     super.dispose();
   }
 
-  double _getAmount() {
-    return double.tryParse(_amountController.text.trim()) ?? 0.0;
-  }
-
-  double _getNewBalance() {
-    final double amount = _getAmount();
-    if (_isAddition) {
-      return _studentBalance + amount;
-    } else {
-      return _studentBalance - amount;
-    }
-  }
-
-  bool _isReasonValid() {
-    return _reasonController.text.trim().length >= 10;
-  }
-
-  bool _isBalanceValid() {
-    final double amount = _getAmount();
-    if (amount <= 0) return false;
-    if (!_isAddition && amount > _studentBalance) {
-      return false; // cannot reduce below 0
-    }
-    return true;
-  }
+  int get _studentBalance => _selectedStudent?.balance ?? 0;
 
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
@@ -139,7 +118,7 @@ class _KeuanganCorrectionScreenState
             content: Text(
               'Pencarian gagal: ${e.toString().replaceAll('Exception: ', '')}',
             ),
-            backgroundColor: dangerRed,
+            backgroundColor: AppColors.errorRed2,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -158,17 +137,17 @@ class _KeuanganCorrectionScreenState
     showCupertinoDialog(
       context: context,
       builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: const Text('Konfirmasi Koreksi Saldo'),
+        title: Text('${AppStrings.titleConfirmation} Koreksi Saldo'),
         content: const Text(
           'Aksi ini bersifat permanen dan akan dicatat dalam Audit Log Dinas yang dapat diperiksa oleh Super Admin kapan saja. Lanjutkan?',
         ),
         actions: [
           CupertinoDialogAction(
-            child: const Text('Batal'),
+            child: const Text(AppStrings.buttonCancel),
             onPressed: () => Navigator.pop(ctx),
           ),
           CupertinoDialogAction(
-            isDestructiveAction: !_isAddition,
+            isDestructiveAction: !_storedIsAddition,
             onPressed: () async {
               Navigator.pop(ctx);
               await _executeCorrectionInDB();
@@ -188,39 +167,21 @@ class _KeuanganCorrectionScreenState
     try {
       final client = ref.read(supabaseClientProvider);
       final profile = ref.read(authNotifierProvider).profile;
-      final actorName = profile?['full_name'] ?? 'Admin Keuangan';
       final actorId = profile?['id'];
 
       final studentId = _selectedStudent!.id;
-      final double amount = _getAmount();
-      final double finalNewBalance = _getNewBalance();
-      final String reason = _reasonController.text.trim();
+      final int amount = _storedAmount;
+      final int finalNewBalance = _storedIsAddition
+          ? _studentBalance + amount
+          : _studentBalance - amount;
+      final String reason = _storedReason;
 
-      // 1. Update student balance in DB
-      await client
-          .from('students')
-          .update({'balance': finalNewBalance})
-          .eq('id', studentId);
-
-      // 2. Write to audit logs table
-      await client.from('audit_logs').insert({
-        'actor_id': actorId,
-        'actor_name': actorName,
-        'action_type': 'KOREKSI_SALDO',
-        'description':
-            'Koreksi saldo ${_isAddition ? "penambahan" : "pengurangan"} sebesar Rp ${NumberFormat.decimalPattern("id_ID").format(amount)} untuk $_studentName. Alasan: $reason',
-        'target_id': studentId,
-        'old_value': {'balance': _studentBalance.toInt()},
-        'new_value': {'balance': finalNewBalance.toInt(), 'reason': reason},
-      });
-
-      // 3. Send system notification to student
-      await client.from('notifications').insert({
-        'student_id': studentId,
-        'title': 'Koreksi Saldo!',
-        'message':
-            'Saldo Anda telah disesuaikan oleh admin menjadi Rp ${NumberFormat.decimalPattern("id_ID").format(finalNewBalance)}. Alasan: $reason',
-        'type': 'system',
+      // Call RPC process_correction (handles balance update, audit log, notification)
+      await client.rpc('process_correction', params: {
+        'p_student_id': studentId,
+        'p_new_balance': finalNewBalance,
+        'p_operator_id': actorId,
+        'p_reason': reason,
       });
 
       // Invalidate providers
@@ -232,15 +193,15 @@ class _KeuanganCorrectionScreenState
       setState(() {
         _refCode =
             'ADJ-${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}-${Random().nextInt(9000) + 1000}';
-        _successTime = DateFormat('dd MMM yyyy, HH:mm:ss').format(now);
+        _successTime = DateFormat('dd MMM yyyy, HH:mm:ss', 'id_ID').format(now);
         _currentStep = 4; // success screen
       });
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Koreksi gagal: $e'),
-            backgroundColor: dangerRed,
+            content: const Text('Koreksi gagal'),
+            backgroundColor: AppColors.errorRed2,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -254,10 +215,8 @@ class _KeuanganCorrectionScreenState
     }
   }
 
-  String get _studentName => _selectedStudent?.fullName ?? 'Siswa';
+  String get _studentName => _selectedStudent?.fullName ?? AppStrings.adminStudents;
   String get _studentClass => _selectedStudent?.class_ ?? '-';
-  double get _studentBalance => _selectedStudent?.balance ?? 0.0;
-
   @override
   Widget build(BuildContext context) {
     final fmt = NumberFormat.currency(
@@ -267,16 +226,16 @@ class _KeuanganCorrectionScreenState
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF9F8),
+      backgroundColor: AppColors.offWhite,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF9F8),
+        backgroundColor: AppColors.offWhite,
         elevation: 0,
         scrolledUnderElevation: 0,
         title: Text(
-          'Koreksi Saldo',
-          style: GoogleFonts.beVietnamPro(
+          AppStrings.keuanganKoreksiSaldo,
+          style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
-            color: primaryTeal,
+            color: AppColors.darkTeal,
             fontSize: 18,
           ),
         ),
@@ -325,63 +284,11 @@ class _KeuanganCorrectionScreenState
   }
 
   Widget _buildProgressIndicator() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _currentStep == 1
-                ? 'LANGKAH 1 DARI 3 — Cari Siswa'
-                : _currentStep == 2
-                ? 'LANGKAH 2 DARI 3 — Detail Koreksi'
-                : 'LANGKAH 3 DARI 3 — Konfirmasi',
-            style: GoogleFonts.beVietnamPro(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF6F7978),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: primaryTeal,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Container(
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: _currentStep >= 2
-                        ? primaryTeal
-                        : const Color(0xFFE4E2E1),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Container(
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: _currentStep >= 3
-                        ? primaryTeal
-                        : const Color(0xFFE4E2E1),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+    return KeuanganStepIndicator(
+      currentStep: _currentStep,
+      step1Label: 'LANGKAH 1 DARI 3 — Cari Siswa',
+      step2Label: 'LANGKAH 2 DARI 3 — Detail Koreksi',
+      step3Label: 'LANGKAH 3 DARI 3 — ${AppStrings.titleConfirmation}',
     );
   }
 
@@ -401,759 +308,70 @@ class _KeuanganCorrectionScreenState
   }
 
   Widget _buildStep1Search() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 8),
-        Text(
-          'Masukkan NISN atau Nama Siswa:',
-          style: GoogleFonts.beVietnamPro(
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF1B1C1B),
-            fontSize: 14,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _searchController,
-          onChanged: (val) {
-            _onSearchChanged(val.trim());
-          },
-          onSubmitted: (val) {
-            _debounce?.cancel();
-            _searchStudent(val.trim());
-          },
-          decoration: InputDecoration(
-            hintText: 'Masukkan NISN atau Nama Lengkap...',
-            hintStyle: GoogleFonts.beVietnamPro(
-              color: const Color(0xFF6F7978),
-              fontSize: 14,
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE4E2E1)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE4E2E1)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: primaryTeal, width: 1.5),
-            ),
-            suffixIcon: _isSearching
-                ? const Padding(
-                    padding: EdgeInsets.all(12.0),
-                    child: SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: primaryTeal,
-                      ),
-                    ),
-                  )
-                : _searchController.text.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(
-                      CupertinoIcons.clear_circled_solid,
-                      color: Color(0xFF6F7978),
-                      size: 18,
-                    ),
-                    onPressed: () {
-                      _searchController.clear();
-                      _searchStudent('');
-                    },
-                  )
-                : const Icon(
-                    CupertinoIcons.search,
-                    color: Color(0xFF6F7978),
-                    size: 20,
-                  ),
-          ),
-        ),
-        const SizedBox(height: 20),
-
-        if (_isSearching && _searchResults.isEmpty)
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: CupertinoActivityIndicator(color: primaryTeal),
-            ),
-          )
-        else if (_hasSearched && _searchResults.isEmpty)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Text(
-                'Siswa tidak ditemukan.',
-                style: GoogleFonts.beVietnamPro(
-                  color: dangerRed,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          )
-        else if (_searchResults.isNotEmpty) ...[
-          Text(
-            'Hasil Pencarian (${_searchResults.length}):',
-            style: GoogleFonts.beVietnamPro(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF6F7978),
-            ),
-          ),
-          const SizedBox(height: 8),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _searchResults.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 10),
-            itemBuilder: (context, index) {
-              final student = _searchResults[index];
-              final name = student.fullName;
-              final nisn = student.nisn ?? '-';
-              final className = student.class_ ?? '-';
-
-              return Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE4E2E1)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.02),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 4,
-                  ),
-                  title: Text(
-                    name,
-                    style: GoogleFonts.beVietnamPro(
-                      fontWeight: FontWeight.bold,
-                      color: primaryTeal,
-                      fontSize: 14,
-                    ),
-                  ),
-                  subtitle: Text(
-                    'NISN: $nisn • Kelas $className',
-                    style: GoogleFonts.beVietnamPro(
-                      color: const Color(0xFF6F7978),
-                      fontSize: 12,
-                    ),
-                  ),
-                  trailing: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: primaryTeal.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'Pilih',
-                      style: GoogleFonts.beVietnamPro(
-                        color: primaryTeal,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ),
-                  onTap: () {
-                    setState(() {
-                      _selectedStudent = student;
-                      _currentStep = 2;
-                    });
-                  },
-                ),
-              );
-            },
-          ),
-        ] else
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40),
-              child: Column(
-                children: [
-                  Icon(
-                    CupertinoIcons.search,
-                    size: 48,
-                    color: primaryTeal.withValues(alpha: 0.2),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Ketik nama atau NISN siswa\nuntuk memulai pencarian.',
-                    style: GoogleFonts.beVietnamPro(
-                      color: const Color(0xFF6F7978),
-                      fontSize: 13,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          ),
-      ],
+    return KeuanganCorrectionStepSearch(
+      searchController: _searchController,
+      isSearching: _isSearching,
+      hasSearched: _hasSearched,
+      searchResults: _searchResults,
+      onSearchChanged: _onSearchChanged,
+      onSearchSubmitted: (val) {
+        _debounce?.cancel();
+        _searchStudent(val);
+      },
+      onSearchCleared: () {
+        _searchController.clear();
+        _searchStudent('');
+      },
+      onStudentSelected: (student) {
+        setState(() {
+          _selectedStudent = student;
+          _currentStep = 2;
+        });
+      },
     );
   }
 
   Widget _buildStep2Details(NumberFormat fmt) {
-    final double amount = _getAmount();
-    final double newBalance = _getNewBalance();
-    final bool balanceValid = _isBalanceValid();
-    final bool reasonValid = _isReasonValid();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Student Info
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 15,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              _buildInfoRow('Nama Siswa', _studentName),
-              const Divider(
-                height: 16,
-                thickness: 0.5,
-                color: Color(0xFFE4E2E1),
-              ),
-              _buildInfoRow('Kelas', 'Kelas $_studentClass'),
-              const Divider(
-                height: 16,
-                thickness: 0.5,
-                color: Color(0xFFE4E2E1),
-              ),
-              _buildInfoRow('Saldo Saat Ini', fmt.format(_studentBalance)),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-
-        // Type of correction
-        Text(
-          'Jenis Koreksi',
-          style: GoogleFonts.beVietnamPro(
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF1B1C1B),
-            fontSize: 13,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _isAddition = false;
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: BoxDecoration(
-                    color: !_isAddition
-                        ? dangerRed.withValues(alpha: 0.08)
-                        : Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: !_isAddition ? dangerRed : const Color(0xFFE4E2E1),
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'Kurangi Saldo',
-                      style: GoogleFonts.beVietnamPro(
-                        fontWeight: FontWeight.bold,
-                        color: !_isAddition
-                            ? dangerRed
-                            : const Color(0xFF6F7978),
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _isAddition = true;
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: BoxDecoration(
-                    color: _isAddition
-                        ? successGreen.withValues(alpha: 0.08)
-                        : Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _isAddition
-                          ? successGreen
-                          : const Color(0xFFE4E2E1),
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'Tambah Saldo',
-                      style: GoogleFonts.beVietnamPro(
-                        fontWeight: FontWeight.bold,
-                        color: _isAddition
-                            ? successGreen
-                            : const Color(0xFF6F7978),
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-
-        // Nominal
-        Text(
-          'Nominal Koreksi',
-          style: GoogleFonts.beVietnamPro(
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF1B1C1B),
-            fontSize: 13,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _amountController,
-          keyboardType: TextInputType.number,
-          onChanged: (_) => setState(() {}),
-          decoration: InputDecoration(
-            prefixText: 'Rp ',
-            prefixStyle: GoogleFonts.beVietnamPro(
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF1B1C1B),
-            ),
-            hintText: '0',
-            hintStyle: GoogleFonts.beVietnamPro(
-              color: const Color(0xFF6F7978),
-              fontSize: 14,
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE4E2E1)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE4E2E1)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: primaryTeal, width: 1.5),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        if (amount > 0 && !_isAddition && amount > _studentBalance)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Text(
-              '⚠️ Saldo tidak mencukupi untuk pengurangan.',
-              style: GoogleFonts.beVietnamPro(
-                color: dangerRed,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-
-        Text(
-          'Saldo Setelah Koreksi: ${fmt.format(newBalance)}',
-          style: GoogleFonts.beVietnamPro(
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-            color: balanceValid ? primaryTeal : dangerRed,
-          ),
-        ),
-        const SizedBox(height: 20),
-
-        // Reason
-        Text(
-          'Alasan Koreksi (Wajib)',
-          style: GoogleFonts.beVietnamPro(
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF1B1C1B),
-            fontSize: 13,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _reasonController,
-          maxLines: 3,
-          onChanged: (_) => setState(() {}),
-          decoration: InputDecoration(
-            hintText: 'Masukkan alasan koreksi secara detail...',
-            hintStyle: GoogleFonts.beVietnamPro(
-              color: const Color(0xFF6F7978),
-              fontSize: 14,
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.all(16),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE4E2E1)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE4E2E1)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: primaryTeal, width: 1.5),
-            ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Minimal 10 karakter. (Saat ini: ${_reasonController.text.trim().length} karakter)',
-          style: GoogleFonts.beVietnamPro(
-            fontSize: 11,
-            color: reasonValid ? successGreen : const Color(0xFF6F7978),
-          ),
-        ),
-        const SizedBox(height: 32),
-
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: !balanceValid || !reasonValid
-                ? null
-                : () {
-                    setState(() {
-                      _currentStep = 3;
-                    });
-                  },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryTeal,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              elevation: 0,
-            ),
-            child: Text(
-              'LANJUT → KONFIRMASI',
-              style: GoogleFonts.beVietnamPro(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ),
-      ],
+    return CorrectionForm(
+      key: ValueKey('correction_form_${_selectedStudent?.id}'),
+      selectedStudent: _selectedStudent!,
+      fmt: fmt,
+      onSubmit: (int amount, bool isAddition, String reason) {
+        setState(() {
+          _storedAmount = amount;
+          _storedIsAddition = isAddition;
+          _storedReason = reason;
+          _currentStep = 3;
+        });
+      },
     );
   }
 
   Widget _buildStep3Confirm(NumberFormat fmt) {
-    final double amount = _getAmount();
-    final double newBalance = _getNewBalance();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Confirm Bento Card
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 15,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '⚠️ RINGKASAN KOREKSI SALDO',
-                style: GoogleFonts.beVietnamPro(
-                  fontWeight: FontWeight.bold,
-                  color: dangerRed,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildInfoRow('Nama Siswa', _studentName),
-              const Divider(
-                height: 16,
-                thickness: 0.5,
-                color: Color(0xFFE4E2E1),
-              ),
-              _buildInfoRow('Kelas', 'Kelas $_studentClass'),
-              const Divider(
-                height: 16,
-                thickness: 0.5,
-                color: Color(0xFFE4E2E1),
-              ),
-              _buildInfoRow('Saldo Lama', fmt.format(_studentBalance)),
-              const Divider(
-                height: 16,
-                thickness: 0.5,
-                color: Color(0xFFE4E2E1),
-              ),
-              _buildInfoRow(
-                'Koreksi',
-                '${_isAddition ? "+" : "-"}${fmt.format(amount)}',
-                valueColor: _isAddition ? successGreen : dangerRed,
-                isBold: true,
-              ),
-              const Divider(
-                height: 16,
-                thickness: 0.5,
-                color: Color(0xFFE4E2E1),
-              ),
-              _buildInfoRow(
-                'Saldo Baru',
-                fmt.format(newBalance),
-                isBold: true,
-                valueColor: primaryTeal,
-              ),
-              const Divider(
-                height: 16,
-                thickness: 0.5,
-                color: Color(0xFFE4E2E1),
-              ),
-              _buildInfoRow('Alasan Koreksi', _reasonController.text.trim()),
-            ],
-          ),
-        ),
-        const SizedBox(height: 32),
-
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : _processCorrection,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: dangerRed,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              elevation: 0,
-            ),
-            child: _isLoading
-                ? const CupertinoActivityIndicator(color: Colors.white)
-                : Text(
-                    '✔ KUNCI & PROSES KOREKSI',
-                    style: GoogleFonts.beVietnamPro(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Colors.white,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Center(
-          child: Text(
-            'Aksi ini memerlukan konfirmasi keamanan tambahan.',
-            style: GoogleFonts.beVietnamPro(
-              fontSize: 12,
-              color: const Color(0xFF6F7978),
-            ),
-          ),
-        ),
-      ],
+    final int amount = _storedAmount;
+    return KeuanganCorrectionStepConfirm(
+      fmt: fmt,
+      studentName: _studentName,
+      studentClass: _studentClass,
+      studentBalance: _studentBalance,
+      amount: amount,
+      isAddition: _storedIsAddition,
+      reason: _storedReason,
+      isLoading: _isLoading,
+      onProcess: _processCorrection,
     );
   }
 
   Widget _buildSuccessScreen(NumberFormat fmt) {
-    final double amount = _getAmount();
-    final double newBalance = _getNewBalance();
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const SizedBox(height: 20),
-        // Success Icon
-        Container(
-          height: 80,
-          width: 80,
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: Color(0xFFFEECEB),
-          ),
-          child: const Center(
-            child: Icon(
-              CupertinoIcons.checkmark_shield_fill,
-              color: dangerRed,
-              size: 56,
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-        Text(
-          'Koreksi Berhasil!',
-          style: GoogleFonts.beVietnamPro(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: primaryTeal,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Saldo $_studentName berhasil disesuaikan.',
-          style: GoogleFonts.beVietnamPro(
-            fontSize: 14,
-            color: const Color(0xFF6F7978),
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 28),
-
-        // Detail Card
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFE4E2E1)),
-          ),
-          child: Column(
-            children: [
-              _buildInfoRow('Saldo Sebelum', fmt.format(_studentBalance)),
-              const Divider(
-                height: 16,
-                thickness: 0.5,
-                color: Color(0xFFE4E2E1),
-              ),
-              _buildInfoRow(
-                'Penyesuaian',
-                '${_isAddition ? "+" : "-"}${fmt.format(amount)}',
-                valueColor: _isAddition ? successGreen : dangerRed,
-                isBold: true,
-              ),
-              const Divider(
-                height: 16,
-                thickness: 0.5,
-                color: Color(0xFFE4E2E1),
-              ),
-              _buildInfoRow('Saldo Baru', fmt.format(newBalance), isBold: true),
-              const Divider(
-                height: 16,
-                thickness: 0.5,
-                color: Color(0xFFE4E2E1),
-              ),
-              _buildInfoRow('Waktu Transaksi', _successTime),
-              const Divider(
-                height: 16,
-                thickness: 0.5,
-                color: Color(0xFFE4E2E1),
-              ),
-              _buildInfoRow('Kode Koreksi', _refCode),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 40),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () {
-              context.go('/finance');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryTeal,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              elevation: 0,
-            ),
-            child: Text(
-              'KEMBALI KE BERANDA',
-              style: GoogleFonts.beVietnamPro(
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInfoRow(
-    String label,
-    String value, {
-    bool isBold = false,
-    Color? valueColor,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.beVietnamPro(
-            color: const Color(0xFF6F7978),
-            fontSize: 13,
-          ),
-        ),
-        Flexible(
-          child: Text(
-            value,
-            style: GoogleFonts.beVietnamPro(
-              fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-              color: valueColor ?? const Color(0xFF1B1C1B),
-              fontSize: 13,
-            ),
-            textAlign: TextAlign.right,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
+    final int amount = _storedAmount;
+    return KeuanganCorrectionSuccessScreen(
+      fmt: fmt,
+      studentName: _studentName,
+      studentBalance: _studentBalance,
+      amount: amount,
+      isAddition: _storedIsAddition,
+      successTime: _successTime,
+      refCode: _refCode,
     );
   }
 }

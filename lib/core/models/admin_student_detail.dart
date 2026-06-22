@@ -36,6 +36,32 @@ class AdminStudentDetail {
   }
 
   @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AdminStudentDetail && profile.id == other.profile.id;
+
+  @override
+  int get hashCode => profile.id.hashCode;
+
+  Map<String, dynamic> toJson() => {
+        'profile': profile.toJson(),
+        'student': student.toJson(),
+        'transactions': recentTransactions.map((e) => e.toJson()).toList(),
+      };
+
+  AdminStudentDetail copyWith({
+    UserProfile? profile,
+    Student? student,
+    List<OperatorTransaction>? recentTransactions,
+  }) {
+    return AdminStudentDetail(
+      profile: profile ?? this.profile,
+      student: student ?? this.student,
+      recentTransactions: recentTransactions ?? this.recentTransactions,
+    );
+  }
+
+  @override
   String toString() =>
       'AdminStudentDetail(name: ${profile.fullName}, balance: ${student.balance})';
 }

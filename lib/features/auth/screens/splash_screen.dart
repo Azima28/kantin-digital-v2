@@ -26,35 +26,41 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     
     if (!mounted) return;
 
-    final AuthState authState = ref.read(authNotifierProvider);
+    try {
+      final AuthState authState = ref.read(authNotifierProvider);
 
-    if (authState.isAuthenticated) {
-      final String role = authState.profile?['role'] ?? '';
-      if (role == 'petugas_kantin') {
-        context.go('/pos');
-      } else if (role == 'petugas_keuangan') {
-        context.go('/finance');
-      } else if (role == 'super_admin') {
-        context.go('/admin/secure-entry');
-      } else if (role == 'parent') {
-        final String studentId = authState.profile?['student_id'] ?? '';
-        if (studentId.isNotEmpty) {
-          context.go('/parent/dashboard/$studentId');
+      if (authState.isAuthenticated) {
+        final String role = authState.profile?['role'] ?? '';
+        if (role == 'petugas_kantin') {
+          context.go('/pos');
+        } else if (role == 'petugas_keuangan') {
+          context.go('/finance');
+        } else if (role == 'super_admin') {
+          context.go('/admin');
+        } else if (role == 'parent') {
+          final String studentId = authState.profile?['student_id'] ?? '';
+          if (studentId.isNotEmpty) {
+            context.go('/parent/dashboard/$studentId');
+          } else {
+            context.go('/parent');
+          }
         } else {
-          context.go('/parent');
+          context.go('/student');
         }
       } else {
-        context.go('/student');
+        context.go('/welcome');
       }
-    } else {
-      context.go('/welcome');
+    } catch (_) {
+      if (mounted) {
+        context.go('/welcome');
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 class SiswaMainLayout extends ConsumerWidget {
@@ -107,12 +109,12 @@ class SiswaMainLayout extends ConsumerWidget {
 
   Widget _buildSidebar(BuildContext context, WidgetRef ref, int selectedIndex) {
     final authState = ref.watch(authNotifierProvider);
-    final String fullName = authState.profile?['full_name'] ?? 'Siswa';
+    final String fullName = authState.profile?['full_name'] ?? AppStrings.adminStudents;
     final String email = authState.profile?['email'] ?? '';
 
     return Container(
       width: 260,
-      color: Colors.white,
+      color: AppColors.white,
       child: Column(
         children: [
           // Sidebar Header (Logo & Title)
@@ -249,31 +251,14 @@ class SiswaMainLayout extends ConsumerWidget {
                 ),
                 IconButton(
                   icon: const Icon(CupertinoIcons.square_arrow_right, color: AppColors.error, size: 20),
-                  onPressed: () {
-                    showCupertinoDialog(
-                      context: context,
-                      builder: (BuildContext ctx) => CupertinoAlertDialog(
-                        title: const Text('Keluar dari Akun'),
-                        content: const Text('Apakah Anda yakin ingin keluar dari akun siswa ini?'),
-                        actions: [
-                          CupertinoDialogAction(
-                            child: const Text('Batal'),
-                            onPressed: () => Navigator.pop(ctx),
-                          ),
-                          CupertinoDialogAction(
-                            isDestructiveAction: true,
-                            onPressed: () async {
-                              Navigator.pop(ctx);
-                              await ref.read(authNotifierProvider.notifier).logout();
-                              if (context.mounted) {
-                                context.go('/welcome');
-                              }
-                            },
-                            child: const Text('Keluar'),
-                          ),
-                        ],
-                      ),
-                    );
+                  onPressed: () async {
+                    final confirmed = await showLogoutConfirmationDialog(context);
+                    if (confirmed) {
+                      await ref.read(authNotifierProvider.notifier).logout();
+                      if (context.mounted) {
+                        context.go('/welcome');
+                      }
+                    }
                   },
                 ),
               ],

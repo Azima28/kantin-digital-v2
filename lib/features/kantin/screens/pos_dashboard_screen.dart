@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
+import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/kantin/providers/cart_provider.dart';
@@ -59,7 +61,7 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                   content: const Text('Apakah Anda yakin ingin keluar dari akun kasir?'),
                   actions: [
                     CupertinoDialogAction(
-                      child: const Text('Batal'),
+                      child: const Text(AppStrings.buttonCancel),
                       onPressed: () => Navigator.pop(ctx),
                     ),
                     CupertinoDialogAction(
@@ -69,7 +71,7 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                         ref.read(authNotifierProvider.notifier).logout();
                         context.go('/login');
                       },
-                      child: const Text('Keluar'),
+                      child: const Text(AppStrings.buttonLogout),
                     ),
                   ],
                 ),
@@ -124,9 +126,9 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                             ),
                           ),
                           loading: () => const CupertinoActivityIndicator(),
-                          error: (err, stack) => const Text(
-                            'Gagal memuat',
-                            style: TextStyle(fontSize: 18, color: AppColors.error, fontWeight: FontWeight.bold),
+                          error: (err, stack) => Text(
+                            '${AppStrings.labelFailed} memuat',
+                            style: const TextStyle(fontSize: 18, color: AppColors.error, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
@@ -201,15 +203,8 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(CupertinoIcons.tray, size: 48, color: AppColors.textGray),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'Belum ada jajanan tersedia',
-                                  textAlign: TextAlign.center,
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                        color: AppColors.textDark,
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                EmptyStateWidget(
+                                  message: 'Belum ada jajanan tersedia',
                                 ),
                                 const SizedBox(height: 4),
                                 const Text(
@@ -274,10 +269,11 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                                                 topLeft: Radius.circular(13),
                                                 topRight: Radius.circular(13),
                                               ),
-                                              child: Image.network(
-                                                imageUrl,
+                                              child: CachedNetworkImage(
+                                                imageUrl: imageUrl,
                                                 fit: BoxFit.cover,
-                                                errorBuilder: (context, error, stackTrace) => Center(
+                                                placeholder: (c, i) => const Center(child: CupertinoActivityIndicator()),
+                                                errorWidget: (c, i, e) => Center(
                                                   child: Text(
                                                     category.toLowerCase() == 'makanan' ? '🍔' : '🍹',
                                                     style: const TextStyle(fontSize: 48),
@@ -375,7 +371,7 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                       child: Padding(
                         padding: const EdgeInsets.all(32),
                         child: Text(
-                          'Gagal mengambil katalog jajanan:\n$err',
+                          '${AppStrings.labelFailed} mengambil katalog jajanan:\n$err',
                           textAlign: TextAlign.center,
                           style: const TextStyle(color: AppColors.error, fontSize: 14),
                         ),
@@ -386,7 +382,7 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                 
                 // Bottom spacing for floating cart bar
                 SliverToBoxAdapter(
-                  child: SizedBox(height: cartState.totalItems > 0 ? 100 : 40),
+                  child: SizedBox(height: cartState.totalItems > 0 ? 100 : 40), // not const — depends on runtime value
                 ),
               ],
             ),
@@ -430,7 +426,7 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                               child: Text(
                                 '${cartState.totalItems}',
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                   fontWeight: FontWeight.w800,
                                   fontSize: 12,
                                 ),
@@ -440,7 +436,7 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                             Text(
                               'Keranjang • ${CurrencyFormatter.format(cartState.totalAmount)}',
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: AppColors.white,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
                               ),
@@ -450,9 +446,9 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                         const Row(
                           children: [
                             Text(
-                              'Detail',
+                              AppStrings.titleDetail,
                               style: TextStyle(
-                                color: Colors.white,
+                                color: AppColors.white,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 13,
                               ),
@@ -460,7 +456,7 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                             SizedBox(width: 4),
                             Icon(
                               CupertinoIcons.chevron_right,
-                              color: Colors.white,
+                              color: AppColors.white,
                               size: 14,
                             ),
                           ],

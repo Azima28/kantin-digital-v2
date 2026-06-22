@@ -1,0 +1,60 @@
+{
+  "passed": true,
+  "security_concerns": [
+    {
+      "file": "lib/features/auth/services/auth_service.dart",
+      "line": 156,
+      "description": "Plaintext password stored in profiles.password column and compared directly (storedPassword != password). Fallback auth path at line 137 bypasses Supabase Auth entirely — no hashing used. (known/acceptable for dev)"
+    },
+    {
+      "file": "lib/features/auth/services/auth_service.dart",
+      "line": 137,
+      "description": "Fallback authentication bypasses Supabase Auth session creation. auth.uid() will be NULL in RLS policies during fallback mode, causing some write operations (audit_logs, corrections) to potentially fail. (RLS off — known/acceptable)"
+    },
+    {
+      "file": "lib/core/services/storage_service.dart",
+      "line": 39,
+      "description": "No input validation on userId parameter when constructing file path '$userId/avatar.jpg'. If a caller passes a non-UUID value (e.g. '../../../etc'), it could cause path traversal in the Supabase Storage bucket. Should validate UUID v4 format."
+    },
+    {
+      "file": "lib/main.dart",
+      "line": 8,
+      "description": "No crash/error reporting setup. Missing FlutterError.onError, PlatformDispatcher.onError, or runZonedGuarded. Production release builds will silently drop unhandled exceptions."
+    }
+  ],
+  "logic_errors": [
+    {
+      "file": "lib/core/router/app_router.dart",
+      "line": 524,
+      "description": "Finance role routes (financeMerchantDetail, financeParentDetail) reuse AdminMerchantDetailScreen and AdminParentDetailScreen. These admin-named screens may expose admin-level UI controls (delete, elevated privileges) to petugas_keuangan users — verify these screens have no admin-specific actions."
+    }
+  ],
+  "suggestions": [
+    {
+      "file": "lib/core/router/app_router.dart",
+      "line": 290,
+      "description": "Force-unwrap (!) on pathParameters['studentId'] etc. at lines 290, 298, 444, 451, 459, 466, 513, 520, 527, 535. Safe today because GoRouter guarantees the param, but a null-aware access or fallback would be more defensive against future refactoring."
+    },
+    {
+      "file": "lib/core/router/app_router.dart",
+      "line": 524,
+      "description": "If AdminMerchantDetailScreen and AdminParentDetailScreen are truly role-agnostic, consider renaming them to avoid confusion. If they contain admin-specific controls, create separate screens for the finance role."
+    },
+    {
+      "file": "lib/core/services/nfc_service.dart",
+      "line": 27,
+      "description": "No timeout set on NFC startSession. Consider adding a 30-second application-level timeout with automatic session stop to prevent resource leaks if user never taps a card."
+    },
+    {
+      "file": "lib/core/services/storage_service.dart",
+      "line": 39,
+      "description": "Add UUID v4 regex validation on userId before constructing file path to prevent potential path traversal in the Supabase Storage bucket."
+    },
+    {
+      "file": "lib/main.dart",
+      "line": 8,
+      "description": "Integrate error reporting (Sentry / Firebase Crashlytics) and configure FlutterError.onError + PlatformDispatcher.onError for production crash visibility."
+    }
+  ],
+  "summary": "Core routing and service architecture is clean and well-structured with proper role-based guards, but the auth service's plaintext-password fallback and StorageService's unvalidated userId path represent real (if currently tolerated) security concerns, and production error reporting is entirely absent."
+}

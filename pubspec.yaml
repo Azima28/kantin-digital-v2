@@ -26,6 +26,8 @@ dependencies:
   shared_preferences: ^2.3.5
   # URL launcher (for phone & WhatsApp links in public screens)
   url_launcher: ^6.3.0
+  cached_network_image: ^3.4.1
+  flutter_secure_storage: ^10.3.1
 
 dev_dependencies:
   flutter_test:

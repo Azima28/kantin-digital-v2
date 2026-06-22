@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kantin_digital/core/models/models.dart';
@@ -18,14 +19,12 @@ final supabaseClientProvider = Provider<SupabaseClient>((ref) {
 /// Digunakan di banyak screen (top-up, adjustment, dll).
 final transactionTypesProvider =
     FutureProvider.autoDispose<List<TransactionType>>((ref) async {
-  final client = ref.read(supabaseClientProvider);
-  final List<dynamic> data = await client
-      .from('transaction_types')
-      .select('*')
-      .order('name', ascending: true);
-  return data
-      .map((e) => TransactionType.fromJson(e as Map<String, dynamic>))
-      .toList();
+  // Hardcoded — DB only uses string types ('purchase', 'topup')
+  return [
+    TransactionType(id: 'purchase', name: 'Pembelian'),
+    TransactionType(id: 'topup', name: 'Top-Up'),
+    TransactionType(id: 'refund', name: 'Refund'),
+  ];
 });
 
 /// Map transaction type id -> TransactionType untuk lookup cepat.
@@ -42,18 +41,23 @@ final transactionTypeMapProvider =
 /// Fetch profile user yang sedang login.
 final currentUserProfileProvider =
     FutureProvider.autoDispose<UserProfile?>((ref) async {
-  final client = ref.read(supabaseClientProvider);
-  final user = client.auth.currentUser;
-  if (user == null) return null;
+  try {
+    final client = ref.read(supabaseClientProvider);
+    final user = client.auth.currentUser;
+    if (user == null) return null;
 
-  final data = await client
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();
+    final data = await client
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
 
-  if (data == null) return null;
-  return UserProfile.fromJson(data);
+    if (data == null) return null;
+    return UserProfile.fromJson(data);
+  } catch (e, st) {
+    debugPrint('currentUserProfileProvider error: $e\n$st');
+    rethrow;
+  }
 });
 
 // ============================================================================
@@ -62,44 +66,63 @@ final currentUserProfileProvider =
 
 /// Fetch single student by ID (dengan profile join).
 final studentByIdProvider =
-    FutureProvider.autoDispose.family<StudentWithProfile?, String>(
+    FutureProvider.family<StudentWithProfile?, String>(
         (ref, id) async {
-  final client = ref.read(supabaseClientProvider);
-  final data = await client
-      .from('profiles')
-      .select(
-          'id, full_name, email, nisn, is_active, students:students!students_id_fkey(class, balance, rfid_uid)')
-      .eq('id', id)
-      .maybeSingle();
+  try {
+    final client = ref.read(supabaseClientProvider);
+    final data = await client
+        .from('profiles')
+        .select(
+            'id, full_name, email, nisn, is_active, students:students!students_id_fkey(class, balance, rfid_uid)')
+        .eq('id', id)
+        .maybeSingle();
 
-  if (data == null) return null;
-  return StudentWithProfile.fromJoinedJson(data);
+    if (data == null) return null;
+    return StudentWithProfile.fromJoinedJson(data);
+  } catch (e, st) {
+    debugPrint('studentByIdProvider error: $e\n$st');
+    rethrow;
+  }
 });
 
 // ============================================================================
-// RFID PROVIDERS
+// RFID PROVIDERS (via students.rfid_uid — no separate rfid_cards table)
 // ============================================================================
 
-/// Fetch semua RFID cards.
+/// Ambil semua siswa yang punya RFID terdaftar.
 final rfidCardsProvider =
-    FutureProvider.autoDispose<List<RfidCard>>((ref) async {
-  final client = ref.read(supabaseClientProvider);
-  final List<dynamic> data =
-      await client.from('rfid_cards').select('*').order('created_at');
-  return data
-      .map((e) => RfidCard.fromJson(e as Map<String, dynamic>))
-      .toList();
+    FutureProvider<List<Student>>((ref) async {
+  try {
+    final client = ref.read(supabaseClientProvider);
+    final data = await client
+        .from('students')
+        .select('*, profiles!inner(*)')
+        .not('rfid_uid', 'is', null)
+        .order('rfid_uid');
+    return data
+        .map((e) => Student.fromJson(e))
+        .toList();
+  } catch (e, st) {
+    debugPrint('rfidCardsProvider error: $e\n$st');
+    rethrow;
+  }
 });
 
-/// Cek apakah RFID UID sudah terdaftar.
+/// Cek apakah RFID UID sudah terdaftar ke siswa.
+/// Returns Student jika ditemukan, null jika belum terdaftar.
 final rfidByUidProvider =
-    FutureProvider.autoDispose.family<RfidCard?, String>((ref, uid) async {
-  final client = ref.read(supabaseClientProvider);
-  final data = await client
-      .from('rfid_cards')
-      .select('*')
-      .eq('uid', uid)
-      .maybeSingle();
-  if (data == null) return null;
-  return RfidCard.fromJson(data);
+    FutureProvider.family<Student?, String>((ref, uid) async {
+  try {
+    final client = ref.read(supabaseClientProvider);
+    final data = await client
+        .from('students')
+        .select('*, profiles!inner(*)')
+        .eq('rfid_uid', uid)
+        .maybeSingle();
+    if (data == null) return null;
+    return Student.fromJson(data);
+  } catch (e, st) {
+    debugPrint('rfidByUidProvider error: $e\n$st');
+    rethrow;
+  }
 });

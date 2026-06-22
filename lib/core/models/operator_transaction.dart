@@ -7,7 +7,7 @@ import 'transaction_item.dart';
 /// - `pos_providers` (riwayat transaksi operator dengan nama siswa)
 class OperatorTransaction {
   final String id;
-  final double totalAmount;
+  final int totalAmount;
   final String? type;
   final String? status;
   final DateTime? createdAt;
@@ -22,7 +22,7 @@ class OperatorTransaction {
 
   const OperatorTransaction({
     required this.id,
-    this.totalAmount = 0.0,
+    this.totalAmount = 0,
     this.type,
     this.status,
     this.createdAt,
@@ -54,8 +54,8 @@ class OperatorTransaction {
     }
 
     return OperatorTransaction(
-      id: json['id'] as String,
-      totalAmount: double.tryParse(json['total_amount']?.toString() ?? '0') ?? 0.0,
+      id: json['id']?.toString() ?? '',
+      totalAmount: int.tryParse(json['total_amount']?.toString() ?? '0') ?? 0,
       type: json['type'] as String?,
       status: json['status'] as String?,
       createdAt: json['created_at'] != null
@@ -94,8 +94,8 @@ class OperatorTransaction {
     }
 
     return OperatorTransaction(
-      id: json['id'] as String,
-      totalAmount: double.tryParse(json['total_amount']?.toString() ?? '0') ?? 0.0,
+      id: json['id']?.toString() ?? '',
+      totalAmount: int.tryParse(json['total_amount']?.toString() ?? '0') ?? 0,
       type: json['type'] as String?,
       status: json['status'] as String?,
       createdAt: json['created_at'] != null
@@ -120,6 +120,34 @@ class OperatorTransaction {
   bool get isPurchase => type == 'purchase';
   bool get isTopup => type == 'topup';
   bool get isSuccess => status == 'success';
+
+  OperatorTransaction copyWith({
+    String? id,
+    int? totalAmount,
+    String? type,
+    String? status,
+    DateTime? createdAt,
+    String? studentId,
+    String? operatorId,
+    String? canteenName,
+    String? studentName,
+    String? studentNisn,
+    List<TransactionItem>? transactionItems,
+  }) {
+    return OperatorTransaction(
+      id: id ?? this.id,
+      totalAmount: totalAmount ?? this.totalAmount,
+      type: type ?? this.type,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      studentId: studentId ?? this.studentId,
+      operatorId: operatorId ?? this.operatorId,
+      canteenName: canteenName ?? this.canteenName,
+      studentName: studentName ?? this.studentName,
+      studentNisn: studentNisn ?? this.studentNisn,
+      transactionItems: transactionItems ?? this.transactionItems,
+    );
+  }
 
   @override
   String toString() =>

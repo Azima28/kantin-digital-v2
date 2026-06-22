@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 class StudentTransactionsScreen extends ConsumerStatefulWidget {
@@ -15,8 +17,8 @@ class StudentTransactionsScreen extends ConsumerStatefulWidget {
     super.key,
     required this.studentId,
     this.title = 'Semua Transaksi',
-    this.primaryColor = const Color(0xFF003434),
-    this.accentColor = const Color(0xFF904D00),
+    this.primaryColor = AppColors.darkTeal,
+    this.accentColor = AppColors.darkOrange,
   });
 
   @override
@@ -31,9 +33,6 @@ class _StudentTransactionsScreenState
   int? _selectedMonth;
   int? _selectedYear;
 
-  static const Color successGreen = Color(0xFF006A35);
-  static const Color dangerRed = Color(0xFFBA1A1A);
-  static const Color textGray = Color(0xFF6F7978);
 
   @override
   void initState() {
@@ -137,9 +136,9 @@ class _StudentTransactionsScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF9F8),
+      backgroundColor: AppColors.offWhite,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF9F8),
+        backgroundColor: AppColors.offWhite,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -148,7 +147,7 @@ class _StudentTransactionsScreenState
         ),
         title: Text(
           widget.title,
-          style: GoogleFonts.beVietnamPro(
+          style: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: widget.primaryColor,
@@ -174,9 +173,9 @@ class _StudentTransactionsScreenState
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Gagal memuat transaksi: ${snapshot.error}',
+                  '${AppStrings.labelFailed} memuat transaksi: ${snapshot.error}',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.beVietnamPro(color: dangerRed),
+                  style: GoogleFonts.inter(color: AppColors.error),
                 ),
               ),
             );
@@ -198,9 +197,9 @@ class _StudentTransactionsScreenState
                       children: [
                         Text(
                           '${filtered.length} dari ${txs.length} transaksi',
-                          style: GoogleFonts.beVietnamPro(
+                          style: GoogleFonts.inter(
                             fontSize: 12,
-                            color: textGray,
+                            color: AppColors.textGray,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -214,7 +213,7 @@ class _StudentTransactionsScreenState
                             label: const Text('Reset'),
                             style: TextButton.styleFrom(
                               foregroundColor: widget.primaryColor,
-                              textStyle: GoogleFonts.beVietnamPro(
+                              textStyle: GoogleFonts.inter(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -230,9 +229,9 @@ class _StudentTransactionsScreenState
                     ? Center(
                         child: Text(
                           txs.isEmpty
-                              ? 'Belum ada transaksi.'
+                              ? AppStrings.noTransactions
                               : 'Tidak ada transaksi sesuai filter.',
-                          style: GoogleFonts.beVietnamPro(color: textGray),
+                          style: GoogleFonts.inter(color: AppColors.textGray),
                         ),
                       )
                     : RefreshIndicator(
@@ -265,7 +264,7 @@ class _StudentTransactionsScreenState
             icon: CupertinoIcons.calendar,
             label: _selectedDate == null
                 ? 'Tanggal'
-                : DateFormat('dd MMM yyyy').format(_selectedDate!),
+                : DateFormat('dd MMM yyyy', 'id_ID').format(_selectedDate!),
             onTap: _pickDate,
           ),
           _filterDropdown<int>(
@@ -334,7 +333,7 @@ class _StudentTransactionsScreenState
     required VoidCallback onTap,
   }) {
     return Material(
-      color: Colors.white,
+      color: AppColors.white,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
@@ -344,7 +343,7 @@ class _StudentTransactionsScreenState
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE4E2E1)),
+            border: Border.all(color: AppColors.borderGray),
           ),
           child: Row(
             children: [
@@ -355,10 +354,10 @@ class _StudentTransactionsScreenState
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.beVietnamPro(
+                  style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1B1C1B),
+                    color: AppColors.nearBlack,
                   ),
                 ),
               ),
@@ -380,9 +379,9 @@ class _StudentTransactionsScreenState
       height: 48,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE4E2E1)),
+        border: Border.all(color: AppColors.borderGray),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
@@ -394,10 +393,10 @@ class _StudentTransactionsScreenState
             size: 16,
             color: widget.primaryColor,
           ),
-          style: GoogleFonts.beVietnamPro(
+          style: GoogleFonts.inter(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF1B1C1B),
+            color: AppColors.nearBlack,
           ),
           items: items
               .map(
@@ -435,10 +434,10 @@ class _StudentTransactionsScreenState
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      tileColor: Colors.white,
+      tileColor: AppColors.white,
       leading: CircleAvatar(
         backgroundColor: isTopup
-            ? const Color(0xFFFFDCC3)
+            ? AppColors.softOrange
             : widget.primaryColor.withValues(alpha: 0.1),
         child: Icon(
           isTopup ? CupertinoIcons.creditcard : Icons.shopping_bag,
@@ -450,14 +449,14 @@ class _StudentTransactionsScreenState
         isTopup ? 'Top-up Saldo' : canteen,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: GoogleFonts.beVietnamPro(
+        style: GoogleFonts.inter(
           fontSize: 14,
           fontWeight: FontWeight.bold,
         ),
       ),
       subtitle: Text(
         DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(date),
-        style: GoogleFonts.beVietnamPro(fontSize: 11, color: textGray),
+        style: GoogleFonts.inter(fontSize: 11, color: AppColors.textGray),
       ),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -465,19 +464,19 @@ class _StudentTransactionsScreenState
         children: [
           Text(
             '${isTopup ? "+" : "-"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
-            style: GoogleFonts.beVietnamPro(
+            style: GoogleFonts.inter(
               fontSize: 13,
               fontWeight: FontWeight.bold,
-              color: isTopup ? successGreen : dangerRed,
+              color: isTopup ? AppColors.successGreen : AppColors.error,
             ),
           ),
           if (status != 'success')
             Text(
               status.toUpperCase(),
-              style: GoogleFonts.beVietnamPro(
+              style: GoogleFonts.inter(
                 fontSize: 9,
                 fontWeight: FontWeight.bold,
-                color: dangerRed,
+                color: AppColors.error,
               ),
             ),
         ],

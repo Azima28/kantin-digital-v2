@@ -35,9 +35,35 @@ class ParentDashboardData {
     );
   }
 
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ParentDashboardData && profile.id == other.profile.id;
+
+  @override
+  int get hashCode => profile.id.hashCode;
+
+  Map<String, dynamic> toJson() => {
+        'profile': profile.toJson(),
+        'student': student.toJson(),
+        'transactions': transactions.map((e) => e.toJson()).toList(),
+      };
+
   double get totalSpent => transactions
       .where((tx) => tx.isPurchase && tx.isSuccess)
       .fold(0.0, (sum, tx) => sum + tx.totalAmount);
+
+  ParentDashboardData copyWith({
+    UserProfile? profile,
+    Student? student,
+    List<OperatorTransaction>? transactions,
+  }) {
+    return ParentDashboardData(
+      profile: profile ?? this.profile,
+      student: student ?? this.student,
+      transactions: transactions ?? this.transactions,
+    );
+  }
 
   @override
   String toString() =>

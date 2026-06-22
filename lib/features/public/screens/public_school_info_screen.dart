@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
 
 /// Halaman publik informasi sekolah dan kantin.
-/// Dapat diakses tanpa login.
 class PublicSchoolInfoScreen extends StatelessWidget {
   const PublicSchoolInfoScreen({super.key});
 
@@ -19,22 +20,22 @@ class PublicSchoolInfoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F7),
+      backgroundColor: AppColors.systemBackground,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back, color: Color(0xFF003434)),
+          icon: const Icon(CupertinoIcons.back, color: AppColors.darkTeal),
           onPressed: () => context.go('/public'),
         ),
         title: Text(
           'Info Sekolah & Kantin',
-          style: GoogleFonts.beVietnamPro(
+          style: GoogleFonts.inter(
             fontSize: 17,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF003434),
+            color: AppColors.darkTeal,
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -45,7 +46,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
             // ─── Sekolah Info Card ───
             _buildSection(
               icon: CupertinoIcons.building_2_fill,
-              iconColor: const Color(0xFF003434),
+              iconColor: AppColors.darkTeal,
               title: 'Profil Sekolah',
               children: [
                 _buildInfoRow(
@@ -64,7 +65,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
             // ─── Jam Operasional ───
             _buildSection(
               icon: CupertinoIcons.clock_fill,
-              iconColor: const Color(0xFF904D00),
+              iconColor: AppColors.darkOrange,
               title: 'Jam Operasional Kantin',
               children: [
                 _buildScheduleRow('Senin – Kamis', '06:30 – 14:00'),
@@ -78,13 +79,13 @@ class PublicSchoolInfoScreen extends StatelessWidget {
             // ─── Cara Penggunaan ───
             _buildSection(
               icon: CupertinoIcons.info_circle_fill,
-              iconColor: const Color(0xFF006A35),
+              iconColor: AppColors.successGreen,
               title: 'Cara Menggunakan Kantin Digital',
               children: [
                 _buildStepRow('1', 'Pastikan kartu RFID kamu aktif dan memiliki saldo cukup.'),
-                _buildStepRow('2', 'Pilih menu yang ingin dibeli di kasir kantin.'),
+                _buildStepRow('2', '${AppStrings.buttonSelect} menu yang ingin dibeli di kasir kantin.'),
                 _buildStepRow('3', 'Tempelkan kartu RFID ke mesin kasir.'),
-                _buildStepRow('4', 'Transaksi selesai! Saldo otomatis berkurang.'),
+                _buildStepRow('4', '${AppStrings.labelTransaction} selesai! Saldo otomatis berkurang.'),
                 _buildStepRow('5', 'Cek notifikasi di aplikasi untuk konfirmasi transaksi.'),
               ],
             ),
@@ -93,7 +94,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
             // ─── Top-Up Saldo ───
             _buildSection(
               icon: CupertinoIcons.arrow_up_circle_fill,
-              iconColor: const Color(0xFF0066CC),
+              iconColor: AppColors.primary,
               title: 'Cara Top-Up Saldo',
               children: [
                 _buildInfoRow(CupertinoIcons.person_fill, 'Via Petugas Keuangan',
@@ -107,7 +108,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
             // ─── Kontak Bantuan ───
             _buildSection(
               icon: CupertinoIcons.chat_bubble_2_fill,
-              iconColor: const Color(0xFF9A2DBB),
+              iconColor: AppColors.primary, // purple-ish
               title: 'Butuh Bantuan?',
               children: [
                 _buildContactButton(
@@ -132,11 +133,11 @@ class PublicSchoolInfoScreen extends StatelessWidget {
               icon: const Icon(CupertinoIcons.person, size: 16),
               label: Text(
                 'Login ke Aplikasi',
-                style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.w700),
+                style: GoogleFonts.inter(fontWeight: FontWeight.w700),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF003434),
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.darkTeal,
+                foregroundColor: AppColors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14)),
@@ -159,7 +160,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -185,10 +186,10 @@ class PublicSchoolInfoScreen extends StatelessWidget {
               const SizedBox(width: 10),
               Text(
                 title,
-                style: GoogleFonts.beVietnamPro(
+                style: GoogleFonts.inter(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1A1C1F),
+                  color: AppColors.textDark,
                 ),
               ),
             ],
@@ -206,7 +207,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: const Color(0xFF6F7978)),
+          Icon(icon, size: 16, color: AppColors.mutedGray),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -214,17 +215,17 @@ class PublicSchoolInfoScreen extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: GoogleFonts.beVietnamPro(
+                  style: GoogleFonts.inter(
                     fontSize: 11,
-                    color: const Color(0xFF6F7978),
+                    color: AppColors.mutedGray,
                   ),
                 ),
                 Text(
                   value,
-                  style: GoogleFonts.beVietnamPro(
+                  style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFF1A1C1F),
+                    color: AppColors.textDark,
                   ),
                 ),
               ],
@@ -244,19 +245,19 @@ class PublicSchoolInfoScreen extends StatelessWidget {
         children: [
           Text(
             day,
-            style: GoogleFonts.beVietnamPro(
+            style: GoogleFonts.inter(
               fontSize: 13,
-              color: const Color(0xFF1A1C1F),
+              color: AppColors.textDark,
             ),
           ),
           Text(
             time,
-            style: GoogleFonts.beVietnamPro(
+            style: GoogleFonts.inter(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: isClosed
-                  ? const Color(0xFFBA1A1A)
-                  : const Color(0xFF006A35),
+                  ? AppColors.errorRed2
+                  : AppColors.successGreen,
             ),
           ),
         ],
@@ -274,16 +275,16 @@ class PublicSchoolInfoScreen extends StatelessWidget {
             width: 22,
             height: 22,
             decoration: const BoxDecoration(
-              color: Color(0xFF006A35),
+              color: AppColors.successGreen,
               shape: BoxShape.circle,
             ),
             child: Center(
               child: Text(
                 step,
-                style: GoogleFonts.beVietnamPro(
+                style: GoogleFonts.inter(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: AppColors.white,
                 ),
               ),
             ),
@@ -292,9 +293,9 @@ class PublicSchoolInfoScreen extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: GoogleFonts.beVietnamPro(
+              style: GoogleFonts.inter(
                 fontSize: 13,
-                color: const Color(0xFF1A1C1F),
+                color: AppColors.textDark,
                 height: 1.4,
               ),
             ),
@@ -316,12 +317,12 @@ class PublicSchoolInfoScreen extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF2F2F7),
+          color: AppColors.systemBackground,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: const Color(0xFF9A2DBB)),
+            Icon(icon, size: 18, color: AppColors.primary), // purple-ish
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -329,24 +330,24 @@ class PublicSchoolInfoScreen extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: GoogleFonts.beVietnamPro(
+                    style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF1A1C1F),
+                      color: AppColors.textDark,
                     ),
                   ),
                   Text(
                     subtitle,
-                    style: GoogleFonts.beVietnamPro(
+                    style: GoogleFonts.inter(
                       fontSize: 11,
-                      color: const Color(0xFF6F7978),
+                      color: AppColors.mutedGray,
                     ),
                   ),
                 ],
               ),
             ),
             const Icon(CupertinoIcons.chevron_right,
-                size: 14, color: Color(0xFFC7C7CC)),
+                size: 14, color: AppColors.textGray),
           ],
         ),
       ),

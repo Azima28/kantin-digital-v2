@@ -3,33 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
-
-// ─── Provider untuk fetch menu publik ───
-final publicMenuProvider = FutureProvider.autoDispose
-    .family<List<Map<String, dynamic>>, String?>((ref, category) async {
-  final client = ref.read(supabaseClientProvider);
-
-  List<dynamic> res;
-  if (category != null && category.isNotEmpty) {
-    res = await client
-        .from('products')
-        .select(
-            'id, name, price, category, is_available, image_url, canteen_operators(canteen_name)')
-        .eq('is_available', true)
-        .eq('category', category)
-        .order('name', ascending: true);
-  } else {
-    res = await client
-        .from('products')
-        .select(
-            'id, name, price, category, is_available, image_url, canteen_operators(canteen_name)')
-        .eq('is_available', true)
-        .order('name', ascending: true);
-  }
-
-  return List<Map<String, dynamic>>.from(res);
-});
+import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/features/public/providers/public_providers.dart';
 
 /// Halaman publik daftar menu kantin (tanpa login).
 /// Menampilkan semua produk aktif dari semua stan kantin.
@@ -44,7 +22,7 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final List<String?> _categories = [null, 'makanan', 'minuman'];
-  final List<String> _tabLabels = ['Semua', 'Makanan', 'Minuman'];
+  final List<String> _tabLabels = [AppStrings.labelAll, 'Makanan', 'Minuman'];
 
   @override
   void initState() {
@@ -61,22 +39,22 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F7),
+      backgroundColor: AppColors.systemBackground,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back, color: Color(0xFF003434)),
+          icon: const Icon(CupertinoIcons.back, color: AppColors.darkTeal),
           onPressed: () => context.go('/public'),
         ),
         title: Text(
           'Menu Kantin',
-          style: GoogleFonts.beVietnamPro(
+          style: GoogleFonts.inter(
             fontSize: 17,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF003434),
+            color: AppColors.darkTeal,
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
         actions: [
           Padding(
@@ -85,10 +63,10 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen>
               onPressed: () => context.go('/login?from=/public/menu'),
               child: Text(
                 'Login',
-                style: GoogleFonts.beVietnamPro(
+                style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF003434),
+                  color: AppColors.darkTeal,
                 ),
               ),
             ),
@@ -96,11 +74,11 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen>
         ],
         bottom: TabBar(
           controller: _tabController,
-          labelColor: const Color(0xFF003434),
-          unselectedLabelColor: const Color(0xFF6F7978),
-          indicatorColor: const Color(0xFF003434),
+          labelColor: AppColors.darkTeal,
+          unselectedLabelColor: AppColors.mutedGray,
+          indicatorColor: AppColors.darkTeal,
           indicatorWeight: 2,
-          labelStyle: GoogleFonts.beVietnamPro(
+          labelStyle: GoogleFonts.inter(
               fontSize: 13, fontWeight: FontWeight.w600),
           tabs: _tabLabels.map((label) => Tab(text: label)).toList(),
         ),
@@ -123,12 +101,12 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(CupertinoIcons.cart_badge_minus,
-                    size: 48, color: Color(0xFFC7C7CC)),
+                    size: 48, color: AppColors.textGray),
                 const SizedBox(height: 12),
                 Text(
                   'Belum ada menu tersedia',
-                  style: GoogleFonts.beVietnamPro(
-                      fontSize: 15, color: const Color(0xFF6F7978)),
+                  style: GoogleFonts.inter(
+                      fontSize: 15, color: AppColors.mutedGray),
                 ),
               ],
             ),
@@ -136,12 +114,9 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen>
         }
 
         // Group by canteen
-        final Map<String, List<Map<String, dynamic>>> grouped = {};
+        final Map<String, List<Product>> grouped = {};
         for (final item in items) {
-          final String canteen =
-              item['canteen_operators']?['canteen_name'] as String? ??
-                  'Stan Lainnya';
-          grouped.putIfAbsent(canteen, () => []).add(item);
+          grouped.putIfAbsent(item.canteenName, () => []).add(item.product);
         }
 
         return ListView.builder(
@@ -163,19 +138,19 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen>
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
                           color:
-                              const Color(0xFF003434).withValues(alpha: 0.08),
+                              AppColors.darkTeal.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(CupertinoIcons.house,
-                            size: 14, color: Color(0xFF003434)),
+                            size: 14, color: AppColors.darkTeal),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         canteen,
-                        style: GoogleFonts.beVietnamPro(
+                        style: GoogleFonts.inter(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF003434),
+                          color: AppColors.darkTeal,
                         ),
                       ),
                     ],
@@ -203,19 +178,24 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen>
         );
       },
       loading: () => const Center(
-          child: CupertinoActivityIndicator(color: Color(0xFF003434))),
+          child: CupertinoActivityIndicator(color: AppColors.darkTeal)),
       error: (e, _) => Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(CupertinoIcons.wifi_slash,
-                size: 48, color: Color(0xFFC7C7CC)),
+                size: 48, color: AppColors.textGray),
             const SizedBox(height: 12),
             Text(
-              'Gagal memuat menu: $e',
-              style: GoogleFonts.beVietnamPro(
-                  fontSize: 13, color: const Color(0xFF6F7978)),
+              '${AppStrings.labelFailed} memuat menu',
+              style: GoogleFonts.inter(
+                  fontSize: 13, color: AppColors.mutedGray),
               textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: () => ref.invalidate(publicMenuProvider(category)),
+              child: const Text(AppStrings.buttonRetry),
             ),
           ],
         ),
@@ -223,17 +203,16 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen>
     );
   }
 
-  Widget _buildProductCard(Map<String, dynamic> product) {
-    final String name = product['name'] as String? ?? '-';
-    final double price =
-        double.tryParse(product['price']?.toString() ?? '0') ?? 0;
-    final String category = product['category'] as String? ?? 'makanan';
-    final String? imageUrl = product['image_url'] as String?;
-    final bool isAvailable = product['is_available'] as bool? ?? true;
+  Widget _buildProductCard(Product product) {
+    final String name = product.name;
+    final int price = product.price;
+    final String category = product.category;
+    final String? imageUrl = product.imageUrl;
+    final bool isAvailable = product.isAvailable;
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -253,10 +232,11 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen>
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(16)),
               child: imageUrl != null && imageUrl.isNotEmpty
-                  ? Image.network(
-                      imageUrl,
+                  ? CachedNetworkImage(
+                      imageUrl: imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildPlaceholderImage(category),
+                      placeholder: (_, __) => const Center(child: CupertinoActivityIndicator()),
+                      errorWidget: (_, __, ___) => _buildPlaceholderImage(category),
                     )
                   : _buildPlaceholderImage(category),
             ),
@@ -273,10 +253,10 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen>
                 children: [
                   Text(
                     name,
-                    style: GoogleFonts.beVietnamPro(
+                    style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF1A1C1F),
+                      color: AppColors.mutedGray,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -286,10 +266,10 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen>
                     children: [
                       Text(
                         'Rp ${price.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
-                        style: GoogleFonts.beVietnamPro(
+                        style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF006767),
+                          color: AppColors.mutedGray,
                         ),
                       ),
                       if (!isAvailable)
@@ -297,14 +277,14 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFBA1A1A).withValues(alpha: 0.1),
+                            color: AppColors.errorRed2.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             'Habis',
-                            style: GoogleFonts.beVietnamPro(
+                            style: GoogleFonts.inter(
                               fontSize: 9,
-                              color: const Color(0xFFBA1A1A),
+                              color: AppColors.mutedGray,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -324,14 +304,14 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen>
     final bool isMakanan = category == 'makanan';
     return Container(
       color: isMakanan
-          ? const Color(0xFFFFF3E8)
-          : const Color(0xFFE8F4FF),
+          ? AppColors.softOrange
+          : AppColors.systemBackground,
       child: Icon(
         isMakanan ? CupertinoIcons.flame : CupertinoIcons.drop,
         size: 40,
         color: isMakanan
-            ? const Color(0xFF904D00).withValues(alpha: 0.5)
-            : const Color(0xFF0066CC).withValues(alpha: 0.5),
+            ? AppColors.darkOrange.withValues(alpha: 0.5)
+            : AppColors.primary.withValues(alpha: 0.5),
       ),
     );
   }

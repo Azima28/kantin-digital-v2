@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:nfc_manager/nfc_manager.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
 
 class NfcService {
   NfcService._();
@@ -10,7 +11,6 @@ class NfcService {
     try {
       return await NfcManager.instance.isAvailable();
     } catch (e) {
-      debugPrint('NfcService - isNfcAvailable Error: $e');
       return false;
     }
   }
@@ -31,7 +31,7 @@ class NfcService {
           if (uid != null) {
             onTagDiscovered(uid);
           } else {
-            onError('Gagal membaca UID kartu. Pastikan tipe kartu didukung.');
+            onError('${AppStrings.labelFailed} membaca UID kartu. Pastikan tipe kartu didukung.');
           }
         } catch (e) {
           onError('Error memproses tag NFC: $e');
@@ -49,7 +49,6 @@ class NfcService {
     try {
       await NfcManager.instance.stopSession();
     } catch (e) {
-      debugPrint('NfcService - stopScanning Error: $e');
     }
   }
 

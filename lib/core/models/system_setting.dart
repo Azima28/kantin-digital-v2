@@ -55,6 +55,20 @@ class SystemSetting {
     return null;
   }
 
+  SystemSetting copyWith({
+    String? key,
+    dynamic value,
+    String? updatedBy,
+    DateTime? updatedAt,
+  }) {
+    return SystemSetting(
+      key: key ?? this.key,
+      value: value ?? this.value,
+      updatedBy: updatedBy ?? this.updatedBy,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
   @override
   String toString() => 'SystemSetting(key: $key, value: $value)';
 

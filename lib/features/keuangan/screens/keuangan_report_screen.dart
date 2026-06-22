@@ -3,62 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 
-final keuanganReportProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final client = ref.read(supabaseClientProvider);
-  
-  // Fetch canteen operators and their earned balance
-  final List<dynamic> canteens = await client
-      .from('canteen_operators')
-      .select('canteen_name, balance_earned');
-      
-  // Fetch all transactions to compile totals
-  final List<dynamic> txs = await client
-      .from('transactions')
-      .select('total_amount, type, status, created_at');
-
-  double totalTopup = 0.0;
-  double totalPurchase = 0.0;
-  int topupCount = 0;
-  int purchaseCount = 0;
-
-  for (var tx in txs) {
-    if (tx['status'] != 'success') continue;
-    final amt = double.tryParse(tx['total_amount']?.toString() ?? '0') ?? 0.0;
-    if (tx['type'] == 'topup') {
-      totalTopup += amt;
-      topupCount++;
-    } else if (tx['type'] == 'purchase') {
-      totalPurchase += amt;
-      purchaseCount++;
-    }
-  }
-
-  // Fetch audit logs to compile corrections
-  final List<dynamic> logs = await client
-      .from('audit_logs')
-      .select('old_value, new_value')
-      .eq('action_type', 'KOREKSI_SALDO');
-
-  double totalCorrection = 0.0;
-  for (var log in logs) {
-    final oldVal = log['old_value'] as Map<String, dynamic>? ?? {};
-    final newVal = log['new_value'] as Map<String, dynamic>? ?? {};
-    final double oldBal = double.tryParse(oldVal['balance']?.toString() ?? '0') ?? 0.0;
-    final double newBal = double.tryParse(newVal['balance']?.toString() ?? '0') ?? 0.0;
-    totalCorrection += (newBal - oldBal);
-  }
-
-  return {
-    'canteens': List<Map<String, dynamic>>.from(canteens),
-    'totalTopup': totalTopup,
-    'totalPurchase': totalPurchase,
-    'totalCorrection': totalCorrection,
-    'topupCount': topupCount,
-    'purchaseCount': purchaseCount,
-  };
-});
+import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
 
 class KeuanganReportScreen extends ConsumerStatefulWidget {
   const KeuanganReportScreen({super.key});
@@ -70,10 +19,6 @@ class KeuanganReportScreen extends ConsumerStatefulWidget {
 class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
   String _selectedPeriod = 'Bulan Ini'; // 'Hari Ini', 'Minggu Ini', 'Bulan Ini'
 
-  static const Color primaryTeal = Color(0xFF003434);
-  static const Color accentOrange = Color(0xFF904D00);
-  static const Color successGreen = Color(0xFF006A35);
-  static const Color dangerRed = Color(0xFFBA1A1A);
 
   void _showExportDialog() {
     showDialog(
@@ -87,11 +32,11 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              backgroundColor: Colors.white,
+              backgroundColor: AppColors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
               title: Text(
                 'Export Laporan',
-                style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, color: primaryTeal, fontSize: 18),
+                style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.darkTeal, fontSize: 18),
               ),
               content: SingleChildScrollView(
                 child: Column(
@@ -100,7 +45,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                   children: [
                     Text(
                       'Format Laporan:',
-                      style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, fontSize: 13, color: const Color(0xFF1B1C1B)),
+                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.nearBlack),
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -114,11 +59,11 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                 excelChecked = true;
                               });
                             },
-                            selectedColor: primaryTeal.withValues(alpha: 0.1),
-                            backgroundColor: Colors.white,
-                            checkmarkColor: primaryTeal,
-                            labelStyle: GoogleFonts.beVietnamPro(
-                              color: excelChecked ? primaryTeal : const Color(0xFF6F7978),
+                            selectedColor: AppColors.darkTeal.withValues(alpha: 0.1),
+                            backgroundColor: AppColors.white,
+                            checkmarkColor: AppColors.darkTeal,
+                            labelStyle: GoogleFonts.inter(
+                              color: excelChecked ? AppColors.darkTeal : AppColors.mutedGray,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -133,11 +78,11 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                 excelChecked = false;
                               });
                             },
-                            selectedColor: primaryTeal.withValues(alpha: 0.1),
-                            backgroundColor: Colors.white,
-                            checkmarkColor: primaryTeal,
-                            labelStyle: GoogleFonts.beVietnamPro(
-                              color: !excelChecked ? primaryTeal : const Color(0xFF6F7978),
+                            selectedColor: AppColors.darkTeal.withValues(alpha: 0.1),
+                            backgroundColor: AppColors.white,
+                            checkmarkColor: AppColors.darkTeal,
+                            labelStyle: GoogleFonts.inter(
+                              color: !excelChecked ? AppColors.darkTeal : AppColors.mutedGray,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -146,13 +91,13 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Pilih Data Yang Disertakan:',
-                      style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, fontSize: 13, color: const Color(0xFF1B1C1B)),
+                      '${AppStrings.buttonSelect} Data Yang Disertakan:',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.nearBlack),
                     ),
                     CheckboxListTile(
-                      title: Text('Rekap Riwayat Audit Log', style: GoogleFonts.beVietnamPro(fontSize: 12)),
+                      title: Text('Rekap Riwayat Audit Log', style: GoogleFonts.inter(fontSize: 12)),
                       value: includeAudit,
-                      activeColor: primaryTeal,
+                      activeColor: AppColors.darkTeal,
                       contentPadding: EdgeInsets.zero,
                       onChanged: (val) {
                         setDialogState(() {
@@ -161,9 +106,9 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                       },
                     ),
                     CheckboxListTile(
-                      title: Text('Detail Per-Siswa (Data Sensitif)', style: GoogleFonts.beVietnamPro(fontSize: 12)),
+                      title: Text('${AppStrings.titleDetail} Per-Siswa (Data Sensitif)', style: GoogleFonts.inter(fontSize: 12)),
                       value: includeStudents,
-                      activeColor: primaryTeal,
+                      activeColor: AppColors.darkTeal,
                       contentPadding: EdgeInsets.zero,
                       onChanged: (val) {
                         setDialogState(() {
@@ -174,12 +119,12 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                     const SizedBox(height: 8),
                     Text(
                       'Kirim Ke Email:',
-                      style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, fontSize: 13, color: const Color(0xFF1B1C1B)),
+                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.nearBlack),
                     ),
                     const SizedBox(height: 6),
                     TextField(
                       controller: emailController,
-                      style: GoogleFonts.beVietnamPro(fontSize: 13),
+                      style: GoogleFonts.inter(fontSize: 13),
                       decoration: InputDecoration(
                         hintText: 'email@sekolah.sch.id',
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -192,7 +137,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Batal', style: GoogleFonts.beVietnamPro(color: const Color(0xFF6F7978))),
+                  child: Text(AppStrings.buttonCancel, style: GoogleFonts.inter(color: AppColors.mutedGray)),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -200,13 +145,13 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                     ScaffoldMessenger.of(this.context).showSnackBar(
                       SnackBar(
                         content: Text('Laporan berhasil diexport dan dikirim ke ${emailController.text}'),
-                        backgroundColor: successGreen,
+                        backgroundColor: AppColors.successGreen,
                         behavior: SnackBarBehavior.floating,
                       ),
                     );
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: primaryTeal),
-                  child: Text('Generate & Kirim', style: GoogleFonts.beVietnamPro(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.darkTeal),
+                  child: Text('Generate & Kirim', style: GoogleFonts.inter(color: AppColors.white)),
                 ),
               ],
             );
@@ -219,7 +164,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
   void _showTrendsBottomSheet() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) {
         return Padding(
@@ -232,18 +177,18 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                 child: Container(
                   width: 36,
                   height: 5,
-                  decoration: BoxDecoration(color: const Color(0xFFE4E2E1), borderRadius: BorderRadius.circular(2.5)),
+                  decoration: BoxDecoration(color: AppColors.borderGray, borderRadius: BorderRadius.circular(2.5)),
                 ),
               ),
               const SizedBox(height: 20),
               Text(
                 'Tren Transaksi Harian',
-                style: GoogleFonts.beVietnamPro(fontSize: 16, fontWeight: FontWeight.bold, color: primaryTeal),
+                style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkTeal),
               ),
               const SizedBox(height: 8),
               Text(
                 'Visualisasi tren pengisian saldo tunai sekolah.',
-                style: GoogleFonts.beVietnamPro(fontSize: 12, color: const Color(0xFF6F7978)),
+                style: GoogleFonts.inter(fontSize: 12, color: AppColors.mutedGray),
               ),
               const SizedBox(height: 24),
               // Simulated bar chart
@@ -265,7 +210,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
               const SizedBox(height: 24),
               Text(
                 '* Tren meningkat 15% dari rata-rata minggu lalu.',
-                style: GoogleFonts.beVietnamPro(fontSize: 11, fontStyle: FontStyle.italic, color: successGreen),
+                style: GoogleFonts.inter(fontSize: 11, fontStyle: FontStyle.italic, color: AppColors.successGreen),
               ),
             ],
           ),
@@ -282,12 +227,12 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
           width: 24,
           height: heightPercentage,
           decoration: BoxDecoration(
-            color: primaryTeal,
+            color: AppColors.darkTeal,
             borderRadius: BorderRadius.circular(6),
           ),
         ),
         const SizedBox(height: 8),
-        Text(label, style: GoogleFonts.beVietnamPro(fontSize: 10, color: const Color(0xFF6F7978))),
+        Text(label, style: GoogleFonts.inter(fontSize: 10, color: AppColors.mutedGray)),
       ],
     );
   }
@@ -298,16 +243,16 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
     final fmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF9F8),
+      backgroundColor: AppColors.offWhite,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF9F8),
+        backgroundColor: AppColors.offWhite,
         elevation: 0,
         scrolledUnderElevation: 0,
         title: Text(
           'Laporan Keuangan',
-          style: GoogleFonts.beVietnamPro(
+          style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
-            color: primaryTeal,
+            color: AppColors.darkTeal,
             fontSize: 20,
           ),
         ),
@@ -315,7 +260,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async => ref.invalidate(keuanganReportProvider),
-          color: primaryTeal,
+          color: AppColors.darkTeal,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -327,20 +272,20 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Pilih Periode:',
-                      style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, color: const Color(0xFF1B1C1B), fontSize: 13),
+                      '${AppStrings.buttonSelect} Periode:',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.nearBlack, fontSize: 13),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.white,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE4E2E1)),
+                        border: Border.all(color: AppColors.borderGray),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           value: _selectedPeriod,
-                          style: GoogleFonts.beVietnamPro(color: const Color(0xFF1B1C1B), fontSize: 13, fontWeight: FontWeight.bold),
+                          style: GoogleFonts.inter(color: AppColors.nearBlack, fontSize: 13, fontWeight: FontWeight.bold),
                           onChanged: (val) {
                             if (val != null) {
                               setState(() {
@@ -362,12 +307,16 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
 
                 reportAsync.when(
                   data: (data) {
-                    final canteens = data['canteens'] as List<Map<String, dynamic>>;
-                    final totalTopup = data['totalTopup'] as double;
-                    final totalPurchase = data['totalPurchase'] as double;
-                    final totalCorrection = data['totalCorrection'] as double;
-                    final topupCount = data['topupCount'] as int;
-                    final purchaseCount = data['purchaseCount'] as int;
+                    final rawCanteens = data['canteens'] as List<dynamic>;
+                    final canteens = rawCanteens
+                        .map((e) => CanteenOperator.fromJson(
+                            Map<String, dynamic>.from(e)))
+                        .toList();
+                    final totalTopup = (data['totalTopup'] as num?)?.toDouble() ?? 0.0;
+                    final totalPurchase = (data['totalPurchase'] as num?)?.toDouble() ?? 0.0;
+                    final totalCorrection = (data['totalCorrection'] as num?)?.toDouble() ?? 0.0;
+                    final topupCount = (data['topupCount'] as num?)?.toInt() ?? 0;
+                    final purchaseCount = (data['purchaseCount'] as num?)?.toInt() ?? 0;
 
                     // Calculate net balance flow
                     final netInflow = totalTopup + totalCorrection;
@@ -380,11 +329,11 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.white,
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.04),
+                                color: AppColors.black.withValues(alpha: 0.04),
                                 blurRadius: 15,
                                 offset: const Offset(0, 4),
                               ),
@@ -395,26 +344,26 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(CupertinoIcons.graph_square_fill, color: primaryTeal, size: 18),
+                                  const Icon(CupertinoIcons.graph_square_fill, color: AppColors.darkTeal, size: 18),
                                   const SizedBox(width: 8),
                                   Text(
                                     'Ringkasan Periode ($_selectedPeriod)',
-                                    style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, fontSize: 13, color: primaryTeal),
+                                    style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.darkTeal),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 16),
                               _buildReportRow('Total Top-Up Tunai', fmt.format(totalTopup), detail: '$topupCount transaksi'),
-                              const Divider(height: 16, thickness: 0.5, color: Color(0xFFE4E2E1)),
-                              _buildReportRow('Total Pembayaran Belanja', fmt.format(totalPurchase), detail: '$purchaseCount transaksi', valueColor: accentOrange),
-                              const Divider(height: 16, thickness: 0.5, color: Color(0xFFE4E2E1)),
-                              _buildReportRow('Total Koreksi Saldo', '${totalCorrection >= 0 ? "+" : ""}${fmt.format(totalCorrection)}', valueColor: totalCorrection >= 0 ? successGreen : dangerRed),
-                              const Divider(height: 16, thickness: 0.5, color: Color(0xFFE4E2E1)),
+                              const Divider(height: 16, thickness: 0.5, color: AppColors.borderGray),
+                              _buildReportRow('Total Pembayaran Belanja', fmt.format(totalPurchase), detail: '$purchaseCount transaksi', valueColor: AppColors.darkOrange),
+                              const Divider(height: 16, thickness: 0.5, color: AppColors.borderGray),
+                              _buildReportRow('Total Koreksi Saldo', '${totalCorrection >= 0 ? "+" : ""}${fmt.format(totalCorrection)}', valueColor: totalCorrection >= 0 ? AppColors.successGreen : AppColors.errorRed2),
+                              const Divider(height: 16, thickness: 0.5, color: AppColors.borderGray),
                               _buildReportRow(
                                 'Net Aliran Masuk',
                                 fmt.format(netInflow),
                                 isBold: true,
-                                valueColor: primaryTeal,
+                                valueColor: AppColors.darkTeal,
                               ),
                             ],
                           ),
@@ -424,7 +373,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                         // Canteen operators revenue header
                         Text(
                           'Pendapatan per Stan Kantin:',
-                          style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, fontSize: 15, color: const Color(0xFF1B1C1B)),
+                          style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.nearBlack),
                         ),
                         const SizedBox(height: 12),
 
@@ -432,11 +381,11 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                         Container(
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.white,
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.04),
+                                color: AppColors.black.withValues(alpha: 0.04),
                                 blurRadius: 15,
                                 offset: const Offset(0, 4),
                               ),
@@ -448,7 +397,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                   child: Center(
                                     child: Text(
                                       'Belum ada pendapatan terekam untuk stan kantin.',
-                                      style: GoogleFonts.beVietnamPro(color: const Color(0xFF6F7978), fontSize: 13),
+                                      style: GoogleFonts.inter(color: AppColors.mutedGray, fontSize: 13),
                                     ),
                                   ),
                                 )
@@ -456,27 +405,27 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                   children: canteens.asMap().entries.map((entry) {
                                     final i = entry.key;
                                     final canteen = entry.value;
-                                    final name = canteen['canteen_name'] ?? 'Stan Tanpa Nama';
-                                    final double earned = double.tryParse(canteen['balance_earned']?.toString() ?? '0') ?? 0.0;
+                                    final name = canteen.canteenName;
+                                    final int earned = canteen.balanceEarned;
 
                                     return Column(
                                       children: [
                                         ListTile(
                                           leading: CircleAvatar(
-                                            backgroundColor: primaryTeal.withValues(alpha: 0.08),
-                                            child: const Icon(CupertinoIcons.house_alt_fill, color: primaryTeal, size: 18),
+                                            backgroundColor: AppColors.darkTeal.withValues(alpha: 0.08),
+                                            child: const Icon(CupertinoIcons.house_alt_fill, color: AppColors.darkTeal, size: 18),
                                           ),
                                           title: Text(
                                             name,
-                                            style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, fontSize: 14, color: const Color(0xFF1B1C1B)),
+                                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.nearBlack),
                                           ),
                                           trailing: Text(
                                             fmt.format(earned),
-                                            style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, fontSize: 14, color: primaryTeal),
+                                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.darkTeal),
                                           ),
                                         ),
                                         if (i < canteens.length - 1)
-                                          const Divider(height: 1, thickness: 0.5, color: Color(0xFFE4E2E1), indent: 72),
+                                          const Divider(height: 1, thickness: 0.5, color: AppColors.borderGray, indent: 72),
                                       ],
                                     );
                                   }).toList(),
@@ -493,11 +442,11 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                 icon: const Icon(CupertinoIcons.chart_bar, size: 18),
                                 label: Text(
                                   'Grafik Tren',
-                                  style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold),
+                                  style: GoogleFonts.inter(fontWeight: FontWeight.bold),
                                 ),
                                 style: OutlinedButton.styleFrom(
-                                  foregroundColor: primaryTeal,
-                                  side: const BorderSide(color: primaryTeal),
+                                  foregroundColor: AppColors.darkTeal,
+                                  side: const BorderSide(color: AppColors.darkTeal),
                                   padding: const EdgeInsets.symmetric(vertical: 16),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                 ),
@@ -510,10 +459,10 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                 icon: const Icon(CupertinoIcons.share_up, size: 18),
                                 label: Text(
                                   'Export Laporan',
-                                  style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, color: Colors.white),
+                                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.white),
                                 ),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: primaryTeal,
+                                  backgroundColor: AppColors.darkTeal,
                                   padding: const EdgeInsets.symmetric(vertical: 16),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                   elevation: 0,
@@ -529,13 +478,25 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                   loading: () => const Center(
                     child: Padding(
                       padding: EdgeInsets.all(40),
-                      child: CupertinoActivityIndicator(color: primaryTeal),
+                      child: CupertinoActivityIndicator(color: AppColors.darkTeal),
                     ),
                   ),
                   error: (e, _) => Center(
                     child: Padding(
                       padding: const EdgeInsets.all(20),
-                      child: Text('Gagal memuat laporan: $e', style: GoogleFonts.beVietnamPro(color: Colors.red)),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+                          const SizedBox(height: 12),
+                          Text('${AppStrings.labelFailed} memuat laporan'),
+                          const SizedBox(height: 8),
+                          ElevatedButton(
+                            onPressed: () => ref.invalidate(keuanganReportProvider),
+                            child: const Text(AppStrings.buttonRetry),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -556,20 +517,20 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
           children: [
             Text(
               label,
-              style: GoogleFonts.beVietnamPro(color: const Color(0xFF6F7978), fontSize: 13),
+              style: GoogleFonts.inter(color: AppColors.mutedGray, fontSize: 13),
             ),
             if (detail != null)
               Text(
                 detail,
-                style: GoogleFonts.beVietnamPro(color: const Color(0xFF6F7978), fontSize: 11),
+                style: GoogleFonts.inter(color: AppColors.mutedGray, fontSize: 11),
               ),
           ],
         ),
         Text(
           value,
-          style: GoogleFonts.beVietnamPro(
+          style: GoogleFonts.inter(
             fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-            color: valueColor ?? const Color(0xFF1B1C1B),
+            color: valueColor ?? AppColors.nearBlack,
             fontSize: 13,
           ),
         ),

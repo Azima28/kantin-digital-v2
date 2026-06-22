@@ -30,7 +30,7 @@ class PdfService {
   static Future<void> showReceiptPreview({
     required String transactionId,
     required String type,
-    required double amount,
+    required int amount,
     required String studentName,
     required String canteenOrLocation,
     required DateTime dateTime,
@@ -56,7 +56,7 @@ class PdfService {
   static Future<void> shareReceipt({
     required String transactionId,
     required String type,
-    required double amount,
+    required int amount,
     required String studentName,
     required String canteenOrLocation,
     required DateTime dateTime,
@@ -81,7 +81,7 @@ class PdfService {
   static Future<pw.Document> _buildReceiptPdf({
     required String transactionId,
     required String type,
-    required double amount,
+    required int amount,
     required String studentName,
     required String canteenOrLocation,
     required DateTime dateTime,
@@ -113,7 +113,7 @@ class PdfService {
     final bool isPurchase = type == 'purchase';
     final String dateStr =
         DateFormat('dd MMMM yyyy', 'id_ID').format(dateTime.toLocal());
-    final String timeStr = DateFormat('HH:mm').format(dateTime.toLocal());
+    final String timeStr = DateFormat('HH:mm', 'id_ID').format(dateTime.toLocal());
     final String shortId = transactionId.length >= 10
         ? transactionId.substring(0, 10).toUpperCase()
         : transactionId.toUpperCase();

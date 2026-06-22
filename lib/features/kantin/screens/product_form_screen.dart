@@ -1,18 +1,20 @@
-import 'dart:io';
+import 'dart:io' show File; // TODO: Replace with cross-platform file picker for web
 import 'package:flutter/foundation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
 
 class ProductFormScreen extends ConsumerStatefulWidget {
-  final Map<String, dynamic>? initialProduct;
+  final Product? initialProduct;
   const ProductFormScreen({super.key, this.initialProduct});
 
   @override
@@ -34,11 +36,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   void initState() {
     super.initState();
     final product = widget.initialProduct;
-    _nameController = TextEditingController(text: product?['name']?.toString() ?? '');
+    _nameController = TextEditingController(text: product?.name ?? '');
     _priceController = TextEditingController(
-      text: product?['price'] != null ? product!['price'].toString().replaceAll('.00', '') : '',
+      text: product?.price != null ? product!.price.toString() : '',
     );
-    _selectedCategory = product?['category']?.toString() ?? 'makanan';
+    _selectedCategory = product?.category ?? 'makanan';
   }
 
   @override
@@ -73,7 +75,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memilih gambar: $e'), backgroundColor: AppColors.error),
+          SnackBar(content: Text(AppStrings.labelFailedPickImage), backgroundColor: AppColors.error),
         );
       }
     }
@@ -94,7 +96,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         _isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sesi kasir tidak valid. Harap login kembali.'), backgroundColor: AppColors.error),
+        const SnackBar(content: Text(AppStrings.errorInvalidSession), backgroundColor: AppColors.error),
       );
       return;
     }
@@ -102,7 +104,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final String name = _nameController.text.trim();
     final double price = double.parse(_priceController.text.trim());
     final bool isEdit = widget.initialProduct != null;
-    String? finalImageUrl = isEdit ? widget.initialProduct!['image_url']?.toString() : null;
+    String? finalImageUrl = isEdit ? widget.initialProduct!.imageUrl : null;
 
     if (_imageDeleted) {
       finalImageUrl = null;
@@ -131,7 +133,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               fileOptions: const FileOptions(contentType: 'image/jpeg', cacheControl: '3600'),
             );
           } catch (createErr) {
-            throw Exception('Gagal mengunggah gambar. Pastikan bucket "products" sudah dibuat di Supabase Storage Anda. Detail: $storageErr');
+            throw Exception('${AppStrings.labelFailed} mengunggah gambar. Pastikan bucket "products" sudah dibuat di Supabase Storage Anda. Detail: $storageErr');
           }
         }
         
@@ -146,7 +148,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       };
 
       if (isEdit) {
-        final String productId = widget.initialProduct!['id'].toString();
+        final String productId = widget.initialProduct!.id;
         await client.from('products').update(data).eq('id', productId);
       } else {
         data['operator_id'] = operatorId;
@@ -175,7 +177,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isEdit ? 'Jajanan berhasil diubah!' : 'Jajanan berhasil ditambahkan!'),
+            content: Text(isEdit ? AppStrings.successProductUpdated : AppStrings.successProductSaved),
             backgroundColor: AppColors.success,
             behavior: SnackBarBehavior.floating,
           ),
@@ -186,16 +188,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal menyimpan jajanan: $e'),
+            content: Text(AppStrings.labelFailedSaveProduct),
             backgroundColor: AppColors.error,
           ),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
       }
     }
   }
@@ -204,15 +200,15 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   Widget build(BuildContext context) {
     final bool isEdit = widget.initialProduct != null;
     final bool hasExistingImage = isEdit &&
-        widget.initialProduct!['image_url'] != null &&
-        widget.initialProduct!['image_url'].toString().isNotEmpty;
+        widget.initialProduct!.imageUrl != null &&
+        widget.initialProduct!.imageUrl!.isNotEmpty;
     final bool showExistingImage = hasExistingImage && !_imageDeleted;
 
     return Scaffold(
       backgroundColor: AppColors.cardBackground,
       appBar: AppBar(
         title: Text(
-          isEdit ? 'Ubah Jajanan' : 'Tambah Jajanan',
+          isEdit ? 'Ubah Jajanan' : '${AppStrings.buttonAdd} Jajanan',
           style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
         ),
         centerTitle: true,
@@ -367,9 +363,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             ? ClipRRect(
                                 borderRadius: BorderRadius.circular(16),
                                 child: kIsWeb
-                                    ? Image.network(
-                                        _imageFile!.path,
+                                    ? CachedNetworkImage(
+                                        imageUrl: _imageFile!.path,
                                         fit: BoxFit.cover,
+                                        placeholder: (c, i) => const Center(child: CupertinoActivityIndicator()),
                                       )
                                     : Image.file(
                                         File(_imageFile!.path),
@@ -379,10 +376,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             : showExistingImage
                                 ? ClipRRect(
                                     borderRadius: BorderRadius.circular(16),
-                                    child: Image.network(
-                                      widget.initialProduct!['image_url'].toString(),
+                                    child: CachedNetworkImage(
+                                      imageUrl: widget.initialProduct!.imageUrl!,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) => _buildUploadPlaceholder(),
+                                      placeholder: (c, i) => const Center(child: CupertinoActivityIndicator()),
+                                      errorWidget: (c, i, e) => _buildUploadPlaceholder(),
                                     ),
                                   )
                                 : _buildUploadPlaceholder(),
@@ -423,13 +421,13 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           elevation: 0,
                         ),
                         child: _isLoading
-                            ? const CupertinoActivityIndicator(color: Colors.white)
+                            ? const CupertinoActivityIndicator(color: AppColors.white)
                             : Text(
                                 AppStrings.buttonSaveProduct.toUpperCase(),
                                 style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -456,7 +454,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         ),
         const SizedBox(height: 12),
         const Text(
-          'Pilih Gambar Jajanan',
+          '${AppStrings.buttonSelect} Gambar Jajanan',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,

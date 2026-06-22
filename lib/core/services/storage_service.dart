@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
 
 /// Service untuk upload, update, dan delete foto profil pengguna
 /// menggunakan Supabase Storage bucket 'avatars'.
@@ -23,7 +24,6 @@ class StorageService {
       );
       return image;
     } catch (e) {
-      debugPrint('StorageService.pickImage error: $e');
       return null;
     }
   }
@@ -66,7 +66,7 @@ class StorageService {
 
       return freshUrl;
     } on StorageException catch (e) {
-      throw Exception('Gagal upload foto: ${e.message}');
+      throw Exception('${AppStrings.labelFailed} upload foto: ${e.message}');
     } catch (e) {
       throw Exception('Terjadi kesalahan saat upload foto: $e');
     }

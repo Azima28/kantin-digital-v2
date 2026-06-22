@@ -1,13 +1,20 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kantin_digital/features/auth/services/auth_service.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 
-// Provider untuk instance SupabaseClient
-final Provider<SupabaseClient> supabaseClientProvider =
-    Provider<SupabaseClient>((Ref ref) {
-      return Supabase.instance.client;
-    });
+// Re-export supabaseClientProvider for backward compatibility
+export 'package:kantin_digital/core/providers/shared_providers.dart'
+    show supabaseClientProvider;
+
+/// Role string constants used across auth logic.
+class AuthRoles {
+  static const String student = 'student';
+  static const String keuangan = 'petugas_keuangan';
+  static const String canteen = 'petugas_kantin';
+  static const String parent = 'parent';
+  static const String superAdmin = 'super_admin';
+}
 
 // Provider untuk AuthService
 final Provider<AuthService> authServiceProvider = Provider<AuthService>((
@@ -62,7 +69,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (session != null) {
         final Map<String, dynamic>? profile = await _authService
             .getCurrentProfile();
-        if (profile != null && (profile['role'] == 'petugas_kantin' || profile['role'] == 'student' || profile['role'] == 'parent' || profile['role'] == 'super_admin' || profile['role'] == 'petugas_keuangan')) {
+        if (profile != null && (profile['role'] == AuthRoles.canteen || profile['role'] == AuthRoles.student || profile['role'] == AuthRoles.parent || profile['role'] == AuthRoles.superAdmin || profile['role'] == AuthRoles.keuangan)) {
           state = AuthState(isAuthenticated: true, profile: profile);
           return;
         }
@@ -82,11 +89,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
         password: password,
         expectedRole: role,
       );
-      debugPrint('DEBUG - Login SUCCESS, Profile: $profile');
       state = AuthState(isAuthenticated: true, profile: profile);
       return true;
     } catch (e) {
-      debugPrint('DEBUG - Login ERROR: $e');
       state = AuthState(
         errorMessage: e.toString().replaceFirst('Exception: ', ''),
       );

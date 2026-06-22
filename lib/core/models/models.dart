@@ -2,19 +2,15 @@
 //
 // Import file ini untuk mengakses semua model:
 // ```dart
-// import 'package:kantin_digital/core/models/models.dart';
 // ```
 
 // ── Base models ──────────────────────────────────────────────
 export 'user_profile.dart';
 export 'student.dart';
-export 'canteen_staff.dart';
 export 'canteen_operator.dart';
-export 'rfid_card.dart';
 export 'transaction_type.dart';
 export 'transaction.dart';
 export 'transaction_item.dart';
-export 'balance_adjustment.dart';
 export 'product.dart';
 export 'app_notification.dart';
 export 'audit_log.dart';

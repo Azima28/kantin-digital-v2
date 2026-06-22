@@ -19,8 +19,8 @@ class FinanceOfficer {
   factory FinanceOfficer.fromJson(Map<String, dynamic> json) {
     return FinanceOfficer(
       id: json['id'] as String,
-      assignedSchool: json['assigned_school'] as String,
-      authorityLevel: json['authority_level'] as String,
+      assignedSchool: json['assigned_school']?.toString() ?? '',
+      authorityLevel: json['authority_level']?.toString() ?? '',
       features: json['features'] is List
           ? List<String>.from(json['features'].map((e) => e.toString()))
           : const [],

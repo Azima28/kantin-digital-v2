@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
@@ -20,7 +21,7 @@ class SiswaNotificationsScreen extends ConsumerWidget {
       
       ref.invalidate(siswaNotificationsProvider);
     } catch (e) {
-      debugPrint('Error marking notification as read: $e');
+      debugPrint('Notification markAsRead error: $e');
     }
   }
 
@@ -36,7 +37,7 @@ class SiswaNotificationsScreen extends ConsumerWidget {
         content: const Text('Apakah Anda yakin ingin menghapus semua notifikasi dari kotak masuk Anda?'),
         actions: [
           CupertinoDialogAction(
-            child: const Text('Batal'),
+            child: const Text(AppStrings.buttonCancel),
             onPressed: () => Navigator.pop(ctx),
           ),
           CupertinoDialogAction(
@@ -54,12 +55,12 @@ class SiswaNotificationsScreen extends ConsumerWidget {
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Gagal menghapus notifikasi: $e'), backgroundColor: AppColors.error),
+                    SnackBar(content: Text(AppStrings.labelFailedDeleteNotification), backgroundColor: AppColors.error),
                   );
                 }
               }
             },
-            child: const Text('Hapus'),
+            child: const Text(AppStrings.buttonDelete),
           ),
         ],
       ),
@@ -103,30 +104,23 @@ class SiswaNotificationsScreen extends ConsumerWidget {
             child: notificationsAsync.when(
               data: (List<AppNotification> notifs) {
                 if (notifs.isEmpty) {
-                  return ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    children: const [
-                      Padding(
-                        padding: EdgeInsets.symmetric(vertical: 100),
-                        child: Center(
-                          child: Column(
-                            children: [
-                              Icon(CupertinoIcons.bell_slash, size: 48, color: AppColors.textGray),
-                              SizedBox(height: 12),
-                              Text(
-                                'Kotak masuk kosong',
-                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Pemberitahuan transaksi akan muncul di sini.',
-                                style: TextStyle(color: AppColors.textGray, fontSize: 12),
-                              ),
-                            ],
-                          ),
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(CupertinoIcons.bell_slash, size: 48, color: AppColors.textGray),
+                        SizedBox(height: 12),
+                        Text(
+                          'Kotak masuk kosong',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark),
                         ),
-                      ),
-                    ],
+                        SizedBox(height: 4),
+                        Text(
+                          'Pemberitahuan transaksi akan muncul di sini.',
+                          style: TextStyle(color: AppColors.textGray, fontSize: 12),
+                        ),
+                      ],
+                    ),
                   );
                 }
 
@@ -142,7 +136,7 @@ class SiswaNotificationsScreen extends ConsumerWidget {
                     final bool isRead = notif.isRead;
                     
                     final DateTime createdAt = notif.createdAt?.toLocal() ?? DateTime.now();
-                    final String timeStr = DateFormat('dd MMM, HH:mm').format(createdAt);
+                    final String timeStr = DateFormat('dd MMM, HH:mm', 'id_ID').format(createdAt);
 
                     IconData iconData;
                     Color iconColor;
@@ -172,7 +166,7 @@ class SiswaNotificationsScreen extends ConsumerWidget {
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: isRead ? AppColors.cardBackground : const Color(0xFFF9F9FE),
+                          color: isRead ? AppColors.cardBackground : AppColors.systemBackground,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
                             color: isRead ? AppColors.borderLight : AppColors.primary.withValues(alpha: 0.3),
@@ -255,7 +249,21 @@ class SiswaNotificationsScreen extends ConsumerWidget {
                 );
               },
               loading: () => const Center(child: CupertinoActivityIndicator()),
-              error: (err, stack) => Center(child: Text('Gagal memuat notifikasi: $err', style: const TextStyle(color: AppColors.error))),
+              error: (err, stack) => Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                    const SizedBox(height: 12),
+                    Text('${AppStrings.labelFailed} memuat notifikasi'),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () => ref.invalidate(siswaNotificationsProvider),
+                      child: const Text(AppStrings.buttonRetry),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),

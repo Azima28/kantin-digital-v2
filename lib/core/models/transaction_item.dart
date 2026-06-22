@@ -6,7 +6,7 @@ class TransactionItem {
   final String transactionId;
   final String? productId;
   final int quantity;
-  final double unitPrice;
+  final int unitPrice;
   final String? customNotes;
 
   /// Nested object dari join Supabase (opsional).
@@ -24,12 +24,12 @@ class TransactionItem {
 
   factory TransactionItem.fromJson(Map<String, dynamic> json) {
     return TransactionItem(
-      id: json['id'] as String,
-      transactionId: json['transaction_id'] as String,
+      id: json['id']?.toString() ?? '',
+      transactionId: json['transaction_id']?.toString() ?? '',
       productId: json['product_id'] as String?,
       quantity: (json['quantity'] as num?)?.toInt() ?? 0,
       unitPrice:
-          double.tryParse(json['unit_price']?.toString() ?? '0') ?? 0.0,
+          int.tryParse(json['unit_price']?.toString() ?? '0') ?? 0,
       customNotes: json['custom_notes'] as String?,
       product: (json['product'] ?? json['products']) as Map<String, dynamic>?,
     );
@@ -45,7 +45,7 @@ class TransactionItem {
       };
 
   /// Total harga item = quantity × unitPrice
-  double get totalPrice => quantity * unitPrice;
+  int get totalPrice => quantity * unitPrice;
 
   /// Nama produk dari join data.
   String get productName {
@@ -53,6 +53,26 @@ class TransactionItem {
       return product!['name'] as String? ?? '-';
     }
     return '-';
+  }
+
+  TransactionItem copyWith({
+    String? id,
+    String? transactionId,
+    String? productId,
+    int? quantity,
+    int? unitPrice,
+    String? customNotes,
+    Map<String, dynamic>? product,
+  }) {
+    return TransactionItem(
+      id: id ?? this.id,
+      transactionId: transactionId ?? this.transactionId,
+      productId: productId ?? this.productId,
+      quantity: quantity ?? this.quantity,
+      unitPrice: unitPrice ?? this.unitPrice,
+      customNotes: customNotes ?? this.customNotes,
+      product: product ?? this.product,
+    );
   }
 
   @override

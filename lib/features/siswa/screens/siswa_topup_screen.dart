@@ -1,11 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
+import 'package:kantin_digital/features/siswa/widgets/qris_checkout_content.dart';
+import 'package:kantin_digital/features/siswa/widgets/siswa_quick_amount_item.dart';
+import 'package:kantin_digital/features/siswa/widgets/topup_payment_info_card.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class SiswaTopUpScreen extends ConsumerStatefulWidget {
   const SiswaTopUpScreen({super.key});
@@ -64,44 +68,25 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
         throw Exception('Identitas siswa tidak ditemukan.');
       }
 
-      // 1. Fetch current student details to calculate new balance
-      final student = await client
-          .from('students')
-          .select('balance')
-          .eq('id', studentId)
-          .single();
+      // Get operator ID from auth context or fetch first available operator
+      final authProfile = authState.profile;
+      String operatorId = authProfile?['operator_id'] ?? '';
 
-      final double currentBalance = double.tryParse(student['balance'].toString()) ?? 0.0;
-      final double newBalance = currentBalance + amount;
-
-      // 2. Fetch a default operator ID to associate with the transaction
-      final operators = await client.from('canteen_operators').select('id').limit(1);
-      String operatorId = '6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c'; // default fallback
-      if (operators.isNotEmpty) {
+      if (operatorId.isEmpty) {
+        final operators = await client.from('canteen_operators').select('id').limit(1);
+        if (operators.isEmpty) {
+          throw Exception('Tidak ada operator kantin terdaftar untuk mencatat transaksi top-up.');
+        }
         operatorId = operators.first['id'];
       }
 
-      // 3. Update student balance in DB
-      await client
-          .from('students')
-          .update({'balance': newBalance})
-          .eq('id', studentId);
-
-      // 4. Record the topup transaction
-      await client.from('transactions').insert({
-        'student_id': studentId,
-        'operator_id': operatorId,
-        'total_amount': amount,
-        'type': 'topup',
-        'status': 'success',
-      });
-
-      // 5. Send notification to the student inbox
-      await client.from('notifications').insert({
-        'student_id': studentId,
-        'title': 'Top-Up Saldo Sukses!',
-        'message': 'Pengisian saldo saku sebesar ${CurrencyFormatter.format(amount)} via QRIS berhasil.',
-        'type': 'topup',
+      // Replace direct update with RPC
+      await client.rpc('process_topup', params: {
+        'p_student_id': studentId,
+        'p_amount': amount,
+        'p_operator_id': operatorId,
+        'p_method': 'simulasi',
+        'p_notes': 'Top-up mandiri siswa',
       });
 
       // Invalidate providers to reload UI data
@@ -118,7 +103,7 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
         Navigator.pop(context); // Close bottom sheet
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Top-up gagal: $e'),
+            content: const Text('Top-up gagal'),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
@@ -165,130 +150,20 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return Container(
-              padding: EdgeInsets.fromLTRB(24, 16, 24, 24 + MediaQuery.of(context).viewInsets.bottom),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // iOS grab handle
-                  Container(
-                    width: 36,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Simulasi QRIS Pembayaran',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    CurrencyFormatter.format(amount),
-                    style: GoogleFonts.inter(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Simulated QR Code Graphic Box
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.borderLight, width: 1),
-                    ),
-                    child: Column(
-                      children: [
-                        // Draw a mock QR code layout using containers
-                        Container(
-                          width: 180,
-                          height: 180,
-                          color: const Color(0xFFF2F2F7),
-                          child: Center(
-                            child: Icon(
-                              Icons.qr_code_2,
-                              size: 130,
-                              color: AppColors.textDark.withValues(alpha: 0.8),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'KANTIN DIGITAL COOPERATIVE',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textDark,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Pindai QRIS di atas menggunakan e-wallet atau Mobile Banking Anda.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textGray,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  // Action buttons
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      onPressed: _isLoading
-                          ? null
-                          : () async {
-                              setSheetState(() {});
-                              await _handlePaymentSimulation(amount);
-                            },
-                      child: _isLoading
-                          ? const CupertinoActivityIndicator(color: Colors.white)
-                          : const Text(
-                              'Simulasikan Pembayaran Sukses',
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                            ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text(
-                        'Batalkan',
-                        style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
+        return Container(
+          padding: EdgeInsets.fromLTRB(24, 16, 24, 24 + MediaQuery.of(context).viewInsets.bottom),
+          child: QrisCheckoutContent(
+            amount: amount,
+            isLoading: _isLoading,
+            onConfirm: _isLoading
+                ? null
+                : () async {
+                    await _handlePaymentSimulation(amount);
+                  },
+            onCancel: () => Navigator.pop(context),
+          ),
         );
       },
     );
@@ -324,7 +199,7 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
               children: [
                 // Quick nominal title
                 const Text(
-                  'Pilih Nominal Cepat',
+                  '${AppStrings.buttonSelect} Nominal Cepat',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -342,10 +217,34 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
                   mainAxisSpacing: 12,
                   childAspectRatio: MediaQuery.of(context).size.width > 600 ? 3.0 : 2.2,
                   children: [
-                    _buildQuickAmountItem(10000, '10k', 'Rp 10.000'),
-                    _buildQuickAmountItem(20000, '20k', 'Rp 20.000'),
-                    _buildQuickAmountItem(50000, '50k', 'Rp 50.000'),
-                    _buildQuickAmountItem(100000, '100k', 'Rp 100.000'),
+                    SiswaQuickAmountItem(
+                      amount: 10000,
+                      label: '10k',
+                      description: 'Rp 10.000',
+                      isSelected: _selectedQuickAmount == 10000,
+                      onTap: () => _onQuickAmountSelected(10000),
+                    ),
+                    SiswaQuickAmountItem(
+                      amount: 20000,
+                      label: '20k',
+                      description: 'Rp 20.000',
+                      isSelected: _selectedQuickAmount == 20000,
+                      onTap: () => _onQuickAmountSelected(20000),
+                    ),
+                    SiswaQuickAmountItem(
+                      amount: 50000,
+                      label: '50k',
+                      description: 'Rp 50.000',
+                      isSelected: _selectedQuickAmount == 50000,
+                      onTap: () => _onQuickAmountSelected(50000),
+                    ),
+                    SiswaQuickAmountItem(
+                      amount: 100000,
+                      label: '100k',
+                      description: 'Rp 100.000',
+                      isSelected: _selectedQuickAmount == 100000,
+                      onTap: () => _onQuickAmountSelected(100000),
+                    ),
                   ],
                 ),
 
@@ -451,58 +350,7 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
 
                 const SizedBox(height: 24),
 
-                // Payment context info box
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryLight.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.1), width: 0.5),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
-                          color: AppColors.primaryLight,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          CupertinoIcons.qrcode_viewfinder,
-                          color: AppColors.primary,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text(
-                              'Metode Pembayaran',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textDark,
-                              ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              'QRIS / Virtual Account (Instan)',
-                              style: TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w600),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Mendukung pembayaran dari semua e-wallet (GoPay, OVO, Dana) dan mobile banking.',
-                              style: TextStyle(fontSize: 11, color: AppColors.textGray, height: 1.3),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                const TopupPaymentInfoCard(),
                 const SizedBox(height: 100), // spacing for bottom bar
               ],
             ),
@@ -532,9 +380,9 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: const [
-                        Text('LANJUTKAN PEMBAYARAN', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        Text('LANJUTKAN PEMBAYARAN', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
                         SizedBox(width: 8),
-                        Icon(CupertinoIcons.arrow_right, color: Colors.white, size: 16),
+                        Icon(CupertinoIcons.arrow_right, color: AppColors.white, size: 16),
                       ],
                     ),
                   ),
@@ -549,54 +397,4 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
     );
   }
 
-  Widget _buildQuickAmountItem(int amount, String label, String sub) {
-    final bool isSelected = _selectedQuickAmount == amount;
-
-    return GestureDetector(
-      onTap: () => _onQuickAmountSelected(amount),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryLight : AppColors.cardBackground,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.borderLight,
-            width: isSelected ? 1.5 : 1.0,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: isSelected ? AppColors.primary : AppColors.textDark,
-                  ),
-                ),
-                Text(
-                  sub,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textGray,
-                  ),
-                ),
-              ],
-            ),
-            if (isSelected)
-              const Icon(
-                CupertinoIcons.checkmark_circle_fill,
-                color: AppColors.primary,
-                size: 16,
-              ),
-          ],
-        ),
-      ),
-    );
-  }
 }

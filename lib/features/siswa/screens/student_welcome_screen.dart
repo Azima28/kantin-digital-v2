@@ -1,20 +1,32 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
 
-class StudentWelcomeScreen extends StatefulWidget {
+import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
+
+class StudentWelcomeScreen extends ConsumerStatefulWidget {
   const StudentWelcomeScreen({super.key});
 
   @override
-  State<StudentWelcomeScreen> createState() => _StudentWelcomeScreenState();
+  ConsumerState<StudentWelcomeScreen> createState() =>
+      _StudentWelcomeScreenState();
 }
 
-class _StudentWelcomeScreenState extends State<StudentWelcomeScreen>
+class _StudentWelcomeScreenState extends ConsumerState<StudentWelcomeScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
+
+  static const List<String> _welcomeMessages = [
+    'Selamat Datang di Kantin Digital!',
+    'Jajan Praktis, Tanpa Uang Tunai',
+    'Nikmati Berbagai Menu Lezat',
+    'Cukup Tap Kartu, Makan Siang Siap!',
+  ];
 
   @override
   void initState() {
@@ -40,7 +52,7 @@ class _StudentWelcomeScreenState extends State<StudentWelcomeScreen>
         'https://lh3.googleusercontent.com/aida-public/AB6AXuAj9v7hCFkrRMAey43LSqCsH44EKtneScrHLtAbaq6ds1WZOLUwWuTjULCt-RAxdUsHfVqA4YVlpA0Xt52989-Cz_lGBEGQ_lC4s82hTAGoVB_0f0MrONfgiu-EWk-JYao2dwaXApSFQsp41tQzh38H1K1sf7Zgy0D21UR-tkIBvJCscPwhynCK-7XZjwElD3qjwM9pLSA6WjPWAXPHBBDTjXQ2U_RmLDJyBviDR4jfZvqq0SfKYRC8BGNieqbbXrKyYBwE5NEVcbY';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9FE),
+      backgroundColor: AppColors.systemBackground,
       body: Stack(
         children: [
           // Ambient Background Glow
@@ -58,8 +70,6 @@ class _StudentWelcomeScreenState extends State<StudentWelcomeScreen>
             ),
           ),
 
-
-
           // Main content
           SafeArea(
             child: Center(
@@ -71,6 +81,21 @@ class _StudentWelcomeScreenState extends State<StudentWelcomeScreen>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Spacer(),
+
+                      // Welcome message
+                      Text(
+                        _welcomeMessages.isNotEmpty ? _welcomeMessages[0] : 'Halo!',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          textStyle: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.primary,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
 
                       // Animated Illustration
                       AnimatedBuilder(
@@ -91,8 +116,9 @@ class _StudentWelcomeScreenState extends State<StudentWelcomeScreen>
                               height: 224,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Colors.white,
-                                border: Border.all(color: Colors.white, width: 4),
+                                color: AppColors.white,
+                                border:
+                                    Border.all(color: AppColors.white, width: 4),
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withAlpha(15),
@@ -103,10 +129,11 @@ class _StudentWelcomeScreenState extends State<StudentWelcomeScreen>
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(999),
-                                child: Image.network(
-                                  imageUrl,
+                                child: CachedNetworkImage(
+                                  imageUrl: imageUrl,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
+                                  placeholder: (c, i) => const Center(child: CupertinoActivityIndicator()),
+                                  errorWidget: (c, i, e) {
                                     return Container(
                                       color: AppColors.primaryLight,
                                       child: const Icon(
@@ -127,7 +154,7 @@ class _StudentWelcomeScreenState extends State<StudentWelcomeScreen>
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.black.withAlpha(10),
@@ -151,7 +178,7 @@ class _StudentWelcomeScreenState extends State<StudentWelcomeScreen>
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.black.withAlpha(10),
@@ -172,9 +199,9 @@ class _StudentWelcomeScreenState extends State<StudentWelcomeScreen>
                       ),
                       const SizedBox(height: 40),
 
-                      // App Title & Subtitle
+                      // App Title
                       Text(
-                        'Kantin Digital',
+                        AppStrings.appName,
                         style: GoogleFonts.inter(
                           textStyle: const TextStyle(
                             fontSize: 24,
@@ -185,8 +212,10 @@ class _StudentWelcomeScreenState extends State<StudentWelcomeScreen>
                         ),
                       ),
                       const SizedBox(height: 12),
+
+                      // Subtitle
                       Text(
-                        'Mulai Jajan Praktis, Tanpa Uang Tunai Lagi',
+                        AppStrings.subtitleSplash,
                         textAlign: TextAlign.center,
                         style: GoogleFonts.inter(
                           textStyle: const TextStyle(
@@ -213,23 +242,24 @@ class _StudentWelcomeScreenState extends State<StudentWelcomeScreen>
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 16),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: const [
                               Text(
-                                'Mulai Sekarang',
+                                AppStrings.buttonGetStarted,
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                 ),
                               ),
                               SizedBox(width: 8),
                               Icon(
                                 CupertinoIcons.arrow_right,
-                                color: Colors.white,
+                                color: AppColors.white,
                                 size: 16,
                               ),
                             ],

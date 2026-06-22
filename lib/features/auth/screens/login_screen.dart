@@ -5,7 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/services/connectivity_service.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/features/auth/widgets/login_account_preview.dart';
+import 'package:kantin_digital/features/auth/widgets/login_preview_item.dart';
+import 'package:kantin_digital/features/auth/widgets/role_toggle_button.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   final String? from;
@@ -32,6 +36,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Check connectivity before attempting login
+    final bool isOnline = await ConnectivityService.isOnline();
+    if (!isOnline) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tidak ada koneksi internet. Periksa koneksi Anda dan coba lagi.'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
     final String email = _emailController.text.trim();
     final String password = _passwordController.text;
 
@@ -51,7 +70,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         } else if (role == 'student') {
           context.go('/student');
         } else if (role == 'super_admin') {
-          context.go('/admin/secure-entry');
+          context.go('/admin');
         } else if (role == 'petugas_keuangan') {
           context.go('/finance');
         } else if (role == 'parent') {
@@ -61,7 +80,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Akun orang tua tidak memiliki data anak yang tertaut.'),
+                content: Text(AppStrings.errorParentNoChild),
                 backgroundColor: AppColors.error,
                 behavior: SnackBarBehavior.floating,
               ),
@@ -70,7 +89,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Akses ditolak: Hak akses tidak dikenali.'),
+              content: Text(AppStrings.errorAccessDenied),
               backgroundColor: AppColors.error,
               behavior: SnackBarBehavior.floating,
             ),
@@ -108,82 +127,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Widget _buildPreviewItem({
-    required String roleName,
-    required String identifier,
-    required String password,
-    required VoidCallback onTap,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          roleName,
-          style: const TextStyle(
-            fontSize: 8,
-            fontWeight: FontWeight.bold,
-            color: AppColors.primary,
-            letterSpacing: 0.3,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          identifier,
-          style: const TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textDark,
-          ),
-        ),
-        Text(
-          'Sandi: $password',
-          style: const TextStyle(
-            fontSize: 9,
-            color: AppColors.textGray,
-          ),
-        ),
-        const SizedBox(height: 4),
-        GestureDetector(
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-            decoration: BoxDecoration(
-              color: AppColors.primaryLight,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Text(
-                  'Gunakan Kredensial',
-                  style: TextStyle(
-                    fontSize: 8,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
-                ),
-                SizedBox(width: 2),
-                Icon(
-                  CupertinoIcons.square_pencil,
-                  size: 8,
-                  color: AppColors.primary,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final AuthState authState = ref.watch(authNotifierProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         leadingWidth: 100,
@@ -201,7 +152,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               Icon(CupertinoIcons.left_chevron, color: AppColors.primary, size: 20),
               SizedBox(width: 4),
               Text(
-                'Kembali',
+                AppStrings.buttonBack,
                 style: TextStyle(
                   color: AppColors.primary,
                   fontSize: 16,
@@ -271,9 +222,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             hintText: _selectedLoginTab == 0
                                 ? 'Contoh: petugas, 20260012, atau petugas@sekolah.sch.id'
                                 : 'Contoh: 20260012',
-                            hintStyle: const TextStyle(color: Color(0xFFBDC9C8)),
+                            hintStyle: const TextStyle(color: AppColors.inputBorder),
                             border: const UnderlineInputBorder(
-                              borderSide: BorderSide(color: Color(0xFFBDC9C8)),
+                              borderSide: BorderSide(color: AppColors.inputBorder),
                             ),
                             focusedBorder: const UnderlineInputBorder(
                               borderSide: BorderSide(color: AppColors.primary),
@@ -311,9 +262,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           style: const TextStyle(fontSize: 16),
                           decoration: InputDecoration(
                             hintText: 'Masukkan kata sandi',
-                            hintStyle: const TextStyle(color: Color(0xFFBDC9C8)),
+                            hintStyle: const TextStyle(color: AppColors.inputBorder),
                             border: const UnderlineInputBorder(
-                              borderSide: BorderSide(color: Color(0xFFBDC9C8)),
+                              borderSide: BorderSide(color: AppColors.inputBorder),
                             ),
                             focusedBorder: const UnderlineInputBorder(
                               borderSide: BorderSide(color: AppColors.primary),
@@ -324,7 +275,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 _obscurePassword
                                     ? CupertinoIcons.eye_slash
                                     : CupertinoIcons.eye,
-                                color: const Color(0xFFBDC9C8),
+                                color: AppColors.inputBorder,
                                 size: 20,
                               ),
                               onPressed: () {
@@ -356,13 +307,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 16),
                             ),
                             child: authState.isLoading
-                                ? const CupertinoActivityIndicator(color: Colors.white)
+                                ? const CupertinoActivityIndicator(color: AppColors.white)
                                 : const Text(
                                     'MASUK',
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,
-                                      color: Colors.white,
+                                      color: AppColors.white,
                                     ),
                                   ),
                           ),
@@ -370,50 +321,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         const SizedBox(height: 24),
 
                         // Pilihan login Orang Tua / Siswa & Staff di bawah
-                        Center(
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _selectedLoginTab = _selectedLoginTab == 0 ? 1 : 0;
-                                _emailController.clear();
-                                _passwordController.clear();
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(
-                                  color: AppColors.primary.withValues(alpha: 0.15),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    _selectedLoginTab == 0
-                                        ? CupertinoIcons.person_2
-                                        : CupertinoIcons.arrow_left_square,
-                                    size: 16,
-                                    color: AppColors.primary,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    _selectedLoginTab == 0
-                                        ? 'Masuk sebagai Orang Tua'
-                                        : 'Kembali ke Login Siswa / Staff',
-                                    style: GoogleFonts.inter(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                        RoleToggleButton(
+                          selectedLoginTab: _selectedLoginTab,
+                          onToggle: () {
+                            setState(() {
+                              _selectedLoginTab = _selectedLoginTab == 0 ? 1 : 0;
+                              _emailController.clear();
+                              _passwordController.clear();
+                            });
+                          },
                         ),
                         const SizedBox(height: 32),
 
@@ -442,52 +358,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             top: 16,
             left: 16,
             child: SafeArea(
-              child: Container(
-                width: 200,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.95),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.borderLight, width: 0.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
+              child: LoginAccountPreview(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        const Text(
-                          'PREVIEW AKUN UJI COBA',
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textGray,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    
                     if (_selectedLoginTab == 0) ...[
-                      // Petugas
-                      _buildPreviewItem(
+                      LoginPreviewItem(
                         roleName: 'KASIR / PETUGAS (USERNAME)',
                         identifier: 'petugas',
                         password: 'password123',
@@ -502,8 +379,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       const Divider(height: 12, color: AppColors.borderLight),
                       
-                      // Admin Keuangan
-                      _buildPreviewItem(
+                      // Admin Keuangan (budi_fin — akun asli)
+                      LoginPreviewItem(
                         roleName: 'ADMIN KEUANGAN (USERNAME)',
                         identifier: 'budi_fin',
                         password: 'budi123',
@@ -517,9 +394,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         },
                       ),
                       const Divider(height: 12, color: AppColors.borderLight),
+
+                      // Petugas Keuangan (keuangan — akun testing)
+                      LoginPreviewItem(
+                        roleName: 'PETUGAS KEUANGAN (USERNAME)',
+                        identifier: 'keuangan',
+                        password: 'keuangan123',
+                        onTap: () {
+                          FocusScope.of(context).unfocus();
+                          setState(() {
+                            _emailController.text = 'keuangan';
+                            _passwordController.text = 'keuangan123';
+                          });
+                          _showFillSnackBar('Petugas Keuangan');
+                        },
+                      ),
+                      const Divider(height: 12, color: AppColors.borderLight),
                       
                       // Siswa
-                      _buildPreviewItem(
+                      LoginPreviewItem(
                         roleName: 'SISWA (AHMAD - NISN)',
                         identifier: '20260012',
                         password: 'password123',
@@ -535,7 +428,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       const Divider(height: 12, color: AppColors.borderLight),
                       
                       // Super Admin
-                      _buildPreviewItem(
+                      LoginPreviewItem(
                         roleName: 'SUPER ADMIN (MOCK)',
                         identifier: 'superadmin',
                         password: 'admin123',
@@ -550,7 +443,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ] else ...[
                       // Orang Tua
-                      _buildPreviewItem(
+                      LoginPreviewItem(
                         roleName: 'ORANG TUA (WALI AHMAD - NISN)',
                         identifier: '20260012',
                         password: 'parent123',

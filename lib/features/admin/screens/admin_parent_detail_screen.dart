@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
@@ -31,15 +32,24 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
 
     final client = ref.read(supabaseClientProvider);
     try {
-      await client.from('profiles').update({'password': password}).eq('id', profileId);
+      // Client-side role check before RPC call
+      final currentUserRole = ref.read(authNotifierProvider).profile?['role'];
+      if (currentUserRole != 'super_admin' && currentUserRole != 'admin' && currentUserRole != 'petugas_keuangan') {
+        throw Exception('Tidak memiliki izin untuk mengubah password');
+      }
+
+      await client.rpc('update_auth_user_password', params: {
+        'p_user_id': profileId,
+        'p_new_password': password,
+      });
 
       if (mounted) {
         Navigator.pop(context); // Close dialog
         _passwordController.clear();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Kata sandi orang tua berhasil diperbarui!'),
-            backgroundColor: Color(0xFF006A35),
+            content: Text(AppStrings.successPasswordUpdated),
+            backgroundColor: AppColors.successGreen,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -48,8 +58,8 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal mengubah kata sandi: $e'),
-            backgroundColor: const Color(0xFFBA1A1A),
+            content: Text('${AppStrings.labelFailed} mengubah kata sandi'),
+            backgroundColor: AppColors.errorRed2,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -68,8 +78,8 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Akun orang tua berhasil ${newStatus ? "diaktifkan kembali" : "dinonaktifkan"}.'),
-            backgroundColor: newStatus ? const Color(0xFF006A35) : const Color(0xFFBA1A1A),
+            content: Text('Akun orang tua berhasil ' '${newStatus ? AppStrings.successCardActivatedBack : AppStrings.adminNonaktifkan}' '.'),
+            backgroundColor: newStatus ? AppColors.successGreen : AppColors.errorRed2,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -78,8 +88,8 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal menonaktifkan akun: $e'),
-            backgroundColor: const Color(0xFFBA1A1A),
+            content: Text(AppStrings.labelFailedDeactivate),
+            backgroundColor: AppColors.errorRed2,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -91,7 +101,7 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text('Ubah Kata Sandi'),
+        title: const Text(AppStrings.adminChangePassword),
         content: Padding(
           padding: const EdgeInsets.only(top: 12.0),
           child: CupertinoTextField(
@@ -103,7 +113,7 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
         ),
         actions: [
           CupertinoDialogAction(
-            child: const Text('Batal'),
+            child: const Text(AppStrings.buttonCancel),
             onPressed: () {
               _passwordController.clear();
               Navigator.pop(context);
@@ -112,7 +122,7 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
           CupertinoDialogAction(
             isDestructiveAction: true,
             onPressed: () => _changePassword(profileId),
-            child: const Text('Simpan'),
+            child: const Text(AppStrings.buttonSave),
           ),
         ],
       ),
@@ -122,25 +132,23 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
   @override
   Widget build(BuildContext context) {
     final parentAsync = ref.watch(parentParentDetailProvider);
-    const Color primaryTeal = Color(0xFF003434);
-    const Color successGreen = Color(0xFF006A35);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF9F8),
+      backgroundColor: AppColors.offWhite,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF9F8),
+        backgroundColor: AppColors.offWhite,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.left_chevron, color: primaryTeal),
+          icon: const Icon(CupertinoIcons.left_chevron, color: AppColors.darkTeal),
           onPressed: () => context.pop(),
         ),
         title: Text(
           'Profil Orang Tua',
-          style: GoogleFonts.beVietnamPro(
+          style: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: primaryTeal,
+            color: AppColors.darkTeal,
           ),
         ),
       ),
@@ -163,11 +171,11 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.white,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
+                        color: AppColors.black.withValues(alpha: 0.04),
                         blurRadius: 20,
                         offset: const Offset(0, 4),
                       ),
@@ -177,31 +185,31 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                     children: [
                       CircleAvatar(
                         radius: 36,
-                        backgroundColor: primaryTeal.withValues(alpha: 0.1),
-                        child: const Icon(CupertinoIcons.person_2_fill, color: primaryTeal, size: 36),
+                        backgroundColor: AppColors.darkTeal.withValues(alpha: 0.1),
+                        child: const Icon(CupertinoIcons.person_2_fill, color: AppColors.darkTeal, size: 36),
                       ),
                       const SizedBox(height: 12),
                       Text(
                         fullName,
-                        style: GoogleFonts.beVietnamPro(
+                        style: GoogleFonts.inter(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: const Color(0xFF1B1C1B),
+                          color: AppColors.nearBlack,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                         decoration: BoxDecoration(
-                          color: primaryTeal.withValues(alpha: 0.1),
+                          color: AppColors.darkTeal.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
                           'Orang Tua Wali',
-                          style: GoogleFonts.beVietnamPro(
+                          style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: primaryTeal,
+                            color: AppColors.darkTeal,
                           ),
                         ),
                       ),
@@ -218,11 +226,11 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.white,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
+                        color: AppColors.black.withValues(alpha: 0.04),
                         blurRadius: 20,
                         offset: const Offset(0, 4),
                       ),
@@ -236,10 +244,10 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                         children: [
                           Text(
                             'Data Anak',
-                            style: GoogleFonts.beVietnamPro(
+                            style: GoogleFonts.inter(
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
-                              color: const Color(0xFF1B1C1B),
+                              color: AppColors.nearBlack,
                             ),
                           ),
                           const Icon(CupertinoIcons.group, color: AppColors.textGray),
@@ -249,7 +257,7 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                       if (children.isEmpty)
                         Text(
                           'Belum ada data anak yang ditautkan ke orang tua ini.',
-                          style: GoogleFonts.beVietnamPro(color: AppColors.textGray, fontSize: 13),
+                          style: GoogleFonts.inter(color: AppColors.textGray, fontSize: 13),
                         )
                       else
                         Column(
@@ -258,7 +266,7 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                             final studentInfo = c['students'] ?? {};
                             final String classStr = studentInfo['class'] ?? '-';
                             final profileInfo = studentInfo['profiles'] ?? {};
-                            final String childName = profileInfo['full_name'] ?? 'Siswa';
+                            final String childName = profileInfo['full_name'] ?? AppStrings.adminStudents;
 
                             return Column(
                               children: [
@@ -266,8 +274,8 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                                   children: [
                                     CircleAvatar(
                                       radius: 20,
-                                      backgroundColor: primaryTeal.withValues(alpha: 0.1),
-                                      child: const Icon(CupertinoIcons.person, color: primaryTeal, size: 20),
+                                      backgroundColor: AppColors.darkTeal.withValues(alpha: 0.1),
+                                      child: const Icon(CupertinoIcons.person, color: AppColors.darkTeal, size: 20),
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
@@ -276,15 +284,15 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                                         children: [
                                           Text(
                                             childName,
-                                            style: GoogleFonts.beVietnamPro(
+                                            style: GoogleFonts.inter(
                                               fontSize: 15,
                                               fontWeight: FontWeight.bold,
-                                              color: const Color(0xFF1B1C1B),
+                                              color: AppColors.nearBlack,
                                             ),
                                           ),
                                           Text(
                                             'Kelas $classStr',
-                                            style: GoogleFonts.beVietnamPro(
+                                            style: GoogleFonts.inter(
                                               fontSize: 12,
                                               color: AppColors.textGray,
                                             ),
@@ -292,7 +300,7 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                                         ],
                                       ),
                                     ),
-                                    const Icon(CupertinoIcons.checkmark_circle_fill, color: successGreen),
+                                    const Icon(CupertinoIcons.checkmark_circle_fill, color: AppColors.successGreen),
                                   ],
                                 ),
                                 const SizedBox(height: 12),
@@ -302,22 +310,22 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                                   child: Container(
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: primaryTeal.withValues(alpha: 0.05),
+                                      color: AppColors.darkTeal.withValues(alpha: 0.05),
                                       borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: primaryTeal.withValues(alpha: 0.15)),
+                                      border: Border.all(color: AppColors.darkTeal.withValues(alpha: 0.15)),
                                     ),
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
                                           '👉 LIHAT DETAIL AKUN SISWA',
-                                          style: GoogleFonts.beVietnamPro(
+                                          style: GoogleFonts.inter(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w700,
-                                            color: primaryTeal,
+                                            color: AppColors.darkTeal,
                                           ),
                                         ),
-                                        const Icon(CupertinoIcons.chevron_right, size: 14, color: primaryTeal),
+                                        const Icon(CupertinoIcons.chevron_right, size: 14, color: AppColors.darkTeal),
                                       ],
                                     ),
                                   ),
@@ -335,11 +343,11 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.white,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
+                        color: AppColors.black.withValues(alpha: 0.04),
                         blurRadius: 20,
                         offset: const Offset(0, 4),
                       ),
@@ -350,7 +358,7 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                     children: [
                       Text(
                         'Pengaturan Keamanan',
-                        style: GoogleFonts.beVietnamPro(
+                        style: GoogleFonts.inter(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textGray,
@@ -360,18 +368,18 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                       const SizedBox(height: 12),
                       _buildSecurityItem(
                         icon: CupertinoIcons.lock_shield,
-                        title: 'Ubah Kata Sandi',
+                        title: AppStrings.adminChangePassword,
                         onTap: () => _showChangePasswordDialog(profile.id),
                       ),
-                      const Divider(height: 20, thickness: 0.5, color: Color(0xFFE4E2E1)),
+                      const Divider(height: 20, thickness: 0.5, color: AppColors.borderGray),
                       _buildSecurityItem(
                         icon: CupertinoIcons.device_phone_portrait,
-                        title: 'Sesi Aktif',
+                        title: AppStrings.adminSessionActiveLabel,
                         onTap: () {
                           showCupertinoDialog(
                             context: context,
                             builder: (context) => CupertinoAlertDialog(
-                              title: const Text('Sesi Aktif'),
+                              title: const Text(AppStrings.adminSessionActiveLabel),
                               content: const Padding(
                                 padding: EdgeInsets.only(top: 8.0),
                                 child: Text('1 Sesi aktif di perangkat iOS (iPhone 15 Pro Max).'),
@@ -395,8 +403,8 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: const Color(0xFFFFDAD6), width: 1),
+                    color: AppColors.white,
+                    border: Border.all(color: AppColors.errorLightColor, width: 1),
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: TextButton.icon(
@@ -412,7 +420,7 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                           ),
                           actions: [
                             CupertinoDialogAction(
-                              child: const Text('Batal'),
+                              child: const Text(AppStrings.buttonCancel),
                               onPressed: () => Navigator.pop(ctx),
                             ),
                             CupertinoDialogAction(
@@ -421,7 +429,7 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                                 Navigator.pop(ctx);
                                 _toggleDisableParentAccount(profile.id, isAccountActive);
                               },
-                              child: Text(isAccountActive ? 'Nonaktifkan' : 'Aktifkan'),
+                              child: Text(isAccountActive ? AppStrings.adminNonaktifkan : AppStrings.adminAktifkan),
                             ),
                           ],
                         ),
@@ -429,14 +437,14 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                     },
                     icon: Icon(
                       isAccountActive ? CupertinoIcons.minus_circle : CupertinoIcons.checkmark_seal,
-                      color: const Color(0xFFBA1A1A),
+                      color: AppColors.errorRed2,
                     ),
                     label: Text(
                       isAccountActive ? 'Nonaktifkan Akun Orang Tua' : 'Aktifkan Kembali Akun Orang Tua',
-                      style: GoogleFonts.beVietnamPro(
+                      style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFFBA1A1A),
+                        color: AppColors.errorRed2,
                       ),
                     ),
                   ),
@@ -445,8 +453,22 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
             ),
           );
         },
-        loading: () => const Center(child: CupertinoActivityIndicator(color: primaryTeal)),
-        error: (err, stack) => Center(child: Text('Error: $err')),
+        loading: () => const Center(child: CupertinoActivityIndicator(color: AppColors.darkTeal)),
+        error: (err, stack) => Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+              const SizedBox(height: 12),
+              Text('${AppStrings.labelFailed} memuat data'),
+              const SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: () => ref.invalidate(adminParentDetailProvider(widget.parentId)),
+                child: const Text(AppStrings.buttonRetry),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -463,10 +485,10 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
         const SizedBox(width: 6),
         Text(
           value,
-          style: GoogleFonts.beVietnamPro(
+          style: GoogleFonts.inter(
             fontSize: 15,
             fontWeight: FontWeight.w400,
-            color: const Color(0xFF3F4848),
+            color: AppColors.darkGray,
           ),
         ),
       ],
@@ -489,21 +511,21 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
               children: [
                 CircleAvatar(
                   radius: 16,
-                  backgroundColor: const Color(0xFFEFEDEC),
-                  child: Icon(icon, size: 16, color: const Color(0xFF6F7978)),
+                  backgroundColor: AppColors.lightGray,
+                  child: Icon(icon, size: 16, color: AppColors.mutedGray),
                 ),
                 const SizedBox(width: 12),
                 Text(
                   title,
-                  style: GoogleFonts.beVietnamPro(
+                  style: GoogleFonts.inter(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFF1B1C1B),
+                    color: AppColors.nearBlack,
                   ),
                 ),
               ],
             ),
-            const Icon(CupertinoIcons.chevron_right, size: 14, color: Color(0xFFBFC8C8)),
+            const Icon(CupertinoIcons.chevron_right, size: 14, color: AppColors.gray400),
           ],
         ),
       ),

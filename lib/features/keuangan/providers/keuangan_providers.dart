@@ -1,6 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+
+/// WIB timezone offset used across keuangan providers.
+const _wibTimezone = Duration(hours: 7);
 
 // ============================================================================
 // DASHBOARD PROVIDER (Keuangan)
@@ -33,21 +37,23 @@ final keuanganDashboardProvider =
       final now = DateTime.now().toLocal();
       final todayStr =
           '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-      final startOfDayUtc = '${todayStr}T00:00:00+07:00';
+      final startOfDayUtc = '${todayStr}T00:00:00${_wibTimezone.isNegative ? '-' : '+'}${_wibTimezone.inHours.toString().padLeft(2, '0')}:00';
 
       // 1. Total saldo beredar semua siswa (data real dari DB)
-      double totalSaldo = 0.0;
+      int totalSaldo = 0;
       try {
         final List<dynamic> balances =
             await client.from('students').select('balance');
         for (final row in balances) {
           totalSaldo +=
-              double.tryParse(row['balance']?.toString() ?? '0') ?? 0.0;
+              (row['balance'] as num?)?.toInt() ?? 0;
         }
-      } catch (_) {}
+      } catch (e, st) {
+        debugPrint('keuanganDashboard saldo error: $e\n$st');
+      }
 
       // 2. Top-up hari ini
-      double topupToday = 0.0;
+      int topupToday = 0;
       int topupCount = 0;
       try {
         final List<dynamic> topups = await client
@@ -59,13 +65,15 @@ final keuanganDashboardProvider =
         topupCount = topups.length;
         for (final tx in topups) {
           topupToday +=
-              double.tryParse(tx['total_amount']?.toString() ?? '0') ?? 0.0;
+              int.tryParse(tx['total_amount']?.toString() ?? '0') ?? 0;
         }
-      } catch (_) {}
+      } catch (e, st) {
+        debugPrint('keuanganDashboard topup error: $e\n$st');
+      }
 
       // 3. Koreksi saldo hari ini (audit_logs KOREKSI_SALDO)
       int koreksCount = 0;
-      double koreksNet = 0.0;
+      int koreksNet = 0;
       try {
         final List<dynamic> koreksi = await client
             .from('audit_logs')
@@ -77,13 +85,15 @@ final keuanganDashboardProvider =
         for (final log in koreksi) {
           final oldVal = log['old_value'] as Map<String, dynamic>? ?? {};
           final newVal = log['new_value'] as Map<String, dynamic>? ?? {};
-          final double oldBal =
-              double.tryParse(oldVal['balance']?.toString() ?? '0') ?? 0.0;
-          final double newBal =
-              double.tryParse(newVal['balance']?.toString() ?? '0') ?? 0.0;
+          final int oldBal =
+              int.tryParse(oldVal['balance']?.toString() ?? '0') ?? 0;
+          final int newBal =
+              int.tryParse(newVal['balance']?.toString() ?? '0') ?? 0;
           koreksNet += (newBal - oldBal);
         }
-      } catch (_) {}
+      } catch (e, st) {
+        debugPrint('keuanganDashboard koreksi error: $e\n$st');
+      }
 
       // 4. Recent audit logs by this officer
       final List<dynamic> logs = await client
@@ -112,14 +122,14 @@ final keuanganDashboardProvider =
 /// Fetch riwayat audit logs milik officer keuangan.
 /// Digunakan di: keuangan_history_screen.dart
 final keuanganHistoryProvider =
-    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+    FutureProvider.autoDispose<List<AuditLog>>((ref) async {
       final client = ref.read(supabaseClientProvider);
       final profile = ref.read(authNotifierProvider).profile;
       final actorId = profile?['id'];
 
       // Guard: if actor ID is not available, return empty list
       if (actorId == null || actorId.toString().isEmpty) {
-        return <Map<String, dynamic>>[];
+        return <AuditLog>[];
       }
 
       final List<dynamic> res = await client
@@ -128,9 +138,12 @@ final keuanganHistoryProvider =
             'id, action_type, description, created_at, old_value, new_value, target_id',
           )
           .eq('actor_id', actorId)
-          .order('created_at', ascending: false);
+          .order('created_at', ascending: false)
+          .limit(50);
 
-      return List<Map<String, dynamic>>.from(res);
+      return res
+          .map((e) => AuditLog.fromJson(e as Map<String, dynamic>))
+          .toList();
     });
 
 // ============================================================================
@@ -153,14 +166,14 @@ final keuanganReportProvider = FutureProvider.autoDispose<Map<String, dynamic>>(
         .from('transactions')
         .select('total_amount, type, status, created_at');
 
-    double totalTopup = 0.0;
-    double totalPurchase = 0.0;
+    int totalTopup = 0;
+    int totalPurchase = 0;
     int topupCount = 0;
     int purchaseCount = 0;
 
     for (var tx in txs) {
       if (tx['status'] != 'success') continue;
-      final amt = double.tryParse(tx['total_amount']?.toString() ?? '0') ?? 0.0;
+      final amt = int.tryParse(tx['total_amount']?.toString() ?? '0') ?? 0;
       if (tx['type'] == 'topup') {
         totalTopup += amt;
         topupCount++;
@@ -176,14 +189,14 @@ final keuanganReportProvider = FutureProvider.autoDispose<Map<String, dynamic>>(
         .select('old_value, new_value')
         .eq('action_type', 'KOREKSI_SALDO');
 
-    double totalCorrection = 0.0;
+    int totalCorrection = 0;
     for (var log in logs) {
       final oldVal = log['old_value'] as Map<String, dynamic>? ?? {};
       final newVal = log['new_value'] as Map<String, dynamic>? ?? {};
-      final double oldBal =
-          double.tryParse(oldVal['balance']?.toString() ?? '0') ?? 0.0;
-      final double newBal =
-          double.tryParse(newVal['balance']?.toString() ?? '0') ?? 0.0;
+      final int oldBal =
+          int.tryParse(oldVal['balance']?.toString() ?? '0') ?? 0;
+      final int newBal =
+          int.tryParse(newVal['balance']?.toString() ?? '0') ?? 0;
       totalCorrection += (newBal - oldBal);
     }
 
@@ -205,7 +218,7 @@ final keuanganReportProvider = FutureProvider.autoDispose<Map<String, dynamic>>(
 /// Fetch semua siswa dengan data profile + student (join).
 /// Digunakan di: keuangan_students_screen.dart
 final keuanganStudentsProvider =
-    FutureProvider.autoDispose<List<StudentWithProfile>>((ref) async {
+    FutureProvider<List<StudentWithProfile>>((ref) async {
       final client = ref.read(supabaseClientProvider);
 
       // Fetch profiles that are students and join student details
@@ -230,7 +243,7 @@ final keuanganStudentsProvider =
 
 /// Fetch detail siswa lengkap dengan riwayat transaksi.
 /// Digunakan di: keuangan_student_detail_screen.dart
-final keuanganStudentDetailProvider = FutureProvider.autoDispose
+final keuanganStudentDetailProvider = FutureProvider
     .family<AdminStudentDetail, String>((ref, id) async {
       final client = ref.read(supabaseClientProvider);
 
@@ -239,14 +252,14 @@ final keuanganStudentDetailProvider = FutureProvider.autoDispose
           .from('profiles')
           .select()
           .eq('id', id)
-          .single();
+          .maybeSingle();
 
       // 2. Fetch student
       final student = await client
           .from('students')
           .select()
           .eq('id', id)
-          .single();
+          .maybeSingle();
 
       // 3. Fetch recent transactions
       final List<dynamic> txs = await client
@@ -259,8 +272,8 @@ final keuanganStudentDetailProvider = FutureProvider.autoDispose
           .limit(10);
 
       return AdminStudentDetail.fromJson({
-        'profile': profile,
-        'student': student,
+        'profile': profile ?? <String, dynamic>{},
+        'student': student ?? <String, dynamic>{},
         'transactions': txs,
       });
     });
@@ -272,7 +285,7 @@ final keuanganStudentDetailProvider = FutureProvider.autoDispose
 /// Fetch semua parent/ortu dengan data children.
 /// Digunakan di: keuangan_users_screen.dart
 final keuanganParentsProvider =
-    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
       final client = ref.read(supabaseClientProvider);
       final List<dynamic> res = await client
           .from('profiles')
@@ -287,7 +300,7 @@ final keuanganParentsProvider =
 /// Fetch semua petugas kantin dengan data operator.
 /// Digunakan di: keuangan_users_screen.dart
 final keuanganStaffProvider =
-    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
       final client = ref.read(supabaseClientProvider);
       final List<dynamic> res = await client
           .from('profiles')

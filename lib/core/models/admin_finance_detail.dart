@@ -34,6 +34,32 @@ class AdminFinanceDetail {
 
   int get logCount => recentLogs.length;
 
+  Map<String, dynamic> toJson() => {
+        'profile': profile.toJson(),
+        'officer': officer,
+        'logs': recentLogs.map((e) => e.toJson()).toList(),
+      };
+
+  AdminFinanceDetail copyWith({
+    UserProfile? profile,
+    Map<String, dynamic>? officer,
+    List<AuditLog>? recentLogs,
+  }) {
+    return AdminFinanceDetail(
+      profile: profile ?? this.profile,
+      officer: officer ?? this.officer,
+      recentLogs: recentLogs ?? this.recentLogs,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AdminFinanceDetail && profile.id == other.profile.id;
+
+  @override
+  int get hashCode => profile.id.hashCode;
+
   @override
   String toString() =>
       'AdminFinanceDetail(name: ${profile.fullName}, logs: $logCount)';
