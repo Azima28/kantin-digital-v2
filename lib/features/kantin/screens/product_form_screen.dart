@@ -185,11 +185,13 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         context.pop();
       }
     } catch (e) {
+      debugPrint('Save product error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppStrings.labelFailedSaveProduct),
+            content: Text('${AppStrings.labelFailedSaveProduct}: ${e.toString().replaceFirst('Exception: ', '')}'),
             backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
