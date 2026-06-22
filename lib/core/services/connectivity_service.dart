@@ -2,8 +2,8 @@ import 'package:kantin_digital/core/services/supabase_client.dart';
 
 /// Minimal connectivity checker.
 ///
-/// Performs a lightweight query against the Supabase backend with a 5‑second
-/// timeout. Returns `true` if the server responds, `false` otherwise.
+/// Performs a lightweight query against the `system_settings` table
+/// (RLS disabled for dev) with a 5‑second timeout.
 ///
 /// No third‑party package is required — only what the project already depends on.
 class ConnectivityService {

@@ -62,8 +62,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   // Cek sesi login saat inisialisasi awal
+  // NOTE: sengaja gak pake isLoading biar gak muncul spinner di tombol login.
+  // Loading cuma dipake pas user beneran login, bukan pas startup.
   Future<void> _checkInitialSession() async {
-    state = state.copyWith(isLoading: true);
     try {
       final Session? session = _authService.currentSession;
       if (session != null) {

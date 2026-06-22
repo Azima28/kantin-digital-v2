@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
-import 'package:kantin_digital/core/services/connectivity_service.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/auth/widgets/login_account_preview.dart';
 import 'package:kantin_digital/features/auth/widgets/login_preview_item.dart';
@@ -35,21 +34,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
-
-    // Check connectivity before attempting login
-    final bool isOnline = await ConnectivityService.isOnline();
-    if (!isOnline) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Tidak ada koneksi internet. Periksa koneksi Anda dan coba lagi.'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-      return;
-    }
 
     final String email = _emailController.text.trim();
     final String password = _passwordController.text;
