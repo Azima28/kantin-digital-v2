@@ -66,207 +66,192 @@ class OrderItemCard extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Left color stripe
-            Container(
-              width: 5,
-              color: indicatorColor,
-            ),
-            // Content
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(left: BorderSide(color: indicatorColor, width: 5)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top header: Name + Status Badge
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Top header: Name + Status Badge
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            order.studentName,
+                    Expanded(
+                      child: Text(
+                        order.studentName,
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: badgeBgColor,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(badgeIcon, size: 12, color: badgeTextColor),
+                          const SizedBox(width: 4),
+                          Text(
+                            badgeLabel,
                             style: GoogleFonts.inter(
-                              fontSize: 16,
+                              fontSize: 10,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.textDark,
+                              color: badgeTextColor,
                             ),
                           ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: badgeBgColor,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                badgeIcon,
-                                size: 12,
-                                color: badgeTextColor,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                badgeLabel,
-                                style: GoogleFonts.inter(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: badgeTextColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-
-                    // Time Row
-                    Row(
-                      children: [
-                        const Icon(
-                          CupertinoIcons.time,
-                          size: 13,
-                          color: AppColors.textGray,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          order.time,
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: AppColors.textGray,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-
-                    // List of items
-                    ...order.items.map((item) => Padding(
-                          padding: const EdgeInsets.only(bottom: 6.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                '${item.qty}x ${item.name}',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  color: AppColors.textDark,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              Text(
-                                'Rp ${NumberFormat('#,###', 'id_ID').format(item.price * item.qty)}',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  color: AppColors.textDark,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )),
-                    const SizedBox(height: 8),
-
-                    // Dashed Divider
-                    _buildDashedDivider(),
-                    const SizedBox(height: 8),
-
-                    // Total
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Total',
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textDark,
-                          ),
-                        ),
-                        Text(
-                          'Rp ${NumberFormat('#,###', 'id_ID').format(order.totalAmount)}',
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textDark,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Status Dropdown selector
-                    Align(
-                      alignment: Alignment.bottomRight,
-                      child: PopupMenuButton<String>(
-                        onSelected: (newStatus) {
-                          onStatusChanged(order.id, newStatus);
-                        },
-                        itemBuilder: (BuildContext context) => [
-                          const PopupMenuItem(
-                            value: 'Baru',
-                            child: Text('Baru'),
-                          ),
-                          const PopupMenuItem(
-                            value: 'Sedang Dimasak',
-                            child: Text('Sedang Dimasak'),
-                          ),
-                          const PopupMenuItem(
-                            value: 'Siap Diambil',
-                            child: Text('Siap Diambil'),
-                          ),
-                          const PopupMenuItem(
-                            value: 'Siap Diantar',
-                            child: Text('Siap Diantar'),
-                          ),
                         ],
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.systemBackground,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                order.status,
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textDark,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              const Icon(
-                                CupertinoIcons.chevron_down,
-                                size: 10,
-                                color: AppColors.textDark,
-                              ),
-                            ],
-                          ),
-                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 4),
+
+                // Time Row
+                Row(
+                  children: [
+                    const Icon(
+                      CupertinoIcons.time,
+                      size: 13,
+                      color: AppColors.textGray,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      order.time,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: AppColors.textGray,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // List of items
+                ...order.items.map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${item.qty}x ${item.name}',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: AppColors.textDark,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          'Rp ${NumberFormat('#,###', 'id_ID').format(item.price * item.qty)}',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Dashed Divider
+                _buildDashedDivider(),
+                const SizedBox(height: 8),
+
+                // Total
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Total',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    Text(
+                      'Rp ${NumberFormat('#,###', 'id_ID').format(order.totalAmount)}',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Status Dropdown selector
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: PopupMenuButton<String>(
+                    onSelected: (newStatus) {
+                      onStatusChanged(order.id, newStatus);
+                    },
+                    itemBuilder: (BuildContext context) => [
+                      const PopupMenuItem(value: 'Baru', child: Text('Baru')),
+                      const PopupMenuItem(
+                        value: 'Sedang Dimasak',
+                        child: Text('Sedang Dimasak'),
+                      ),
+                      const PopupMenuItem(
+                        value: 'Siap Diambil',
+                        child: Text('Siap Diambil'),
+                      ),
+                      const PopupMenuItem(
+                        value: 'Siap Diantar',
+                        child: Text('Siap Diantar'),
+                      ),
+                    ],
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.systemBackground,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            order.status,
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textDark,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(
+                            CupertinoIcons.chevron_down,
+                            size: 10,
+                            color: AppColors.textDark,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
       ),
     );
   }
