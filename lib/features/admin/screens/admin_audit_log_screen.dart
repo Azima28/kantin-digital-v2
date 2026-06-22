@@ -82,148 +82,144 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
   Widget build(BuildContext context) {
     final logsAsync = ref.watch(adminAuditLogsProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.offWhite,
-      appBar: AppBar(
-        backgroundColor: AppColors.offWhite,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(
-          'Audit Log Explorer',
-          style: GoogleFonts.inter(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: AppColors.darkTeal,
+    // NOTE: Disini TIDAK pake Scaffold — udah di-wrap AdminMainLayout
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── HEADER STATIC (gak ikut scroll) ──
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+          child: Text(
+            'Audit Log Explorer',
+            style: GoogleFonts.inter(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.darkTeal,
+            ),
           ),
         ),
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Subtitle & Dropdowns
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20.0,
-              vertical: 8.0,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Pemantauan sistem dan riwayat aktivitas secara real-time.',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    color: AppColors.darkGray,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                AuditLogActionFilter(
-                  selectedAction: _selectedAction,
-                  actions: _actions,
-                  onChanged: (val) {
-                    setState(() {
-                      _selectedAction = val;
-                    });
-                  },
-                ),
-              ],
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 20.0,
+            vertical: 4.0,
+          ),
+          child: Text(
+            'Pemantauan sistem dan riwayat aktivitas secara real-time.',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: AppColors.darkGray,
             ),
           ),
-          const SizedBox(height: 8),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 20.0,
+            vertical: 8.0,
+          ),
+          child: AuditLogActionFilter(
+            selectedAction: _selectedAction,
+            actions: _actions,
+            onChanged: (val) {
+              setState(() {
+                _selectedAction = val;
+              });
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
 
-          // Timeline logs
-          Expanded(
-            child: logsAsync.when(
-              data: (logs) {
-                var filtered = logs;
+        // ── LIST SCROLLABLE ──
+        Expanded(
+          child: logsAsync.when(
+            data: (logs) {
+              var filtered = logs;
 
-                if (_selectedAction != 'Semua Aksi') {
-                  final dbActionKey = _mapActionTypeToFilter(_selectedAction);
-                  filtered = filtered
-                      .where((l) => l.actionType == dbActionKey)
-                      .toList();
-                }
+              if (_selectedAction != 'Semua Aksi') {
+                final dbActionKey = _mapActionTypeToFilter(_selectedAction);
+                filtered = filtered
+                    .where((l) => l.actionType == dbActionKey)
+                    .toList();
+              }
 
-                if (filtered.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.inbox_outlined,
-                            size: 64, color: AppColors.mutedGray),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Tidak ada log audit ditemukan.',
-                          style: GoogleFonts.inter(
-                            color: AppColors.textGray,
-                            fontSize: 15,
-                          ),
+              if (filtered.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.inbox_outlined,
+                          size: 64, color: AppColors.mutedGray),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Tidak ada log audit ditemukan.',
+                        style: GoogleFonts.inter(
+                          color: AppColors.textGray,
+                          fontSize: 15,
                         ),
-                      ],
-                    ),
-                  );
-                }
-
-                return RefreshIndicator(
-                  onRefresh: () async {
-                    ref.invalidate(adminAuditLogsProvider);
-                  },
-                  color: AppColors.darkTeal,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
-                    ),
-                    itemCount: filtered.length,
-                    itemBuilder: (context, index) {
-                      final log = filtered[index];
-                      return AuditLogTile(
-                        log: log,
-                        onDetailTap: () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: AppColors.white,
-                            shape: const RoundedRectangleBorder(
-                              borderRadius: BorderRadius.vertical(
-                                top: Radius.circular(24),
-                              ),
-                            ),
-                            builder: (_) =>
-                                AuditLogDetailSheet(log: log),
-                          );
-                        },
-                      );
-                    },
+                      ),
+                    ],
                   ),
                 );
-              },
-              loading: () => const Center(
-                child: CupertinoActivityIndicator(
-                  color: AppColors.darkTeal,
+              }
+
+              return RefreshIndicator(
+                onRefresh: () async {
+                  ref.invalidate(adminAuditLogsProvider);
+                },
+                color: AppColors.darkTeal,
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  itemCount: filtered.length,
+                  itemBuilder: (context, index) {
+                    final log = filtered[index];
+                    return AuditLogTile(
+                      log: log,
+                      onDetailTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: AppColors.white,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(24),
+                            ),
+                          ),
+                          builder: (_) =>
+                              AuditLogDetailSheet(log: log),
+                        );
+                      },
+                    );
+                  },
                 ),
+              );
+            },
+            loading: () => const Center(
+              child: CupertinoActivityIndicator(
+                color: AppColors.darkTeal,
               ),
-              error: (err, stack) => Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.error_outline,
-                        size: 48, color: AppColors.errorRed),
-                    const SizedBox(height: 12),
-                    Text('${AppStrings.labelFailed} memuat data'),
-                    const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: () =>
-                          ref.invalidate(adminAuditLogsProvider),
-                      child: const Text(AppStrings.buttonRetry),
-                    ),
-                  ],
-                ),
+            ),
+            error: (err, stack) => Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error_outline,
+                      size: 48, color: AppColors.errorRed),
+                  const SizedBox(height: 12),
+                  Text('${AppStrings.labelFailed} memuat data'),
+                  const SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: () =>
+                        ref.invalidate(adminAuditLogsProvider),
+                    child: const Text(AppStrings.buttonRetry),
+                  ),
+                ],
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
