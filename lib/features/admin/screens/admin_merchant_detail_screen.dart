@@ -232,12 +232,15 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Product Catalog',
-                style: GoogleFonts.inter(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.darkTeal,
+              Flexible(
+                child: Text(
+                  'Product Catalog',
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.darkTeal,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               Container(
