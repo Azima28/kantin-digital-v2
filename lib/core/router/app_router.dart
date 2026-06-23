@@ -369,6 +369,16 @@ final routerProvider = Provider<GoRouter>((ref) {
                 const CheckCardScreen(),
           ),
           GoRoute(
+            path: AppRouter.posTerminal,
+            builder: (BuildContext context, GoRouterState state) =>
+                const PosDashboardScreen(),
+          ),
+          GoRoute(
+            path: AppRouter.posCart,
+            builder: (BuildContext context, GoRouterState state) =>
+                const CartScreen(),
+          ),
+          GoRoute(
             path: AppRouter.posManageProducts,
             builder: (BuildContext context, GoRouterState state) =>
                 const ManageProductsScreen(),
@@ -379,18 +389,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                 const SalesHistoryScreen(),
           ),
         ],
-      ),
-      
-      // POS Canteen sub-pages (without bottom tab bar)
-      GoRoute(
-        path: AppRouter.posTerminal,
-        builder: (BuildContext context, GoRouterState state) =>
-            const PosDashboardScreen(),
-      ),
-      GoRoute(
-        path: AppRouter.posCart,
-        builder: (BuildContext context, GoRouterState state) =>
-            const CartScreen(),
       ),
       GoRoute(
         path: AppRouter.posAddEditProduct,

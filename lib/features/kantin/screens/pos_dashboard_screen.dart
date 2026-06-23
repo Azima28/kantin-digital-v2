@@ -142,6 +142,7 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: SizedBox(
                       width: double.infinity,
+                      height: 36,
                       child: CupertinoSegmentedControl<int>(
                         groupValue: _selectedCategoryIndex,
                         selectedColor: AppColors.primary,
@@ -150,21 +151,21 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                         pressedColor: AppColors.primaryLight,
                         children: const <int, Widget>{
                           0: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 10),
+                            padding: EdgeInsets.symmetric(vertical: 8),
                             child: Text(
                               AppStrings.categoryAll,
                               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                             ),
                           ),
                           1: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 10),
+                            padding: EdgeInsets.symmetric(vertical: 8),
                             child: Text(
                               AppStrings.categoryFood,
                               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                             ),
                           ),
                           2: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 10),
+                            padding: EdgeInsets.symmetric(vertical: 8),
                             child: Text(
                               AppStrings.categoryDrink,
                               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),

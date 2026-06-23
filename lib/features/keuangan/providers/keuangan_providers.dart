@@ -159,7 +159,7 @@ final keuanganReportProvider = FutureProvider.autoDispose<Map<String, dynamic>>(
     // Fetch canteen operators and their earned balance
     final List<dynamic> canteens = await client
         .from('canteen_operators')
-        .select('canteen_name, balance_earned');
+        .select('id, canteen_name, balance_earned');
 
     // Fetch all transactions to compile totals
     final List<dynamic> txs = await client

@@ -68,7 +68,7 @@ DECLARE
     v_parent RECORD;
 BEGIN
     -- Step 1: Find student by NISN
-    SELECT id, nisn, name
+    SELECT id, nisn, full_name
     INTO v_student
     FROM public.profiles
     WHERE nisn = p_student_nisn AND role = 'student';
