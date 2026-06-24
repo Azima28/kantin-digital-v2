@@ -47,6 +47,7 @@ class _CheckCardScreenState extends ConsumerState<CheckCardScreen> {
         _errorMessage =
             'Hardware NFC tidak terdeteksi atau dinonaktifkan di perangkat ini. Gunakan simulator di bawah untuk pengujian.';
       });
+      return;
     }
 
     NfcService.startScanning(

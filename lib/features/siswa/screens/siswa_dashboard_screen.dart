@@ -11,6 +11,7 @@ import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/utils/responsive.dart';
 import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/widgets/notification_bell.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 import 'package:kantin_digital/features/siswa/widgets/siswa_transaction_detail_sheet.dart';
@@ -78,12 +79,9 @@ class SiswaDashboardScreen extends ConsumerWidget {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(CupertinoIcons.bell, color: AppColors.teal),
-            onPressed: () => context.push('/student/notifications'),
-          ),
-          const SizedBox(width: 8),
+        actions: const [
+          NotificationBell(color: AppColors.teal),
+          SizedBox(width: 8),
         ],
       ),
       body: RefreshIndicator(

@@ -12,35 +12,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
+import 'package:kantin_digital/core/widgets/notification_bell.dart';
 import 'package:intl/intl.dart';
 
 class PosHomeScreen extends ConsumerWidget {
   const PosHomeScreen({super.key});
-
-  Future<void> _handleLogout(BuildContext context, WidgetRef ref) async {
-    showCupertinoDialog(
-      context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: const Text('Keluar Aplikasi'),
-        content: const Text('Apakah Anda yakin ingin keluar dari akun kasir?'),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () {
-              Navigator.pop(ctx);
-              ref.read(authNotifierProvider.notifier).logout();
-              context.go('/login');
-            },
-            child: const Text(AppStrings.buttonLogout),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -56,6 +32,7 @@ class PosHomeScreen extends ConsumerWidget {
       appBar: AppBar(
         toolbarHeight: 64,
         titleSpacing: 16,
+        centerTitle: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -107,16 +84,11 @@ class PosHomeScreen extends ConsumerWidget {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(
-              CupertinoIcons.square_arrow_right,
-              color: AppColors.error,
-            ),
-            onPressed: () => _handleLogout(context, ref),
-          ),
-          const SizedBox(width: 8),
+        actions: const [
+          NotificationBell(color: AppColors.teal),
+          SizedBox(width: 8),
         ],
+
       ),
       body: RefreshIndicator(
         onRefresh: () async {

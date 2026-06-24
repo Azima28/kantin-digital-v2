@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
@@ -147,27 +148,20 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
 
     try {
       final client = ref.read(supabaseClientProvider);
+      final sessionToken = ref.read(authNotifierProvider).sessionToken;
 
       final studentId = _selectedStudent!.id;
       final int amount = _getAmount();
 
-      // Fetch a default operator ID to associate with the transaction
-      final operators = await client
-          .from('canteen_operators')
-          .select('id')
-          .limit(1);
-      if (operators.isEmpty) {
-        throw Exception(
-          'Tidak ada operator kantin terdaftar untuk mencatat transaksi top-up.',
-        );
+      if (sessionToken == null || sessionToken.isEmpty) {
+        throw Exception('Sesi tidak valid. Silakan keluar dan masuk kembali.');
       }
-      final String operatorId = operators.first['id'];
 
       // Call RPC process_topup (handles balance update, transaction, audit log, notification)
       await client.rpc('process_topup', params: {
         'p_student_id': studentId,
         'p_amount': amount,
-        'p_operator_id': operatorId,
+        'p_session_token': sessionToken,
         'p_method': 'tunai',
         'p_notes': '',
       });
@@ -176,6 +170,7 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
       ref.invalidate(keuanganDashboardProvider);
       ref.invalidate(keuanganStudentsProvider);
       ref.invalidate(keuanganStudentDetailProvider(studentId));
+      ref.invalidate(userNotificationsProvider);
 
       final now = DateTime.now();
       setState(() {

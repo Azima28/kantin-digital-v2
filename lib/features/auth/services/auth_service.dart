@@ -30,6 +30,7 @@ class AuthService {
   // Sign In with dual-path strategy:
   //   1. Primary: Supabase Auth (signInWithPassword) — establishes JWT session for RLS
   //   2. Fallback: Profiles-based password check — keeps app usable if Auth is down
+  // Returns: Map with keys 'profile' (Map) and 'session_token' (String?)
   Future<Map<String, dynamic>> signIn({
     required String email,
     required String password,
@@ -240,7 +241,32 @@ class AuthService {
       }
 
       _currentProfile = profile;
-      return profile!;
+
+      // --- Step 5: Obtain a secure hashed session token for transactional RPCs ---
+      // Only for operational roles that perform purchases/topups/corrections.
+      String? sessionToken;
+      try {
+        final sessionResult = await _client.rpc('create_user_session', params: {
+          'p_email': resolvedEmail,
+          'p_password': password,
+        });
+        final Map<String, dynamic> sessionData;
+        if (sessionResult is Map<String, dynamic>) {
+          sessionData = sessionResult;
+        } else if (sessionResult is String) {
+          sessionData = jsonDecode(sessionResult) as Map<String, dynamic>;
+        } else {
+          sessionData = {};
+        }
+        if (sessionData['success'] == true) {
+          sessionToken = sessionData['session_token'] as String?;
+        }
+      } catch (_) {
+        // Non-fatal: session token is best-effort. App functions, but transactional
+        // RPCs will fail if token is null — user will see a friendly error message.
+      }
+
+      return {'profile': profile!, 'session_token': sessionToken};
     } catch (e) {
       final String errString = e.toString();
       if (errString.contains('SocketException') ||

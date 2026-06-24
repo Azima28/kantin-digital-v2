@@ -122,6 +122,33 @@ class FakeSupabaseClient extends Fake implements SupabaseClient {
     }
     return FakeSupabaseQueryBuilder(profileToReturn);
   }
+
+  @override
+  PostgrestFilterBuilder<T> rpc<T>(
+    String fn, {
+    Map<String, dynamic>? params,
+    Object? get,
+  }) {
+    dynamic returnValue;
+    if (fn == 'resolve_parent_login') {
+      returnValue = {
+        'found': true,
+        'id': 'parent-uuid',
+        'email': 'parent.siswa@sekolah.sch.id',
+        'role': 'parent',
+        'full_name': 'Orang Tua Siswa Test',
+        'student_id': 'student-uuid',
+      };
+    } else if (fn == 'verify_password') {
+      returnValue = {
+        'success': true,
+        'profile': profileToReturn,
+      };
+    } else if (fn == 'create_user_session') {
+      returnValue = 'mock-session-token';
+    }
+    return FakePostgrestFilterBuilder<T>(returnValue as T);
+  }
 }
 
 void main() {
@@ -163,8 +190,9 @@ void main() {
         expectedRole: 'siswa',
       );
 
-      expect(result['role'], equals('siswa'));
-      expect(result['full_name'], equals('Siswa Test'));
+      final profile = result['profile'] as Map<String, dynamic>;
+      expect(profile['role'], equals('siswa'));
+      expect(profile['full_name'], equals('Siswa Test'));
     });
 
     test('Auth Success but role mismatch throws error and signs out', () async {
@@ -205,7 +233,8 @@ void main() {
           password: 'safe-password',
           expectedRole: 'petugas_kantin',
         );
-        expect(result['full_name'], equals('Petugas Fallback'));
+        final profile = result['profile'] as Map<String, dynamic>;
+        expect(profile['full_name'], equals('Petugas Fallback'));
       } catch (e) {
         rethrow;
       }
@@ -226,9 +255,10 @@ void main() {
         expectedRole: 'parent',
       );
 
-      expect(result['role'], equals('parent'));
-      expect(result['full_name'], equals('Orang Tua Siswa Test'));
-      expect(result['student_id'], equals('student-uuid'));
+      final profile = result['profile'] as Map<String, dynamic>;
+      expect(profile['role'], equals('parent'));
+      expect(profile['full_name'], equals('Orang Tua Siswa Test'));
+      expect(profile['student_id'], equals('student-uuid'));
     });
   });
 }

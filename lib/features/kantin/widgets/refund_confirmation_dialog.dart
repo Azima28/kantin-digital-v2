@@ -17,8 +17,9 @@ Future<void> showRefundConfirmationDialog(
   String studentName,
 ) async {
   final authState = ref.read(authNotifierProvider);
+  final String? sessionToken = authState.sessionToken;
   final String? operatorId = authState.profile?['id'];
-  if (operatorId == null) return;
+  if (sessionToken == null || operatorId == null) return;
 
   showCupertinoDialog(
     context: context,
@@ -43,7 +44,7 @@ Future<void> showRefundConfirmationDialog(
                 'process_refund',
                 params: {
                   'p_transaction_id': txId,
-                  'p_operator_id': operatorId,
+                  'p_session_token': sessionToken,
                   'p_reason': 'Dibatalkan oleh petugas kantin',
                 },
               );

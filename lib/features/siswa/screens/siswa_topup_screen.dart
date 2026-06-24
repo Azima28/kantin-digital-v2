@@ -6,6 +6,7 @@ import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/siswa/widgets/qris_checkout_content.dart';
 import 'package:kantin_digital/features/siswa/widgets/siswa_quick_amount_item.dart';
 import 'package:kantin_digital/features/siswa/widgets/topup_payment_info_card.dart';
@@ -68,23 +69,17 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
         throw Exception('Identitas siswa tidak ditemukan.');
       }
 
-      // Get operator ID from auth context or fetch first available operator
-      final authProfile = authState.profile;
-      String operatorId = authProfile?['operator_id'] ?? '';
+      final sessionToken = authState.sessionToken;
 
-      if (operatorId.isEmpty) {
-        final operators = await client.from('canteen_operators').select('id').limit(1);
-        if (operators.isEmpty) {
-          throw Exception('Tidak ada operator kantin terdaftar untuk mencatat transaksi top-up.');
-        }
-        operatorId = operators.first['id'];
+      if (sessionToken == null || sessionToken.isEmpty) {
+        throw Exception('Sesi tidak valid. Silakan keluar dan masuk kembali.');
       }
 
       // Replace direct update with RPC
       await client.rpc('process_topup', params: {
         'p_student_id': studentId,
         'p_amount': amount,
-        'p_operator_id': operatorId,
+        'p_session_token': sessionToken,
         'p_method': 'simulasi',
         'p_notes': 'Top-up mandiri siswa',
       });
@@ -93,6 +88,7 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
       ref.invalidate(siswaStudentProvider);
       ref.invalidate(siswaTransactionsProvider);
       ref.invalidate(siswaNotificationsProvider);
+      ref.invalidate(userNotificationsProvider);
 
       if (mounted) {
         Navigator.pop(context); // Close bottom sheet

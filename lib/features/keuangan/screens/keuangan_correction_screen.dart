@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
@@ -166,8 +167,8 @@ class _KeuanganCorrectionScreenState
 
     try {
       final client = ref.read(supabaseClientProvider);
-      final profile = ref.read(authNotifierProvider).profile;
-      final actorId = profile?['id'];
+      final authState = ref.read(authNotifierProvider);
+      final sessionToken = authState.sessionToken;
 
       final studentId = _selectedStudent!.id;
       final int amount = _storedAmount;
@@ -176,11 +177,15 @@ class _KeuanganCorrectionScreenState
           : _studentBalance - amount;
       final String reason = _storedReason;
 
+      if (sessionToken == null || sessionToken.isEmpty) {
+        throw Exception('Sesi tidak valid. Silakan keluar dan masuk kembali.');
+      }
+
       // Call RPC process_correction (handles balance update, audit log, notification)
       await client.rpc('process_correction', params: {
         'p_student_id': studentId,
         'p_new_balance': finalNewBalance,
-        'p_operator_id': actorId,
+        'p_session_token': sessionToken,
         'p_reason': reason,
       });
 
@@ -188,6 +193,7 @@ class _KeuanganCorrectionScreenState
       ref.invalidate(keuanganDashboardProvider);
       ref.invalidate(keuanganStudentsProvider);
       ref.invalidate(keuanganStudentDetailProvider(studentId));
+      ref.invalidate(userNotificationsProvider);
 
       final now = DateTime.now();
       setState(() {

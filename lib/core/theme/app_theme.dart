@@ -51,6 +51,10 @@ class AppTheme {
           borderRadius: BorderRadius.circular(16),
         ),
       ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,

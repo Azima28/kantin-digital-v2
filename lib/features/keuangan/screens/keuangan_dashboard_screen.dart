@@ -10,6 +10,7 @@ import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.da
 
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/widgets/notification_bell.dart';
 
 // keuanganDashboardProvider is defined in keuangan_providers.dart
 
@@ -75,20 +76,27 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    GestureDetector(
-                      onTap: () => context.go('/finance/settings'),
-                      child: CircleAvatar(
-                        radius: 22,
-                        backgroundColor: AppColors.darkTeal.withValues(alpha: 0.1),
-                        child: Text(
-                          fullName.isNotEmpty ? fullName[0].toUpperCase() : 'A',
-                          style: GoogleFonts.inter(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.darkTeal,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const NotificationBell(color: AppColors.darkTeal),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () => context.go('/finance/settings'),
+                          child: CircleAvatar(
+                            radius: 22,
+                            backgroundColor: AppColors.darkTeal.withValues(alpha: 0.1),
+                            child: Text(
+                              fullName.isNotEmpty ? fullName[0].toUpperCase() : 'A',
+                              style: GoogleFonts.inter(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.darkTeal,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),

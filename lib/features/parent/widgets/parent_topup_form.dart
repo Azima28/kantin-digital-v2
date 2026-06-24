@@ -6,12 +6,12 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
-import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/parent/widgets/parent_amount_selector.dart';
 import 'package:kantin_digital/features/parent/widgets/parent_midtrans_payment_modal.dart';
 import 'package:kantin_digital/features/parent/providers/parent_providers.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 
 class ParentTopUpForm extends ConsumerStatefulWidget {
   final String studentId;
@@ -82,19 +82,17 @@ class _ParentTopUpFormState extends ConsumerState<ParentTopUpForm> {
     try {
       final client = ref.read(supabaseClientProvider);
 
-      // Fetch a default operator ID to associate with the transaction
-      final operators = await client.from('canteen_operators').select('id, canteen_name').limit(1);
-      if (operators.isEmpty) {
-        throw Exception('Tidak ada stan kantin terdaftar untuk mencatat transaksi topup.');
+      final sessionToken = ref.read(authNotifierProvider).sessionToken;
+
+      if (sessionToken == null || sessionToken.isEmpty) {
+        throw Exception('Sesi tidak valid. Silakan keluar dan masuk kembali.');
       }
-      final operatorModel = CanteenOperator.fromJson(operators.first);
-      final String operatorId = operatorModel.id;
 
       // Use RPC for atomic topup
       await client.rpc('process_topup', params: {
         'p_student_id': widget.studentId,
         'p_amount': amount,
-        'p_operator_id': operatorId,
+        'p_session_token': sessionToken,
         'p_method': 'transfer',
         'p_notes': 'Top-up oleh orang tua',
       });
@@ -111,6 +109,7 @@ class _ParentTopUpFormState extends ConsumerState<ParentTopUpForm> {
       ref.invalidate(siswaStudentProvider);
       ref.invalidate(siswaTransactionsProvider);
       ref.invalidate(parentDashboardProvider(widget.studentId));
+      ref.invalidate(userNotificationsProvider);
 
       if (mounted) {
         Navigator.pop(context); // Close the Midtrans snap modal

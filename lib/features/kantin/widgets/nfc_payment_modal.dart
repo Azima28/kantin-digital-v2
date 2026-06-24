@@ -41,7 +41,7 @@ class _NfcPaymentModalState extends ConsumerState<NfcPaymentModal> {
     final paymentState = ref.watch(nfcPaymentProvider);
     final authState = ref.watch(authNotifierProvider);
     final cartState = ref.watch(cartProvider);
-    final String? operatorId = authState.profile?['id'];
+    final String? sessionToken = authState.sessionToken;
 
     // Auto-close modal on success after 2 seconds
     if (paymentState.status == NfcPaymentStatus.success) {
@@ -95,12 +95,12 @@ class _NfcPaymentModalState extends ConsumerState<NfcPaymentModal> {
             NfcConfirmingPaymentUi(
               totalAmount: widget.totalAmount,
               isConfirming: _isConfirming,
-              onConfirm: operatorId == null || operatorId.isEmpty || _isConfirming
+              onConfirm: sessionToken == null || sessionToken.isEmpty || _isConfirming
                   ? null
                   : () {
                       setState(() => _isConfirming = true);
                       ref.read(nfcPaymentProvider.notifier).confirmPurchase(
-                        operatorId: operatorId,
+                        sessionToken: sessionToken,
                         items: cartState.items,
                         totalAmount: widget.totalAmount,
                       );

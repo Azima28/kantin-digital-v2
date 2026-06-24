@@ -126,3 +126,41 @@ final rfidByUidProvider =
     rethrow;
   }
 });
+
+// ============================================================================
+// GLOBAL NOTIFICATIONS PROVIDERS (Multi-Role)
+// ============================================================================
+
+/// Fetch all notifications for currently logged in user (Siswa, Kantin, Keuangan, Admin)
+final userNotificationsProvider =
+    FutureProvider.autoDispose<List<AppNotification>>((ref) async {
+  try {
+    final client = ref.read(supabaseClientProvider);
+    final user = client.auth.currentUser;
+    if (user == null) return <AppNotification>[];
+
+    final List<dynamic> response = await client
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', ascending: false)
+        .limit(50);
+
+    return response
+        .map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
+        .toList();
+  } catch (e, st) {
+    debugPrint('userNotificationsProvider error: $e\n$st');
+    return <AppNotification>[];
+  }
+});
+
+/// Count of unread notifications for currently logged in user
+final unreadNotificationsCountProvider =
+    Provider.autoDispose<int>((ref) {
+  final notifsAsync = ref.watch(userNotificationsProvider);
+  return notifsAsync.maybeWhen(
+    data: (notifs) => notifs.where((n) => !n.isRead).length,
+    orElse: () => 0,
+  );
+});

@@ -19,15 +19,11 @@ class KeuanganMainLayout extends ConsumerWidget {
   int _getSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).uri.toString();
     if (location.startsWith('/finance/settings')) {
-      return 4;
-    } else if (location.startsWith('/finance/students')) {
-      return 1;
-    } else if (location.startsWith('/finance/users')) {
+      return 3;
+    } else if (location.startsWith('/finance/students') || location.startsWith('/finance/users')) {
       return 1;
     } else if (location.startsWith('/finance/history')) {
       return 2;
-    } else if (location.startsWith('/finance/report')) {
-      return 3;
     }
     return 0; // default to /finance (dashboard)
   }
@@ -44,9 +40,6 @@ class KeuanganMainLayout extends ConsumerWidget {
         context.go('/finance/history');
         break;
       case 3:
-        context.go('/finance/report');
-        break;
-      case 4:
         context.go('/finance/settings');
         break;
     }
@@ -123,14 +116,9 @@ class KeuanganMainLayout extends ConsumerWidget {
               label: AppStrings.labelTransaction,
             ),
             BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.chart_bar, size: 22),
-              activeIcon: Icon(CupertinoIcons.chart_bar_fill, size: 22),
-              label: 'Laporan',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.gear, size: 22),
-              activeIcon: Icon(CupertinoIcons.gear_solid, size: 22),
-              label: 'Settings',
+              icon: Icon(CupertinoIcons.person, size: 22),
+              activeIcon: Icon(CupertinoIcons.person_fill, size: 22),
+              label: 'Akun',
             ),
           ],
         ),
@@ -232,20 +220,11 @@ class KeuanganMainLayout extends ConsumerWidget {
                 const SizedBox(height: 8),
                 _buildSidebarItem(
                   context: context,
-                  icon: CupertinoIcons.chart_bar,
-                  activeIcon: CupertinoIcons.chart_bar_fill,
-                  label: 'Laporan',
+                  icon: CupertinoIcons.person,
+                  activeIcon: CupertinoIcons.person_fill,
+                  label: 'Akun Saya',
                   isSelected: selectedIndex == 3,
                   onTap: () => _onItemTapped(3, context),
-                ),
-                const SizedBox(height: 8),
-                _buildSidebarItem(
-                  context: context,
-                  icon: CupertinoIcons.gear,
-                  activeIcon: CupertinoIcons.gear_solid,
-                  label: 'Settings',
-                  isSelected: selectedIndex == 4,
-                  onTap: () => _onItemTapped(4, context),
                 ),
               ],
             ),

@@ -345,71 +345,81 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                             ),
                           ],
                         ),
-                        child: Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding:
-                                        const EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white
-                                          .withValues(alpha: 0.25),
-                                      borderRadius:
-                                          BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      '${cartState.totalItems}',
-                                      style: const TextStyle(
-                                        color: AppColors.white,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      alignment: Alignment.centerLeft,
-                                      child: Text(
-                                        'Keranjang • ${CurrencyFormatter.format(cartState.totalAmount)}',
-                                        style: const TextStyle(
-                                          color: AppColors.white,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 15,
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final bool isNarrow = constraints.maxWidth < 320;
+                            return Row(
+                              mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding:
+                                            const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.25),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          '${cartState.totalItems}',
+                                          style: const TextStyle(
+                                            color: AppColors.white,
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 12,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  AppStrings.titleDetail,
-                                  style: TextStyle(
-                                    color: AppColors.white,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13,
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          alignment: Alignment.centerLeft,
+                                          child: Text(
+                                            isNarrow
+                                                ? CurrencyFormatter.format(
+                                                    cartState.totalAmount)
+                                                : 'Keranjang • ${CurrencyFormatter.format(cartState.totalAmount)}',
+                                            style: const TextStyle(
+                                              color: AppColors.white,
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 15,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                SizedBox(width: 4),
-                                Icon(
-                                  CupertinoIcons.chevron_right,
-                                  color: AppColors.white,
-                                  size: 14,
+                                const SizedBox(width: 8),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (!isNarrow) ...[
+                                      const Text(
+                                        AppStrings.titleDetail,
+                                        style: TextStyle(
+                                          color: AppColors.white,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                    ],
+                                    const Icon(
+                                      CupertinoIcons.chevron_right,
+                                      color: AppColors.white,
+                                      size: 14,
+                                    ),
+                                  ],
                                 ),
                               ],
-                            ),
-                          ],
+                            );
+                          },
                         ),
                       ),
                     ),

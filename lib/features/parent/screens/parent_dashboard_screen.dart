@@ -519,6 +519,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
       ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
+          color: AppColors.white,
           border: Border(
             top: BorderSide(color: AppColors.borderLight, width: 0.5),
           ),

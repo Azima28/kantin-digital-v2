@@ -17,11 +17,11 @@ class KantinMainLayout extends ConsumerWidget {
     final String location = GoRouterState.of(context).uri.toString();
     if (location.startsWith('/pos/orders')) {
       return 1;
-    } else if (location.startsWith('/pos/terminal') || location.startsWith('/pos/cart')) {
-      return 2;
     } else if (location.startsWith('/pos/products')) {
-      return 3;
+      return 2;
     } else if (location.startsWith('/pos/sales')) {
+      return 3;
+    } else if (location.startsWith('/pos/profile')) {
       return 4;
     }
     return 0; // default to /pos
@@ -36,13 +36,13 @@ class KantinMainLayout extends ConsumerWidget {
         context.go('/pos/orders');
         break;
       case 2:
-        context.go('/pos/terminal');
-        break;
-      case 3:
         context.go('/pos/products');
         break;
-      case 4:
+      case 3:
         context.go('/pos/sales');
+        break;
+      case 4:
+        context.go('/pos/profile');
         break;
     }
   }
@@ -89,6 +89,7 @@ class KantinMainLayout extends ConsumerWidget {
       ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
+          color: AppColors.cardBackground,
           border: Border(
             top: BorderSide(color: AppColors.borderLight, width: 0.5),
           ),
@@ -115,11 +116,6 @@ class KantinMainLayout extends ConsumerWidget {
               label: 'Pesanan',
             ),
             BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.square_grid_2x2, size: 22),
-              activeIcon: Icon(CupertinoIcons.square_grid_2x2_fill, size: 22),
-              label: 'Menu',
-            ),
-            BottomNavigationBarItem(
               icon: Icon(CupertinoIcons.tray_full, size: 22),
               activeIcon: Icon(CupertinoIcons.tray_full_fill, size: 22),
               label: 'Produk',
@@ -128,6 +124,11 @@ class KantinMainLayout extends ConsumerWidget {
               icon: Icon(CupertinoIcons.time, size: 22),
               activeIcon: Icon(CupertinoIcons.time_solid, size: 22),
               label: 'Riwayat',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.person, size: 22),
+              activeIcon: Icon(CupertinoIcons.person_fill, size: 22),
+              label: 'Akun',
             ),
           ],
         ),
@@ -219,20 +220,11 @@ class KantinMainLayout extends ConsumerWidget {
                 const SizedBox(height: 8),
                 _buildSidebarItem(
                   context: context,
-                  icon: CupertinoIcons.square_grid_2x2,
-                  activeIcon: CupertinoIcons.square_grid_2x2_fill,
-                  label: 'Menu',
-                  isSelected: selectedIndex == 2,
-                  onTap: () => _onItemTapped(2, context),
-                ),
-                const SizedBox(height: 8),
-                _buildSidebarItem(
-                  context: context,
                   icon: CupertinoIcons.tray_full,
                   activeIcon: CupertinoIcons.tray_full_fill,
                   label: 'Kelola Produk',
-                  isSelected: selectedIndex == 3,
-                  onTap: () => _onItemTapped(3, context),
+                  isSelected: selectedIndex == 2,
+                  onTap: () => _onItemTapped(2, context),
                 ),
                 const SizedBox(height: 8),
                 _buildSidebarItem(
@@ -240,6 +232,15 @@ class KantinMainLayout extends ConsumerWidget {
                   icon: CupertinoIcons.time,
                   activeIcon: CupertinoIcons.time_solid,
                   label: 'Riwayat Jualan',
+                  isSelected: selectedIndex == 3,
+                  onTap: () => _onItemTapped(3, context),
+                ),
+                const SizedBox(height: 8),
+                _buildSidebarItem(
+                  context: context,
+                  icon: CupertinoIcons.person,
+                  activeIcon: CupertinoIcons.person_fill,
+                  label: 'Akun Saya',
                   isSelected: selectedIndex == 4,
                   onTap: () => _onItemTapped(4, context),
                 ),

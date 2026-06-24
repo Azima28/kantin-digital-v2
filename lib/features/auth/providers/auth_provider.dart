@@ -30,12 +30,16 @@ class AuthState {
   final bool isAuthenticated;
   final Map<String, dynamic>? profile;
   final String? errorMessage;
+  /// Plaintext session token returned by `create_user_session` RPC.
+  /// Only the authenticated client holds this — the DB stores only the SHA-256 hash.
+  final String? sessionToken;
 
   const AuthState({
     this.isLoading = false,
     this.isAuthenticated = false,
     this.profile,
     this.errorMessage,
+    this.sessionToken,
   });
 
   AuthState copyWith({
@@ -43,12 +47,14 @@ class AuthState {
     bool? isAuthenticated,
     Map<String, dynamic>? profile,
     String? errorMessage,
+    String? sessionToken,
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       profile: profile ?? this.profile,
       errorMessage: errorMessage, // We allow setting it to null
+      sessionToken: sessionToken ?? this.sessionToken,
     );
   }
 }
@@ -86,12 +92,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<bool> login(String email, String password, {String role = ''}) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final Map<String, dynamic> profile = await _authService.signIn(
+      final result = await _authService.signIn(
         email: email,
         password: password,
         expectedRole: role,
       );
-      state = AuthState(isAuthenticated: true, profile: profile);
+      final Map<String, dynamic> profile = result['profile'] as Map<String, dynamic>;
+      final String? sessionToken = result['session_token'] as String?;
+      state = AuthState(
+        isAuthenticated: true,
+        profile: profile,
+        sessionToken: sessionToken,
+      );
       return true;
     } catch (e) {
       state = AuthState(
@@ -105,7 +117,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> logout() async {
     state = state.copyWith(isLoading: true);
     await _authService.signOut();
-    state = const AuthState(isAuthenticated: false);
+    state = const AuthState(isAuthenticated: false, sessionToken: null);
   }
 }
 

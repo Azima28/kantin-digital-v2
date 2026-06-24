@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/widgets/notification_bell.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 
 import 'package:kantin_digital/core/constants/app_colors.dart';
@@ -69,12 +70,9 @@ class AdminDashboardScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(CupertinoIcons.bell, color: AppColors.darkTeal),
-                onPressed: () {},
-              ),
-              const SizedBox(width: 8),
+            actions: const [
+              NotificationBell(color: AppColors.darkTeal),
+              SizedBox(width: 8),
             ],
           ),
         ),

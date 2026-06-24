@@ -3,20 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
-
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
+import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
-class KeuanganSettingsScreen extends ConsumerStatefulWidget {
-  const KeuanganSettingsScreen({super.key});
+class KantinProfileScreen extends ConsumerStatefulWidget {
+  const KantinProfileScreen({super.key});
 
   @override
-  ConsumerState<KeuanganSettingsScreen> createState() => _KeuanganSettingsScreenState();
+  ConsumerState<KantinProfileScreen> createState() => _KantinProfileScreenState();
 }
 
-class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen> {
-
+class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
   final _passwordController = TextEditingController();
   bool _isChangingPassword = false;
 
@@ -81,13 +80,11 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
                             final profile = ref.read(authNotifierProvider).profile;
                             final profileId = profile?['id'];
 
-                            // Client-side role check before RPC call
                             final currentUserRole = profile?['role'];
-                            if (currentUserRole != 'super_admin' && currentUserRole != 'admin' && currentUserRole != 'petugas_keuangan') {
+                            if (currentUserRole != 'petugas_kantin') {
                               throw Exception('Tidak memiliki izin untuk mengubah password');
                             }
 
-                            // Update password via RPC
                             final response = await client.rpc('update_auth_user_password', params: {
                               'p_user_id': profileId,
                               'p_new_password': password,
@@ -99,30 +96,33 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
 
                             _passwordController.clear();
                             navigator.pop();
+
                             messenger.showSnackBar(
                               const SnackBar(
-                                content: Text(AppStrings.successPasswordChanged),
+                                content: Text('Kata sandi berhasil diubah!'),
                                 backgroundColor: AppColors.successGreen,
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
                           } catch (e) {
+                            navigator.pop();
                             messenger.showSnackBar(
                               SnackBar(
-                                content: Text('${AppStrings.labelFailed} mengubah kata sandi'),
-                                backgroundColor: AppColors.errorRed2,
+                                content: Text('Error: ${e.toString().replaceFirst('Exception: ', '')}'),
+                                backgroundColor: AppColors.error,
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
                           } finally {
-                            setDialogState(() {
-                              _isChangingPassword = false;
-                            });
+                            _passwordController.clear();
+                            if (mounted) {
+                              setState(() {
+                                _isChangingPassword = false;
+                              });
+                            }
                           }
                         },
-                  child: _isChangingPassword
-                      ? const CupertinoActivityIndicator()
-                      : const Text(AppStrings.buttonSave),
+                  child: const Text(AppStrings.buttonSave),
                 ),
               ],
             );
@@ -132,54 +132,24 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
     );
   }
 
-  void _handleLogout() {
-    showCupertinoDialog(
-      context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: const Text('Keluar dari Akun'),
-        content: const Text('Apakah Anda yakin ingin keluar dari akun keuangan ini?'),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () async {
-              final router = GoRouter.of(context);
-              Navigator.pop(ctx);
-              await ref.read(authNotifierProvider.notifier).logout();
-              router.go('/login');
-            },
-            child: const Text(AppStrings.buttonLogout),
-          ),
-        ],
-      ),
-    );
+  Future<void> _handleLogout() async {
+    final confirmed = await showLogoutConfirmationDialog(context);
+    if (confirmed) {
+      await ref.read(authNotifierProvider.notifier).logout();
+      if (context.mounted) {
+        context.go('/login');
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final profile = ref.watch(authNotifierProvider).profile;
-    final fullName = profile?['full_name'] ?? 'Admin Keuangan';
-    final email = profile?['email'] ?? '-';
-    final username = profile?['username'] ?? '-';
-    final school = profile?['assigned_school'] ?? 'SMP Terpadu';
-    final phone = profile?['phone'] ?? '-';
-    final role = profile?['role'] ?? 'petugas_keuangan';
-
-    // Map role code to human-readable label
-    String roleLabel;
-    switch (role) {
-      case 'petugas_keuangan':
-        roleLabel = 'Admin Keuangan';
-        break;
-      case 'tata_usaha':
-        roleLabel = 'Tata Usaha';
-        break;
-      default:
-        roleLabel = 'Admin Keuangan';
-    }
+    final authState = ref.watch(authNotifierProvider);
+    final String canteenName = authState.profile?['canteen_name'] ?? 'Stan Kantin';
+    final String fullName = authState.profile?['full_name'] ?? 'Petugas Kantin';
+    final String email = authState.profile?['email'] ?? '';
+    final String username = authState.profile?['username'] ?? '';
+    final String phone = authState.profile?['phone_number'] ?? '-';
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -191,7 +161,7 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
         centerTitle: false,
         title: Text(
           'Akun Saya',
-          style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.darkTeal, fontSize: 18),
+          style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.teal, fontSize: 18),
         ),
       ),
       body: SafeArea(
@@ -200,23 +170,23 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ─── Profile Header Bento Card ───
+              // Bento Profile Card
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      AppColors.darkTeal,
-                      AppColors.darkTeal2,
+                      AppColors.teal,
+                      AppColors.primary,
                     ],
                   ),
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.darkTeal.withValues(alpha: 0.3),
+                      color: AppColors.teal.withValues(alpha: 0.3),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -228,7 +198,7 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
                       radius: 40,
                       backgroundColor: Colors.transparent.withValues(alpha: 0.15),
                       child: Text(
-                        fullName.isNotEmpty ? fullName[0].toUpperCase() : 'A',
+                        canteenName.isNotEmpty ? canteenName[0].toUpperCase() : 'K',
                         style: GoogleFonts.inter(
                           fontSize: 36,
                           fontWeight: FontWeight.bold,
@@ -238,7 +208,7 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      fullName,
+                      canteenName,
                       style: GoogleFonts.inter(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -254,7 +224,7 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        '$roleLabel · $school',
+                        'Petugas Kantin · Kasir',
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           color: AppColors.white.withValues(alpha: 0.9),
@@ -266,27 +236,25 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
               ),
               const SizedBox(height: 16),
 
-              // ─── Detail Profil Card ───
+              // Detail Profil Card
               _buildSectionCard(
                 title: '${AppStrings.titleDetail} Profil',
                 icon: CupertinoIcons.person_crop_circle,
                 children: [
-                  _buildInfoRow(AppStrings.labelFullName, fullName),
-                  const Divider(height: 16, thickness: 0.5, color: AppColors.borderGray),
+                  _buildInfoRow('Nama Stan', canteenName),
+                  const Divider(height: 16, thickness: 0.5, color: AppColors.borderLight),
+                  _buildInfoRow('Nama Petugas', fullName),
+                  const Divider(height: 16, thickness: 0.5, color: AppColors.borderLight),
                   _buildInfoRow('Email', email),
-                  const Divider(height: 16, thickness: 0.5, color: AppColors.borderGray),
+                  const Divider(height: 16, thickness: 0.5, color: AppColors.borderLight),
                   _buildInfoRow('Username', username),
-                  const Divider(height: 16, thickness: 0.5, color: AppColors.borderGray),
+                  const Divider(height: 16, thickness: 0.5, color: AppColors.borderLight),
                   _buildInfoRow('No. Telepon', phone),
-                  const Divider(height: 16, thickness: 0.5, color: AppColors.borderGray),
-                  _buildInfoRow('Sekolah', school),
-                  const Divider(height: 16, thickness: 0.5, color: AppColors.borderGray),
-                  _buildInfoRow('Role', roleLabel),
                 ],
               ),
               const SizedBox(height: 16),
 
-              // ─── Keamanan Card ───
+              // Keamanan Card
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -303,81 +271,69 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 20, top: 16, right: 20, bottom: 8),
+                    const Padding(
+                      padding: EdgeInsets.only(left: 20, top: 16, right: 20, bottom: 8),
                       child: Row(
                         children: [
-                          Icon(CupertinoIcons.lock_shield, color: AppColors.darkTeal, size: 18),
-                          const SizedBox(width: 8),
+                          Icon(CupertinoIcons.lock_shield, color: AppColors.teal, size: 18),
+                          SizedBox(width: 8),
                           Text(
                             'Keamanan',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
-                              color: AppColors.nearBlack,
+                              color: AppColors.textDark,
                             ),
                           ),
                         ],
                       ),
                     ),
                     ListTile(
-                      leading: CircleAvatar(
+                      leading: const CircleAvatar(
                         radius: 18,
-                        backgroundColor: AppColors.darkTeal.withValues(alpha: 0.08),
-                        child: const Icon(CupertinoIcons.lock_rotation, color: AppColors.darkTeal, size: 20),
+                        backgroundColor: AppColors.primaryLight,
+                        child: Icon(CupertinoIcons.lock_rotation, color: AppColors.teal, size: 20),
                       ),
-                      title: Text(
+                      title: const Text(
                         AppStrings.adminChangePassword,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
-                          color: AppColors.nearBlack,
+                          color: AppColors.textDark,
                         ),
                       ),
-                      subtitle: Text(
+                      subtitle: const Text(
                         'Terakhir diubah: belum pernah',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.mutedGray,
+                          color: AppColors.textGray,
                         ),
                       ),
-                      trailing: const Icon(CupertinoIcons.chevron_forward, size: 16, color: AppColors.mutedGray),
+                      trailing: const Icon(CupertinoIcons.chevron_forward, size: 16, color: AppColors.textGray),
                       onTap: _showChangePasswordDialog,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-
-              // ─── Tentang Aplikasi Card ───
-              _buildSectionCard(
-                title: 'Tentang Aplikasi',
-                icon: CupertinoIcons.info_circle,
-                children: [
-                  _buildInfoRow('Versi', '1.0.0'),
-                  const Divider(height: 16, thickness: 0.5, color: AppColors.borderGray),
-                  _buildInfoRow('Platform', 'Kantin Digital'),
-                ],
-              ),
               const SizedBox(height: 24),
 
-              // ─── Logout Button ───
+              // Logout Button
               SizedBox(
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton.icon(
                   onPressed: _handleLogout,
                   icon: const Icon(CupertinoIcons.square_arrow_right, size: 20),
-                  label: Text(
+                  label: const Text(
                     'Keluar dari Akun',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                       color: AppColors.white,
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.errorRed2,
+                    backgroundColor: AppColors.error,
                     foregroundColor: AppColors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -418,14 +374,14 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
         children: [
           Row(
             children: [
-              Icon(icon, color: AppColors.darkTeal, size: 18),
+              Icon(icon, color: AppColors.teal, size: 18),
               const SizedBox(width: 8),
               Text(
                 title,
-                style: GoogleFonts.inter(
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
-                  color: AppColors.nearBlack,
+                  color: AppColors.textDark,
                 ),
               ),
             ],
@@ -438,29 +394,33 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
   }
 
   Widget _buildInfoRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          flex: 2,
-          child: Text(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
             label,
-            style: GoogleFonts.inter(color: AppColors.mutedGray, fontSize: 13),
-          ),
-        ),
-        Expanded(
-          flex: 3,
-          child: Text(
-            value,
-            textAlign: TextAlign.right,
-            style: GoogleFonts.inter(
-              fontWeight: FontWeight.bold,
-              color: AppColors.nearBlack,
+            style: const TextStyle(
               fontSize: 13,
+              color: AppColors.textGray,
+              fontWeight: FontWeight.w500,
             ),
           ),
-        ),
-      ],
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textDark,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

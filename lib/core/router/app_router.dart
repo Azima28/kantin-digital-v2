@@ -13,6 +13,7 @@ import 'package:kantin_digital/features/kantin/screens/product_form_screen.dart'
 import 'package:kantin_digital/features/kantin/screens/order_list_screen.dart';
 import 'package:kantin_digital/features/kantin/screens/check_card_screen.dart';
 import 'package:kantin_digital/features/kantin/screens/sales_history_screen.dart';
+import 'package:kantin_digital/features/kantin/screens/kantin_profile_screen.dart';
 import 'package:kantin_digital/features/kantin/widgets/kantin_main_layout.dart';
 
 import 'package:kantin_digital/features/siswa/screens/student_welcome_screen.dart';
@@ -88,6 +89,7 @@ class AppRouter {
   static const String posManageProducts = '/pos/products';
   static const String posAddEditProduct = '/pos/products/form';
   static const String posHistorySales = '/pos/sales';
+  static const String posProfile = '/pos/profile';
 
   // Super Admin App Routes
   static const String adminSecureEntry = '/admin/secure-entry';
@@ -393,6 +395,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: AppRouter.posHistorySales,
             builder: (BuildContext context, GoRouterState state) =>
                 const SalesHistoryScreen(),
+          ),
+          GoRoute(
+            path: AppRouter.posProfile,
+            builder: (BuildContext context, GoRouterState state) =>
+                const KantinProfileScreen(),
           ),
         ],
       ),

@@ -66,12 +66,16 @@ Widget buildIconRow({
                 color: AppColors.textDark,
               ),
             ),
-            const Spacer(),
-            Text(
-              value,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                color: AppColors.textDark,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                value,
+                textAlign: TextAlign.end,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  color: AppColors.textDark,
+                ),
               ),
             ),
           ],

@@ -1,10 +1,11 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/widgets/notification_bell.dart';
 
 /// Dashboard header with logout button, title, and notification bell.
 class ParentDashboardHeader extends ConsumerWidget {
@@ -52,6 +53,9 @@ class ParentDashboardHeader extends ConsumerWidget {
               final confirmed = await showLogoutConfirmationDialog(context);
               if (confirmed == true && context.mounted) {
                 await ref.read(authNotifierProvider.notifier).logout();
+                if (context.mounted) {
+                  context.go('/login');
+                }
               }
             },
             icon: const Icon(Icons.logout,
@@ -79,8 +83,7 @@ class ParentDashboardHeader extends ConsumerWidget {
               ),
             ),
           ),
-          const Icon(CupertinoIcons.bell,
-              color: AppColors.primary, size: 20),
+          const NotificationBell(color: AppColors.primary),
         ],
       ),
     );

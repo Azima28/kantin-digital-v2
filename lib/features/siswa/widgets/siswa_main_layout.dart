@@ -75,6 +75,7 @@ class SiswaMainLayout extends ConsumerWidget {
       ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
+          color: AppColors.cardBackground,
           border: Border(
             top: BorderSide(color: AppColors.borderLight, width: 0.5),
           ),

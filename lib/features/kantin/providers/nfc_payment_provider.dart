@@ -183,7 +183,7 @@ class NfcPaymentNotifier extends StateNotifier<NfcPaymentState> {
 
   // Confirm and deduct balance (executes process_purchase)
   Future<bool> confirmPurchase({
-    required String operatorId,
+    required String sessionToken,
     required List<CartItem> items,
     required int totalAmount,
   }) async {
@@ -207,7 +207,7 @@ class NfcPaymentNotifier extends StateNotifier<NfcPaymentState> {
         'process_purchase',
         params: {
           'p_rfid_uid': state.studentUid,
-          'p_operator_id': operatorId,
+          'p_session_token': sessionToken,
           'p_items': cartItemsJson,
           'p_total_amount': totalAmount,
         },
