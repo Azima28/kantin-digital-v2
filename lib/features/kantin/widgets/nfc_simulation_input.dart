@@ -25,20 +25,24 @@ class NfcSimulationInput extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
-            children: [
-              Icon(CupertinoIcons.device_phone_portrait, size: 16, color: AppColors.primary),
-              SizedBox(width: 6),
-              Text(
-                '🛠️ SIMULASI TAP KARTU SISWA',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
-                  letterSpacing: 0.5,
+          const FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              children: [
+                Icon(CupertinoIcons.device_phone_portrait, size: 16, color: AppColors.primary),
+                SizedBox(width: 6),
+                Text(
+                  '🛠️ SIMULASI TAP KARTU SISWA',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary,
+                    letterSpacing: 0.5,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 12),
           Row(
@@ -82,6 +86,52 @@ class NfcSimulationInput extends ConsumerWidget {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Preset Kartu Terdaftar:',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textGray,
+            ),
+          ),
+          const SizedBox(height: 6),
+          GestureDetector(
+            onTap: () {
+              controller.text = '04:A3:F8:12';
+              ref.read(nfcPaymentProvider.notifier).simulateTagTap('04:A3:F8:12', totalAmount);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(
+                      CupertinoIcons.person_fill,
+                      size: 14,
+                      color: AppColors.primary,
+                    ),
+                    SizedBox(width: 6),
+                    Text(
+                      'Ahmad Subarjo (04:A3:F8:12)',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),

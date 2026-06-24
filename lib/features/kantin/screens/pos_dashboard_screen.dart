@@ -349,39 +349,49 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                           mainAxisAlignment:
                               MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding:
-                                      const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white
-                                        .withValues(alpha: 0.25),
-                                    borderRadius:
-                                        BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    '${cartState.totalItems}',
-                                    style: const TextStyle(
-                                      color: AppColors.white,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 12,
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding:
+                                        const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white
+                                          .withValues(alpha: 0.25),
+                                      borderRadius:
+                                          BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      '${cartState.totalItems}',
+                                      style: const TextStyle(
+                                        color: AppColors.white,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 12,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  'Keranjang • ${CurrencyFormatter.format(cartState.totalAmount)}',
-                                  style: const TextStyle(
-                                    color: AppColors.white,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 15,
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        'Keranjang • ${CurrencyFormatter.format(cartState.totalAmount)}',
+                                        style: const TextStyle(
+                                          color: AppColors.white,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
+                            const SizedBox(width: 8),
                             const Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
                                   AppStrings.titleDetail,

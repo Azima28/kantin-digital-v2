@@ -42,9 +42,11 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
         throw Exception('Tidak memiliki izin untuk mengubah password');
       }
 
+      final currentUserId = ref.read(authNotifierProvider).profile?['id'];
       await client.rpc('update_auth_user_password', params: {
         'p_user_id': profileId,
         'p_new_password': password,
+        'p_caller_id': currentUserId,
       });
 
       if (mounted) {

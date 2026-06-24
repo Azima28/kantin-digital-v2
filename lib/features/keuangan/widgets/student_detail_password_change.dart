@@ -89,15 +89,19 @@ class _PasswordChangeDialogState extends ConsumerState<_PasswordChangeDialog> {
         throw Exception('Tidak memiliki izin untuk mengubah password');
       }
 
-      try {
-        await client.rpc(
-          'update_auth_user_password',
-          params: {
-            'p_user_id': widget.profileId,
-            'p_new_password': password,
-          },
-        );
-      } catch (_) {}
+      final currentUserId =
+          widget.ref.read(authNotifierProvider).profile?['id'];
+      final response = await client.rpc(
+        'update_auth_user_password',
+        params: {
+          'p_user_id': widget.profileId,
+          'p_new_password': password,
+          'p_caller_id': currentUserId,
+        },
+      );
+      if (response is Map && response['success'] == false) {
+        throw Exception(response['error'] ?? 'Gagal mengubah kata sandi');
+      }
 
       // Write to audit logs
       try {

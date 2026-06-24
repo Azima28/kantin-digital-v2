@@ -88,10 +88,14 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
                             }
 
                             // Update password via RPC
-                            await client.rpc('update_auth_user_password', params: {
+                            final response = await client.rpc('update_auth_user_password', params: {
                               'p_user_id': profileId,
                               'p_new_password': password,
+                              'p_caller_id': profileId,
                             });
+                            if (response is Map && response['success'] == false) {
+                              throw Exception(response['error'] ?? 'Gagal mengubah kata sandi');
+                            }
 
                             _passwordController.clear();
                             navigator.pop();

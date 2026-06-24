@@ -2,7 +2,7 @@
 
 Dokumen ini memantau status penyelesaian setiap fitur pada proyek **Kantin Digital** (multi-platform: Siswa, Kantin/POS, Keuangan, Orang Tua, Super Admin) agar agen berikutnya tahu status persis pengerjaan.
 
-**Terakhir diperbarui**: 23 Juni 2026
+**Terakhir diperbarui**: 24 Juni 2026
 
 ---
 
@@ -89,6 +89,7 @@ lib/
 *   [x] Migrasi `20260617000300_super_admin_schema_extensions.sql` — skema super admin (12.8 KB).
 *   [x] Migrasi `20260617000400_fix_rls_policies_keuangan.sql` — perbaikan RLS untuk keuangan.
 *   [x] Migrasi `20260617000500_disable_rls_for_dev.sql` — ⚠️ **NONAKTIFKAN SEBELUM PRODUCTION**.
+*   [x] Migrasi `20260624000000_fix_fallback_auth_rpc.sql` — perbaikan hak akses eksekusi RPC transaksi untuk role anon/public dalam mode fallback auth.
 
 ### [x] Phase 2: Core Setup & Visual Branding (Design System)
 *   [x] Inisialisasi dependensi: `supabase_flutter`, `flutter_riverpod`, `go_router`, `nfc_manager`, `google_fonts`, `intl`, `connectivity_plus`, `fl_chart`.
@@ -215,6 +216,10 @@ lib/
 *   [ ] Error boundary & crash reporting.
 *   [ ] Environment configuration (dev/staging/prod).
 
+**Progres Keseluruhan**: ~85%
+
+
+
 ---
 
 ## 📌 Catatan Penting untuk Agen Berikutnya
@@ -224,3 +229,8 @@ lib/
 3. **Dual-Path Auth**: `auth_service.dart` memiliki fallback ke plaintext password check. Setelah RLS aktif dan password di-hash, fallback ini harus dihapus/disesuaikan.
 4. **Typed Models Tersedia**: Data models sudah dibuat di `lib/core/models/` tapi screen-screen masih menggunakan `Map<String, dynamic>`. Perlu migrasi bertahap.
 5. **Providers Tersedia**: Shared & keuangan providers sudah dibuat di `lib/core/providers/` dan `lib/features/keuangan/providers/`. Screen providers perlu dimigrasi.
+6. **Perbaikan Layout Overflows**: Mengatasi horizontal RenderFlex overflows pada `ParentBalanceCard`, `ParentActionGrid`, `ParentDailyLimitCard`, `PosHomeScreen`, `PosDashboardScreen` (floating cart bar di bagian bawah), `SalesHistoryScreen` (pada item daftar aktivitas penjualan kasir), `TransactionDetailsSheet`, judul `"AKTIVITAS TERAKHIR HARI INI"` pada `ParentHomeTab`, rekap header `'Ringkasan Periode (...)'` pada `KeuanganReportScreen`, serta status pills pada `KeuanganStudentCard` dengan menambahkan `LayoutBuilder`, `Expanded`, `Wrap`, atau `FittedBox` dengan `BoxFit.scaleDown` untuk support display pada narrow screen.
+7. **Simulasi Pembayaran Tap Kartu**: Menambahkan preset simulasi tap kartu RFID untuk siswa Ahmad Subarjo (`04:A3:F8:12`) pada panel `NfcSimulationInput` serta memperbaiki alur inisialisasi sesi NFC di `nfc_payment_provider.dart` agar tidak memicu `NfcPaymentStatus.error` secara instan pada platform Web. Serta memperbaiki horizontal overflow pada teks button preset Ahmad Subarjo dan header panel menggunakan `FittedBox` (scaleDown).
+8. **Perbaikan Hak Akses RPC Database**: Menambahkan hak akses eksekusi RPC (`process_purchase`, `process_refund`, `process_topup`, `process_correction`) secara eksplisit ke role `anon` dan `authenticated` melalui migrasi `20260624000000_fix_fallback_auth_rpc.sql`, yang berhasil di-push ke remote database menggunakan Supabase CLI. Hal ini mengatasi masalah `PostgrestException: permission denied for function process_purchase`.
+9. **Penyempurnaan Alur Login, Logout & UI Orang Tua**: Mengganti tombol `"Ganti NISN"` di dashboard Orang Tua dengan tombol **Logout** standar (`showLogoutConfirmationDialog`). Mengonfigurasi `redirect` GoRouter agar Orang Tua langsung masuk ke dashboard anak (`/parent/dashboard/$studentId`) setelah login, serta membungkus bottom navigation bar dalam `Container` berlatar belakang putih solid untuk menghilangkan shadow/gradien hitam vignette default.
+10. **Perbaikan Fitur Ubah Kata Sandi pada Mode Fallback**: Memperbaiki pemanggilan RPC `update_auth_user_password` di seluruh 7 halaman/modul (Admin & Keuangan) dengan menambahkan parameter `p_caller_id` agar dapat tervalidasi dengan sukses saat menggunakan fallback auth (role `anon` di mana `auth.uid()` bernilai null). Serta memperbaiki error handling agar tidak menelan exception/kesalahan secara diam-diam.

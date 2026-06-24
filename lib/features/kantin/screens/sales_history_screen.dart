@@ -239,22 +239,28 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
                                                     showTransactionDetailsSheet(
                                                         context, tx),
                                                 child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
                                                   children: [
-                                                    Text(
-                                                      studentName,
-                                                      style: TextStyle(
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: isCancelled
-                                                            ? AppColors.textGray
-                                                            : AppColors
-                                                                .textDark,
-                                                        decoration:
-                                                            isCancelled
-                                                                ? TextDecoration
-                                                                    .lineThrough
-                                                                : null,
+                                                    Flexible(
+                                                      child: Text(
+                                                        studentName,
+                                                        maxLines: 1,
+                                                        overflow:
+                                                            TextOverflow.ellipsis,
+                                                        style: TextStyle(
+                                                          fontSize: 14,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: isCancelled
+                                                              ? AppColors.textGray
+                                                              : AppColors
+                                                                  .textDark,
+                                                          decoration:
+                                                              isCancelled
+                                                                  ? TextDecoration
+                                                                      .lineThrough
+                                                                  : null,
+                                                        ),
                                                       ),
                                                     ),
                                                     const SizedBox(width: 4),

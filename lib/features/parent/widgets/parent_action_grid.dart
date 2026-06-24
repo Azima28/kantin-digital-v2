@@ -25,52 +25,118 @@ class ParentActionGrid extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.borderGray, width: 1),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Total Belanja',
-                  style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: AppColors.textGray,
-                      fontWeight: FontWeight.w500)),
-              const SizedBox(height: 4),
-              Text(
-                CurrencyFormatter.format(totalSpending),
-                style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: primaryTeal),
-              ),
-            ],
-          ),
-          Container(width: 1, height: 40, color: AppColors.borderGray),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text('Rata-rata Harian',
-                  style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: AppColors.textGray,
-                      fontWeight: FontWeight.w500)),
-              const SizedBox(height: 4),
-              Text(
-                CurrencyFormatter.format(
-                  totalSpending /
-                      (selectedPeriod == 'Hari Ini'
-                          ? 1
-                          : (selectedPeriod == 'Minggu Ini' ? 7 : 30)),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth < 280) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Total Belanja',
+                        style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: AppColors.textGray,
+                            fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 4),
+                    Text(
+                      CurrencyFormatter.format(totalSpending),
+                      style: GoogleFonts.inter(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: primaryTeal),
+                    ),
+                  ],
                 ),
-                style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: orangeAccent),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12.0),
+                  child: Divider(height: 1, color: AppColors.borderGray),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Rata-rata Harian',
+                        style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: AppColors.textGray,
+                            fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 4),
+                    Text(
+                      CurrencyFormatter.format(
+                        totalSpending /
+                            (selectedPeriod == 'Hari Ini'
+                                ? 1
+                                : (selectedPeriod == 'Minggu Ini' ? 7 : 30)),
+                      ),
+                      style: GoogleFonts.inter(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: orangeAccent),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          }
+
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Total Belanja',
+                        style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: AppColors.textGray,
+                            fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 4),
+                    Text(
+                      CurrencyFormatter.format(totalSpending),
+                      style: GoogleFonts.inter(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: primaryTeal),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 1,
+                height: 40,
+                color: AppColors.borderGray,
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('Rata-rata Harian',
+                        style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: AppColors.textGray,
+                            fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 4),
+                    Text(
+                      CurrencyFormatter.format(
+                        totalSpending /
+                            (selectedPeriod == 'Hari Ini'
+                                ? 1
+                                : (selectedPeriod == 'Minggu Ini' ? 7 : 30)),
+                      ),
+                      style: GoogleFonts.inter(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: orangeAccent),
+                    ),
+                  ],
+                ),
               ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -98,13 +164,18 @@ class ParentCategoryProgressRow extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              '$title (${percentage.toStringAsFixed(0)}%)',
-              style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textDark),
+            Expanded(
+              child: Text(
+                '$title (${percentage.toStringAsFixed(0)}%)',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textDark),
+              ),
             ),
+            const SizedBox(width: 8),
             Text(
               CurrencyFormatter.format(nominal),
               style: GoogleFonts.inter(
@@ -178,24 +249,51 @@ class ParentDailyLimitCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Batas Pengeluaran',
-                style: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: AppColors.textGray,
-                    fontWeight: FontWeight.w500),
-              ),
-              Text(
-                '${CurrencyFormatter.format(todaySpending)} / ${CurrencyFormatter.format(limit)}',
-                style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textDark),
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 280) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Batas Pengeluaran',
+                      style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: AppColors.textGray,
+                          fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${CurrencyFormatter.format(todaySpending)} / ${CurrencyFormatter.format(limit)}',
+                      style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textDark),
+                    ),
+                  ],
+                );
+              }
+
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Batas Pengeluaran',
+                    style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: AppColors.textGray,
+                        fontWeight: FontWeight.w500),
+                  ),
+                  Text(
+                    '${CurrencyFormatter.format(todaySpending)} / ${CurrencyFormatter.format(limit)}',
+                    style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textDark),
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 12),
           ClipRRect(

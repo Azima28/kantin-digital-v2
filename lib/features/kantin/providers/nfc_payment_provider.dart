@@ -65,9 +65,11 @@ class NfcPaymentNotifier extends StateNotifier<NfcPaymentState> {
         status: NfcPaymentStatus.scanning, // We still transition to scanning so simulator/debug tap is allowed
         errorMessage: 'Hardware NFC tidak terdeteksi atau dinonaktifkan di perangkat ini.',
       );
-    } else {
-      state = NfcPaymentState(status: NfcPaymentStatus.scanning);
+      // Skip startScanning since hardware is not present/available
+      return;
     }
+
+    state = NfcPaymentState(status: NfcPaymentStatus.scanning);
 
     NfcService.startScanning(
       onTagDiscovered: (String uid) {
@@ -176,10 +178,7 @@ class NfcPaymentNotifier extends StateNotifier<NfcPaymentState> {
 
   // Trigger from simulator/button for debugging
   void simulateTagTap(String rfidUid, int totalAmount) {
-    assert(() {
-      _verifyStudentCard(rfidUid, totalAmount);
-      return true;
-    }());
+    _verifyStudentCard(rfidUid, totalAmount);
   }
 
   // Confirm and deduct balance (executes process_purchase)

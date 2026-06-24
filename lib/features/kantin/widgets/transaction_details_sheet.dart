@@ -63,9 +63,17 @@ void showTransactionDetailsSheet(BuildContext context, OperatorTransaction tx) {
                     const Text('Pelanggan',
                         style:
                             TextStyle(color: AppColors.textGray, fontSize: 13)),
-                    Text(studentName,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        studentName,
+                        textAlign: TextAlign.end,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 13)),
+                            fontWeight: FontWeight.w600, fontSize: 13),
+                      ),
+                    ),
                   ],
                 ),
                 const Divider(height: 20),
@@ -107,10 +115,17 @@ void showTransactionDetailsSheet(BuildContext context, OperatorTransaction tx) {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('$qty x  $name',
+                                Expanded(
+                                  child: Text(
+                                    '$qty x  $name',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                         fontSize: 13,
-                                        color: AppColors.textDark)),
+                                        color: AppColors.textDark),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
                                 Text(
                                     CurrencyFormatter.format(itemPrice * qty),
                                     style: const TextStyle(

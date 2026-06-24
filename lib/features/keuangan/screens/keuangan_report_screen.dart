@@ -346,9 +346,13 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                 children: [
                                   const Icon(CupertinoIcons.graph_square_fill, color: AppColors.darkTeal, size: 18),
                                   const SizedBox(width: 8),
-                                  Text(
-                                    'Ringkasan Periode ($_selectedPeriod)',
-                                    style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.darkTeal),
+                                  Expanded(
+                                    child: Text(
+                                      'Ringkasan Periode ($_selectedPeriod)',
+                                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.darkTeal),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
                                   ),
                                 ],
                               ),

@@ -517,25 +517,49 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textGray,
-        backgroundColor: Colors.transparent,
-        type: BottomNavigationBarType.fixed,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
-        unselectedLabelStyle: const TextStyle(fontSize: 11),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(CupertinoIcons.house_fill, size: 20), label: 'Beranda'),
-          BottomNavigationBarItem(icon: Icon(CupertinoIcons.chart_bar_fill, size: 20), label: 'Analisis'),
-          BottomNavigationBarItem(icon: Icon(CupertinoIcons.doc_text_fill, size: 20), label: 'Riwayat'),
-          BottomNavigationBarItem(icon: Icon(CupertinoIcons.settings_solid, size: 20), label: 'Setting'),
-        ],
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          border: Border(
+            top: BorderSide(color: AppColors.borderLight, width: 0.5),
+          ),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          selectedItemColor: AppColors.primary,
+          unselectedItemColor: AppColors.textGray,
+          backgroundColor: AppColors.white,
+          type: BottomNavigationBarType.fixed,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
+          unselectedLabelStyle: const TextStyle(fontSize: 11),
+          elevation: 0,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.house, size: 20),
+              activeIcon: Icon(CupertinoIcons.house_fill, size: 20),
+              label: 'Beranda',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.chart_bar, size: 20),
+              activeIcon: Icon(CupertinoIcons.chart_bar_fill, size: 20),
+              label: 'Analisis',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.doc_text, size: 20),
+              activeIcon: Icon(CupertinoIcons.doc_text_fill, size: 20),
+              label: 'Riwayat',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.settings, size: 20),
+              activeIcon: Icon(CupertinoIcons.settings_solid, size: 20),
+              label: 'Setting',
+            ),
+          ],
+        ),
       ),
     );
   }

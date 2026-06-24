@@ -1,11 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
+import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
-/// Dashboard header with back button, title, and notification bell.
-class ParentDashboardHeader extends StatelessWidget {
+/// Dashboard header with logout button, title, and notification bell.
+class ParentDashboardHeader extends ConsumerWidget {
   final int currentIndex;
 
   const ParentDashboardHeader({
@@ -29,7 +31,7 @@ class ParentDashboardHeader extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.white,
@@ -46,11 +48,16 @@ class ParentDashboardHeader extends StatelessWidget {
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            onPressed: () => context.go('/parent'),
-            icon: const Icon(CupertinoIcons.left_chevron,
-                size: 14, color: AppColors.primary),
+            onPressed: () async {
+              final confirmed = await showLogoutConfirmationDialog(context);
+              if (confirmed == true && context.mounted) {
+                await ref.read(authNotifierProvider.notifier).logout();
+              }
+            },
+            icon: const Icon(Icons.logout,
+                size: 16, color: AppColors.primary),
             label: Text(
-              'Ganti NISN',
+              'Keluar',
               style: GoogleFonts.inter(
                   color: AppColors.primary,
                   fontSize: 13,

@@ -85,7 +85,9 @@ class KeuanganStudentCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      Row(
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
                         children: [
                           _statusPill(
                             hasCard ? 'AKTIF' : 'BELUM AKTIF',
@@ -96,14 +98,12 @@ class KeuanganStudentCard extends StatelessWidget {
                                 ? AppColors.successGreen
                                 : AppColors.mutedGray,
                           ),
-                          if (student.isActive != true) ...[
-                            const SizedBox(width: 8),
+                          if (student.isActive != true)
                             _statusPill(
                               'DIBLOKIR',
                               CupertinoIcons.exclamationmark_circle_fill,
                               AppColors.errorRed2,
                             ),
-                          ],
                         ],
                       ),
                     ],

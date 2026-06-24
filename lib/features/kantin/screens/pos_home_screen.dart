@@ -178,15 +178,20 @@ class PosHomeScreen extends ConsumerWidget {
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         children: [
-                                          const Text(
-                                            'PENDAPATAN HARI INI',
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w500,
-                                              color: AppColors.darkGray,
-                                              letterSpacing: 1.1,
+                                          const Expanded(
+                                            child: Text(
+                                              'PENDAPATAN HARI INI',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w500,
+                                                color: AppColors.darkGray,
+                                                letterSpacing: 1.1,
+                                              ),
                                             ),
                                           ),
+                                          const SizedBox(width: 8),
                                           Container(
                                             padding: const EdgeInsets.symmetric(
                                               horizontal: 12,
@@ -223,33 +228,37 @@ class PosHomeScreen extends ConsumerWidget {
                                         ],
                                       ),
                                       const SizedBox(height: 12),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.baseline,
-                                        textBaseline: TextBaseline.alphabetic,
-                                        children: [
-                                          const Text(
-                                            'Rp',
-                                            style: TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.w600,
-                                              color: AppColors.textDark,
+                                      FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        alignment: Alignment.centerLeft,
+                                        child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.baseline,
+                                          textBaseline: TextBaseline.alphabetic,
+                                          children: [
+                                            const Text(
+                                              'Rp',
+                                              style: TextStyle(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.w600,
+                                                color: AppColors.textDark,
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            NumberFormat(
-                                              '#,###',
-                                              'id_ID',
-                                            ).format(revenue),
-                                            style: const TextStyle(
-                                              fontSize: 34,
-                                              fontWeight: FontWeight.w700,
-                                              color: AppColors.teal,
-                                              letterSpacing: -0.5,
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              NumberFormat(
+                                                '#,###',
+                                                'id_ID',
+                                              ).format(revenue),
+                                              style: const TextStyle(
+                                                fontSize: 34,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppColors.teal,
+                                                letterSpacing: -0.5,
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -301,24 +310,30 @@ class PosHomeScreen extends ConsumerWidget {
                               color: AppColors.teal,
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(
-                                  CupertinoIcons.square_grid_2x2,
-                                  color: AppColors.white,
-                                  size: 20,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    Icon(
+                                      CupertinoIcons.square_grid_2x2,
+                                      color: AppColors.white,
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Kasir POS',
+                                      style: TextStyle(
+                                        color: AppColors.white,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 17,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Kasir POS',
-                                  style: TextStyle(
-                                    color: AppColors.white,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 17,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
@@ -333,24 +348,30 @@ class PosHomeScreen extends ConsumerWidget {
                               color: AppColors.grayLight,
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(
-                                  CupertinoIcons.creditcard,
-                                  color: AppColors.textDark,
-                                  size: 20,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    Icon(
+                                      CupertinoIcons.creditcard,
+                                      color: AppColors.textDark,
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Cek Kartu',
+                                      style: TextStyle(
+                                        color: AppColors.textDark,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 17,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Cek Kartu',
-                                  style: TextStyle(
-                                    color: AppColors.textDark,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 17,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
@@ -477,6 +498,8 @@ class PosHomeScreen extends ConsumerWidget {
                                         isCancelled
                                             ? 'Pembelian Dibatalkan'
                                             : studentName,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w600,
                                           fontSize: 17,

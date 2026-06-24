@@ -115,3 +115,38 @@ Dokumen ini mencatat riwayat kendala teknis yang ditemukan selama pengembangan a
     *   `lib/core/providers/shared_providers.dart` — provider lintas fitur
     *   `lib/features/keuangan/providers/keuangan_providers.dart` — provider khusus keuangan
 *   **Langkah Selanjutnya**: Update screen files untuk import dari provider files baru, lalu hapus definisi inline.
+
+---
+
+### 9. Error Otorisasi RPC: `PostgrestException: permission denied for function process_purchase` (Code 42501)
+*   **Masalah**: Ketika aplikasi dijalankan pada platform web (atau mode offline/fallback di mana session JWT tidak aktif sehingga menggunakan role `anon`), mengeksekusi RPC `process_purchase` mengembalikan error:
+    ```text
+    PostgrestException(message: permission denied for function process_purchase, code: 42501)
+    ```
+*   **Penyebab**: Fungsi database (`process_purchase`, `process_refund`, `process_topup`, `process_correction`) membutuhkan otorisasi eksekusi secara eksplisit bagi role `anon`/`public` ketika dipanggil tanpa JWT yang valid (auth.uid() is NULL). Sebelumnya hak eksekusi dibatasi sehingga mengembalikan error 42501.
+*   **Solusi**: 
+    1. Membuat migrasi baru [20260624000000_fix_fallback_auth_rpc.sql](file:///c:/Users/agust/projects/kantin-digital/supabase/migrations/20260624000000_fix_fallback_auth_rpc.sql) yang:
+       * Merekonstruksi fungsi-fungsi tersebut untuk mendukung otorisasi menggunakan parameter `p_operator_id` / `v_caller_uid` secara aman sebagai pengganti `auth.uid()` jika `auth.uid()` bernilai NULL.
+       * Memberikan hak akses eksekusi eksplisit secara aman menggunakan `GRANT EXECUTE ON FUNCTION ... TO authenticated, anon, public;`.
+    2. Menjalankan perintah `supabase db push` untuk mengaplikasikan migrasi tersebut ke database remote Supabase.
+
+---
+
+### 10. Error Otorisasi RPC Ubah Kata Sandi: `PostgrestException: permission denied for function update_auth_user_password` (Gagal Mengubah Kata Sandi)
+*   **Masalah**: Ketika user mencoba mengubah kata sandi pada mode fallback auth (menggunakan role `anon` / `public`), muncul pesan "Gagal mengubah kata sandi" di snackbar UI.
+*   **Penyebab**: Fungsi database `update_auth_user_password(UUID, TEXT)` hanya memberikan hak eksekusi kepada role `authenticated`. Di samping itu, fungsi tersebut mengandalkan `auth.uid()` untuk memvalidasi hak akses pengubah (caller), di mana pada mode fallback auth `auth.uid()` bernilai `NULL`.
+*   **Solusi**:
+    1. Membuat migrasi baru [20260624000200_fix_password_rpc_fallback.sql](file:///c:/Users/agust/projects/kantin-digital/supabase/migrations/20260624000200_fix_password_rpc_fallback.sql) yang merekonstruksi fungsi RPC menjadi `update_auth_user_password(p_user_id UUID, p_new_password TEXT, p_caller_id UUID DEFAULT NULL)`.
+    2. Memvalidasi hak akses menggunakan `v_caller_uid := COALESCE(auth.uid(), p_caller_id)` agar parameter `p_caller_id` dapat digunakan secara aman ketika `auth.uid()` bernilai `NULL`.
+    3. Memberikan hak akses eksekusi secara eksplisit kepada role `anon` dan `public` dengan perintah `GRANT EXECUTE ON FUNCTION public.update_auth_user_password(UUID, TEXT, UUID) TO authenticated, anon, public;`.
+    4. Menambahkan parameter `'p_caller_id'` pada seluruh pemanggilan RPC `update_auth_user_password` di 7 screen/widget di modul Admin & Keuangan:
+       - [admin_merchant_detail_screen.dart](file:///c:/Users/agust/projects/kantin-digital/lib/features/admin/screens/admin_merchant_detail_screen.dart)
+       - [admin_parent_detail_screen.dart](file:///c:/Users/agust/projects/kantin-digital/lib/features/admin/screens/admin_parent_detail_screen.dart)
+       - [admin_finance_detail_screen.dart](file:///c:/Users/agust/projects/kantin-digital/lib/features/admin/screens/admin_finance_detail_screen.dart)
+       - [keuangan_settings_screen.dart](file:///c:/Users/agust/projects/kantin-digital/lib/features/keuangan/screens/keuangan_settings_screen.dart)
+       - [keuangan_profile_screen.dart](file:///c:/Users/agust/projects/kantin-digital/lib/features/keuangan/screens/keuangan_profile_screen.dart)
+       - [student_detail_password_change.dart](file:///c:/Users/agust/projects/kantin-digital/lib/features/keuangan/widgets/student_detail_password_change.dart)
+       - [admin_student_password_change.dart](file:///c:/Users/agust/projects/kantin-digital/lib/features/admin/widgets/admin_student_password_change.dart)
+    5. Menghapus nested try-catch block kosong pada `student_detail_password_change.dart` dan `admin_student_password_change.dart` yang menelan error secara diam-diam sehingga status error RPC dapat ditangkap dan ditampilkan ke user secara akurat.
+
+

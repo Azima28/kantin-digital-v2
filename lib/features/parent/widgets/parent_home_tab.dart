@@ -139,14 +139,17 @@ class ParentHomeTab extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'AKTIVITAS TERAKHIR HARI INI',
-              style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textDark,
-                  letterSpacing: 0.5),
+            Expanded(
+              child: Text(
+                'AKTIVITAS TERAKHIR HARI INI',
+                style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textDark,
+                    letterSpacing: 0.5),
+              ),
             ),
+            const SizedBox(width: 8),
             GestureDetector(
               onTap: onViewAllHistory,
               child: const Text(

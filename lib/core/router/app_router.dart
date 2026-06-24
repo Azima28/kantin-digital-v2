@@ -179,7 +179,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           return AppRouter.adminHome;
         }
         if (role == 'petugas_keuangan') return AppRouter.financeHome;
-        if (role == 'parent') return AppRouter.parentHome;
+        if (role == 'parent') {
+          final studentId = authState.profile?['student_id'] as String?;
+          if (studentId != null && studentId.isNotEmpty) {
+            return '/parent/dashboard/$studentId';
+          }
+          return AppRouter.parentHome;
+        }
         return AppRouter.publicHome;
       }
 
