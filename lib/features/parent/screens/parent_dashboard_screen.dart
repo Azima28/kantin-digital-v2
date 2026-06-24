@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+import 'package:kantin_digital/core/widgets/premium_panel.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
@@ -450,63 +450,66 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.offWhite,
+      backgroundColor: Colors.transparent,
       body: Column(
         children: [
           SafeArea(child: buildHeader()),
           Expanded(
-            child: dataAsync.when(
-              data: (data) {
-                final profile = data.profile;
-                final student = data.student;
-                final txs = data.transactions;
+            child: PremiumPanel(
+              isDesktop: MediaQuery.of(context).size.width >= 768,
+              child: dataAsync.when(
+                data: (data) {
+                  final profile = data.profile;
+                  final student = data.student;
+                  final txs = data.transactions;
 
-                final String name = profile.fullName ?? AppStrings.adminStudents;
-                final String classStr = student.class_ ?? AppStrings.labelStudentClass;
-                final int balance = student.balance;
-                final double? dailyLimit = student.dailyLimit;
+                  final String name = profile.fullName ?? AppStrings.adminStudents;
+                  final String classStr = student.class_ ?? AppStrings.labelStudentClass;
+                  final int balance = student.balance;
+                  final double? dailyLimit = student.dailyLimit;
 
-                // Bind settings to local state once
-                _initSettingsIfRequired(student);
+                  // Bind settings to local state once
+                  _initSettingsIfRequired(student);
 
-                return Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 600),
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(20.0),
-                      child: _currentIndex == 0
-                          ? _buildHomeTab(name, classStr, balance, dailyLimit, txs)
-                          : _currentIndex == 1
-                              ? _buildAnalisisTab(txs)
-                              : _currentIndex == 2
-                                  ? _buildRiwayatTab(txs)
-                                  : _buildPengaturanTab(),
-                    ),
-                  ),
-                );
-              },
-              loading: () => const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(80.0),
-                  child: CupertinoActivityIndicator(radius: 16),
-                ),
-              ),
-              error: (err, stack) => Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(32.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline, color: AppColors.errorRed, size: 48),
-                      const SizedBox(height: 12),
-                      Text('${AppStrings.labelFailed} memuat data', textAlign: TextAlign.center),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: () => ref.invalidate(parentDashboardProvider(widget.studentId)),
-                        child: const Text(AppStrings.buttonRetry),
+                  return Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 600),
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(20.0),
+                        child: _currentIndex == 0
+                            ? _buildHomeTab(name, classStr, balance, dailyLimit, txs)
+                            : _currentIndex == 1
+                                ? _buildAnalisisTab(txs)
+                                : _currentIndex == 2
+                                    ? _buildRiwayatTab(txs)
+                                    : _buildPengaturanTab(),
                       ),
-                    ],
+                    ),
+                  );
+                },
+                loading: () => const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(80.0),
+                    child: CupertinoActivityIndicator(radius: 16),
+                  ),
+                ),
+                error: (err, stack) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline, color: AppColors.errorRed, size: 48),
+                        const SizedBox(height: 12),
+                        Text('${AppStrings.labelFailed} memuat data', textAlign: TextAlign.center),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: () => ref.invalidate(parentDashboardProvider(widget.studentId)),
+                          child: const Text(AppStrings.buttonRetry),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -523,7 +526,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
         },
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textGray,
-        backgroundColor: AppColors.white,
+        backgroundColor: Colors.transparent,
         type: BottomNavigationBarType.fixed,
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
         unselectedLabelStyle: const TextStyle(fontSize: 11),

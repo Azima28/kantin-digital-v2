@@ -104,14 +104,14 @@ class ManageProductsScreen extends ConsumerWidget {
     final productsAsync = ref.watch(manageProductsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.systemBackground,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text(
           AppStrings.titleManageProducts,
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
         ),
         centerTitle: true,
-        backgroundColor: AppColors.cardBackground,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         shape: const Border(

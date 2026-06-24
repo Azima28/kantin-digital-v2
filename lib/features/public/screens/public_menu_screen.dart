@@ -39,7 +39,7 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.systemBackground,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(CupertinoIcons.back, color: AppColors.darkTeal),
@@ -54,7 +54,7 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen>
           ),
         ),
         centerTitle: true,
-        backgroundColor: AppColors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           Padding(

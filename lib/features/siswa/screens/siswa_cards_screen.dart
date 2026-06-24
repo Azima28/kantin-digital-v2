@@ -92,14 +92,14 @@ class SiswaCardsScreen extends ConsumerWidget {
     final String nis = email.split('@').first;
 
     return Scaffold(
-      backgroundColor: AppColors.systemBackground,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text(
           'Manajemen Kartu',
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
         ),
         centerTitle: true,
-        backgroundColor: AppColors.cardBackground,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         shape: const Border(

@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 
 class LoginPreviewItem extends StatelessWidget {

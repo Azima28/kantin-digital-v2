@@ -214,7 +214,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
         ),
         centerTitle: true,
-        backgroundColor: AppColors.cardBackground,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(

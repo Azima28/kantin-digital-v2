@@ -178,9 +178,9 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
     }
 
     return Scaffold(
-      backgroundColor: AppColors.offWhite,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppColors.offWhite,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
@@ -221,7 +221,7 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
                   children: [
                     CircleAvatar(
                       radius: 40,
-                      backgroundColor: AppColors.white.withValues(alpha: 0.15),
+                      backgroundColor: Colors.transparent.withValues(alpha: 0.15),
                       child: Text(
                         fullName.isNotEmpty ? fullName[0].toUpperCase() : 'A',
                         style: GoogleFonts.inter(

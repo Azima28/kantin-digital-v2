@@ -134,9 +134,9 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
     final parentAsync = ref.watch(parentParentDetailProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.offWhite,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppColors.offWhite,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(

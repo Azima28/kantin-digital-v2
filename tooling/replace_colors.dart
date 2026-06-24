@@ -4,6 +4,7 @@
 ///        dart tooling/replace_colors.dart --parent
 ///        dart tooling/replace_colors.dart --remaining
 ///        dart tooling/replace_colors.dart --fix
+library;
 
 import 'dart:io';
 
@@ -37,8 +38,9 @@ void main(List<String> args) {
   }
 
   List<String> files = [];
-  if (args.contains('--all')) files = findDartFiles('lib');
-  else if (args.contains('--admin')) files = findDartFiles('lib/features/admin');
+  if (args.contains('--all')) {
+    files = findDartFiles('lib');
+  } else if (args.contains('--admin')) files = findDartFiles('lib/features/admin');
   else if (args.contains('--parent')) files = findDartFiles('lib/features/parent');
   else if (args.contains('--remaining')) {
     files.addAll(findDartFiles('lib/features/kantin'));

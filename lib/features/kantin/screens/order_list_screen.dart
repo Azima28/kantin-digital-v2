@@ -201,10 +201,10 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
         o.status == 'Siap Diantar').length;
 
     return Scaffold(
-      backgroundColor: AppColors.systemBackground,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         toolbarHeight: 64,
-        backgroundColor: AppColors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         shape: Border(

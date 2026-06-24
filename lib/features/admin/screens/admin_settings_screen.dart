@@ -207,9 +207,9 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
     final String email = authState.profile?['email'] ?? 'admin@kantindigital.com';
 
     return Scaffold(
-      backgroundColor: AppColors.offWhite,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppColors.offWhite,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         title: Text(

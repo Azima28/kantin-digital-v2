@@ -78,7 +78,7 @@ class ParentReceiptScreen extends StatelessWidget {
     final bool isMobile = screenWidth < 480;
 
     return Scaffold(
-      backgroundColor: AppColors.offWhite,
+      backgroundColor: Colors.transparent,
       body: Align(
         alignment: Alignment.topCenter,
         child: SingleChildScrollView(

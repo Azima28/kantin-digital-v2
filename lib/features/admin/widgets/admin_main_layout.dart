@@ -6,6 +6,8 @@ import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
+import 'package:kantin_digital/core/widgets/premium_panel.dart';
+
 class AdminMainLayout extends ConsumerWidget {
   final Widget child;
   const AdminMainLayout({super.key, required this.child});
@@ -54,7 +56,10 @@ class AdminMainLayout extends ConsumerWidget {
             const VerticalDivider(width: 0.5, thickness: 0.5, color: AppColors.borderLight),
             // Right content
             Expanded(
-              child: child,
+              child: PremiumPanel(
+                isDesktop: true,
+                child: child,
+              ),
             ),
           ],
         ),
@@ -62,7 +67,10 @@ class AdminMainLayout extends ConsumerWidget {
     }
 
     return Scaffold(
-      body: child,
+      body: PremiumPanel(
+        isDesktop: false,
+        child: child,
+      ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           border: Border(

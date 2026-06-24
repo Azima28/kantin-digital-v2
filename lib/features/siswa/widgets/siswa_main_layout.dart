@@ -4,8 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/utils/responsive.dart';
 import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+
+import 'package:kantin_digital/core/widgets/premium_panel.dart';
 
 class SiswaMainLayout extends ConsumerWidget {
   final Widget child;
@@ -43,19 +46,22 @@ class SiswaMainLayout extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final int selectedIndex = _getSelectedIndex(context);
-    final double width = MediaQuery.of(context).size.width;
-    final bool isDesktop = width >= 768;
+    final bool isDesktop = Responsive.showSidebar(context);
+    final double sidebarW = Responsive.sidebarWidth(context);
 
     if (isDesktop) {
       return Scaffold(
         body: Row(
           children: [
             // Left sidebar
-            _buildSidebar(context, ref, selectedIndex),
+            _buildSidebar(context, ref, selectedIndex, sidebarW),
             const VerticalDivider(width: 0.5, thickness: 0.5, color: AppColors.borderLight),
             // Right content
             Expanded(
-              child: child,
+              child: PremiumPanel(
+                isDesktop: true,
+                child: child,
+              ),
             ),
           ],
         ),
@@ -63,7 +69,10 @@ class SiswaMainLayout extends ConsumerWidget {
     }
 
     return Scaffold(
-      body: child,
+      body: PremiumPanel(
+        isDesktop: false,
+        child: child,
+      ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           border: Border(
@@ -107,13 +116,13 @@ class SiswaMainLayout extends ConsumerWidget {
     );
   }
 
-  Widget _buildSidebar(BuildContext context, WidgetRef ref, int selectedIndex) {
+  Widget _buildSidebar(BuildContext context, WidgetRef ref, int selectedIndex, double sidebarWidth) {
     final authState = ref.watch(authNotifierProvider);
     final String fullName = authState.profile?['full_name'] ?? AppStrings.adminStudents;
     final String email = authState.profile?['email'] ?? '';
 
     return Container(
-      width: 260,
+      width: sidebarWidth,
       color: AppColors.white,
       child: Column(
         children: [

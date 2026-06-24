@@ -32,7 +32,7 @@ class _SecureEntryScreenState extends ConsumerState<SecureEntryScreen> {
 
     // If not authenticated or not admin, show redirect to login
     return Scaffold(
-      backgroundColor: AppColors.offWhite,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Center(
           child: Padding(

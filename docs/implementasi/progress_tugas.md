@@ -2,7 +2,7 @@
 
 Dokumen ini memantau status penyelesaian setiap fitur pada proyek **Kantin Digital** (multi-platform: Siswa, Kantin/POS, Keuangan, Orang Tua, Super Admin) agar agen berikutnya tahu status persis pengerjaan.
 
-**Terakhir diperbarui**: 18 Juni 2026
+**Terakhir diperbarui**: 23 Juni 2026
 
 ---
 
@@ -97,6 +97,7 @@ lib/
 *   [x] Tema global: Google Fonts **Be Vietnam Pro**, Primary Teal `#003434`, minimalis iOS di `lib/core/theme/app_theme.dart`.
 *   [x] Setup GoRouter dengan **30+ rute** di `lib/core/router/app_router.dart` (346 baris).
 *   [x] Integrasi Supabase + Riverpod + Router + Theme di `lib/main.dart`.
+*   [x] **Desain Visual Premium**: Mengimplementasikan premium background mesh gradient global dan pembungkus PremiumPanel glassmorphism (white/gray blend) untuk seluruh menu di 5 role (Siswa, Kantin/POS, Keuangan, Super Admin, Orang Tua) agar layout terlihat profesional, modern, dan terstruktur.
 
 ### [x] Phase 3: Autentikasi (Semua Role)
 *   [x] **Login Screen** (`login_screen.dart`, 23 KB) — UI login multi-role dengan role picker (Siswa, Kasir, Keuangan, Orang Tua, Super Admin).

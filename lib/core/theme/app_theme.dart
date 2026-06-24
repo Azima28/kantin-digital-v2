@@ -9,7 +9,7 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      scaffoldBackgroundColor: AppColors.systemBackground,
+      scaffoldBackgroundColor: Colors.transparent,
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
         primary: AppColors.primary,
@@ -52,7 +52,7 @@ class AppTheme {
         ),
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.systemBackground,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
@@ -105,8 +105,8 @@ class AppTheme {
   static CupertinoThemeData get cupertinoTheme {
     return const CupertinoThemeData(
       primaryColor: AppColors.primary,
-      barBackgroundColor: AppColors.systemBackground,
-      scaffoldBackgroundColor: AppColors.systemBackground,
+      barBackgroundColor: Colors.transparent,
+      scaffoldBackgroundColor: Colors.transparent,
     );
   }
 }

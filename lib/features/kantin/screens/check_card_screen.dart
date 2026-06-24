@@ -143,14 +143,14 @@ class _CheckCardScreenState extends ConsumerState<CheckCardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.systemBackground,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text(
           'Cek Kartu Siswa',
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
         ),
         centerTitle: true,
-        backgroundColor: AppColors.cardBackground,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         shape: const Border(

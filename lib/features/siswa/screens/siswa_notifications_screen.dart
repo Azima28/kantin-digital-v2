@@ -72,14 +72,14 @@ class SiswaNotificationsScreen extends ConsumerWidget {
     final notificationsAsync = ref.watch(siswaNotificationsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.systemBackground,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text(
           'Notifikasi',
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
         ),
         centerTitle: true,
-        backgroundColor: AppColors.cardBackground,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         shape: const Border(

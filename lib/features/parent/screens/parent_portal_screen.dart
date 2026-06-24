@@ -327,7 +327,7 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: Colors.transparent,
       body: isWide
           ? Row(
               children: [

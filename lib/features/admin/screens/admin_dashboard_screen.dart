@@ -21,7 +21,7 @@ class AdminDashboardScreen extends ConsumerWidget {
     final metricsAsync = ref.watch(adminDashboardProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.offWhite,
+      backgroundColor: Colors.transparent,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(64),
         child: Container(
@@ -36,7 +36,7 @@ class AdminDashboardScreen extends ConsumerWidget {
             ],
           ),
           child: AppBar(
-            backgroundColor: AppColors.offWhite,
+            backgroundColor: Colors.transparent,
             elevation: 0,
             title: Row(
               children: [

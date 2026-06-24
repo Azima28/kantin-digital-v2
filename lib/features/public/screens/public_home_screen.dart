@@ -12,7 +12,7 @@ class PublicHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.systemBackground,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -85,7 +85,7 @@ class PublicHomeScreen extends StatelessWidget {
                                   fontWeight: FontWeight.w600),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.white,
+                              backgroundColor: Colors.transparent,
                               foregroundColor: AppColors.darkTeal,
                               padding:
                                   const EdgeInsets.symmetric(vertical: 14),

@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/utils/responsive.dart';
 import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
@@ -29,17 +30,18 @@ class SiswaDashboardScreen extends ConsumerWidget {
     final transactionsAsync = ref.watch(siswaTransactionsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.systemBackground,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         toolbarHeight: 64,
         titleSpacing: 16,
-        backgroundColor: AppColors.systemBackground,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         shape: Border(
           bottom: BorderSide(color: AppColors.gray400.withValues(alpha: 0.3), width: 0.5),
         ),
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             CircleAvatar(
               radius: 20,
@@ -51,24 +53,28 @@ class SiswaDashboardScreen extends ConsumerWidget {
                   : null,
             ),
             const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Halo, $fullName!',
-                  style: const TextStyle(fontSize: 13, color: AppColors.darkGray, fontWeight: FontWeight.w500),
-                ),
-                Text(
-                  'Beranda',
-                  style: GoogleFonts.inter(
-                    textStyle: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.teal,
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Halo, $fullName!',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 13, color: AppColors.darkGray, fontWeight: FontWeight.w500),
+                  ),
+                  Text(
+                    'Beranda',
+                    style: GoogleFonts.inter(
+                      textStyle: TextStyle(
+                        fontSize: Responsive.headingFontSize(context),
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.teal,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),

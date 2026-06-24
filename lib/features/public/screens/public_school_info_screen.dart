@@ -20,7 +20,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.systemBackground,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(CupertinoIcons.back, color: AppColors.darkTeal),
@@ -35,7 +35,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
           ),
         ),
         centerTitle: true,
-        backgroundColor: AppColors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: SingleChildScrollView(

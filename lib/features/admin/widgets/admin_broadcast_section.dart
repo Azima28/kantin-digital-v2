@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
-import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/admin/widgets/setting_section_widget.dart';
 
 /// Broadcast section for sending push notifications.

@@ -21,10 +21,10 @@ class AppColors {
 
   // ACCENT
   static const Color accentOrange = Color(0xFFFF9500);
-  static const Color accentOrangeLight = Color(0xFFFFF2E0);
-  static const Color accentOrange2 = Color(0xFFFCA558);
-  static const Color softOrange = Color(0xFFFFF3E0);
   static const Color darkOrange = Color(0xFF904D00);
+  static const Color softOrange = Color(0xFFFFE0B2);
+  static const Color accentOrangeLight = Color(0xFFFFF3E0);
+  static const Color accentOrange2 = Color(0xFFFF8C00);
 
   // STATE
   static const Color success = Color(0xFF34C759); // iOS green

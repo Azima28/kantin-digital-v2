@@ -52,7 +52,7 @@ class _StudentWelcomeScreenState extends ConsumerState<StudentWelcomeScreen>
         'https://lh3.googleusercontent.com/aida-public/AB6AXuAj9v7hCFkrRMAey43LSqCsH44EKtneScrHLtAbaq6ds1WZOLUwWuTjULCt-RAxdUsHfVqA4YVlpA0Xt52989-Cz_lGBEGQ_lC4s82hTAGoVB_0f0MrONfgiu-EWk-JYao2dwaXApSFQsp41tQzh38H1K1sf7Zgy0D21UR-tkIBvJCscPwhynCK-7XZjwElD3qjwM9pLSA6WjPWAXPHBBDTjXQ2U_RmLDJyBviDR4jfZvqq0SfKYRC8BGNieqbbXrKyYBwE5NEVcbY';
 
     return Scaffold(
-      backgroundColor: AppColors.systemBackground,
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
           // Ambient Background Glow
@@ -72,205 +72,237 @@ class _StudentWelcomeScreenState extends ConsumerState<StudentWelcomeScreen>
 
           // Main content
           SafeArea(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 600),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Spacer(),
-
-                      // Welcome message
-                      Text(
-                        _welcomeMessages.isNotEmpty ? _welcomeMessages[0] : 'Halo!',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(
-                          textStyle: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.primary,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                        maxWidth: 600,
                       ),
-                      const SizedBox(height: 8),
-
-                      // Animated Illustration
-                      AnimatedBuilder(
-                        animation: _animation,
-                        builder: (context, child) {
-                          return Transform.translate(
-                            offset: Offset(0, _animation.value),
-                            child: child,
-                          );
-                        },
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          alignment: Alignment.center,
-                          children: [
-                            // Main illustration circle
-                            Container(
-                              width: 224,
-                              height: 224,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: AppColors.white,
-                                border:
-                                    Border.all(color: AppColors.white, width: 4),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withAlpha(15),
-                                    blurRadius: 30,
-                                    offset: const Offset(0, 8),
-                                  ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(999),
-                                child: CachedNetworkImage(
-                                  imageUrl: imageUrl,
-                                  fit: BoxFit.cover,
-                                  placeholder: (c, i) => const Center(child: CupertinoActivityIndicator()),
-                                  errorWidget: (c, i, e) {
-                                    return Container(
-                                      color: AppColors.primaryLight,
-                                      child: const Icon(
-                                        CupertinoIcons.creditcard,
-                                        color: AppColors.primary,
-                                        size: 64,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                            // Floating Wifi Badge (Top Right)
-                            Positioned(
-                              top: -4,
-                              right: -2,
-                              child: Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: AppColors.white,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withAlpha(10),
-                                      blurRadius: 15,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  CupertinoIcons.wifi,
-                                  color: AppColors.primary,
-                                  size: 20,
-                                ),
-                              ),
-                            ),
-                            // Floating Restaurant Badge (Bottom Left)
-                            Positioned(
-                              bottom: -2,
-                              left: -4,
-                              child: Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: AppColors.white,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withAlpha(10),
-                                      blurRadius: 15,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.restaurant,
-                                  color: AppColors.accentOrange,
-                                  size: 18,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 40),
-
-                      // App Title
-                      Text(
-                        AppStrings.appName,
-                        style: GoogleFonts.inter(
-                          textStyle: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primary,
-                            letterSpacing: -0.2,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Subtitle
-                      Text(
-                        AppStrings.subtitleSplash,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(
-                          textStyle: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.textGray,
-                            height: 1.4,
-                          ),
-                        ),
-                      ),
-
-                      const Spacer(),
-
-                      // Bottom action button
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            context.go('/login?from=/welcome');
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                          child: Row(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: IntrinsicHeight(
+                          child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
+                            children: [
+                              const Spacer(),
+
+                              // Welcome message
                               Text(
-                                AppStrings.buttonGetStarted,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.white,
+                                _welcomeMessages.isNotEmpty ? _welcomeMessages[0] : 'Halo!',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.inter(
+                                  textStyle: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.primary,
+                                    letterSpacing: 0.3,
+                                  ),
                                 ),
                               ),
-                              SizedBox(width: 8),
-                              Icon(
-                                CupertinoIcons.arrow_right,
-                                color: AppColors.white,
-                                size: 16,
+                              const SizedBox(height: 8),
+
+                              // Animated Illustration
+                              AnimatedBuilder(
+                                animation: _animation,
+                                builder: (context, child) {
+                                  return Transform.translate(
+                                    offset: Offset(0, _animation.value),
+                                    child: child,
+                                  );
+                                },
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  alignment: Alignment.center,
+                                  children: [
+                                    // Main illustration circle
+                                    Container(
+                                      width: 200,
+                                      height: 200,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: AppColors.white,
+                                        border: Border.all(color: AppColors.white, width: 4),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withAlpha(15),
+                                            blurRadius: 30,
+                                            offset: const Offset(0, 8),
+                                          ),
+                                        ],
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(999),
+                                        child: CachedNetworkImage(
+                                          imageUrl: imageUrl,
+                                          fit: BoxFit.cover,
+                                          placeholder: (c, i) => const Center(child: CupertinoActivityIndicator()),
+                                          errorWidget: (c, i, e) {
+                                            return Container(
+                                              color: AppColors.primaryLight,
+                                              child: const Icon(
+                                                CupertinoIcons.creditcard,
+                                                color: AppColors.primary,
+                                                size: 64,
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                    // Floating Wifi Badge (Top Right)
+                                    Positioned(
+                                      top: -4,
+                                      right: -2,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: AppColors.white,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withAlpha(10),
+                                              blurRadius: 15,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
+                                        ),
+                                        child: const Icon(
+                                          CupertinoIcons.wifi,
+                                          color: AppColors.primary,
+                                          size: 20,
+                                        ),
+                                      ),
+                                    ),
+                                    // Floating Restaurant Badge (Bottom Left)
+                                    Positioned(
+                                      bottom: -2,
+                                      left: -4,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: AppColors.white,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withAlpha(10),
+                                              blurRadius: 15,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
+                                        ),
+                                        child: const Icon(
+                                          Icons.restaurant,
+                                          color: AppColors.accentOrange,
+                                          size: 18,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
+                              const SizedBox(height: 28),
+
+                              // App Title
+                              Text(
+                                AppStrings.appName,
+                                style: GoogleFonts.inter(
+                                  textStyle: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primary,
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+
+                              // Subtitle
+                              Text(
+                                AppStrings.subtitleSplash,
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.inter(
+                                  textStyle: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                    color: AppColors.textGray,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+
+                              const Spacer(),
+
+                              // ── Single MASUK Button ──
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: () => context.go('/login?from=/welcome'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    elevation: 0,
+                                    shadowColor: AppColors.primary.withAlpha(80),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(vertical: 18),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'Masuk',
+                                        style: GoogleFonts.inter(
+                                          textStyle: const TextStyle(
+                                            fontSize: 17,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.white,
+                                            letterSpacing: 0.3,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Icon(
+                                        CupertinoIcons.arrow_right,
+                                        color: AppColors.white,
+                                        size: 18,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 14),
+
+                              // Guest / Lihat Menu Publik
+                              GestureDetector(
+                                onTap: () => context.go('/public'),
+                                child: Text(
+                                  'Lihat menu kantin tanpa login →',
+                                  style: GoogleFonts.inter(
+                                    textStyle: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.primary.withAlpha(180),
+                                      decoration: TextDecoration.underline,
+                                      decorationColor: AppColors.primary.withAlpha(100),
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 32),
                             ],
                           ),
                         ),
                       ),
-                      const SizedBox(height: 32),
-                    ],
+                    ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
           ),
         ],
@@ -278,3 +310,5 @@ class _StudentWelcomeScreenState extends ConsumerState<StudentWelcomeScreen>
     );
   }
 }
+
+

@@ -60,7 +60,7 @@ class _ParentTopUpScreenState extends ConsumerState<ParentTopUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.offWhite,
+      backgroundColor: Colors.transparent,
       body: Column(
         children: [
           // Header Bar

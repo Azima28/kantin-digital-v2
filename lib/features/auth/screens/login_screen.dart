@@ -116,9 +116,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final AuthState authState = ref.watch(authNotifierProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppColors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         leadingWidth: 100,
@@ -276,7 +276,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 60),
+                        const SizedBox(height: 24),
 
                         // Tombol Masuk
                         SizedBox(
@@ -337,115 +337,115 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ),
           
-          // Unified Multi-Role Preview Overlay (Top Left / Responsive Floating)
+          // Unified Multi-Role Preview Overlay
           Positioned(
-            top: 16,
-            left: 16,
-            child: SafeArea(
-              child: LoginAccountPreview(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_selectedLoginTab == 0) ...[
-                      LoginPreviewItem(
-                        roleName: 'KASIR / PETUGAS (USERNAME)',
-                        identifier: 'petugas',
-                        password: 'password123',
-                        onTap: () {
-                          FocusScope.of(context).unfocus();
-                          setState(() {
-                            _emailController.text = 'petugas';
-                            _passwordController.text = 'password123';
-                          });
-                          _showFillSnackBar('Kasir');
-                        },
-                      ),
-                      const Divider(height: 12, color: AppColors.borderLight),
-                      
-                      // Admin Keuangan (budi_fin — akun asli)
-                      LoginPreviewItem(
-                        roleName: 'ADMIN KEUANGAN (USERNAME)',
-                        identifier: 'budi_fin',
-                        password: 'budi123',
-                        onTap: () {
-                          FocusScope.of(context).unfocus();
-                          setState(() {
-                            _emailController.text = 'budi_fin';
-                            _passwordController.text = 'budi123';
-                          });
-                          _showFillSnackBar('Admin Keuangan');
-                        },
-                      ),
-                      const Divider(height: 12, color: AppColors.borderLight),
+              top: 16,
+              left: 16,
+              child: SafeArea(
+                child: LoginAccountPreview(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_selectedLoginTab == 0) ...[
+                        LoginPreviewItem(
+                          roleName: 'KASIR / PETUGAS (USERNAME)',
+                          identifier: 'petugas',
+                          password: 'password123',
+                          onTap: () {
+                            FocusScope.of(context).unfocus();
+                            setState(() {
+                              _emailController.text = 'petugas';
+                              _passwordController.text = 'password123';
+                            });
+                            _showFillSnackBar('Kasir');
+                          },
+                        ),
+                        const Divider(height: 12, color: AppColors.borderLight),
+                        
+                        // Admin Keuangan (budi_fin — akun asli)
+                        LoginPreviewItem(
+                          roleName: 'ADMIN KEUANGAN (USERNAME)',
+                          identifier: 'budi_fin',
+                          password: 'budi123',
+                          onTap: () {
+                            FocusScope.of(context).unfocus();
+                            setState(() {
+                              _emailController.text = 'budi_fin';
+                              _passwordController.text = 'budi123';
+                            });
+                            _showFillSnackBar('Admin Keuangan');
+                          },
+                        ),
+                        const Divider(height: 12, color: AppColors.borderLight),
 
-                      // Petugas Keuangan (keuangan — akun testing)
-                      LoginPreviewItem(
-                        roleName: 'PETUGAS KEUANGAN (USERNAME)',
-                        identifier: 'keuangan',
-                        password: 'keuangan123',
-                        onTap: () {
-                          FocusScope.of(context).unfocus();
-                          setState(() {
-                            _emailController.text = 'keuangan';
-                            _passwordController.text = 'keuangan123';
-                          });
-                          _showFillSnackBar('Petugas Keuangan');
-                        },
-                      ),
-                      const Divider(height: 12, color: AppColors.borderLight),
-                      
-                      // Siswa
-                      LoginPreviewItem(
-                        roleName: 'SISWA (AHMAD - NISN)',
-                        identifier: '20260012',
-                        password: 'password123',
-                        onTap: () {
-                          FocusScope.of(context).unfocus();
-                          setState(() {
-                            _emailController.text = '20260012';
-                            _passwordController.text = 'password123';
-                          });
-                          _showFillSnackBar('Siswa');
-                        },
-                      ),
-                      const Divider(height: 12, color: AppColors.borderLight),
-                      
-                      // Super Admin
-                      LoginPreviewItem(
-                        roleName: 'SUPER ADMIN (MOCK)',
-                        identifier: 'superadmin',
-                        password: 'admin123',
-                        onTap: () {
-                          FocusScope.of(context).unfocus();
-                          setState(() {
-                            _emailController.text = 'superadmin';
-                            _passwordController.text = 'admin123';
-                          });
-                          _showFillSnackBar('Super Admin');
-                        },
-                      ),
-                    ] else ...[
-                      // Orang Tua
-                      LoginPreviewItem(
-                        roleName: 'ORANG TUA (WALI AHMAD - NISN)',
-                        identifier: '20260012',
-                        password: 'parent123',
-                        onTap: () {
-                          FocusScope.of(context).unfocus();
-                          setState(() {
-                            _emailController.text = '20260012';
-                            _passwordController.text = 'parent123';
-                          });
-                          _showFillSnackBar('Orang Tua');
-                        },
-                      ),
+                        // Petugas Keuangan (keuangan — akun testing)
+                        LoginPreviewItem(
+                          roleName: 'PETUGAS KEUANGAN (USERNAME)',
+                          identifier: 'keuangan',
+                          password: 'keuangan123',
+                          onTap: () {
+                            FocusScope.of(context).unfocus();
+                            setState(() {
+                              _emailController.text = 'keuangan';
+                              _passwordController.text = 'keuangan123';
+                            });
+                            _showFillSnackBar('Petugas Keuangan');
+                          },
+                        ),
+                        const Divider(height: 12, color: AppColors.borderLight),
+                        
+                        // Siswa
+                        LoginPreviewItem(
+                          roleName: 'SISWA (AHMAD - NISN)',
+                          identifier: '20260012',
+                          password: 'password123',
+                          onTap: () {
+                            FocusScope.of(context).unfocus();
+                            setState(() {
+                              _emailController.text = '20260012';
+                              _passwordController.text = 'password123';
+                            });
+                            _showFillSnackBar('Siswa');
+                          },
+                        ),
+                        const Divider(height: 12, color: AppColors.borderLight),
+                        
+                        // Super Admin
+                        LoginPreviewItem(
+                          roleName: 'SUPER ADMIN (MOCK)',
+                          identifier: 'superadmin',
+                          password: 'admin123',
+                          onTap: () {
+                            FocusScope.of(context).unfocus();
+                            setState(() {
+                              _emailController.text = 'superadmin';
+                              _passwordController.text = 'admin123';
+                            });
+                            _showFillSnackBar('Super Admin');
+                          },
+                        ),
+                      ] else ...[
+                        // Orang Tua
+                        LoginPreviewItem(
+                          roleName: 'ORANG TUA (WALI AHMAD - NISN)',
+                          identifier: '20260012',
+                          password: 'parent123',
+                          onTap: () {
+                            FocusScope.of(context).unfocus();
+                            setState(() {
+                              _emailController.text = '20260012';
+                              _passwordController.text = 'parent123';
+                            });
+                            _showFillSnackBar('Orang Tua');
+                          },
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );

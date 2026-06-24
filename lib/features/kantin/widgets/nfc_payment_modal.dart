@@ -1,14 +1,10 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
-import 'package:kantin_digital/core/utils/currency_formatter.dart';
-import 'package:kantin_digital/core/widgets/nfc_pulse_animator.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/cart_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/nfc_payment_provider.dart';
-import 'package:kantin_digital/features/kantin/widgets/nfc_data_row.dart';
 import 'package:kantin_digital/features/kantin/widgets/nfc_scanning_ui.dart';
 import 'package:kantin_digital/features/kantin/widgets/nfc_simulation_input.dart';
 import 'package:kantin_digital/features/kantin/widgets/nfc_status_uis.dart';

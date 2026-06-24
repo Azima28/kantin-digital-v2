@@ -255,14 +255,14 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
     final transactionsAsync = ref.watch(siswaTransactionsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.systemBackground,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text(
           'Riwayat Jajan',
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
         ),
         centerTitle: true,
-        backgroundColor: AppColors.cardBackground,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         shape: const Border(

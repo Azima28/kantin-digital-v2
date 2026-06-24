@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/utils/responsive.dart';
 import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kantin_digital/core/models/models.dart';
@@ -44,23 +45,28 @@ class PosHomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authNotifierProvider);
-    final String canteenName = authState.profile?['canteen_name'] ?? 'Stan Kantin';
+    final String canteenName =
+        authState.profile?['canteen_name'] ?? 'Stan Kantin';
     final String? profilePhotoUrl = authState.profile?['avatar_url'];
     final revenueAsync = ref.watch(todayRevenueProvider);
     final transactionsAsync = ref.watch(operatorTransactionsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.systemBackground,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         toolbarHeight: 64,
         titleSpacing: 16,
-        backgroundColor: AppColors.systemBackground,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         shape: Border(
-          bottom: BorderSide(color: AppColors.gray400.withValues(alpha: 0.3), width: 0.5),
+          bottom: BorderSide(
+            color: AppColors.gray400.withValues(alpha: 0.3),
+            width: 0.5,
+          ),
         ),
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             CircleAvatar(
               radius: 20,
@@ -72,30 +78,41 @@ class PosHomeScreen extends ConsumerWidget {
                   : null,
             ),
             const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Halo, $canteenName!',
-                  style: const TextStyle(fontSize: 13, color: AppColors.darkGray, fontWeight: FontWeight.w500),
-                ),
-                Text(
-                  'Beranda',
-                  style: GoogleFonts.inter(
-                    textStyle: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.teal,
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Halo, $canteenName!',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.darkGray,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                ),
-              ],
+                  Text(
+                    'Beranda',
+                    style: GoogleFonts.inter(
+                      textStyle: TextStyle(
+                        fontSize: Responsive.headingFontSize(context),
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.teal,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(CupertinoIcons.square_arrow_right, color: AppColors.error),
+            icon: const Icon(
+              CupertinoIcons.square_arrow_right,
+              color: AppColors.error,
+            ),
             onPressed: () => _handleLogout(context, ref),
           ),
           const SizedBox(width: 8),
@@ -116,344 +133,413 @@ class PosHomeScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-              // Earnings Card
-              revenueAsync.when(
-                data: (revenue) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AppColors.white,
+                  // Earnings Card
+                  revenueAsync.when(
+                    data: (revenue) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ClipRRect(
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.borderLight, width: 1),
-                          ),
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              // Decorative Background Shape
-                              Positioned(
-                                top: -48,
-                                right: -48,
-                                child: Container(
-                                  width: 128,
-                                  height: 128,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: AppColors.softTeal.withValues(alpha: 0.2),
-                                  ),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: AppColors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: AppColors.borderLight,
+                                  width: 1,
                                 ),
                               ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              child: Stack(
+                                clipBehavior: Clip.none,
                                 children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text(
-                                        'PENDAPATAN HARI INI',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w500,
-                                          color: AppColors.darkGray,
-                                          letterSpacing: 1.1,
+                                  // Decorative Background Shape
+                                  Positioned(
+                                    top: -48,
+                                    right: -48,
+                                    child: Container(
+                                      width: 128,
+                                      height: 128,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: AppColors.softTeal.withValues(
+                                          alpha: 0.2,
                                         ),
                                       ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.teal.withValues(alpha: 0.1),
-                                          borderRadius: BorderRadius.circular(999),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: const [
-                                            Text(
-                                              'Buka',
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w500,
-                                                color: AppColors.teal,
+                                    ),
+                                  ),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text(
+                                            'PENDAPATAN HARI INI',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                              color: AppColors.darkGray,
+                                              letterSpacing: 1.1,
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.teal.withValues(
+                                                alpha: 0.1,
                                               ),
+                                              borderRadius:
+                                                  BorderRadius.circular(999),
                                             ),
-                                            SizedBox(width: 4),
-                                            Icon(
-                                              CupertinoIcons.checkmark_seal_fill,
-                                              size: 14,
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: const [
+                                                Text(
+                                                  'Buka',
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: AppColors.teal,
+                                                  ),
+                                                ),
+                                                SizedBox(width: 4),
+                                                Icon(
+                                                  CupertinoIcons
+                                                      .checkmark_seal_fill,
+                                                  size: 14,
+                                                  color: AppColors.teal,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.baseline,
+                                        textBaseline: TextBaseline.alphabetic,
+                                        children: [
+                                          const Text(
+                                            'Rp',
+                                            style: TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.textDark,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            NumberFormat(
+                                              '#,###',
+                                              'id_ID',
+                                            ).format(revenue),
+                                            style: const TextStyle(
+                                              fontSize: 34,
+                                              fontWeight: FontWeight.w700,
                                               color: AppColors.teal,
+                                              letterSpacing: -0.5,
                                             ),
-                                          ],
-                                        ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 12),
-                                  Row(
-                                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                                    textBaseline: TextBaseline.alphabetic,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                    loading: () => const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: CupertinoActivityIndicator(),
+                      ),
+                    ),
+                    error: (err, stack) => Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            size: 48,
+                            color: AppColors.error,
+                          ),
+                          const SizedBox(height: 12),
+                          Text('${AppStrings.labelFailed} memuat pendapatan'),
+                          const SizedBox(height: 8),
+                          ElevatedButton(
+                            onPressed: () =>
+                                ref.invalidate(todayRevenueProvider),
+                            child: const Text(AppStrings.buttonRetry),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Quick Actions Grid Row
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => context.push('/pos/terminal'),
+                          child: Container(
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: AppColors.teal,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(
+                                  CupertinoIcons.square_grid_2x2,
+                                  color: AppColors.white,
+                                  size: 20,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Kasir POS',
+                                  style: TextStyle(
+                                    color: AppColors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 17,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => context.push('/pos/check-card'),
+                          child: Container(
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: AppColors.grayLight,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(
+                                  CupertinoIcons.creditcard,
+                                  color: AppColors.textDark,
+                                  size: 20,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Cek Kartu',
+                                  style: TextStyle(
+                                    color: AppColors.textDark,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 17,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+
+                  // Penjualan Hari Ini Title & Lihat Semua link
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Penjualan Hari Ini',
+                        style: GoogleFonts.inter(
+                          textStyle: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => context.go('/pos/sales'),
+                        child: const Text(
+                          'Lihat Semua',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Transactions List (Only show today's)
+                  transactionsAsync.when(
+                    data: (List<OperatorTransaction> txs) {
+                      final now = DateTime.now();
+                      final todayTxs = txs.where((tx) {
+                        if (tx.createdAt == null) return false;
+                        final txDate = tx.createdAt!.toLocal();
+                        return txDate.year == now.year &&
+                            txDate.month == now.month &&
+                            txDate.day == now.day;
+                      }).toList();
+
+                      if (todayTxs.isEmpty) {
+                        return Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 40),
+                          decoration: BoxDecoration(
+                            color: AppColors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.borderLight,
+                              width: 0.5,
+                            ),
+                          ),
+                          child: const EmptyStateWidget(
+                            message: AppStrings.labelNoData,
+                          ),
+                        );
+                      }
+
+                      return Column(
+                        children: todayTxs.map((tx) {
+                          final int amount = tx.totalAmount;
+                          final String studentName =
+                              tx.studentName ?? AppStrings.adminStudents;
+                          final String status = tx.status ?? 'success';
+                          final bool isCancelled = status == 'cancelled';
+
+                          final txTime = tx.createdAt != null
+                              ? DateFormat(
+                                  'HH:mm',
+                                  'id_ID',
+                                ).format(tx.createdAt!.toLocal())
+                              : '-';
+
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppColors.borderLight,
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: isCancelled
+                                        ? AppColors.errorRed2.withValues(
+                                            alpha: 0.1,
+                                          )
+                                        : AppColors.teal.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    isCancelled
+                                        ? CupertinoIcons.xmark_circle
+                                        : CupertinoIcons.creditcard,
+                                    color: isCancelled
+                                        ? AppColors.errorRed2
+                                        : AppColors.teal,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
-                                        'Rp',
-                                        style: TextStyle(
-                                          fontSize: 20,
+                                      Text(
+                                        isCancelled
+                                            ? 'Pembelian Dibatalkan'
+                                            : studentName,
+                                        style: const TextStyle(
                                           fontWeight: FontWeight.w600,
+                                          fontSize: 17,
                                           color: AppColors.textDark,
                                         ),
                                       ),
-                                      const SizedBox(width: 4),
+                                      const SizedBox(height: 2),
                                       Text(
-                                        NumberFormat('#,###', 'id_ID').format(revenue),
+                                        '$txTime WIB \u2022 ${isCancelled ? "Refund" : "Penjualan"}',
                                         style: const TextStyle(
-                                          fontSize: 34,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.teal,
-                                          letterSpacing: -0.5,
+                                          color: AppColors.darkGray,
+                                          fontSize: 11,
                                         ),
                                       ),
                                     ],
                                   ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-                loading: () => const Center(child: Padding(padding: EdgeInsets.all(24), child: CupertinoActivityIndicator())),
-                error: (err, stack) => Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.error_outline, size: 48, color: AppColors.error),
-                      const SizedBox(height: 12),
-                      Text('${AppStrings.labelFailed} memuat pendapatan'),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: () => ref.invalidate(todayRevenueProvider),
-                        child: const Text(AppStrings.buttonRetry),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Quick Actions Grid Row
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => context.push('/pos/terminal'),
-                      child: Container(
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: AppColors.teal,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(CupertinoIcons.square_grid_2x2, color: AppColors.white, size: 20),
-                            SizedBox(width: 8),
-                            Text(
-                              'Kasir POS',
-                              style: TextStyle(
-                                color: AppColors.white,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 17,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => context.go('/pos/orders'),
-                      child: Container(
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: AppColors.grayLight,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(CupertinoIcons.cart, color: AppColors.textDark, size: 20),
-                            SizedBox(width: 8),
-                            Text(
-                              'Pesanan',
-                              style: TextStyle(
-                                color: AppColors.textDark,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 17,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 28),
-
-              // Penjualan Hari Ini Title & Lihat Semua link
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Penjualan Hari Ini',
-                    style: GoogleFonts.inter(
-                      textStyle: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textDark,
-                      ),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => context.go('/pos/sales'),
-                    child: const Text(
-                      'Lihat Semua',
-                      style: TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Transactions List (Only show today's)
-              transactionsAsync.when(
-                data: (List<OperatorTransaction> txs) {
-                  final now = DateTime.now();
-                  final todayTxs = txs.where((tx) {
-                    if (tx.createdAt == null) return false;
-                    final txDate = tx.createdAt!.toLocal();
-                    return txDate.year == now.year && txDate.month == now.month && txDate.day == now.day;
-                  }).toList();
-
-                  if (todayTxs.isEmpty) {
-                    return Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 40),
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.borderLight, width: 0.5),
-                      ),
-                      child: const EmptyStateWidget(
-                        message: AppStrings.labelNoData,
-                      ),
-                    );
-                  }
-
-                  return Column(
-                    children: todayTxs.map((tx) {
-                      final int amount = tx.totalAmount;
-                      final String studentName = tx.studentName ?? AppStrings.adminStudents;
-                      final String status = tx.status ?? 'success';
-                      final bool isCancelled = status == 'cancelled';
-                      
-                      final txTime = tx.createdAt != null 
-                          ? DateFormat('HH:mm', 'id_ID').format(tx.createdAt!.toLocal())
-                          : '-';
-
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.borderLight, width: 1),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: isCancelled
-                                    ? AppColors.errorRed2.withValues(alpha: 0.1)
-                                    : AppColors.teal.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(
-                                isCancelled ? CupertinoIcons.xmark_circle : CupertinoIcons.creditcard,
-                                color: isCancelled ? AppColors.errorRed2 : AppColors.teal,
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    isCancelled ? 'Pembelian Dibatalkan' : studentName,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 17,
-                                      color: AppColors.textDark,
-                                    ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${isCancelled ? "-" : "+"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 17,
+                                    color: isCancelled
+                                        ? AppColors.errorRed2
+                                        : AppColors.teal,
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '$txTime WIB \u2022 ${isCancelled ? "Refund" : "Penjualan"}',
-                                    style: const TextStyle(
-                                      color: AppColors.darkGray,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '${isCancelled ? "-" : "+"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 17,
-                                color: isCancelled ? AppColors.errorRed2 : AppColors.teal,
-                              ),
-                            ),
-                          ],
-                        ),
+                          );
+                        }).toList(),
                       );
-                    }).toList(),
-                  );
-                },
-                loading: () => const Center(child: CupertinoActivityIndicator()),
-                error: (err, stack) => Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.error_outline, size: 48, color: AppColors.error),
-                      const SizedBox(height: 12),
-                      Text('${AppStrings.labelFailed} memuat riwayat'),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: () => ref.invalidate(operatorTransactionsProvider),
-                        child: const Text(AppStrings.buttonRetry),
+                    },
+                    loading: () =>
+                        const Center(child: CupertinoActivityIndicator()),
+                    error: (err, stack) => Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            size: 48,
+                            color: AppColors.error,
+                          ),
+                          const SizedBox(height: 12),
+                          Text('${AppStrings.labelFailed} memuat riwayat'),
+                          const SizedBox(height: 8),
+                          ElevatedButton(
+                            onPressed: () =>
+                                ref.invalidate(operatorTransactionsProvider),
+                            child: const Text(AppStrings.buttonRetry),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
-    ),
-  ),
-);
+    );
   }
 }

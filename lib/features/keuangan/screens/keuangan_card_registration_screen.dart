@@ -285,9 +285,9 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
     }
 
     return Scaffold(
-      backgroundColor: AppColors.offWhite,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppColors.offWhite,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         title: Text(

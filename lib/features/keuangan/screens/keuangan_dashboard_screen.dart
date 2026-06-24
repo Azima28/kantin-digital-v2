@@ -29,7 +29,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
     final greeting = hour < 11 ? 'Selamat Pagi' : hour < 15 ? 'Selamat Siang' : 'Selamat Sore';
 
     return Scaffold(
-      backgroundColor: AppColors.offWhite,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async => ref.invalidate(keuanganDashboardProvider),

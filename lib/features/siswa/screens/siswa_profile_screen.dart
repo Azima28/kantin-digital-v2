@@ -188,7 +188,7 @@ class SiswaProfileScreen extends ConsumerWidget {
     final String? avatarUrl = authState.profile?['avatar_url'] as String?;
 
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBackground,
+      backgroundColor: Colors.transparent,
       body: studentAsync.when(
         data: (student) {
           final String studentClass = student?.class_ ?? '8-B';

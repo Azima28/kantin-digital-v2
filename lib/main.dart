@@ -9,6 +9,7 @@ import 'package:kantin_digital/core/services/secure_session_service.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/app_theme.dart';
+import 'package:kantin_digital/core/widgets/premium_background.dart';
 
 void main() async {
   // runZonedGuarded bungkus SEMUA inisialisasi + runApp biar zone konsisten.
@@ -79,6 +80,9 @@ class MainApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        return PremiumBackground(child: child!);
+      },
     );
   }
 }

@@ -1,7 +1,5 @@
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
 
 /// Trend line chart painter for daily volume data.
 class TrendChartPainter extends CustomPainter {

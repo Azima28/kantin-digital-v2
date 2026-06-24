@@ -9,6 +9,8 @@ import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 
+import 'package:kantin_digital/core/widgets/premium_panel.dart';
+
 class KeuanganMainLayout extends ConsumerWidget {
   final Widget child;
   const KeuanganMainLayout({super.key, required this.child});
@@ -68,14 +70,22 @@ class KeuanganMainLayout extends ConsumerWidget {
               color: AppColors.borderGray,
             ),
             // Right content
-            Expanded(child: child),
+            Expanded(
+              child: PremiumPanel(
+                isDesktop: true,
+                child: child,
+              ),
+            ),
           ],
         ),
       );
     }
 
     return Scaffold(
-      body: child,
+      body: PremiumPanel(
+        isDesktop: false,
+        child: child,
+      ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: AppColors.borderGray, width: 0.5)),
