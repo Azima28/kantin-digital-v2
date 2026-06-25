@@ -265,10 +265,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const PublicHomeScreen(),
         routes: [
           GoRoute(
-            path: 'menu',
-            builder: (context, state) => const PublicMenuScreen(),
-          ),
-          GoRoute(
             path: 'info',
             builder: (context, state) => const PublicSchoolInfoScreen(),
           ),
@@ -317,7 +313,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
 
-      // Siswa Main layout with bottom tabs (Beranda, Riwayat, Kartu, Akun)
+      // Siswa Main layout with bottom tabs (Beranda, Menu, Riwayat, Akun)
       ShellRoute(
         builder: (BuildContext context, GoRouterState state, Widget child) {
           return SiswaMainLayout(child: child);
@@ -327,6 +323,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: AppRouter.studentHome,
             builder: (BuildContext context, GoRouterState state) =>
                 const SiswaDashboardScreen(),
+          ),
+          GoRoute(
+            path: AppRouter.publicMenu,
+            builder: (BuildContext context, GoRouterState state) =>
+                const PublicMenuScreen(),
           ),
           GoRoute(
             path: AppRouter.studentHistory,

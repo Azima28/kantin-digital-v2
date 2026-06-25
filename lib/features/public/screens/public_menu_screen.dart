@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
@@ -41,10 +40,6 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen>
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(CupertinoIcons.back, color: AppColors.darkTeal),
-          onPressed: () => context.go('/public'),
-        ),
         title: Text(
           'Menu Kantin',
           style: GoogleFonts.inter(
@@ -56,22 +51,6 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen>
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: TextButton(
-              onPressed: () => context.go('/login?from=/public/menu'),
-              child: Text(
-                'Login',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.darkTeal,
-                ),
-              ),
-            ),
-          ),
-        ],
         bottom: TabBar(
           controller: _tabController,
           labelColor: AppColors.darkTeal,

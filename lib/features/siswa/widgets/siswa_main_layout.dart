@@ -16,9 +16,9 @@ class SiswaMainLayout extends ConsumerWidget {
 
   int _getSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).uri.toString();
-    if (location.startsWith('/student/history')) {
+    if (location.startsWith('/public/menu')) {
       return 1;
-    } else if (location.startsWith('/student/cards')) {
+    } else if (location.startsWith('/student/history')) {
       return 2;
     } else if (location.startsWith('/student/profile')) {
       return 3;
@@ -32,10 +32,10 @@ class SiswaMainLayout extends ConsumerWidget {
         context.go('/student');
         break;
       case 1:
-        context.go('/student/history');
+        context.go('/public/menu');
         break;
       case 2:
-        context.go('/student/cards');
+        context.go('/student/history');
         break;
       case 3:
         context.go('/student/profile');
@@ -97,14 +97,14 @@ class SiswaMainLayout extends ConsumerWidget {
               label: 'Beranda',
             ),
             BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.square_grid_2x2, size: 22),
+              activeIcon: Icon(CupertinoIcons.square_grid_2x2_fill, size: 22),
+              label: 'Menu',
+            ),
+            BottomNavigationBarItem(
               icon: Icon(CupertinoIcons.clock, size: 22),
               activeIcon: Icon(CupertinoIcons.clock_fill, size: 22),
               label: 'Riwayat',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.creditcard, size: 22),
-              activeIcon: Icon(CupertinoIcons.creditcard_fill, size: 22),
-              label: 'Kartu',
             ),
             BottomNavigationBarItem(
               icon: Icon(CupertinoIcons.person, size: 22),
@@ -192,18 +192,18 @@ class SiswaMainLayout extends ConsumerWidget {
                 const SizedBox(height: 8),
                 _buildSidebarItem(
                   context: context,
-                  icon: CupertinoIcons.clock,
-                  activeIcon: CupertinoIcons.clock_fill,
-                  label: 'Riwayat',
+                  icon: CupertinoIcons.square_grid_2x2,
+                  activeIcon: CupertinoIcons.square_grid_2x2_fill,
+                  label: 'Menu Kantin',
                   isSelected: selectedIndex == 1,
                   onTap: () => _onItemTapped(1, context),
                 ),
                 const SizedBox(height: 8),
                 _buildSidebarItem(
                   context: context,
-                  icon: CupertinoIcons.creditcard,
-                  activeIcon: CupertinoIcons.creditcard_fill,
-                  label: 'Kartu RFID',
+                  icon: CupertinoIcons.clock,
+                  activeIcon: CupertinoIcons.clock_fill,
+                  label: 'Riwayat',
                   isSelected: selectedIndex == 2,
                   onTap: () => _onItemTapped(2, context),
                 ),

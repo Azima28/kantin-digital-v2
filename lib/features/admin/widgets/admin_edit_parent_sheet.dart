@@ -243,7 +243,7 @@ void showEditParentSheet(
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('${e.toString().replaceAll("Exception: ", "")}'),
+                                  content: Text(e.toString().replaceAll("Exception: ", "")),
                                   backgroundColor: AppColors.errorRed2,
                                 ),
                               );
