@@ -122,7 +122,12 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text('Metode/Lokasi', style: TextStyle(color: AppColors.textGray, fontSize: 13)),
-                        Text(type == 'topup' ? 'QRIS / Koperasi' : canteenName, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
+                        Text(
+                          type == 'topup'
+                              ? 'QRIS / Koperasi'
+                              : '$canteenName (${tx.purchaseMethod == 'app' ? 'Aplikasi' : 'RFID/NFC'})',
+                          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                        ),
                       ],
                     ),
                     
@@ -447,10 +452,10 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
                                         isTopup ? 'Top-Up Saldo' : canteenName,
                                         style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.textDark),
                                       ),
-                                      subtitle: Text(
-                                        '$timeStr WIB \u2022 ${isTopup ? "Koperasi" : "Jajan"}',
-                                        style: const TextStyle(color: AppColors.textGray, fontSize: 11),
-                                      ),
+                                       subtitle: Text(
+                                         '$timeStr WIB \u2022 ${isTopup ? "Koperasi" : (tx.purchaseMethod == 'app' ? "Jajan (Aplikasi)" : "Jajan (Kasir)")}',
+                                         style: const TextStyle(color: AppColors.textGray, fontSize: 11),
+                                       ),
                                       trailing: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [

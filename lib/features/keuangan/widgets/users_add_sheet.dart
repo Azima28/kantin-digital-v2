@@ -231,7 +231,7 @@ void _showAddStaffSheet(BuildContext context, WidgetRef ref) {
   final emailCtrl = TextEditingController();
   final usernameCtrl = TextEditingController();
   final passCtrl = TextEditingController(text: 'kantin${_randomSuffix()}');
-  String? selectedCanteen;
+  final canteenCtrl = TextEditingController();
   bool isSaving = false;
 
   showModalBottomSheet(
@@ -312,18 +312,7 @@ void _showAddStaffSheet(BuildContext context, WidgetRef ref) {
               const SizedBox(height: 20),
               _sectionLabel('PENUGASAN STAN KANTIN'),
               const SizedBox(height: 8),
-              _buildDropdownRow(
-                label: 'Stan Kantin',
-                value: selectedCanteen ?? 'Belum Dipilih',
-                items: [
-                  'Belum Dipilih',
-                  'Warung Bude Sari',
-                  'Koperasi Minuman',
-                  'Stan Bakso Pak Harto',
-                  'Stan Nasi Goreng',
-                ],
-                onChanged: (v) => setLocal(() => selectedCanteen = v),
-              ),
+              _buildFormField(canteenCtrl, 'Nama Stan Kantin *'),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -339,10 +328,11 @@ void _showAddStaffSheet(BuildContext context, WidgetRef ref) {
                       ? null
                       : () async {
                           if (nameCtrl.text.trim().isEmpty ||
-                              usernameCtrl.text.trim().isEmpty) {
+                              usernameCtrl.text.trim().isEmpty ||
+                              canteenCtrl.text.trim().isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Nama dan username wajib diisi'),
+                                content: Text('Nama, username, dan nama stan wajib diisi'),
                               ),
                             );
                             return;
@@ -361,7 +351,7 @@ void _showAddStaffSheet(BuildContext context, WidgetRef ref) {
                               'p_role': 'petugas_kantin',
                               'p_phone_number': phoneCtrl.text.trim(),
                               'p_username': usernameCtrl.text.trim(),
-                              'p_canteen_name': selectedCanteen != 'Belum Dipilih' ? selectedCanteen : 'Stan Kantin',
+                              'p_canteen_name': canteenCtrl.text.trim(),
                               'p_is_active': true,
                             });
 

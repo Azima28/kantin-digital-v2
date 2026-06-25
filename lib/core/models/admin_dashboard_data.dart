@@ -21,10 +21,10 @@ class AdminDashboardData {
     final trendList = json['daily_trend'] as List<dynamic>? ?? [];
     return AdminDashboardData(
       userCount: (json['user_count'] as num?)?.toInt() ?? 0,
-      globalBalance: int.tryParse(json['global_balance']?.toString() ?? '0') ?? 0,
-      dailyVolume: int.tryParse(json['daily_volume']?.toString() ?? '0') ?? 0,
+      globalBalance: (double.tryParse(json['global_balance']?.toString() ?? '0') ?? 0.0).toInt(),
+      dailyVolume: (double.tryParse(json['daily_volume']?.toString() ?? '0') ?? 0.0).toInt(),
       txCountToday: (json['tx_count_today'] as num?)?.toInt() ?? 0,
-      dailyTrend: trendList.map((e) => int.tryParse(e.toString()) ?? 0).toList(),
+      dailyTrend: trendList.map((e) => (double.tryParse(e.toString()) ?? 0.0).toInt()).toList(),
     );
   }
 

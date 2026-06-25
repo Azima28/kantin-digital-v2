@@ -297,6 +297,9 @@ class AuthService {
   // Check if session is active via Supabase Auth
   Session? get currentSession => _client.auth.currentSession;
 
+  // Get auth state changes stream from Supabase Auth
+  Stream<dynamic> get onAuthStateChange => _client.auth.onAuthStateChange;
+
   // Get current authenticated user profile
   Future<Map<String, dynamic>?> getCurrentProfile() async {
     if (_currentProfile != null) return _currentProfile;

@@ -27,7 +27,7 @@ class Product {
       id: json['id'] as String,
       operatorId: json['operator_id']?.toString() ?? '',
       name: json['name']?.toString() ?? 'Produk',
-      price: int.tryParse(json['price']?.toString() ?? '0') ?? 0,
+      price: (double.tryParse(json['price']?.toString() ?? '0') ?? 0.0).toInt(),
       category: json['category']?.toString() ?? 'makanan',
       isAvailable: json['is_available'] as bool? ?? true,
       imageUrl: json['image_url']?.toString(),

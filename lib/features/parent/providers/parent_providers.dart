@@ -27,7 +27,7 @@ final parentDashboardProvider =
     final List<dynamic> txs = await client
         .from('transactions')
         .select(
-            'id, total_amount, type, status, created_at, canteen_operators(canteen_name), transaction_items(quantity, unit_price, products(name, category))')
+            'id, total_amount, type, status, created_at, purchase_method, canteen_operators(canteen_name), transaction_items(quantity, unit_price, products(name, category))')
         .eq('student_id', studentId)
         .order('created_at', ascending: false)
         .limit(100);

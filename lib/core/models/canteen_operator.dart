@@ -17,7 +17,7 @@ class CanteenOperator {
       id: json['id'] as String,
       canteenName: json['canteen_name']?.toString() ?? '',
       balanceEarned:
-          int.tryParse(json['balance_earned']?.toString() ?? '0') ?? 0,
+          (double.tryParse(json['balance_earned']?.toString() ?? '0') ?? 0.0).toInt(),
     );
   }
 

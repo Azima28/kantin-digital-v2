@@ -10,9 +10,16 @@ import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 import 'package:kantin_digital/core/widgets/premium_panel.dart';
 
-class SiswaMainLayout extends ConsumerWidget {
+class SiswaMainLayout extends ConsumerStatefulWidget {
   final Widget child;
   const SiswaMainLayout({super.key, required this.child});
+
+  @override
+  ConsumerState<SiswaMainLayout> createState() => _SiswaMainLayoutState();
+}
+
+class _SiswaMainLayoutState extends ConsumerState<SiswaMainLayout> {
+  final List<int> _tabHistory = [0];
 
   int _getSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).uri.toString();
@@ -27,6 +34,18 @@ class SiswaMainLayout extends ConsumerWidget {
   }
 
   void _onItemTapped(int index, BuildContext context) {
+    final int currentIndex = _getSelectedIndex(context);
+    if (currentIndex == index) return;
+
+    setState(() {
+      _tabHistory.remove(index);
+      _tabHistory.add(index);
+    });
+
+    _navigateToTab(index, context);
+  }
+
+  void _navigateToTab(int index, BuildContext context) {
     switch (index) {
       case 0:
         context.go('/student');
@@ -44,13 +63,20 @@ class SiswaMainLayout extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final int selectedIndex = _getSelectedIndex(context);
     final bool isDesktop = Responsive.showSidebar(context);
     final double sidebarW = Responsive.sidebarWidth(context);
 
+    // Sync external navigation changes with our history stack
+    if (_tabHistory.isEmpty || _tabHistory.last != selectedIndex) {
+      _tabHistory.remove(selectedIndex);
+      _tabHistory.add(selectedIndex);
+    }
+
+    Widget mainWidget;
     if (isDesktop) {
-      return Scaffold(
+      mainWidget = Scaffold(
         body: Row(
           children: [
             // Left sidebar
@@ -60,62 +86,78 @@ class SiswaMainLayout extends ConsumerWidget {
             Expanded(
               child: PremiumPanel(
                 isDesktop: true,
-                child: child,
+                child: widget.child,
               ),
             ),
           ],
         ),
       );
-    }
-
-    return Scaffold(
-      body: PremiumPanel(
-        isDesktop: false,
-        child: child,
-      ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.cardBackground,
-          border: Border(
-            top: BorderSide(color: AppColors.borderLight, width: 0.5),
+    } else {
+      mainWidget = Scaffold(
+        body: PremiumPanel(
+          isDesktop: false,
+          child: widget.child,
+        ),
+        bottomNavigationBar: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.cardBackground,
+            border: Border(
+              top: BorderSide(color: AppColors.borderLight, width: 0.5),
+            ),
+          ),
+          child: BottomNavigationBar(
+            currentIndex: selectedIndex,
+            onTap: (int index) => _onItemTapped(index, context),
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: AppColors.cardBackground,
+            selectedItemColor: AppColors.primary,
+            unselectedItemColor: AppColors.textGray,
+            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
+            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
+            elevation: 0,
+            items: const <BottomNavigationBarItem>[
+              BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.house, size: 22),
+                activeIcon: Icon(CupertinoIcons.house_fill, size: 22),
+                label: 'Beranda',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.square_grid_2x2, size: 22),
+                activeIcon: Icon(CupertinoIcons.square_grid_2x2_fill, size: 22),
+                label: 'Menu',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.clock, size: 22),
+                activeIcon: Icon(CupertinoIcons.clock_fill, size: 22),
+                label: 'Riwayat',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.person, size: 22),
+                activeIcon: Icon(CupertinoIcons.person_fill, size: 22),
+                label: 'Akun',
+              ),
+            ],
           ),
         ),
-        child: BottomNavigationBar(
-          currentIndex: selectedIndex,
-          onTap: (int index) => _onItemTapped(index, context),
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: AppColors.cardBackground,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textGray,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
-          elevation: 0,
-          items: const <BottomNavigationBarItem>[
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.house, size: 22),
-              activeIcon: Icon(CupertinoIcons.house_fill, size: 22),
-              label: 'Beranda',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.square_grid_2x2, size: 22),
-              activeIcon: Icon(CupertinoIcons.square_grid_2x2_fill, size: 22),
-              label: 'Menu',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.clock, size: 22),
-              activeIcon: Icon(CupertinoIcons.clock_fill, size: 22),
-              label: 'Riwayat',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.person, size: 22),
-              activeIcon: Icon(CupertinoIcons.person_fill, size: 22),
-              label: 'Akun',
-            ),
-          ],
-        ),
-      ),
+      );
+    }
+
+    return PopScope(
+      canPop: _tabHistory.length <= 1,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        if (didPop) return;
+        if (_tabHistory.length > 1) {
+          setState(() {
+            _tabHistory.removeLast(); // Remove current tab
+            final prevTab = _tabHistory.last;
+            _navigateToTab(prevTab, context);
+          });
+        }
+      },
+      child: mainWidget,
     );
   }
+
 
   Widget _buildSidebar(BuildContext context, WidgetRef ref, int selectedIndex, double sidebarWidth) {
     final authState = ref.watch(authNotifierProvider);

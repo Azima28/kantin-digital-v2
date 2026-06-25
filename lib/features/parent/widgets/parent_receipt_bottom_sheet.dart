@@ -94,7 +94,9 @@ class ParentReceiptBottomSheet extends ConsumerWidget {
             const SizedBox(height: 12),
             _buildReceiptRow(
               'Lokasi / Metode',
-              isTopup ? 'Top-up Transfer Bank' : canteen,
+              isTopup
+                  ? 'Top-up Transfer Bank'
+                  : '$canteen (${transaction.purchaseMethod == 'app' ? 'Aplikasi' : 'RFID/NFC'})',
             ),
             const SizedBox(height: 16),
 

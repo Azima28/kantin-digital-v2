@@ -11,10 +11,16 @@ import 'package:kantin_digital/core/constants/app_strings.dart';
 
 import 'package:kantin_digital/core/widgets/premium_panel.dart';
 
-class KeuanganMainLayout extends ConsumerWidget {
+class KeuanganMainLayout extends ConsumerStatefulWidget {
   final Widget child;
   const KeuanganMainLayout({super.key, required this.child});
 
+  @override
+  ConsumerState<KeuanganMainLayout> createState() => _KeuanganMainLayoutState();
+}
+
+class _KeuanganMainLayoutState extends ConsumerState<KeuanganMainLayout> {
+  final List<int> _tabHistory = [0];
 
   int _getSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).uri.toString();
@@ -29,6 +35,18 @@ class KeuanganMainLayout extends ConsumerWidget {
   }
 
   void _onItemTapped(int index, BuildContext context) {
+    final int currentIndex = _getSelectedIndex(context);
+    if (currentIndex == index) return;
+
+    setState(() {
+      _tabHistory.remove(index);
+      _tabHistory.add(index);
+    });
+
+    _navigateToTab(index, context);
+  }
+
+  void _navigateToTab(int index, BuildContext context) {
     switch (index) {
       case 0:
         context.go('/finance');
@@ -46,17 +64,24 @@ class KeuanganMainLayout extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final int selectedIndex = _getSelectedIndex(context);
     final double width = MediaQuery.of(context).size.width;
     final bool isDesktop = width >= 768;
 
+    // Sync external navigation changes with our history stack
+    if (_tabHistory.isEmpty || _tabHistory.last != selectedIndex) {
+      _tabHistory.remove(selectedIndex);
+      _tabHistory.add(selectedIndex);
+    }
+
+    Widget mainWidget;
     if (isDesktop) {
-      return Scaffold(
+      mainWidget = Scaffold(
         body: Row(
           children: [
             // Left sidebar
-            _buildSidebar(context, ref, selectedIndex),
+            _buildSidebar(context, selectedIndex),
             const VerticalDivider(
               width: 0.5,
               thickness: 0.5,
@@ -66,67 +91,82 @@ class KeuanganMainLayout extends ConsumerWidget {
             Expanded(
               child: PremiumPanel(
                 isDesktop: true,
-                child: child,
+                child: widget.child,
               ),
             ),
           ],
         ),
       );
+    } else {
+      mainWidget = Scaffold(
+        body: PremiumPanel(
+          isDesktop: false,
+          child: widget.child,
+        ),
+        bottomNavigationBar: Container(
+          decoration: const BoxDecoration(
+            border: Border(top: BorderSide(color: AppColors.borderGray, width: 0.5)),
+          ),
+          child: BottomNavigationBar(
+            currentIndex: selectedIndex,
+            onTap: (int index) => _onItemTapped(index, context),
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: AppColors.white,
+            selectedItemColor: AppColors.darkTeal,
+            unselectedItemColor: AppColors.mutedGray,
+            selectedLabelStyle: GoogleFonts.inter(
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+            ),
+            unselectedLabelStyle: GoogleFonts.inter(
+              fontWeight: FontWeight.w500,
+              fontSize: 11,
+            ),
+            elevation: 0,
+            items: const <BottomNavigationBarItem>[
+              BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.house, size: 22),
+                activeIcon: Icon(CupertinoIcons.house_fill, size: 22),
+                label: 'Beranda',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.group, size: 22),
+                activeIcon: Icon(CupertinoIcons.group_solid, size: 22),
+                label: AppStrings.adminUsers,
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.list_bullet, size: 22),
+                activeIcon: Icon(CupertinoIcons.list_bullet, size: 22),
+                label: AppStrings.labelTransaction,
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.person, size: 22),
+                activeIcon: Icon(CupertinoIcons.person_fill, size: 22),
+                label: 'Akun',
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
-    return Scaffold(
-      body: PremiumPanel(
-        isDesktop: false,
-        child: child,
-      ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: AppColors.borderGray, width: 0.5)),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: selectedIndex,
-          onTap: (int index) => _onItemTapped(index, context),
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: AppColors.white,
-          selectedItemColor: AppColors.darkTeal,
-          unselectedItemColor: AppColors.mutedGray,
-          selectedLabelStyle: GoogleFonts.inter(
-            fontWeight: FontWeight.w600,
-            fontSize: 11,
-          ),
-          unselectedLabelStyle: GoogleFonts.inter(
-            fontWeight: FontWeight.w500,
-            fontSize: 11,
-          ),
-          elevation: 0,
-          items: const <BottomNavigationBarItem>[
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.house, size: 22),
-              activeIcon: Icon(CupertinoIcons.house_fill, size: 22),
-              label: 'Beranda',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.group, size: 22),
-              activeIcon: Icon(CupertinoIcons.group_solid, size: 22),
-              label: AppStrings.adminUsers,
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.list_bullet, size: 22),
-              activeIcon: Icon(CupertinoIcons.list_bullet, size: 22),
-              label: AppStrings.labelTransaction,
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.person, size: 22),
-              activeIcon: Icon(CupertinoIcons.person_fill, size: 22),
-              label: 'Akun',
-            ),
-          ],
-        ),
-      ),
+    return PopScope(
+      canPop: _tabHistory.length <= 1,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        if (didPop) return;
+        if (_tabHistory.length > 1) {
+          setState(() {
+            _tabHistory.removeLast(); // Remove current tab
+            final prevTab = _tabHistory.last;
+            _navigateToTab(prevTab, context);
+          });
+        }
+      },
+      child: mainWidget,
     );
   }
 
-  Widget _buildSidebar(BuildContext context, WidgetRef ref, int selectedIndex) {
+  Widget _buildSidebar(BuildContext context, int selectedIndex) {
     final authState = ref.watch(authNotifierProvider);
     final String fullName = authState.profile?['full_name'] ?? 'Admin Keuangan';
     final String school =

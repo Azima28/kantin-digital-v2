@@ -32,7 +32,7 @@ final AutoDisposeFutureProvider<List<OperatorTransaction>>
   final List<dynamic> response = await client
       .from('transactions')
       .select(
-          'id, student_id, operator_id, total_amount, type, status, created_at, canteen_operators(canteen_name)')
+          'id, student_id, operator_id, total_amount, type, status, created_at, purchase_method, canteen_operators(canteen_name)')
       .eq('student_id', profileId)
       .order('created_at', ascending: false)
       .limit(50);

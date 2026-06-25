@@ -390,3 +390,15 @@ lib/
     * **Perataan Rasio (Circle Distortions)**: Membungkus seluruh widget lingkaran (Role Activity circle, legend dots, SA avatar circle, Optimal indicator dot) dalam `SizedBox` + `AspectRatio` + `BorderRadius` untuk menjaga aspect ratio lingkaran tetap 1:1 sempurna di semua viewport browser.
     * **Performa Scroll**: Menghapus `BackdropFilter` (blur glass) pada `PremiumPanel` untuk menghilangkan kelambatan / patah-patah visual saat melakukan scroll pada aplikasi web.
     * **Auto Read Notifikasi**: Mengubah `NotificationsBottomSheet` menjadi `ConsumerStatefulWidget` untuk menandai semua notifikasi pengguna sebagai telah dibaca secara otomatis di `initState` saat panel dibuka. Hal ini membersihkan badge lonceng notifikasi seketika tanpa perlu mengklik pesan satu demi satu.
+15. **Redesain Katalog Menu Siswa (GoFood-style) & Lazy Loading**: ✅ **Selesai** — Merombak total menu katalog siswa di `/public/menu` agar terkelompok rapi, memiliki visual kelas premium, dan bebas lag:
+    * Mengganti layout `TabBarView` lama dengan `CustomScrollView` satu konteks scroll.
+    * **Pemisahan Kelompok Menu**: Jika filter kategori kosong, menu disajikan ke dalam 3 section vertikal (Makanan Utama, Camilan & Jajanan, Minuman Segar) yang masing-masing hanya memuat 4 item pertama (sangat ringan di database).
+    * **Infinite Scroll (Lazy Loading)**: Jika filter kategori aktif atau siswa sedang mencari menu, katalog disajikan dalam grid tunggal dengan pagination 8 item per halaman menggunakan PostgREST `.range(start, end)` yang terpaut dengan listener pergerakan scroll.
+    * **Proteksi Pencarian (Debounce 500ms)**: Menambahkan debouncer pada Search Bar untuk menunda kueri Supabase selama 500ms saat mengetik, guna menghindari kueri berlebih pada database.
+    * Merancang ulang kartu menu dengan indikator ketersediaan, format rupiah, dan soft pastel gradient fallback per kategori.
+    * Membuat Bottom Sheet Detail Jajanan interaktif lengkap dengan panduan transaksi RFID di kantin fisik.
+    * Memperbarui database query provider agar memuat menu yang habis di urutan bawah demi katalog yang lengkap.
+16. **Perbaikan Bug Tombol Back & Sesi Auto-Restore (0Rp)**: ✅ **Selesai**
+    * **Tombol Back Sistem (PopScope)**: Menambahkan penanganan tombol back fisik/sistem pada HP agar berpindah mundur melalui riwayat tab (Beranda, Menu, Riwayat, Akun) alih-alih langsung keluar dari aplikasi. Ini diimplementasikan secara stateful menggunakan `PopScope` pada `SiswaMainLayout`, `KantinMainLayout`, `AdminMainLayout`, dan `KeuanganMainLayout`.
+    * **Inisialisasi Sesi Otomatis**: Memperbaiki masalah data tereset menjadi `0Rp` atau terlempar ke halaman welcome saat membuka kembali aplikasi. Masalah ini disebabkan oleh pembacaan `currentSession` secara sinkronis pada startup sebelum proses pemulihan sesi asinkronis Supabase selesai. Diatasi dengan mengubah `AuthNotifier` agar berlangganan langsung ke stream `onAuthStateChange` milik Supabase, sehingga status autentikasi dan profil pengguna selalu tersinkronisasi sempurna sejak aplikasi pertama kali diluncurkan.
+

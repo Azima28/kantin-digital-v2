@@ -45,7 +45,7 @@ class _StudentTransactionsScreenState
     final List<dynamic> txs = await client
         .from('transactions')
         .select(
-          'id, total_amount, type, status, created_at, canteen_operators(canteen_name)',
+          'id, total_amount, type, status, created_at, purchase_method, canteen_operators(canteen_name)',
         )
         .eq('student_id', widget.studentId)
         .order('created_at', ascending: false);
@@ -455,7 +455,7 @@ class _StudentTransactionsScreenState
         ),
       ),
       subtitle: Text(
-        DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(date),
+        '${DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(date)} WIB • ${isTopup ? "Koperasi" : (tx['purchase_method'] == 'app' ? "Aplikasi" : "Kasir")}',
         style: GoogleFonts.inter(fontSize: 11, color: AppColors.textGray),
       ),
       trailing: Column(

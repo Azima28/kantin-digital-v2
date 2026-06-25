@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kantin_digital/features/auth/services/auth_service.dart';
@@ -33,6 +34,7 @@ class AuthState {
   /// Plaintext session token returned by `create_user_session` RPC.
   /// Only the authenticated client holds this — the DB stores only the SHA-256 hash.
   final String? sessionToken;
+  final bool isInitialized;
 
   const AuthState({
     this.isLoading = false,
@@ -40,6 +42,7 @@ class AuthState {
     this.profile,
     this.errorMessage,
     this.sessionToken,
+    this.isInitialized = false,
   });
 
   AuthState copyWith({
@@ -48,6 +51,7 @@ class AuthState {
     Map<String, dynamic>? profile,
     String? errorMessage,
     String? sessionToken,
+    bool? isInitialized,
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
@@ -55,6 +59,7 @@ class AuthState {
       profile: profile ?? this.profile,
       errorMessage: errorMessage, // We allow setting it to null
       sessionToken: sessionToken ?? this.sessionToken,
+      isInitialized: isInitialized ?? this.isInitialized,
     );
   }
 }
@@ -62,30 +67,52 @@ class AuthState {
 // StateNotifier untuk mengelola aksi & state autentikasi
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
+  StreamSubscription<dynamic>? _authSubscription;
 
   AuthNotifier(this._authService) : super(const AuthState()) {
-    // Delay ke post-frame biar gak trigger rebuild mid-layout
-    Future.microtask(_checkInitialSession);
+    _initAuthListener();
   }
 
-  // Cek sesi login saat inisialisasi awal
-  // NOTE: sengaja gak pake isLoading biar gak muncul spinner di tombol login.
-  // Loading cuma dipake pas user beneran login, bukan pas startup.
-  Future<void> _checkInitialSession() async {
-    try {
-      final Session? session = _authService.currentSession;
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _initAuthListener() {
+    _authSubscription = _authService.onAuthStateChange.listen((data) async {
+      final session = data.session;
       if (session != null) {
-        final Map<String, dynamic>? profile = await _authService
-            .getCurrentProfile();
-        if (profile != null && (profile['role'] == AuthRoles.canteen || profile['role'] == AuthRoles.student || profile['role'] == AuthRoles.parent || profile['role'] == AuthRoles.superAdmin || profile['role'] == AuthRoles.keuangan)) {
-          state = AuthState(isAuthenticated: true, profile: profile);
+        // If already authenticated with the same user ID, no need to refresh or fetch again
+        final String? currentUserId = state.profile?['id'];
+        if (state.isAuthenticated && currentUserId == session.user.id) {
+          if (!state.isInitialized) {
+            state = state.copyWith(isInitialized: true);
+          }
           return;
         }
+
+        try {
+          final Map<String, dynamic>? profile = await _authService.getCurrentProfile();
+          if (profile != null && (profile['role'] == AuthRoles.canteen ||
+              profile['role'] == AuthRoles.student ||
+              profile['role'] == AuthRoles.parent ||
+              profile['role'] == AuthRoles.superAdmin ||
+              profile['role'] == AuthRoles.keuangan)) {
+            state = AuthState(
+              isAuthenticated: true,
+              profile: profile,
+              isInitialized: true,
+              sessionToken: state.sessionToken,
+            );
+            return;
+          }
+        } catch (_) {
+          // Fall through on error
+        }
       }
-      state = const AuthState(isAuthenticated: false);
-    } catch (e) {
-      state = AuthState(errorMessage: e.toString());
-    }
+      state = const AuthState(isAuthenticated: false, isInitialized: true);
+    });
   }
 
   // Fungsi Login
@@ -103,11 +130,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isAuthenticated: true,
         profile: profile,
         sessionToken: sessionToken,
+        isInitialized: true,
       );
       return true;
     } catch (e) {
       state = AuthState(
         errorMessage: e.toString().replaceFirst('Exception: ', ''),
+        isInitialized: true,
       );
       return false;
     }
@@ -117,9 +146,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> logout() async {
     state = state.copyWith(isLoading: true);
     await _authService.signOut();
-    state = const AuthState(isAuthenticated: false, sessionToken: null);
+    state = const AuthState(isAuthenticated: false, sessionToken: null, isInitialized: true);
   }
 }
+
 
 // Provider untuk StateNotifier
 final StateNotifierProvider<AuthNotifier, AuthState> authNotifierProvider =

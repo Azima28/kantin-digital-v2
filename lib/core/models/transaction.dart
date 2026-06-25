@@ -9,6 +9,7 @@ class Transaction {
   final int totalAmount;
   final String type; // 'purchase' or 'topup'
   final DateTime createdAt;
+  final String purchaseMethod; // 'rfid' or 'app'
 
   /// Nested objects dari join Supabase (opsional).
   final Map<String, dynamic>? operator;
@@ -22,6 +23,7 @@ class Transaction {
     required this.totalAmount,
     required this.type,
     required this.createdAt,
+    this.purchaseMethod = 'rfid',
     this.operator,
     this.student,
   });
@@ -32,9 +34,10 @@ class Transaction {
       studentId: json['student_id']?.toString() ?? '',
       operatorId: json['operator_id']?.toString() ?? '',
       status: json['status']?.toString() ?? '',
-      totalAmount: int.tryParse(json['total_amount']?.toString() ?? '') ?? 0,
+      totalAmount: (double.tryParse(json['total_amount']?.toString() ?? '') ?? 0.0).toInt(),
       type: json['type'] as String,
       createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
+      purchaseMethod: json['purchase_method']?.toString() ?? 'rfid',
       operator: json['operator'] as Map<String, dynamic>?,
       student: json['student'] as Map<String, dynamic>?,
     );
@@ -48,6 +51,7 @@ class Transaction {
         'total_amount': totalAmount,
         'type': type,
         'created_at': createdAt.toIso8601String(),
+        'purchase_method': purchaseMethod,
       };
 
   // ---------------------------------------------------------------------------
@@ -62,6 +66,7 @@ class Transaction {
     int? totalAmount,
     String? type,
     DateTime? createdAt,
+    String? purchaseMethod,
     Map<String, dynamic>? operator,
     Map<String, dynamic>? student,
   }) {
@@ -73,6 +78,7 @@ class Transaction {
       totalAmount: totalAmount ?? this.totalAmount,
       type: type ?? this.type,
       createdAt: createdAt ?? this.createdAt,
+      purchaseMethod: purchaseMethod ?? this.purchaseMethod,
       operator: operator ?? this.operator,
       student: student ?? this.student,
     );

@@ -29,7 +29,7 @@ class TransactionItem {
       productId: json['product_id'] as String?,
       quantity: (json['quantity'] as num?)?.toInt() ?? 0,
       unitPrice:
-          int.tryParse(json['unit_price']?.toString() ?? '0') ?? 0,
+          (double.tryParse(json['unit_price']?.toString() ?? '0') ?? 0.0).toInt(),
       customNotes: json['custom_notes'] as String?,
       product: (json['product'] ?? json['products']) as Map<String, dynamic>?,
     );

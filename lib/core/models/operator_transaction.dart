@@ -13,6 +13,7 @@ class OperatorTransaction {
   final DateTime? createdAt;
   final String? studentId;
   final String? operatorId;
+  final String? purchaseMethod; // 'rfid' or 'app'
 
   /// Nested data dari join Supabase (opsional).
   final String? canteenName;
@@ -28,6 +29,7 @@ class OperatorTransaction {
     this.createdAt,
     this.studentId,
     this.operatorId,
+    this.purchaseMethod,
     this.canteenName,
     this.studentName,
     this.studentNisn,
@@ -55,7 +57,7 @@ class OperatorTransaction {
 
     return OperatorTransaction(
       id: json['id']?.toString() ?? '',
-      totalAmount: int.tryParse(json['total_amount']?.toString() ?? '0') ?? 0,
+      totalAmount: (double.tryParse(json['total_amount']?.toString() ?? '0') ?? 0.0).toInt(),
       type: json['type'] as String?,
       status: json['status'] as String?,
       createdAt: json['created_at'] != null
@@ -63,6 +65,7 @@ class OperatorTransaction {
           : null,
       studentId: json['student_id'] as String?,
       operatorId: json['operator_id'] as String?,
+      purchaseMethod: json['purchase_method'] as String? ?? 'rfid',
       canteenName: canteenName,
       transactionItems: transactionItems,
     );
@@ -95,13 +98,14 @@ class OperatorTransaction {
 
     return OperatorTransaction(
       id: json['id']?.toString() ?? '',
-      totalAmount: int.tryParse(json['total_amount']?.toString() ?? '0') ?? 0,
+      totalAmount: (double.tryParse(json['total_amount']?.toString() ?? '0') ?? 0.0).toInt(),
       type: json['type'] as String?,
       status: json['status'] as String?,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
       studentId: json['student_id'] as String?,
+      purchaseMethod: json['purchase_method'] as String? ?? 'rfid',
       studentName: studentName,
       studentNisn: studentNisn,
     );
@@ -115,6 +119,7 @@ class OperatorTransaction {
         'created_at': createdAt?.toIso8601String(),
         'student_id': studentId,
         'operator_id': operatorId,
+        'purchase_method': purchaseMethod,
       };
 
   bool get isPurchase => type == 'purchase';
@@ -129,6 +134,7 @@ class OperatorTransaction {
     DateTime? createdAt,
     String? studentId,
     String? operatorId,
+    String? purchaseMethod,
     String? canteenName,
     String? studentName,
     String? studentNisn,
@@ -142,6 +148,7 @@ class OperatorTransaction {
       createdAt: createdAt ?? this.createdAt,
       studentId: studentId ?? this.studentId,
       operatorId: operatorId ?? this.operatorId,
+      purchaseMethod: purchaseMethod ?? this.purchaseMethod,
       canteenName: canteenName ?? this.canteenName,
       studentName: studentName ?? this.studentName,
       studentNisn: studentNisn ?? this.studentNisn,

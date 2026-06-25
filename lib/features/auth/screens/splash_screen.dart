@@ -17,17 +17,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Navigasi setelah frame pertama selesai dibangun (post-frame callback)
-    // untuk menghindari layout crash cascade akibat route change saat build.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _redirectAfterSplash();
-    });
   }
 
-  void _redirectAfterSplash() {
+  void _redirectAfterSplash(AuthState authState) {
     if (!mounted) return;
     try {
-      final authState = ref.read(authNotifierProvider);
       if (authState.isAuthenticated) {
         final role = authState.profile?['role'] ?? '';
         if (role == 'petugas_kantin') {
@@ -56,6 +50,20 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen to changes to run redirect when initialized
+    ref.listen<AuthState>(authNotifierProvider, (previous, next) {
+      if (next.isInitialized) {
+        _redirectAfterSplash(next);
+      }
+    });
+
+    // Fallback in case state was already initialized on launch/hot-reload
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authState = ref.read(authNotifierProvider);
+      if (authState.isInitialized) {
+        _redirectAfterSplash(authState);
+      }
+    });
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Center(

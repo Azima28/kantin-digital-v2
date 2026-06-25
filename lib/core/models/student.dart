@@ -27,7 +27,7 @@ class Student {
     return Student(
       id: json['id'] as String,
       class_: json['class'] as String?,
-      balance: int.tryParse(json['balance']?.toString() ?? '0') ?? 0,
+      balance: (double.tryParse(json['balance']?.toString() ?? '0') ?? 0.0).toInt(),
       rfidUid: json['rfid_uid'] as String?,
       dailyLimit: json['daily_limit'] != null
           ? double.tryParse(json['daily_limit'].toString())
@@ -160,7 +160,7 @@ class StudentWithProfile {
       isActive: json['is_active'] == true,
       class_: studentData?['class'] as String?,
       balance:
-          int.tryParse(studentData?['balance']?.toString() ?? '0') ?? 0,
+          (double.tryParse(studentData?['balance']?.toString() ?? '0') ?? 0.0).toInt(),
       rfidUid: studentData?['rfid_uid'] as String?,
       cardIsActive: studentData?['is_active'] == true,
     );

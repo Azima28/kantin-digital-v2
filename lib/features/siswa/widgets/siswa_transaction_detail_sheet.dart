@@ -109,7 +109,9 @@ void showTransactionDetailSheet(
                   const Divider(height: 20),
                   _buildDataRow(
                     'Metode/Lokasi',
-                    type == 'topup' ? 'QRIS / Koperasi' : canteenName,
+                    type == 'topup'
+                        ? 'QRIS / Koperasi'
+                        : '$canteenName (${tx.purchaseMethod == 'app' ? 'Aplikasi' : 'RFID/NFC'})',
                   ),
 
                   if (type == 'purchase') ...[
