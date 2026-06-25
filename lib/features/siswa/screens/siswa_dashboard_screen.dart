@@ -35,6 +35,7 @@ class SiswaDashboardScreen extends ConsumerWidget {
       appBar: AppBar(
         toolbarHeight: 64,
         titleSpacing: 16,
+        centerTitle: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
