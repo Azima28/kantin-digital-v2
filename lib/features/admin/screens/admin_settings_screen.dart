@@ -1,14 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/utils/responsive.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/admin/widgets/setting_section_widget.dart';
-import 'package:kantin_digital/features/admin/widgets/admin_settings_account_section.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_settings_broadcast_section.dart';
 import 'package:kantin_digital/features/admin/widgets/setting_tile_widget.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
@@ -178,40 +176,10 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
     }
   }
 
-  void _showLogoutDialog(BuildContext context, WidgetRef ref) {
-    showCupertinoDialog(
-      context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: const Text(AppStrings.buttonLogout),
-        content: const Text(
-            'Apakah Anda yakin ingin keluar dari Master Control?'),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await ref.read(authNotifierProvider.notifier).logout();
-              if (context.mounted) {
-                context.go('/login');
-              }
-            },
-            child: const Text(AppStrings.buttonLogout),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     final settingsAsync = ref.watch(adminSettingsProvider);
-    final authState = ref.watch(authNotifierProvider);
-    final String fullName = authState.profile?['full_name'] ?? 'Super Admin';
-    final String email = authState.profile?['email'] ?? 'admin@kantindigital.com';
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -222,7 +190,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
         automaticallyImplyLeading: false,
         centerTitle: false,
         title: Text(
-          'Akun Saya',
+          'Setelan Sistem',
           style: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -460,14 +428,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
-                const SizedBox(height: 24),
-
-                // ── Account & Logout Section ───────────────────────────────
-                AdminSettingsAccountSection(
-                  fullName: fullName,
-                  email: email,
-                  onLogout: () => _showLogoutDialog(context, ref),
-                ),
+                const SizedBox(height: 20),
               ],
             ),
           );

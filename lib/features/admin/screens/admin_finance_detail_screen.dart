@@ -11,6 +11,8 @@ import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/shared/screens/officer_activities_screen.dart';
+import 'package:kantin_digital/features/admin/widgets/admin_edit_finance_sheet.dart';
+
 
 class AdminFinanceDetailScreen extends ConsumerStatefulWidget {
   final String officerId;
@@ -127,6 +129,20 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
             color: AppColors.darkTeal,
           ),
         ),
+        actions: [
+          detailAsync.maybeWhen(
+            data: (data) => IconButton(
+              icon: const Icon(CupertinoIcons.pencil, color: AppColors.darkTeal),
+              onPressed: () => showEditFinanceSheet(
+                context,
+                ref,
+                data.profile,
+                FinanceOfficer.fromJson(data.officer),
+              ),
+            ),
+            orElse: () => const SizedBox.shrink(),
+          ),
+        ],
       ),
       body: detailAsync.when(
         data: (data) {

@@ -20,6 +20,8 @@ class AdminMainLayout extends ConsumerWidget {
       return 2;
     } else if (location.startsWith('/admin/settings')) {
       return 3;
+    } else if (location.startsWith('/admin/profile')) {
+      return 4;
     }
     return 0; // default to /admin
   }
@@ -37,6 +39,9 @@ class AdminMainLayout extends ConsumerWidget {
         break;
       case 3:
         context.go('/admin/settings');
+        break;
+      case 4:
+        context.go('/admin/profile');
         break;
     }
   }
@@ -102,6 +107,11 @@ class AdminMainLayout extends ConsumerWidget {
               icon: Icon(CupertinoIcons.doc_text, size: 22),
               activeIcon: Icon(CupertinoIcons.doc_text_fill, size: 22),
               label: 'Audit',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.settings, size: 22),
+              activeIcon: Icon(CupertinoIcons.settings_solid, size: 22),
+              label: 'Settings',
             ),
             BottomNavigationBarItem(
               icon: Icon(CupertinoIcons.person, size: 22),
@@ -207,11 +217,20 @@ class AdminMainLayout extends ConsumerWidget {
                 const SizedBox(height: 8),
                 _buildSidebarItem(
                   context: context,
+                  icon: CupertinoIcons.settings,
+                  activeIcon: CupertinoIcons.settings_solid,
+                  label: 'Setelan Sistem',
+                  isSelected: selectedIndex == 3,
+                  onTap: () => _onItemTapped(3, context),
+                ),
+                const SizedBox(height: 8),
+                _buildSidebarItem(
+                  context: context,
                   icon: CupertinoIcons.person,
                   activeIcon: CupertinoIcons.person_fill,
                   label: 'Akun Saya',
-                  isSelected: selectedIndex == 3,
-                  onTap: () => _onItemTapped(3, context),
+                  isSelected: selectedIndex == 4,
+                  onTap: () => _onItemTapped(4, context),
                 ),
               ],
             ),

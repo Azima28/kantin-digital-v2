@@ -38,8 +38,13 @@ class TrendChartPainter extends CustomPainter {
       return;
     }
 
-    final double maxVal = data.reduce((a, b) => a > b ? a : b).toDouble();
-    final double minVal = data.reduce((a, b) => a < b ? a : b).toDouble();
+    double maxVal = data.isEmpty ? 0.0 : data[0].toDouble();
+    double minVal = data.isEmpty ? 0.0 : data[0].toDouble();
+    for (int i = 1; i < data.length; i++) {
+      final double val = data[i].toDouble();
+      if (val > maxVal) maxVal = val;
+      if (val < minVal) minVal = val;
+    }
     final double range = maxVal - minVal == 0 ? 1.0 : maxVal - minVal;
 
     final path = Path();

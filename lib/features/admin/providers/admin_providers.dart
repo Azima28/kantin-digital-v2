@@ -55,7 +55,7 @@ final adminDashboardProvider = FutureProvider.autoDispose<AdminDashboardData>((
     totalTransactionsToday = txRes.length;
     for (var row in txRes) {
       transactionVolumeToday +=
-          int.tryParse(row['total_amount'].toString()) ?? 0;
+          (double.tryParse(row['total_amount']?.toString() ?? '0') ?? 0.0).toInt();
     }
 
     // 4. Fetch last 30 days of transactions for trend
@@ -79,7 +79,7 @@ final adminDashboardProvider = FutureProvider.autoDispose<AdminDashboardData>((
         final dateKey =
             "${txDate.year}-${txDate.month.toString().padLeft(2, '0')}-${txDate.day.toString().padLeft(2, '0')}";
         final int amount =
-            int.tryParse(row['total_amount']?.toString() ?? '0') ?? 0;
+            (double.tryParse(row['total_amount']?.toString() ?? '0') ?? 0.0).toInt();
         dailyVolumes[dateKey] = (dailyVolumes[dateKey] ?? 0) + amount;
       }
     }
@@ -250,7 +250,7 @@ final adminParentDetailProvider = FutureProvider
       final List<dynamic> childrenRes = await client
           .from('parent_students')
           .select(
-            'student_id, students!parent_students_student_id_fkey(class, profiles!students_id_fkey(full_name))',
+            'student_id, students!parent_students_student_id_fkey(class, profiles!students_id_fkey(full_name, nisn))',
           )
           .eq('parent_id', id);
 

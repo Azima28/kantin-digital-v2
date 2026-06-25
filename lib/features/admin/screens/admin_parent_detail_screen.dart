@@ -8,6 +8,8 @@ import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/features/admin/widgets/admin_edit_parent_sheet.dart';
+
 
 class AdminParentDetailScreen extends ConsumerStatefulWidget {
   final String parentId;
@@ -153,6 +155,20 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
             color: AppColors.darkTeal,
           ),
         ),
+        actions: [
+          parentAsync.maybeWhen(
+            data: (data) => IconButton(
+              icon: const Icon(CupertinoIcons.pencil, color: AppColors.darkTeal),
+              onPressed: () => showEditParentSheet(
+                context,
+                ref,
+                data.profile,
+                data.children,
+              ),
+            ),
+            orElse: () => const SizedBox.shrink(),
+          ),
+        ],
       ),
       body: parentAsync.when(
         data: (data) {

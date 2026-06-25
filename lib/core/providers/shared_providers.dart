@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 // ============================================================================
 // SUPABASE CLIENT
@@ -43,13 +44,14 @@ final currentUserProfileProvider =
     FutureProvider.autoDispose<UserProfile?>((ref) async {
   try {
     final client = ref.read(supabaseClientProvider);
-    final user = client.auth.currentUser;
-    if (user == null) return null;
+    final authState = ref.watch(authNotifierProvider);
+    final String? userId = authState.profile?['id']?.toString() ?? client.auth.currentUser?.id;
+    if (userId == null) return null;
 
     final data = await client
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('id', userId)
         .maybeSingle();
 
     if (data == null) return null;
@@ -136,13 +138,14 @@ final userNotificationsProvider =
     FutureProvider.autoDispose<List<AppNotification>>((ref) async {
   try {
     final client = ref.read(supabaseClientProvider);
-    final user = client.auth.currentUser;
-    if (user == null) return <AppNotification>[];
+    final authState = ref.watch(authNotifierProvider);
+    final String? userId = authState.profile?['id']?.toString() ?? client.auth.currentUser?.id;
+    if (userId == null) return <AppNotification>[];
 
     final List<dynamic> response = await client
         .from('notifications')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .order('created_at', ascending: false)
         .limit(50);
 

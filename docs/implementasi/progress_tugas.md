@@ -178,22 +178,11 @@ lib/
     *   `isOnlineProvider` — derived boolean provider
     *   `globalRefreshKeyProvider` — trigger refresh global
     *   `CacheDuration` — konfigurasi cache per jenis data
-    *   `globalErrorProvider` — error state global
-*   [x] **Shared Providers** (`lib/core/providers/shared_providers.dart`) — baru:
-    *   `supabaseClientProvider` — Supabase client singleton
-    *   `transactionTypesProvider` — cached transaction types
-    *   `transactionTypeMapProvider` — id→type lookup map
-    *   `currentUserProfileProvider` — profile user login
-    *   `studentByIdProvider` — student by ID (family provider)
-    *   `rfidCardsProvider` — semua RFID cards
-    *   `rfidByUidProvider` — RFID by UID (family provider)
-*   [x] **Keuangan Providers** (`lib/features/keuangan/providers/keuangan_providers.dart`) — baru:
-    *   `keuanganStudentsProvider` — daftar siswa (typed `StudentWithProfile`)
 # Progress Lembar Kerja Tugas: Kantin Digital
 
 Dokumen ini memantau status penyelesaian setiap fitur pada proyek **Kantin Digital** (multi-platform: Siswa, Kantin/POS, Keuangan, Orang Tua, Super Admin) agar agen berikutnya tahu status persis pengerjaan.
 
-**Terakhir diperbarui**: 24 Juni 2026
+**Terakhir diperbarui**: 25 Juni 2026
 
 ---
 
@@ -210,9 +199,9 @@ Dokumen ini memantau status penyelesaian setiap fitur pada proyek **Kantin Digit
 | **Phase 7**: Modul Orang Tua (Web/Mobile) | ✅ Selesai |
 | **Phase 8**: Modul Super Admin (Mobile) | ✅ Selesai |
 | **Phase 9**: Code Architecture (Models & Providers) | 🔄 Sedang Berjalan |
-| **Phase 10**: Security Hardening & Production Readiness | 🔄 Sedang Berjalan |
+| **Phase 10**: Security Hardening & Production Readiness | ⏳ Belum Mulai |
 
-**Progres Keseluruhan**: ~92%
+**Progres Keseluruhan**: ~86%
 
 ---
 
@@ -348,6 +337,7 @@ lib/
 *   [x] **Audit Log** — log aktivitas sistem.
 *   [x] **Settings** — pengaturan admin.
 *   [x] **Detail Screens** (4): Student, Merchant, Finance Officer, Parent detail.
+*   [x] **Fitur Edit Profil Pengguna**: Super Admin dapat mengubah seluruh field profil & data spesifik peran (Siswa, POS Kantin, Admin Keuangan, Orang Tua) kecuali ID primer, terintegrasi otomatis dengan update database multi-tabel dan pencatatan audit log (old & new values).
 *   [x] **Main Layout** — bottom navigation (Home, Users, Audit, Settings).
 
 ### [🔄] Phase 9: Code Architecture (Type Safety & Clean Architecture)
@@ -393,5 +383,10 @@ lib/
     * **Penyempurnaan Transaksi**: Memperbarui RPC `process_topup` dan `process_correction` (`20260624000600_add_missing_transaction_notifications.sql`) agar otomatis mencatat entri notifikasi ke tabel `notifications` ketika terjadi pengisian saldo atau penyesuaian saldo sistem.
     * **Widget Shared & Integrasi**: Membuat widget `NotificationBell` interaktif dengan badge indikator unread count, yang membuka `NotificationsBottomSheet` dinamis saat diklik (menampilkan daftar log, mendukung aksi tandai telah dibaca, dan hapus semua). Menyematkan lonceng ke 5 dashboard role (Siswa, POS Kantin, Keuangan, Wali Murid, Super Admin) serta mengintegrasikan form siaran Super Admin ke RPC database.
     * **Sinkronisasi UI (Invalidasi)**: Menambahkan pemanggilan `ref.invalidate(userNotificationsProvider)` di layar top-up siswa, top-up orang tua, top-up petugas keuangan, dan koreksi saldo petugas keuangan agar jumlah notifikasi dan daftar log ter-update seketika setelah aksi sukses dilakukan.
-
-
+13. **Pemisahan Setelan Sistem & Akun Saya Super Admin**: ✅ **Selesai** — Memisahkan halaman Setelan Sistem (Broadcast, Payment API, Maintenance mode) dengan halaman Akun Saya (Profil, Ubah Password, Logout) pada role Super Admin dengan menambahkan tab navigasi kelima di bottom bar / sidebar layout.
+14. **Perbaikan Bug Notifikasi & Perataan Rasio Dashboard Super Admin**: ✅ **Selesai**
+    * **Notifikasi / Broadcast**: Mengatasi masalah notifikasi kosong pada mode fallback auth dengan memperbarui `userNotificationsProvider` dan `currentUserProfileProvider` di `shared_providers.dart` untuk membaca `authNotifierProvider.state.profile['id']` sebagai user ID.
+    * **Database Broadcast**: Menambahkan migrasi SQL `20260625000000_fix_broadcast_audience_roles.sql` untuk memperbarui fungsi `send_broadcast_notifications` agar mendukung pencocokan role `'petugas_keuangan'` (sebagai alias `'staff'`), sehingga pengiriman pesan broadcast ke staf keuangan berjalan sukses.
+    * **Perataan Rasio (Circle Distortions)**: Membungkus seluruh widget lingkaran (Role Activity circle, legend dots, SA avatar circle, Optimal indicator dot) dalam `SizedBox` + `AspectRatio` + `BorderRadius` untuk menjaga aspect ratio lingkaran tetap 1:1 sempurna di semua viewport browser.
+    * **Performa Scroll**: Menghapus `BackdropFilter` (blur glass) pada `PremiumPanel` untuk menghilangkan kelambatan / patah-patah visual saat melakukan scroll pada aplikasi web.
+    * **Auto Read Notifikasi**: Mengubah `NotificationsBottomSheet` menjadi `ConsumerStatefulWidget` untuk menandai semua notifikasi pengguna sebagai telah dibaca secara otomatis di `initState` saat panel dibuka. Hal ini membersihkan badge lonceng notifikasi seketika tanpa perlu mengklik pesan satu demi satu.

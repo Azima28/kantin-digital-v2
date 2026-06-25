@@ -25,23 +25,32 @@ class AdminContributionCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Center(
-            child: Container(
+            child: SizedBox(
               width: 88,
               height: 88,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.darkTeal,
-                  width: 10,
-                ),
-              ),
-              child: Center(
-                child: Text(
-                  'Vol.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
+              child: AspectRatio(
+                aspectRatio: 1.0,
+                child: Container(
+                  decoration: BoxDecoration(
                     color: AppColors.darkTeal,
+                    borderRadius: BorderRadius.circular(44),
+                  ),
+                  padding: const EdgeInsets.all(10),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(34),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Vol.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.darkTeal,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -62,12 +71,17 @@ class AdminContributionCard extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
+        SizedBox(
           width: 8,
           height: 8,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color,
+          child: AspectRatio(
+            aspectRatio: 1.0,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                color: color,
+              ),
+            ),
           ),
         ),
         const SizedBox(width: 6),

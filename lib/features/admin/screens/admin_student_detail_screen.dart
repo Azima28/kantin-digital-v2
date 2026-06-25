@@ -10,6 +10,7 @@ import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_student_password_change.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_student_rfid_section.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_student_status_card.dart';
+import 'package:kantin_digital/features/admin/widgets/admin_edit_student_sheet.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/shared/screens/student_transactions_screen.dart';
 
@@ -71,6 +72,20 @@ class _AdminStudentDetailScreenState
             color: AppColors.darkTeal,
           ),
         ),
+        actions: [
+          studentAsync.maybeWhen(
+            data: (data) => IconButton(
+              icon: const Icon(CupertinoIcons.pencil, color: AppColors.darkTeal),
+              onPressed: () => showEditStudentSheet(
+                context,
+                ref,
+                data.profile,
+                data.student,
+              ),
+            ),
+            orElse: () => const SizedBox.shrink(),
+          ),
+        ],
       ),
       body: studentAsync.when(
         data: (data) {

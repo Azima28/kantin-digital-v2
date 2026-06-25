@@ -41,20 +41,25 @@ class AdminDashboardScreen extends ConsumerWidget {
             elevation: 0,
             title: Row(
               children: [
-                Container(
+                SizedBox(
                   width: 32,
                   height: 32,
-                  decoration: const BoxDecoration(
-                    color: AppColors.darkTeal2,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'SA',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.white,
+                  child: AspectRatio(
+                    aspectRatio: 1.0,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.darkTeal2,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'SA',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.white,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -166,6 +171,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                     );
                   },
                 ),
+                const SizedBox(height: 40),
               ],
             ),
           ],

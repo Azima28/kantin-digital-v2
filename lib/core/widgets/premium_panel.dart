@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 
@@ -28,21 +27,18 @@ class PremiumPanel extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(isDesktop ? 20.0 : 14.0),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0), // Frosted glass
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.white.withValues(alpha: 0.7),
-                  const Color(0xFFF5F6F8).withValues(alpha: 0.6), // Subtle light gray blend
-                ],
-              ),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.white.withValues(alpha: 0.95),
+                const Color(0xFFF5F6F8).withValues(alpha: 0.9),
+              ],
             ),
-            child: child,
           ),
+          child: child,
         ),
       ),
     );

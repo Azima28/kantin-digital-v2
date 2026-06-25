@@ -39,6 +39,8 @@ import 'package:kantin_digital/features/admin/screens/admin_merchant_detail_scre
 import 'package:kantin_digital/features/admin/screens/admin_finance_detail_screen.dart';
 import 'package:kantin_digital/features/admin/screens/admin_parent_detail_screen.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_main_layout.dart';
+import 'package:kantin_digital/features/admin/screens/admin_profile_screen.dart';
+
 
 import 'package:kantin_digital/features/keuangan/screens/keuangan_dashboard_screen.dart';
 import 'package:kantin_digital/features/keuangan/screens/keuangan_students_screen.dart';
@@ -97,6 +99,7 @@ class AppRouter {
   static const String adminUsers = '/admin/users';
   static const String adminAudit = '/admin/audit';
   static const String adminSettings = '/admin/settings';
+  static const String adminProfile = '/admin/profile';
   static const String adminStudentDetail = '/admin/users/student/:studentId';
   static const String adminMerchantDetail = '/admin/users/merchant/:merchantId';
   static const String adminFinanceDetail = '/admin/users/finance/:officerId';
@@ -443,6 +446,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: AppRouter.adminSettings,
             builder: (BuildContext context, GoRouterState state) =>
                 const AdminSettingsScreen(),
+          ),
+          GoRoute(
+            path: AppRouter.adminProfile,
+            builder: (BuildContext context, GoRouterState state) =>
+                const AdminProfileScreen(),
           ),
         ],
       ),

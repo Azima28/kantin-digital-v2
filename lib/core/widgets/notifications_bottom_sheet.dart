@@ -6,9 +6,10 @@ import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
+import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 /// Bottom Sheet for viewing and managing notifications across all roles.
-class NotificationsBottomSheet extends ConsumerWidget {
+class NotificationsBottomSheet extends ConsumerStatefulWidget {
   const NotificationsBottomSheet({super.key});
 
   static void show(BuildContext context) {
@@ -20,7 +21,38 @@ class NotificationsBottomSheet extends ConsumerWidget {
     );
   }
 
-  Future<void> _markAsRead(BuildContext context, WidgetRef ref, String notifId) async {
+  @override
+  ConsumerState<NotificationsBottomSheet> createState() => _NotificationsBottomSheetState();
+}
+
+class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSheet> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => _markAllAsRead());
+  }
+
+  Future<void> _markAllAsRead() async {
+    try {
+      final client = ref.read(supabaseClientProvider);
+      final authState = ref.read(authNotifierProvider);
+      final String? userId = authState.profile?['id']?.toString() ?? client.auth.currentUser?.id;
+      if (userId == null) return;
+
+      // Update all unread notifications to read
+      await client
+          .from('notifications')
+          .update({'is_read': true})
+          .eq('user_id', userId)
+          .eq('is_read', false);
+
+      ref.invalidate(userNotificationsProvider);
+    } catch (e) {
+      debugPrint('Notification markAllAsRead error: $e');
+    }
+  }
+
+  Future<void> _markAsRead(BuildContext context, String notifId) async {
     try {
       final client = ref.read(supabaseClientProvider);
       await client
@@ -34,10 +66,11 @@ class NotificationsBottomSheet extends ConsumerWidget {
     }
   }
 
-  Future<void> _clearAllNotifications(BuildContext context, WidgetRef ref) async {
+  Future<void> _clearAllNotifications(BuildContext context) async {
     final client = ref.read(supabaseClientProvider);
-    final user = client.auth.currentUser;
-    if (user == null) return;
+    final authState = ref.read(authNotifierProvider);
+    final String? userId = authState.profile?['id']?.toString() ?? client.auth.currentUser?.id;
+    if (userId == null) return;
 
     showCupertinoDialog(
       context: context,
@@ -57,7 +90,7 @@ class NotificationsBottomSheet extends ConsumerWidget {
                 await client
                     .from('notifications')
                     .delete()
-                    .eq('user_id', user.id);
+                    .eq('user_id', userId);
                 
                 ref.invalidate(userNotificationsProvider);
               } catch (e) {
@@ -80,7 +113,7 @@ class NotificationsBottomSheet extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final notificationsAsync = ref.watch(userNotificationsProvider);
     final theme = Theme.of(context);
 
@@ -126,7 +159,7 @@ class NotificationsBottomSheet extends ConsumerWidget {
                 IconButton(
                   icon: const Icon(CupertinoIcons.trash, color: AppColors.error, size: 20),
                   tooltip: 'Hapus Semua',
-                  onPressed: () => _clearAllNotifications(context, ref),
+                  onPressed: () => _clearAllNotifications(context),
                 ),
               ],
             ),
@@ -198,18 +231,18 @@ class NotificationsBottomSheet extends ConsumerWidget {
                       return GestureDetector(
                         onTap: () {
                           if (!notif.isRead) {
-                            _markAsRead(context, ref, notif.id);
+                            _markAsRead(context, notif.id);
                           }
                         },
                         child: Container(
                           margin: const EdgeInsets.only(bottom: 12),
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: notif.isRead ? AppColors.white : AppColors.primaryLight.withValues(alpha: 0.2),
+                            color: AppColors.white,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: notif.isRead ? AppColors.borderLight : AppColors.primary.withValues(alpha: 0.3),
-                              width: notif.isRead ? 0.5 : 1.0,
+                              color: AppColors.borderLight,
+                              width: 0.5,
                             ),
                           ),
                           child: Row(
@@ -242,30 +275,21 @@ class NotificationsBottomSheet extends ConsumerWidget {
                                         Expanded(
                                           child: Text(
                                             notif.title,
-                                            style: TextStyle(
+                                            style: const TextStyle(
                                               fontSize: 14,
-                                              fontWeight: notif.isRead ? FontWeight.w600 : FontWeight.w800,
+                                              fontWeight: FontWeight.w600,
                                               color: AppColors.textDark,
                                             ),
                                           ),
                                         ),
-                                        if (!notif.isRead)
-                                          Container(
-                                            width: 8,
-                                            height: 8,
-                                            decoration: const BoxDecoration(
-                                              color: AppColors.primary,
-                                              shape: BoxShape.circle,
-                                            ),
-                                          ),
                                       ],
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       notif.message,
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 12,
-                                        color: notif.isRead ? AppColors.textGray : AppColors.textDark,
+                                        color: AppColors.textGray,
                                         height: 1.3,
                                       ),
                                     ),
