@@ -17,8 +17,7 @@ class KeuanganReportScreen extends ConsumerStatefulWidget {
 }
 
 class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
-  String _selectedPeriod = 'Bulan Ini'; // 'Hari Ini', 'Minggu Ini', 'Bulan Ini'
-
+  String _selectedPeriod = 'Bulan Ini';
 
   void _showExportDialog() {
     showDialog(
@@ -239,7 +238,8 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final reportAsync = ref.watch(keuanganReportProvider);
+    final reportAsync = ref.watch(keuanganReportProvider(_selectedPeriod));
+    final selectedPeriod = _selectedPeriod;
     final fmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
     return Scaffold(
@@ -259,7 +259,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
       ),
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () async => ref.invalidate(keuanganReportProvider),
+          onRefresh: () async => ref.invalidate(keuanganReportProvider(_selectedPeriod)),
           color: AppColors.darkTeal,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -284,7 +284,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: _selectedPeriod,
+                          value: selectedPeriod,
                           style: GoogleFonts.inter(color: AppColors.nearBlack, fontSize: 13, fontWeight: FontWeight.bold),
                           onChanged: (val) {
                             if (val != null) {
@@ -348,7 +348,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      'Ringkasan Periode ($_selectedPeriod)',
+                                      'Ringkasan Periode ($selectedPeriod)',
                                       style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.darkTeal),
                                       overflow: TextOverflow.ellipsis,
                                       maxLines: 1,

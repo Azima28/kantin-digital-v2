@@ -31,13 +31,6 @@ class _KeuanganStudentDetailScreenState
   @override
   void initState() {
     super.initState();
-    // Ensure password controller is disposed when this screen is disposed
-  }
-
-  @override
-  void dispose() {
-    StudentDetailPasswordChange.dispose();
-    super.dispose();
   }
 
   void _openAllTransactionsScreen() {

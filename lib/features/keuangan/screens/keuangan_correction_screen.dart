@@ -13,6 +13,7 @@ import 'package:kantin_digital/core/providers/shared_providers.dart';
 
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/widgets/custom_confirm_dialog.dart';
 import 'package:kantin_digital/features/keuangan/widgets/correction_form.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_correction_step_confirm.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_correction_step_search.dart';
@@ -135,29 +136,19 @@ class _KeuanganCorrectionScreenState
 
   Future<void> _processCorrection() async {
     // Show confirmation dialog first
-    showCupertinoDialog(
+    final confirmed = await showCustomConfirmDialog(
       context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: Text('${AppStrings.titleConfirmation} Koreksi Saldo'),
-        content: const Text(
-          'Aksi ini bersifat permanen dan akan dicatat dalam Audit Log Dinas yang dapat diperiksa oleh Super Admin kapan saja. Lanjutkan?',
-        ),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: !_storedIsAddition,
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await _executeCorrectionInDB();
-            },
-            child: const Text('Proses'),
-          ),
-        ],
-      ),
+      title: '${AppStrings.titleConfirmation} Koreksi Saldo',
+      message: 'Aksi ini bersifat permanen dan akan dicatat dalam Audit Log Dinas yang dapat diperiksa oleh Super Admin kapan saja. Lanjutkan?',
+      confirmLabel: 'Proses',
+      cancelLabel: AppStrings.buttonCancel,
+      isDestructive: !_storedIsAddition,
+      icon: Icons.warning_amber_rounded,
     );
+
+    if (confirmed && context.mounted) {
+      await _executeCorrectionInDB();
+    }
   }
 
   Future<void> _executeCorrectionInDB() async {

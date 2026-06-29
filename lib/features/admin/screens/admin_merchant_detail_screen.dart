@@ -75,34 +75,149 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
   }
 
   void _showChangePasswordDialog(String profileId) {
-    showCupertinoDialog(
+    showGeneralDialog(
       context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text(AppStrings.adminChangePassword),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 12.0),
-          child: CupertinoTextField(
-            controller: _passwordController,
-            placeholder: 'Masukkan sandi baru',
-            obscureText: true,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      barrierDismissible: true,
+      barrierLabel: 'Change Password',
+      barrierColor: AppColors.black.withValues(alpha: 0.5),
+      transitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (context, anim1, anim2) => const SizedBox.shrink(),
+      transitionBuilder: (context, anim1, anim2, child) {
+        return Transform.scale(
+          scale: anim1.value * 0.1 + 0.9,
+          child: Opacity(
+            opacity: anim1.value,
+            child: Dialog(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.black.withValues(alpha: 0.15),
+                      blurRadius: 24,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Circular lock badge
+                    Container(
+                      width: 68,
+                      height: 68,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primaryLight,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.lock_rounded,
+                          color: AppColors.primary,
+                          size: 32,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      AppStrings.adminChangePassword,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.nearBlack,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Masukkan kata sandi baru untuk merchant ini.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _passwordController,
+                      obscureText: true,
+                      style: GoogleFonts.inter(fontSize: 14),
+                      decoration: InputDecoration(
+                        hintText: 'Kata sandi baru',
+                        hintStyle: GoogleFonts.inter(
+                          color: AppColors.mutedGray,
+                          fontSize: 14,
+                        ),
+                        filled: true,
+                        fillColor: AppColors.offWhite,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.borderLight),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              _passwordController.clear();
+                              Navigator.pop(context);
+                            },
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: AppColors.borderLight),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            child: Text(
+                              AppStrings.buttonCancel,
+                              style: GoogleFonts.inter(
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => _changePassword(profileId),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.errorRed2,
+                              foregroundColor: AppColors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            child: const Text(AppStrings.buttonSave),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () {
-              _passwordController.clear();
-              Navigator.pop(context);
-            },
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () => _changePassword(profileId),
-            child: const Text(AppStrings.buttonSave),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 

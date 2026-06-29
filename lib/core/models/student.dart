@@ -4,6 +4,8 @@
 /// Selalu ter-asosiasi dengan [UserProfile] melalui field [id].
 class Student {
   final String id;
+  final String? classId;
+  final String? rombelId;
   final String? class_;
   final int balance;
   final String? rfidUid;
@@ -14,6 +16,8 @@ class Student {
 
   const Student({
     required this.id,
+    this.classId,
+    this.rombelId,
     this.class_,
     this.balance = 0,
     this.rfidUid,
@@ -24,9 +28,33 @@ class Student {
   });
 
   factory Student.fromJson(Map<String, dynamic> json) {
+    final classesData = json['classes'];
+    final rombelsData = json['rombels'];
+    
+    String? className = json['class'] as String?;
+    if (className == null && classesData is Map) {
+      className = classesData['name'] as String?;
+    } else if (className == null && classesData is List && classesData.isNotEmpty) {
+      className = classesData.first['name'] as String?;
+    }
+
+    String? rombelName;
+    if (rombelsData is Map) {
+      rombelName = rombelsData['name'] as String?;
+    } else if (rombelsData is List && rombelsData.isNotEmpty) {
+      rombelName = rombelsData.first['name'] as String?;
+    }
+
+    String? classStr = className;
+    if (className != null && rombelName != null && rombelName != '-') {
+      classStr = '$className-$rombelName';
+    }
+
     return Student(
       id: json['id'] as String,
-      class_: json['class'] as String?,
+      classId: json['class_id'] as String?,
+      rombelId: json['rombel_id'] as String?,
+      class_: classStr,
       balance: (double.tryParse(json['balance']?.toString() ?? '0') ?? 0.0).toInt(),
       rfidUid: json['rfid_uid'] as String?,
       dailyLimit: json['daily_limit'] != null
@@ -40,6 +68,8 @@ class Student {
 
   Map<String, dynamic> toJson() => {
         'id': id,
+        'class_id': classId,
+        'rombel_id': rombelId,
         'class': class_,
         'balance': balance,
         'rfid_uid': rfidUid,
@@ -51,6 +81,8 @@ class Student {
 
   Student copyWith({
     String? id,
+    String? classId,
+    String? rombelId,
     String? class_,
     int? balance,
     String? rfidUid,
@@ -61,6 +93,8 @@ class Student {
   }) {
     return Student(
       id: id ?? this.id,
+      classId: classId ?? this.classId,
+      rombelId: rombelId ?? this.rombelId,
       class_: class_ ?? this.class_,
       balance: balance ?? this.balance,
       rfidUid: rfidUid ?? this.rfidUid,
@@ -92,6 +126,8 @@ class StudentWithProfile {
   final String? email;
   final String? nisn;
   final bool isActive;
+  final String? classId;
+  final String? rombelId;
   final String? class_;
   final int balance;
   final String? rfidUid;
@@ -103,6 +139,8 @@ class StudentWithProfile {
     this.email,
     this.nisn,
     this.isActive = true,
+    this.classId,
+    this.rombelId,
     this.class_,
     this.balance = 0,
     this.rfidUid,
@@ -127,6 +165,8 @@ class StudentWithProfile {
     String? email,
     String? nisn,
     bool? isActive,
+    String? classId,
+    String? rombelId,
     String? class_,
     int? balance,
     String? rfidUid,
@@ -138,6 +178,8 @@ class StudentWithProfile {
       email: email ?? this.email,
       nisn: nisn ?? this.nisn,
       isActive: isActive ?? this.isActive,
+      classId: classId ?? this.classId,
+      rombelId: rombelId ?? this.rombelId,
       class_: class_ ?? this.class_,
       balance: balance ?? this.balance,
       rfidUid: rfidUid ?? this.rfidUid,
@@ -146,11 +188,33 @@ class StudentWithProfile {
   }
 
   /// Parse dari query Supabase:
-  /// `profiles.select('id, full_name, email, nisn, is_active, students:students!students_id_fkey(class, balance, rfid_uid, is_active)')`
+  /// `profiles.select('id, full_name, email, nisn, is_active, students:students!students_id_fkey(class_id, rombel_id, balance, rfid_uid, is_active, classes:classes(name), rombels:rombels(name))')`
   factory StudentWithProfile.fromJoinedJson(Map<String, dynamic> json) {
     final studentData = json['students'] is List
         ? (json['students'] as List).firstOrNull as Map<String, dynamic>?
         : json['students'] as Map<String, dynamic>?;
+
+    final classesData = studentData?['classes'];
+    final rombelsData = studentData?['rombels'];
+    
+    String? className = studentData?['class'] as String?;
+    if (className == null && classesData is Map) {
+      className = classesData['name'] as String?;
+    } else if (className == null && classesData is List && classesData.isNotEmpty) {
+      className = classesData.first['name'] as String?;
+    }
+
+    String? rombelName;
+    if (rombelsData is Map) {
+      rombelName = rombelsData['name'] as String?;
+    } else if (rombelsData is List && rombelsData.isNotEmpty) {
+      rombelName = rombelsData.first['name'] as String?;
+    }
+
+    String? fullClass = className;
+    if (className != null && rombelName != null && rombelName != '-') {
+      fullClass = '$className-$rombelName';
+    }
 
     return StudentWithProfile(
       id: json['id'] as String,
@@ -158,7 +222,9 @@ class StudentWithProfile {
       email: json['email'] as String?,
       nisn: json['nisn'] as String?,
       isActive: json['is_active'] == true,
-      class_: studentData?['class'] as String?,
+      classId: studentData?['class_id'] as String?,
+      rombelId: studentData?['rombel_id'] as String?,
+      class_: fullClass,
       balance:
           (double.tryParse(studentData?['balance']?.toString() ?? '0') ?? 0.0).toInt(),
       rfidUid: studentData?['rfid_uid'] as String?,

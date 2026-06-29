@@ -1,13 +1,3 @@
-# Progress Lembar Kerja Tugas: Kantin Digital
-
-Dokumen ini memantau status penyelesaian setiap fitur pada proyek **Kantin Digital** (multi-platform: Siswa, Kantin/POS, Keuangan, Orang Tua, Super Admin) agar agen berikutnya tahu status persis pengerjaan.
-
-**Terakhir diperbarui**: 24 Juni 2026
-
----
-
-## 📊 Status Ringkas Progres
-
 | Kategori | Status |
 |---|---|
 | **Phase 1**: Database & Migrations | ✅ Selesai |
@@ -167,22 +157,11 @@ lib/
     *   `Student` — tabel `students` (dengan `hasRfid`, `isLowBalance`)
     *   `StudentWithProfile` — model join profile+student (factory `fromJoinedJson`)
     *   `CanteenStaff` — tabel `canteen_staff`
-    *   `RfidCard` — tabel `rfid_cards` (dengan `isActive`, `isAssigned`)
-    *   `TransactionType` — tabel `transaction_types`
-    *   `Transaction` — tabel `transactions` (dengan nested `transactionType`, `student`)
-    *   `BalanceAdjustment` — tabel `balance_adjustments` (dengan `isAdd`, `isSubtract`)
-    *   `models.dart` — barrel export untuk import tunggal
-*   [x] **Core Providers** (`lib/core/providers/app_providers.dart`) — ditulis ulang:
-    *   `AppStateNotifier` (StateNotifier) — network monitoring, maintenance mode, sync status
-    *   `networkStatusProvider` — StreamProvider dari connectivity_plus
-    *   `isOnlineProvider` — derived boolean provider
-    *   `globalRefreshKeyProvider` — trigger refresh global
-    *   `CacheDuration` — konfigurasi cache per jenis data
 # Progress Lembar Kerja Tugas: Kantin Digital
 
 Dokumen ini memantau status penyelesaian setiap fitur pada proyek **Kantin Digital** (multi-platform: Siswa, Kantin/POS, Keuangan, Orang Tua, Super Admin) agar agen berikutnya tahu status persis pengerjaan.
 
-**Terakhir diperbarui**: 25 Juni 2026
+**Terakhir diperbarui**: 26 Juni 2026
 
 ---
 
@@ -198,10 +177,10 @@ Dokumen ini memantau status penyelesaian setiap fitur pada proyek **Kantin Digit
 | **Phase 6**: Modul Keuangan (Mobile) | ✅ Selesai |
 | **Phase 7**: Modul Orang Tua (Web/Mobile) | ✅ Selesai |
 | **Phase 8**: Modul Super Admin (Mobile) | ✅ Selesai |
-| **Phase 9**: Code Architecture (Models & Providers) | 🔄 Sedang Berjalan |
+| **Phase 9**: Code Architecture (Models & Providers) | ✅ Selesai |
 | **Phase 10**: Security Hardening & Production Readiness | ⏳ Belum Mulai |
 
-**Progres Keseluruhan**: ~86%
+**Progres Keseluruhan**: ~90%
 
 ---
 
@@ -401,4 +380,28 @@ lib/
 16. **Perbaikan Bug Tombol Back & Sesi Auto-Restore (0Rp)**: ✅ **Selesai**
     * **Tombol Back Sistem (PopScope)**: Menambahkan penanganan tombol back fisik/sistem pada HP agar berpindah mundur melalui riwayat tab (Beranda, Menu, Riwayat, Akun) alih-alih langsung keluar dari aplikasi. Ini diimplementasikan secara stateful menggunakan `PopScope` pada `SiswaMainLayout`, `KantinMainLayout`, `AdminMainLayout`, dan `KeuanganMainLayout`.
     * **Inisialisasi Sesi Otomatis**: Memperbaiki masalah data tereset menjadi `0Rp` atau terlempar ke halaman welcome saat membuka kembali aplikasi. Masalah ini disebabkan oleh pembacaan `currentSession` secara sinkronis pada startup sebelum proses pemulihan sesi asinkronis Supabase selesai. Diatasi dengan mengubah `AuthNotifier` agar berlangganan langsung ke stream `onAuthStateChange` milik Supabase, sehingga status autentikasi dan profil pengguna selalu tersinkronisasi sempurna sejak aplikasi pertama kali diluncurkan.
-
+17. **Migrasi Kelas & Rombel Dinamis (Tabel Master)**: ✅ **Selesai** — Memodifikasi arsitektur data kelas dari string statis di kolom `students.class` menjadi relasi dinamis ke tabel master `classes`:
+    * **Database**: Membuat tabel `classes` (id, name, level) dengan RLS policy aman. Memindahkan data kelas siswa lama ke tabel `classes`, menambahkan foreign key `class_id` di `students`, dan menghapus kolom `class` lama. Memperbarui RPC `create_user_account` dan trigger `handle_new_user` agar otomatis mendaftarkan kelas baru jika belum terdaftar.
+    * **Dart Model**: Menambahkan model `SchoolClass` dan memperbarui `Student` serta `StudentWithProfile` agar parsing data kelas asinkronis / join relasional berjalan aman dan backward-compatible.
+    * **Queries & Providers**: Menambahkan `classesProvider` di `shared_providers.dart` dan memperbarui query filter di `siswa_providers.dart`, `keuangan_providers.dart`, `admin_providers.dart`, dan `parent_providers.dart` agar men-join data kelas dari tabel `classes`.
+    * **UI Dinamis**: Memperbarui form `showAddStudentSheet` dan `showEditStudentSheet` pada Super Admin agar dropdown kelas memuat data secara dinamis dari database menggunakan `classesProvider` daripada menggunakan daftar *hardcoded*.
+18. **Pemisahan Kelas & Rombongan Belajar (Rombel)**: ✅ **Selesai** — Memecah data kelas gabungan (contoh: "7-A") menjadi bidang "Kelas" (tingkat/jurusan) dan "Rombel" (sub-kelas) yang independen di database dan UI:
+    * **Database**: Membuat tabel master `rombels` dengan kebijakan RLS aman. Menambahkan foreign key `rombel_id` di `students`. Migrasi data secara otomatis memecah kelas lama menjadi kelas dan rombel yang terpisah. Memperbarui RPC `create_user_account` dan trigger `handle_new_user` agar memecah string kelas gabungan menjadi relasi terpisah saat registrasi.
+    * **Dart Model**: Menambahkan model `SchoolRombel` dan mengekspornya. Memperbarui `Student` dan `StudentWithProfile` agar menyertakan properti `rombelId` dan secara dinamis menggabungkannya kembali di getter virtual `class_` (misalnya `"7-A"`) untuk backward compatibility di tampilan visual lainnya.
+    * **Queries & Providers**: Menambahkan `rombelsProvider` di `shared_providers.dart` dan memperbarui seluruh query join relasional `rombels(name)` di provider siswa, parent, keuangan, dan admin.
+    * **UI Dinamis & CRUD**: Menambahkan kartu **Manajemen Rombel** khusus untuk `super_admin` di halaman Setelan Sistem untuk mengelola data master Rombel (Add/Edit/Delete). Memperbarui form tambah dan edit siswa agar menggunakan dua dropdown terpisah ("Kelas" dan "Rombel") untuk memodifikasi relasi data secara akurat.
+19. **Optimasi Load DB, Caching Provider & Search Debouncing**: ✅ **Selesai** — Mengurangi beban database dan memori secara masif untuk meningkatkan skalabilitas:
+    * **Optimasi Query & Limit**: Seluruh pencarian pengguna (Manajemen User, Manajemen Siswa, Super Admin) sekarang berjalan sepenuhnya di sisi database menggunakan operator PostgREST `or` dan `ilike` dengan batas data `.limit(100)`. Menghilangkan total pemuatan record tak terbatas pada query transaksi dan aktivitas log detail dengan menerapkan batas default 100 baris.
+    * **Filter Periode Laporan Keuangan**: Laporan keuangan tidak lagi memuat riwayat transaksi global secara membabi buta. Kueri disaring secara dinamis menggunakan `.gte('created_at', startDate)` di level database sesuai dengan periode yang dipilih (`Hari Ini`, `Minggu Ini`, `Bulan Ini`), dipicu langsung via Riverpod state provider.
+    * **Debouncing Keyboard (500ms)**: Menambahkan penunda pengetikan pada kolom pencarian Manajemen User, Manajemen Siswa, dan Super Admin Users. Ini mencegah spam kueri ke Supabase dan menghilangkan lag ketukan keyboard di UI.
+    * **Caching Instan via `autoDispose` & `cacheFor`**: Seluruh provider data di 5 role telah dimigrasikan menggunakan Riverpod `.autoDispose` dengan timeout `cacheFor` 5 menit (atau 15 menit untuk data master statis). Ini menyelesaikan kendala visual reload spinner berulang saat berpindah halaman/tab, sekaligus mengamankan aplikasi dari kebocoran memori (memory leak) karena state provider otomatis terhapus setelah 5 menit tidak memiliki active listener.
+    * **Family Caching Per-Tab (Super Admin)**: Mengubah `adminUsersProvider` menjadi family provider (`AdminUsersFilter`) sehingga setiap tab/segmen peran ("Siswa", "Keuangan", "Kantin", "Semua") memiliki cache bucket independen. Berpindah tab kini instan 100% tanpa loading spinner ataupun re-fetch ke Supabase.
+20. **Optimalisasi Caching User & Retensi State Tab**: ✅ **Selesai** — Menghilangkan sepenuhnya loading spinner saat mengetik pencarian/pindah filter peran dan mempertahankan posisi scroll tab:
+    * **Pemfilteran Pencarian Sisi Klien (Client-Side)**: Mengubah `adminUsersProvider` (Super Admin), `keuanganStudentsProvider`, `keuanganUsersStudentsProvider`, `keuanganParentsProvider`, dan `keuanganStaffProvider` (Keuangan) agar memuat semua data ke cache sekali saja, dan melakukan pemfilteran pencarian secara instan di sisi klien. Hal ini menghapus delay pengetikan pencarian (menghilangkan debounce) dan menghilangkan reload spinner sepenuhnya.
+    * **Retensi State Tab (Keep-Alive)**: Mengimplementasikan `AutomaticKeepAliveClientMixin` pada `StudentsTab`, `ParentsTab`, `StaffTab` (Keuangan), serta `ActivitiesTab` (Kantin). Ini mencegah disposal widget tab saat berpindah tab di `KeuanganUsersScreen` dan `SalesHistoryScreen`, sehingga posisi scroll serta dropdown filter status yang dipilih tidak ter-reset.
+21. **Integrasi Sistem Pemesanan Online ala GoFood (Multi-Kantin & Delivery)**: ✅ **Selesai** — Mengembangkan fitur pemesanan makanan online terintegrasi penuh untuk Siswa dan Petugas Kantin:
+    * **Database & Migrasi**: Membuat tabel master `delivery_locations`, tabel orders utama (`orders`), dan tabel item per order (`order_items`). Menambahkan kolom `delivery_enabled` dan `delivery_fee` pada `canteen_operators`. Menulis RPC database ACID `place_order` (atomic split multi-kantin & potong saldo siswa), `cancel_order` (batal status pending & refund saldo), dan `complete_order` (selesai status ready & credit saldo kantin).
+    * **Dart Model & State Management**: Membuat model `Order`, `OrderItemLine`, dan `DeliveryLocation`. Mengembangkan `cartProvider` asinkronis di sisi siswa yang mendukung auto-split keranjang multi-kantin, pengaturan tipe pengiriman, dan validasi data wajib.
+    * **Integrasi Dashboard Siswa**: Menambahkan banner premium "Pesan Makanan Online" dan visual tracker "Pesanan Aktif" real-time di layar utama siswa.
+    * **Integrasi Dashboard & Profil Kantin**: Menambahkan banner notifikasi pesanan masuk otomatis di dashboard kasir petugas kantin serta badge order count di layout navigasi global. Menyediakan saklar setelan "Layanan Antar" dan biaya ongkir dinamis di halaman profil petugas kantin.
+    * **Navigasi & Routing**: Mendaftarkan seluruh halaman baru (Daftar Kantin, Menu Detail, Keranjang, Checkout, Pesanan Saya, Pelacakan Pesanan) ke dalam setup routing `app_router.dart` dengan visual premium bebas lag.

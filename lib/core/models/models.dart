@@ -7,6 +7,8 @@
 // ── Base models ──────────────────────────────────────────────
 export 'user_profile.dart';
 export 'student.dart';
+export 'school_class.dart';
+export 'school_rombel.dart';
 export 'canteen_operator.dart';
 export 'transaction_type.dart';
 export 'transaction.dart';
@@ -26,3 +28,4 @@ export 'admin_parent_detail.dart';
 export 'admin_merchant_detail.dart';
 export 'admin_finance_detail.dart';
 export 'parent_dashboard_data.dart';
+export 'order.dart';

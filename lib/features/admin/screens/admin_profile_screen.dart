@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/widgets/custom_password_dialog.dart';
 import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
@@ -16,118 +17,41 @@ class AdminProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
-  final _passwordController = TextEditingController();
-  bool _isChangingPassword = false;
-
-  @override
-  void dispose() {
-    _passwordController.dispose();
-    super.dispose();
-  }
 
   void _showChangePasswordDialog() {
-    showCupertinoDialog(
+    showCustomPasswordDialog(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return CupertinoAlertDialog(
-              title: const Text(AppStrings.adminChangePassword),
-              content: Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Column(
-                  children: [
-                    const Text('Masukkan kata sandi baru untuk akun Anda.'),
-                    const SizedBox(height: 12),
-                    CupertinoTextField(
-                      controller: _passwordController,
-                      placeholder: 'Kata sandi baru',
-                      obscureText: true,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: CupertinoColors.inactiveGray),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                CupertinoDialogAction(
-                  child: const Text(AppStrings.buttonCancel),
-                  onPressed: () {
-                    _passwordController.clear();
-                    Navigator.pop(context);
-                  },
-                ),
-                CupertinoDialogAction(
-                  isDefaultAction: true,
-                  onPressed: _isChangingPassword
-                      ? null
-                      : () async {
-                          final password = _passwordController.text.trim();
-                          if (password.isEmpty) return;
+      title: AppStrings.adminChangePassword,
+      description: 'Masukkan kata sandi baru untuk akun Anda.',
+      placeholder: 'Kata sandi baru',
+      onSave: (password) async {
+        final client = ref.read(supabaseClientProvider);
+        final profile = ref.read(authNotifierProvider).profile;
+        final profileId = profile?['id'];
 
-                          setDialogState(() {
-                            _isChangingPassword = true;
-                          });
+        final currentUserRole = profile?['role'];
+        if (currentUserRole != 'super_admin' && currentUserRole != 'admin') {
+          throw Exception('Tidak memiliki izin untuk mengubah password');
+        }
 
-                          final navigator = Navigator.of(context);
-                          final messenger = ScaffoldMessenger.of(this.context);
+        final response = await client.rpc('update_auth_user_password', params: {
+          'p_user_id': profileId,
+          'p_new_password': password,
+          'p_caller_id': profileId,
+        });
+        if (response is Map && response['success'] == false) {
+          throw Exception(response['error'] ?? 'Gagal mengubah kata sandi');
+        }
 
-                          try {
-                            final client = ref.read(supabaseClientProvider);
-                            final profile = ref.read(authNotifierProvider).profile;
-                            final profileId = profile?['id'];
-
-                            final currentUserRole = profile?['role'];
-                            if (currentUserRole != 'super_admin' && currentUserRole != 'admin') {
-                              throw Exception('Tidak memiliki izin untuk mengubah password');
-                            }
-
-                            final response = await client.rpc('update_auth_user_password', params: {
-                              'p_user_id': profileId,
-                              'p_new_password': password,
-                              'p_caller_id': profileId,
-                            });
-                            if (response is Map && response['success'] == false) {
-                              throw Exception(response['error'] ?? 'Gagal mengubah kata sandi');
-                            }
-
-                            _passwordController.clear();
-                            navigator.pop();
-
-                            messenger.showSnackBar(
-                              const SnackBar(
-                                content: Text('Kata sandi berhasil diubah!'),
-                                backgroundColor: AppColors.successGreen,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          } catch (e) {
-                            navigator.pop();
-                            messenger.showSnackBar(
-                              SnackBar(
-                                content: Text('Error: ${e.toString().replaceFirst('Exception: ', '')}'),
-                                backgroundColor: AppColors.error,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          } finally {
-                            _passwordController.clear();
-                            if (mounted) {
-                              setState(() {
-                                _isChangingPassword = false;
-                              });
-                            }
-                          }
-                        },
-                  child: const Text(AppStrings.buttonSave),
-                ),
-              ],
-            );
-          },
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Kata sandi berhasil diubah!'),
+              backgroundColor: AppColors.successGreen,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       },
     );
   }

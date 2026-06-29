@@ -338,7 +338,7 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
                       Container(
                         decoration: BoxDecoration(
                           image: DecorationImage(
-                            image: CachedNetworkImageProvider(bgImageUrl),
+                            image: CachedNetworkImageProvider(bgImageUrl, maxWidth: 1200, maxHeight: 1200),
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -362,7 +362,7 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
                 Container(
                   decoration: BoxDecoration(
                     image: DecorationImage(
-                      image: CachedNetworkImageProvider(bgImageUrl),
+                      image: CachedNetworkImageProvider(bgImageUrl, maxWidth: 1200, maxHeight: 1200),
                       fit: BoxFit.cover,
                     ),
                   ),

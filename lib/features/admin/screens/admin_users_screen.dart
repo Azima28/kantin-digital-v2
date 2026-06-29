@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,12 +24,35 @@ class AdminUsersScreen extends ConsumerStatefulWidget {
 
 class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   String _selectedRoleFilter = 'Semua'; // 'Semua', 'Keuangan', 'Kantin', 'Siswa', 'Orang Tua'
   String _searchQuery = '';
 
   @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      final dbRole = _getDbRoleKey(_selectedRoleFilter);
+      final filter = PaginatedProfilesFilter(role: dbRole, searchQuery: _searchQuery);
+      ref.read(paginatedProfilesProvider(filter).notifier).loadNextPage();
+    }
+  }
+
+  void _onSearchChanged(String val) {
+    setState(() {
+      _searchQuery = val.trim();
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -51,7 +75,23 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
     }
   }
 
-  Future<void> _toggleUserStatus(String profileId, String role, bool currentStatus) async {
+  String? _getDbRoleKey(String filter) {
+    switch (filter) {
+      case 'Siswa':
+        return 'student';
+      case 'Kantin':
+        return 'petugas_kantin';
+      case 'Orang Tua':
+        return 'parent';
+      case 'Keuangan':
+        return 'petugas_keuangan';
+      default:
+        return null;
+    }
+  }
+
+  Future<void> _toggleUserStatus(
+      String profileId, String role, bool currentStatus, PaginatedProfilesFilter filter) async {
     final client = ref.read(supabaseClientProvider);
     final bool newStatus = !currentStatus;
 
@@ -82,7 +122,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
       } catch (_) {}
 
       // Refresh list
-      ref.invalidate(adminUsersProvider);
+      ref.invalidate(paginatedProfilesProvider(filter));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -132,7 +172,9 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final usersAsync = ref.watch(adminUsersProvider);
+    final dbRole = _getDbRoleKey(_selectedRoleFilter);
+    final filter = PaginatedProfilesFilter(role: dbRole, searchQuery: _searchQuery);
+    final profilesState = ref.watch(paginatedProfilesProvider(filter));
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -165,11 +207,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
           AdminUserSearchFilter(
             searchController: _searchController,
             selectedRoleFilter: _selectedRoleFilter,
-            onSearchChanged: (val) {
-              setState(() {
-                _searchQuery = val;
-              });
-            },
+            onSearchChanged: _onSearchChanged,
             onRoleFilterChanged: (val) {
               setState(() {
                 _selectedRoleFilter = val;
@@ -179,26 +217,35 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
 
           // User list
           Expanded(
-            child: usersAsync.when(
-              data: (users) {
-                // In-memory filter by role is now handled at DB layer via adminRoleFilterProvider
-                var filtered = users;
-
-                // Filter by search query
-                if (_searchQuery.isNotEmpty) {
-                  filtered = filtered.where((u) {
-                    final fullName = (u.fullName ?? '').toLowerCase();
-                    final email = (u.email ?? '').toLowerCase();
-                    final username = (u.username ?? '').toLowerCase();
-                    final nisn = (u.nisn ?? '').toLowerCase();
-                    return fullName.contains(_searchQuery) ||
-                        email.contains(_searchQuery) ||
-                        username.contains(_searchQuery) ||
-                        nisn.contains(_searchQuery);
-                  }).toList();
+            child: Builder(
+              builder: (context) {
+                if (profilesState.isLoading) {
+                  return const Center(
+                    child: CupertinoActivityIndicator(color: AppColors.darkTeal),
+                  );
                 }
 
-                if (filtered.isEmpty) {
+                if (profilesState.error != null && profilesState.items.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+                        const SizedBox(height: 12),
+                        Text('${AppStrings.labelFailed} memuat data'),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: () => ref.invalidate(paginatedProfilesProvider(filter)),
+                          child: const Text(AppStrings.buttonRetry),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                final users = profilesState.items;
+
+                if (users.isEmpty) {
                   return Center(
                     child: Text(
                       'Tidak ada pengguna ditemukan.',
@@ -212,19 +259,29 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
 
                 return RefreshIndicator(
                   onRefresh: () async {
-                    ref.invalidate(adminUsersProvider);
+                    ref.invalidate(paginatedProfilesProvider(filter));
                   },
                   color: AppColors.darkTeal,
                   child: ListView.builder(
+                    controller: _scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    itemCount: filtered.length,
+                    itemCount: users.length + (profilesState.isLoadingMore ? 1 : 0),
                     itemBuilder: (context, index) {
-                      final user = filtered[index];
+                      if (index == users.length) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: CupertinoActivityIndicator(color: AppColors.darkTeal),
+                          ),
+                        );
+                      }
+                      final user = users[index];
                       return AdminUserListTile(
                         user: user,
                         getRoleLabel: _getRoleLabel,
                         onToggleStatus: (id, role, isActive) =>
-                            _toggleUserStatus(id, role, isActive),
+                            _toggleUserStatus(id, role, isActive, filter),
                         onNavigateToDetail: (id, role) =>
                             _navigateToDetail(id, role),
                       );
@@ -232,22 +289,6 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                   ),
                 );
               },
-              loading: () => const Center(child: CupertinoActivityIndicator(color: AppColors.darkTeal)),
-              error: (err, stack) => Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
-                    const SizedBox(height: 12),
-                    Text('${AppStrings.labelFailed} memuat data'),
-                    const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: () => ref.invalidate(adminUsersProvider),
-                      child: const Text(AppStrings.buttonRetry),
-                    ),
-                  ],
-                ),
-              ),
             ),
           ),
         ],
@@ -264,7 +305,6 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
-
 
   void _showAddUserSheet(BuildContext context, String roleFilter) {
     if (roleFilter == 'Siswa') {
@@ -287,6 +327,5 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
   void _showAddFinanceSheet(BuildContext context) {
     showAddFinanceSheet(context, ref);
   }
-
 }
 

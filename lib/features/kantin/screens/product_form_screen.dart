@@ -368,6 +368,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                     ? CachedNetworkImage(
                                         imageUrl: _imageFile!.path,
                                         fit: BoxFit.cover,
+                                        memCacheWidth: 400,
+                                        memCacheHeight: 250,
                                         placeholder: (c, i) => const Center(child: CupertinoActivityIndicator()),
                                       )
                                     : Image.file(
@@ -381,6 +383,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                     child: CachedNetworkImage(
                                       imageUrl: widget.initialProduct!.imageUrl!,
                                       fit: BoxFit.cover,
+                                      memCacheWidth: 400,
+                                      memCacheHeight: 250,
                                       placeholder: (c, i) => const Center(child: CupertinoActivityIndicator()),
                                       errorWidget: (c, i, e) => _buildUploadPlaceholder(),
                                     ),

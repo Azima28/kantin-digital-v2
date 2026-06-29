@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/widgets/custom_confirm_dialog.dart';
+import 'package:kantin_digital/core/widgets/custom_password_dialog.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
@@ -20,56 +22,7 @@ class AdminParentDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScreen> {
-  final _passwordController = TextEditingController();
 
-  @override
-  void dispose() {
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _changePassword(String profileId) async {
-    final String password = _passwordController.text.trim();
-    if (password.isEmpty) return;
-
-    final client = ref.read(supabaseClientProvider);
-    try {
-      // Client-side role check before RPC call
-      final currentUserRole = ref.read(authNotifierProvider).profile?['role'];
-      if (currentUserRole != 'super_admin' && currentUserRole != 'admin' && currentUserRole != 'petugas_keuangan') {
-        throw Exception('Tidak memiliki izin untuk mengubah password');
-      }
-
-      final currentUserId = ref.read(authNotifierProvider).profile?['id'];
-      await client.rpc('update_auth_user_password', params: {
-        'p_user_id': profileId,
-        'p_new_password': password,
-        'p_caller_id': currentUserId,
-      });
-
-      if (mounted) {
-        Navigator.pop(context); // Close dialog
-        _passwordController.clear();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(AppStrings.successPasswordUpdated),
-            backgroundColor: AppColors.successGreen,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${AppStrings.labelFailed} mengubah kata sandi'),
-            backgroundColor: AppColors.errorRed2,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
-  }
 
   Future<void> _toggleDisableParentAccount(String profileId, bool currentStatus) async {
     final client = ref.read(supabaseClientProvider);
@@ -102,34 +55,39 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
   }
 
   void _showChangePasswordDialog(String profileId) {
-    showCupertinoDialog(
+    showCustomPasswordDialog(
       context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text(AppStrings.adminChangePassword),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 12.0),
-          child: CupertinoTextField(
-            controller: _passwordController,
-            placeholder: 'Masukkan sandi baru',
-            obscureText: true,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          ),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () {
-              _passwordController.clear();
-              Navigator.pop(context);
-            },
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () => _changePassword(profileId),
-            child: const Text(AppStrings.buttonSave),
-          ),
-        ],
-      ),
+      title: AppStrings.adminChangePassword,
+      description: 'Masukkan kata sandi baru untuk akun orang tua ini.',
+      placeholder: 'Kata sandi baru',
+      onSave: (password) async {
+        final client = ref.read(supabaseClientProvider);
+        // Client-side role check before RPC call
+        final currentUserRole = ref.read(authNotifierProvider).profile?['role'];
+        if (currentUserRole != 'super_admin' && currentUserRole != 'admin' && currentUserRole != 'petugas_keuangan') {
+          throw Exception('Tidak memiliki izin untuk mengubah password');
+        }
+
+        final currentUserId = ref.read(authNotifierProvider).profile?['id'];
+        final response = await client.rpc('update_auth_user_password', params: {
+          'p_user_id': profileId,
+          'p_new_password': password,
+          'p_caller_id': currentUserId,
+        });
+        if (response is Map && response['success'] == false) {
+          throw Exception(response['error'] ?? 'Gagal mengubah kata sandi');
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(AppStrings.successPasswordUpdated),
+              backgroundColor: AppColors.successGreen,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      },
     );
   }
 
@@ -282,7 +240,7 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                           children: children.map((c) {
                             final String studentId = c['student_id'] ?? '';
                             final studentInfo = c['students'] ?? {};
-                            final String classStr = studentInfo['class'] ?? '-';
+                            final String classStr = studentInfo['class'] ?? (studentInfo['classes'] is Map ? studentInfo['classes']['name'] : null) ?? '-';
                             final profileInfo = studentInfo['profiles'] ?? {};
                             final String childName = profileInfo['full_name'] ?? AppStrings.adminStudents;
 
@@ -394,21 +352,13 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                         icon: CupertinoIcons.device_phone_portrait,
                         title: AppStrings.adminSessionActiveLabel,
                         onTap: () {
-                          showCupertinoDialog(
+                          showCustomConfirmDialog(
                             context: context,
-                            builder: (context) => CupertinoAlertDialog(
-                              title: const Text(AppStrings.adminSessionActiveLabel),
-                              content: const Padding(
-                                padding: EdgeInsets.only(top: 8.0),
-                                child: Text('1 Sesi aktif di perangkat iOS (iPhone 15 Pro Max).'),
-                              ),
-                              actions: [
-                                CupertinoDialogAction(
-                                  child: const Text('Tutup'),
-                                  onPressed: () => Navigator.pop(context),
-                                ),
-                              ],
-                            ),
+                            title: AppStrings.adminSessionActiveLabel,
+                            message: '1 Sesi aktif di perangkat iOS (iPhone 15 Pro Max).',
+                            confirmLabel: 'Tutup',
+                            cancelLabel: '',
+                            icon: Icons.phonelink_setup_rounded,
                           );
                         },
                       ),
@@ -426,32 +376,22 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: TextButton.icon(
-                    onPressed: () {
-                      showCupertinoDialog(
+                    onPressed: () async {
+                      final confirmed = await showCustomConfirmDialog(
                         context: context,
-                        builder: (ctx) => CupertinoAlertDialog(
-                          title: Text(isAccountActive ? 'Nonaktifkan Akun' : 'Aktifkan Akun'),
-                          content: Text(
-                            isAccountActive 
-                                ? 'Apakah Anda yakin ingin menonaktifkan akun orang tua ini?' 
-                                : 'Apakah Anda yakin ingin mengaktifkan kembali akun orang tua ini?',
-                          ),
-                          actions: [
-                            CupertinoDialogAction(
-                              child: const Text(AppStrings.buttonCancel),
-                              onPressed: () => Navigator.pop(ctx),
-                            ),
-                            CupertinoDialogAction(
-                              isDestructiveAction: true,
-                              onPressed: () {
-                                Navigator.pop(ctx);
-                                _toggleDisableParentAccount(profile.id, isAccountActive);
-                              },
-                              child: Text(isAccountActive ? AppStrings.adminNonaktifkan : AppStrings.adminAktifkan),
-                            ),
-                          ],
-                        ),
+                        title: isAccountActive ? 'Nonaktifkan Akun' : 'Aktifkan Akun',
+                        message: isAccountActive 
+                            ? 'Apakah Anda yakin ingin menonaktifkan akun orang tua ini?' 
+                            : 'Apakah Anda yakin ingin mengaktifkan kembali akun orang tua ini?',
+                        confirmLabel: isAccountActive ? AppStrings.adminNonaktifkan : AppStrings.adminAktifkan,
+                        cancelLabel: AppStrings.buttonCancel,
+                        isDestructive: isAccountActive,
+                        icon: isAccountActive ? Icons.person_off_rounded : Icons.how_to_reg_rounded,
                       );
+
+                      if (confirmed && context.mounted) {
+                        _toggleDisableParentAccount(profile.id, isAccountActive);
+                      }
                     },
                     icon: Icon(
                       isAccountActive ? CupertinoIcons.minus_circle : CupertinoIcons.checkmark_seal,

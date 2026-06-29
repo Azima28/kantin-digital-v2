@@ -7,6 +7,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/core/utils/responsive.dart';
+import 'package:kantin_digital/core/widgets/custom_confirm_dialog.dart';
 import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
@@ -57,30 +58,21 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
           IconButton(
             icon: const Icon(CupertinoIcons.square_arrow_right,
                 color: AppColors.error),
-            onPressed: () {
-              showCupertinoDialog(
+            onPressed: () async {
+              final confirmed = await showCustomConfirmDialog(
                 context: context,
-                builder: (BuildContext ctx) => CupertinoAlertDialog(
-                  title: const Text('Keluar Aplikasi'),
-                  content: const Text(
-                      'Apakah Anda yakin ingin keluar dari akun kasir?'),
-                  actions: [
-                    CupertinoDialogAction(
-                      child: const Text(AppStrings.buttonCancel),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                    CupertinoDialogAction(
-                      isDestructiveAction: true,
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        ref.read(authNotifierProvider.notifier).logout();
-                        context.go('/login');
-                      },
-                      child: const Text(AppStrings.buttonLogout),
-                    ),
-                  ],
-                ),
+                title: 'Keluar Aplikasi',
+                message: 'Apakah Anda yakin ingin keluar dari akun kasir?',
+                confirmLabel: AppStrings.buttonLogout,
+                cancelLabel: AppStrings.buttonCancel,
+                isDestructive: true,
+                icon: Icons.logout_rounded,
               );
+
+              if (confirmed && context.mounted) {
+                ref.read(authNotifierProvider.notifier).logout();
+                context.go('/login');
+              }
             },
           ),
         ],
@@ -460,6 +452,8 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                       imageUrl: imageUrl,
                       width: double.infinity,
                       fit: BoxFit.cover,
+                      memCacheWidth: 250,
+                      memCacheHeight: 250,
                       placeholder: (context, url) => Container(
                         color: AppColors.lightGray,
                         child: const Center(

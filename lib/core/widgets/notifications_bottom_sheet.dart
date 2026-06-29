@@ -6,6 +6,7 @@ import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
+import 'package:kantin_digital/core/widgets/custom_confirm_dialog.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 /// Bottom Sheet for viewing and managing notifications across all roles.
@@ -72,44 +73,36 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
     final String? userId = authState.profile?['id']?.toString() ?? client.auth.currentUser?.id;
     if (userId == null) return;
 
-    showCupertinoDialog(
+    final confirmed = await showCustomConfirmDialog(
       context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: const Text('Hapus Semua Notifikasi'),
-        content: const Text('Apakah Anda yakin ingin menghapus semua notifikasi dari kotak masuk Anda?'),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () async {
-              Navigator.pop(ctx);
-              try {
-                await client
-                    .from('notifications')
-                    .delete()
-                    .eq('user_id', userId);
-                
-                ref.invalidate(userNotificationsProvider);
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Gagal menghapus notifikasi'),
-                      backgroundColor: AppColors.error,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text(AppStrings.buttonDelete),
-          ),
-        ],
-      ),
+      title: 'Hapus Semua Notifikasi',
+      message: 'Apakah Anda yakin ingin menghapus semua notifikasi dari kotak masuk Anda?',
+      confirmLabel: AppStrings.buttonDelete,
+      cancelLabel: AppStrings.buttonCancel,
+      isDestructive: true,
+      icon: Icons.delete_sweep_rounded,
     );
+
+    if (confirmed && context.mounted) {
+      try {
+        await client
+            .from('notifications')
+            .delete()
+            .eq('user_id', userId);
+        
+        ref.invalidate(userNotificationsProvider);
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Gagal menghapus notifikasi'),
+              backgroundColor: AppColors.errorRed2,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    }
   }
 
   @override

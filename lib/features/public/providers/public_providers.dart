@@ -12,6 +12,7 @@ class ProductWithCanteen {
 // ─── Provider untuk fetch menu publik (Legacy fallback) ───
 final publicMenuProvider = FutureProvider.autoDispose
     .family<List<ProductWithCanteen>, String?>((ref, category) async {
+  ref.cacheFor(const Duration(minutes: 5));
   final client = ref.read(supabaseClientProvider);
 
   List<dynamic> res;
@@ -45,6 +46,7 @@ final publicMenuProvider = FutureProvider.autoDispose
 
 // ─── [NEW] Provider daftar stan kantin aktif untuk filter ───
 final publicCanteensProvider = FutureProvider.autoDispose<List<CanteenOperator>>((ref) async {
+  ref.cacheFor(const Duration(minutes: 5));
   final client = ref.read(supabaseClientProvider);
   final res = await client
       .from('canteen_operators')
@@ -74,6 +76,7 @@ class PreviewFilter {
 // ─── [NEW] Provider untuk memuat preview 4 item per kategori ───
 final categoryPreviewProvider = FutureProvider.autoDispose
     .family<List<ProductWithCanteen>, PreviewFilter>((ref, filter) async {
+  ref.cacheFor(const Duration(minutes: 5));
   final client = ref.read(supabaseClientProvider);
   
   var query = client
@@ -250,7 +253,8 @@ class PaginatedProductsNotifier extends StateNotifier<PaginatedProductsState> {
 }
 
 // ─── [NEW] Provider keluarga untuk pagination ───
-final paginatedProductsProvider = StateNotifierProvider.family<
+final paginatedProductsProvider = StateNotifierProvider.autoDispose.family<
     PaginatedProductsNotifier, PaginatedProductsState, PaginatedProductsFilter>((ref, filter) {
+  ref.cacheFor(const Duration(minutes: 5));
   return PaginatedProductsNotifier(ref, filter);
 });

@@ -2,10 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 
 // Provider to fetch all active products for the logged in operator
 final posProductsProvider =
-    FutureProvider<List<Product>>((Ref ref) async {
+    FutureProvider.autoDispose<List<Product>>((Ref ref) async {
+  ref.cacheFor(const Duration(minutes: 5));
   try {
     final authState = ref.watch(authNotifierProvider);
     final operatorId = authState.profile?['id'];
@@ -31,6 +33,7 @@ final posProductsProvider =
 // Provider to fetch and calculate today's revenue for the logged in operator
 final todayRevenueProvider =
     FutureProvider.autoDispose<double>((Ref ref) async {
+  ref.cacheFor(const Duration(minutes: 5));
   try {
     final authState = ref.watch(authNotifierProvider);
     final operatorId = authState.profile?['id'];
@@ -73,7 +76,8 @@ final todayRevenueProvider =
 
 // Provider to fetch all products for management (both available and unavailable)
 final manageProductsProvider =
-    FutureProvider<List<Product>>((Ref ref) async {
+    FutureProvider.autoDispose<List<Product>>((Ref ref) async {
+  ref.cacheFor(const Duration(minutes: 5));
   try {
     final authState = ref.watch(authNotifierProvider);
     final operatorId = authState.profile?['id'];
@@ -98,6 +102,7 @@ final manageProductsProvider =
 // Provider to fetch transaction history for the logged in operator
 final operatorTransactionsProvider =
     FutureProvider.autoDispose<List<OperatorTransaction>>((Ref ref) async {
+  ref.cacheFor(const Duration(minutes: 5));
   try {
     final authState = ref.watch(authNotifierProvider);
     final operatorId = authState.profile?['id'];

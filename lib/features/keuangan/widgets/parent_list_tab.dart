@@ -4,94 +4,147 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/models/models.dart';
-import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/widgets/custom_confirm_dialog.dart';
 
 // ── Parents Tab ─────────────────────────────────────────────────────────────
 
-class ParentsTab extends ConsumerWidget {
+class ParentsTab extends ConsumerStatefulWidget {
   final String searchQuery;
   const ParentsTab({required this.searchQuery, super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final parentsAsync = ref.watch(keuanganParentsProvider);
+  ConsumerState<ParentsTab> createState() => _ParentsTabState();
+}
+
+class _ParentsTabState extends ConsumerState<ParentsTab>
+    with AutomaticKeepAliveClientMixin {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      final filter = PaginatedProfilesFilter(
+        role: 'parent',
+        searchQuery: widget.searchQuery,
+      );
+      ref.read(paginatedProfilesProvider(filter).notifier).loadNextPage();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    final filter = PaginatedProfilesFilter(
+      role: 'parent',
+      searchQuery: widget.searchQuery,
+    );
+    final profilesState = ref.watch(paginatedProfilesProvider(filter));
 
     return RefreshIndicator(
-      onRefresh: () async => ref.invalidate(keuanganParentsProvider),
+      onRefresh: () async => ref.invalidate(paginatedProfilesProvider(filter)),
       color: AppColors.darkTeal,
-      child: parentsAsync.when(
-        data: (list) {
-          final profiles = list
-              .map((e) => UserProfile.fromJson(Map<String, dynamic>.from(e)))
-              .toList();
+      child: Builder(
+        builder: (context) {
+          if (profilesState.isLoading) {
+            return const Center(child: CupertinoActivityIndicator(color: AppColors.darkTeal));
+          }
+
+          if (profilesState.error != null && profilesState.items.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      CupertinoIcons.xmark_circle,
+                      size: 48,
+                      color: AppColors.errorRed2,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '${AppStrings.labelFailed} memuat data',
+                      style: GoogleFonts.inter(color: AppColors.errorRed2),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: () => ref.invalidate(paginatedProfilesProvider(filter)),
+                      child: const Text(AppStrings.buttonRetry),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          final profiles = profilesState.items;
           final pending = profiles.where((p) => p.isActive != true).toList();
 
-          final filtered = profiles.where((p) {
-            final name = (p.fullName ?? '').toLowerCase();
-            final email = (p.email ?? '').toLowerCase();
-            return name.contains(searchQuery) || email.contains(searchQuery);
-          }).toList();
-
-          if (filtered.isEmpty) {
+          if (profiles.isEmpty) {
             return _buildEmptyState(
               'Tidak ada orang tua yang terdaftar.',
               'Akun orang tua otomatis terbuat saat data siswa baru didaftarkan.',
             );
           }
 
-          return ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            children: [
-              // Pending verification section
-              if (pending.isNotEmpty && searchQuery.isEmpty) ...[
-                _sectionHeader('⚠️  PERLU VERIFIKASI (${pending.length})'),
-                const SizedBox(height: 8),
-                ...pending.map(
-                  (p) => _buildParentCard(context, ref, p, isPending: true),
+          final List<Widget> children = [];
+
+          // Pending verification section
+          if (pending.isNotEmpty && widget.searchQuery.isEmpty) {
+            children.add(_sectionHeader('⚠️  PERLU VERIFIKASI (${pending.length})'));
+            children.add(const SizedBox(height: 8));
+            children.addAll(pending.map(
+              (p) => _buildParentCard(context, ref, p, isPending: true, filter: filter),
+            ));
+            children.add(const SizedBox(height: 20));
+          }
+
+          // All active parents
+          children.add(_sectionHeader('SEMUA ORANG TUA (${profiles.length})'));
+          children.add(const SizedBox(height: 8));
+          children.addAll(profiles.map(
+            (p) => _buildParentCard(context, ref, p, isPending: false, filter: filter),
+          ));
+
+          if (profilesState.isLoadingMore) {
+            children.add(
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: CupertinoActivityIndicator(color: AppColors.darkTeal),
                 ),
-                const SizedBox(height: 20),
-              ],
-              // All active parents
-              _sectionHeader('SEMUA ORANG TUA (${filtered.length})'),
-              const SizedBox(height: 8),
-              ...filtered.map(
-                (p) => _buildParentCard(context, ref, p, isPending: false),
               ),
-            ],
+            );
+          }
+
+          return ListView(
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            children: children,
           );
         },
-        loading: () =>
-            const Center(child: CupertinoActivityIndicator(color: AppColors.darkTeal)),
-        error: (e, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  CupertinoIcons.xmark_circle,
-                  size: 48,
-                  color: AppColors.errorRed2,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  '${AppStrings.labelFailed} memuat data',
-                  style: GoogleFonts.inter(color: AppColors.errorRed2),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: () => ref.invalidate(keuanganParentsProvider),
-                  child: const Text(AppStrings.buttonRetry),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -114,6 +167,7 @@ class ParentsTab extends ConsumerWidget {
     WidgetRef ref,
     UserProfile parent, {
     required bool isPending,
+    required PaginatedProfilesFilter filter,
   }) {
     final name = parent.fullName ?? 'Orang Tua';
     final email = parent.email ?? '-';
@@ -211,7 +265,7 @@ class ParentsTab extends ConsumerWidget {
                           padding: const EdgeInsets.symmetric(vertical: 8),
                         ),
                         onPressed: () =>
-                            _rejectParent(context, ref, parent.id, name),
+                            _rejectParent(context, ref, parent.id, name, filter),
                         child: Text(
                           'TOLAK',
                           style: GoogleFonts.inter(
@@ -232,7 +286,7 @@ class ParentsTab extends ConsumerWidget {
                           padding: const EdgeInsets.symmetric(vertical: 8),
                         ),
                         onPressed: () =>
-                            _verifyParent(context, ref, parent.id, name),
+                            _verifyParent(context, ref, parent.id, name, filter),
                         child: Text(
                           'VERIFIKASI',
                           style: GoogleFonts.inter(
@@ -306,6 +360,7 @@ class ParentsTab extends ConsumerWidget {
     WidgetRef ref,
     String parentId,
     String name,
+    PaginatedProfilesFilter filter,
   ) async {
     final client = ref.read(supabaseClientProvider);
     try {
@@ -313,7 +368,7 @@ class ParentsTab extends ConsumerWidget {
           .from('profiles')
           .update({'is_active': true})
           .eq('id', parentId);
-      ref.invalidate(keuanganParentsProvider);
+      ref.invalidate(paginatedProfilesProvider(filter));
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -336,51 +391,44 @@ class ParentsTab extends ConsumerWidget {
     WidgetRef ref,
     String parentId,
     String name,
+    PaginatedProfilesFilter filter,
   ) async {
-    showCupertinoDialog(
+    final confirmed = await showCustomConfirmDialog(
       context: context,
-      builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('Tolak Pendaftaran'),
-        content: Text('Tolak pendaftaran orang tua "$name"?'),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final client = ref.read(supabaseClientProvider);
-              try {
-                await client
-                    .from('profiles')
-                    .update({'is_active': false})
-                    .eq('id', parentId);
-                ref.invalidate(keuanganParentsProvider);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Pendaftaran $name ditolak'),
-                      backgroundColor: AppColors.errorRed2,
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(AppStrings.labelFailed),
-                      backgroundColor: AppColors.errorRed2,
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text('Tolak'),
-          ),
-        ],
-      ),
+      title: 'Tolak Pendaftaran',
+      message: 'Tolak pendaftaran orang tua "$name"?',
+      confirmLabel: 'Tolak',
+      cancelLabel: AppStrings.buttonCancel,
+      isDestructive: true,
+      icon: Icons.person_remove_rounded,
     );
+
+    if (confirmed && context.mounted) {
+      final client = ref.read(supabaseClientProvider);
+      try {
+        await client
+            .from('profiles')
+            .update({'is_active': false})
+            .eq('id', parentId);
+        ref.invalidate(paginatedProfilesProvider(filter));
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Pendaftaran $name ditolak'),
+              backgroundColor: AppColors.errorRed2,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppStrings.labelFailed),
+              backgroundColor: AppColors.errorRed2,
+            ),
+          );
+        }
+      }
+    }
   }
 }

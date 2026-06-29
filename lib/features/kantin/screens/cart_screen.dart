@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/kantin/providers/cart_provider.dart';
@@ -12,72 +13,187 @@ import 'package:kantin_digital/features/kantin/widgets/nfc_payment_modal.dart';
 class CartScreen extends ConsumerWidget {
   const CartScreen({super.key});
 
-  // Modal dialog to add manual extra charges
   void _showAddExtraChargeDialog(BuildContext context, WidgetRef ref) {
     final TextEditingController nameController = TextEditingController();
     final TextEditingController priceController = TextEditingController();
 
-    showCupertinoDialog(
+    showGeneralDialog(
       context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: const Text(
-          AppStrings.labelAddExtraCharge,
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 12.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CupertinoTextField(
-                controller: nameController,
-                placeholder: 'Nama biaya (contoh: Nasi Tambah)',
-                placeholderStyle: const TextStyle(color: AppColors.textGray, fontSize: 13),
-                style: const TextStyle(fontSize: 14, color: AppColors.textDark),
+      barrierDismissible: true,
+      barrierLabel: 'Add Extra Charge',
+      barrierColor: AppColors.black.withValues(alpha: 0.5),
+      transitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (context, anim1, anim2) => const SizedBox.shrink(),
+      transitionBuilder: (context, anim1, anim2, child) {
+        return Transform.scale(
+          scale: anim1.value * 0.1 + 0.9,
+          child: Opacity(
+            opacity: anim1.value,
+            child: Dialog(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+              child: Container(
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: CupertinoColors.extraLightBackgroundGray,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.borderLight, width: 0.5),
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.black.withValues(alpha: 0.15),
+                      blurRadius: 24,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              ),
-              const SizedBox(height: 8),
-              CupertinoTextField(
-                controller: priceController,
-                placeholder: 'Nominal harga (Rp)',
-                placeholderStyle: const TextStyle(color: AppColors.textGray, fontSize: 13),
-                keyboardType: TextInputType.number,
-                style: const TextStyle(fontSize: 14, color: AppColors.textDark),
-                decoration: BoxDecoration(
-                  color: CupertinoColors.extraLightBackgroundGray,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.borderLight, width: 0.5),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDefaultAction: true,
-            onPressed: () {
-              final String name = nameController.text.trim();
-              final int? price = int.tryParse(priceController.text.trim());
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Icon Badge
+                    Center(
+                      child: Container(
+                        width: 68,
+                        height: 68,
+                        decoration: const BoxDecoration(
+                          color: AppColors.primaryLight,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.add_shopping_cart_rounded,
+                            color: AppColors.primary,
+                            size: 32,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      AppStrings.labelAddExtraCharge,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.nearBlack,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Tambahkan biaya atau produk tambahan di luar menu ke keranjang belanja.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // Item Name Input
+                    TextField(
+                      controller: nameController,
+                      style: GoogleFonts.inter(fontSize: 14, color: AppColors.nearBlack),
+                      decoration: InputDecoration(
+                        hintText: 'Nama biaya (contoh: Nasi Tambah)',
+                        hintStyle: GoogleFonts.inter(color: AppColors.textSecondary.withValues(alpha: 0.6)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        filled: true,
+                        fillColor: AppColors.grayLighter,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Price Input
+                    TextField(
+                      controller: priceController,
+                      keyboardType: TextInputType.number,
+                      style: GoogleFonts.inter(fontSize: 14, color: AppColors.nearBlack),
+                      decoration: InputDecoration(
+                        hintText: 'Nominal harga (Rp)',
+                        hintStyle: GoogleFonts.inter(color: AppColors.textSecondary.withValues(alpha: 0.6)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        filled: true,
+                        fillColor: AppColors.grayLighter,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        // Cancel Button
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: AppColors.borderLight),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            child: Text(
+                              AppStrings.buttonCancel,
+                              style: GoogleFonts.inter(
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        // Save Button
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              final String name = nameController.text.trim();
+                              final int? price = int.tryParse(priceController.text.trim());
 
-              if (name.isNotEmpty && price != null && price > 0) {
-                ref.read(cartProvider.notifier).addCustomCharge(name, price);
-                Navigator.pop(ctx);
-              }
-            },
-            child: const Text(AppStrings.buttonSave),
+                              if (name.isNotEmpty && price != null && price > 0) {
+                                ref.read(cartProvider.notifier).addCustomCharge(name, price);
+                                Navigator.pop(context);
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: AppColors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            child: Text(
+                              AppStrings.buttonSave,
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 

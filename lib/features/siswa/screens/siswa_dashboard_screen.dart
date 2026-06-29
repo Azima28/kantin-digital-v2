@@ -14,6 +14,8 @@ import 'package:kantin_digital/core/widgets/notification_bell.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 import 'package:kantin_digital/features/siswa/widgets/siswa_transaction_detail_sheet.dart';
+import 'package:kantin_digital/core/router/app_router.dart';
+import 'package:kantin_digital/features/siswa/providers/order_providers.dart';
 
 class SiswaDashboardScreen extends ConsumerStatefulWidget {
   const SiswaDashboardScreen({super.key});
@@ -53,7 +55,7 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
             CircleAvatar(
               radius: 20,
               backgroundImage: profilePhotoUrl != null
-                  ? CachedNetworkImageProvider(profilePhotoUrl)
+                  ? CachedNetworkImageProvider(profilePhotoUrl, maxWidth: 80, maxHeight: 80)
                   : null,
               child: profilePhotoUrl == null
                   ? const Icon(Icons.person, color: AppColors.teal)
@@ -291,7 +293,14 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
+
+                  // Active Orders (Real-time tracking)
+                  _buildActiveOrders(context, ref),
+
+                  // GoFood-like Food Delivery Banner
+                  _buildGoFoodBanner(context),
+                  const SizedBox(height: 28),
 
                   // ── Koleksi Spesial Section ──
                   _buildSectionHeader(
@@ -686,6 +695,266 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
             Icons.nfc,
             color: AppColors.white,
             size: 26,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActiveOrders(BuildContext context, WidgetRef ref) {
+    final activeOrdersAsync = ref.watch(siswaActiveOrdersProvider);
+
+    return activeOrdersAsync.when(
+      data: (orders) {
+        if (orders.isEmpty) return const SizedBox();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Pesanan Aktif',
+                  style: GoogleFonts.inter(
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => context.push(AppRouter.studentOrders),
+                  child: const Text(
+                    'Lihat Semua',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.teal,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ...orders.take(2).map((order) {
+              return Card(
+                elevation: 0,
+                margin: const EdgeInsets.only(bottom: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: const BorderSide(color: AppColors.borderLight),
+                ),
+                color: AppColors.white,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () => context.push(
+                    AppRouter.studentOrderDetail.replaceFirst(':orderId', order.id),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: const BoxDecoration(
+                            color: AppColors.primaryLight,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(CupertinoIcons.bell_fill, color: AppColors.teal, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                order.canteenName ?? 'Stan Kantin',
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: AppColors.textDark,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                order.items.map((i) => '${i.quantity}x ${i.productName}').join(', '),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: AppColors.textGray,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: _getStatusBgColor(order.status),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                order.statusLabel,
+                                style: GoogleFonts.inter(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: _getStatusTextColor(order.status),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              order.isDelivery ? '🛵 Diantarkan' : '🛍️ Take Away',
+                              style: GoogleFonts.inter(
+                                fontSize: 10,
+                                color: AppColors.mutedGray,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+            const SizedBox(height: 12),
+          ],
+        );
+      },
+      loading: () => const SizedBox(),
+      error: (_, __) => const SizedBox(),
+    );
+  }
+
+  Color _getStatusBgColor(String status) {
+    switch (status) {
+      case 'pending':
+        return AppColors.accentOrange.withValues(alpha: 0.1);
+      case 'accepted':
+        return AppColors.teal.withValues(alpha: 0.1);
+      case 'preparing':
+        return Colors.blue.withValues(alpha: 0.1);
+      case 'ready':
+        return AppColors.successGreen.withValues(alpha: 0.1);
+      default:
+        return AppColors.grayLight;
+    }
+  }
+
+  Color _getStatusTextColor(String status) {
+    switch (status) {
+      case 'pending':
+        return AppColors.accentOrange;
+      case 'accepted':
+        return AppColors.teal;
+      case 'preparing':
+        return Colors.blue;
+      case 'ready':
+        return AppColors.successGreen;
+      default:
+        return AppColors.textDark;
+    }
+  }
+
+  Widget _buildGoFoodBanner(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.teal, AppColors.primary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.teal.withValues(alpha: 0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: () => context.push(AppRouter.studentCanteens),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          'LAYANAN BARU 🛵',
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Pesan Makan Online',
+                        style: GoogleFonts.inter(
+                          fontSize: 19,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Jajan dari stan kantin favorit, antar ke kelas atau ambil sendiri tanpa antre!',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: Colors.white.withValues(alpha: 0.85),
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 8,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.chevron_right,
+                    color: AppColors.teal,
+                    size: 26,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

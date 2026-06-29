@@ -7,6 +7,8 @@ import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
+import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 
 class SiswaHistoryScreen extends ConsumerStatefulWidget {
@@ -19,6 +21,37 @@ class SiswaHistoryScreen extends ConsumerStatefulWidget {
 class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
   String _searchQuery = '';
   int _selectedFilterIndex = 0; // 0: Semua, 1: Jajan, 2: Top-Up
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController()..addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      final authState = ref.read(authNotifierProvider);
+      final String? profileId = authState.profile?['id'];
+      if (profileId == null) return;
+
+      final filter = PaginatedTransactionsFilter(
+        studentId: profileId,
+        type: _selectedFilterIndex == 1
+            ? 'purchase'
+            : _selectedFilterIndex == 2
+                ? 'topup'
+                : null,
+      );
+      ref.read(paginatedTransactionsProvider(filter).notifier).loadNextPage();
+    }
+  }
 
   void _showTransactionDetail(BuildContext context, OperatorTransaction tx) {
     final String txId = tx.id;
@@ -257,7 +290,27 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final transactionsAsync = ref.watch(siswaTransactionsProvider);
+    final authState = ref.watch(authNotifierProvider);
+    final String? profileId = authState.profile?['id'];
+    
+    if (profileId == null) {
+      return const Scaffold(
+        body: Center(
+          child: CupertinoActivityIndicator(),
+        ),
+      );
+    }
+
+    final filter = PaginatedTransactionsFilter(
+      studentId: profileId,
+      type: _selectedFilterIndex == 1
+          ? 'purchase'
+          : _selectedFilterIndex == 2
+              ? 'topup'
+              : null,
+    );
+
+    final transactionsState = ref.watch(paginatedTransactionsProvider(filter));
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -276,7 +329,7 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          ref.invalidate(siswaTransactionsProvider);
+          await ref.read(paginatedTransactionsProvider(filter).notifier).loadFirstPage();
         },
         child: Align(
           alignment: Alignment.topCenter,
@@ -341,165 +394,173 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
 
                 // History Transactions Grouped List
                 Expanded(
-                  child: transactionsAsync.when(
-                    data: (List<OperatorTransaction> txs) {
-                      // Apply filter & search
-                      final filteredTxs = txs.where((tx) {
-                        final String type = tx.type ?? 'purchase';
-                        final String canteenName = (tx.canteenName ?? 'Kantin').toLowerCase();
-                        
-                        // Filter match
-                        if (_selectedFilterIndex == 1 && type != 'purchase') return false;
-                        if (_selectedFilterIndex == 2 && type != 'topup') return false;
-
-                        // Search query match
-                        if (_searchQuery.isNotEmpty) {
-                          if (type == 'topup') {
-                            return 'top-up saldo'.contains(_searchQuery) || 'koperasi'.contains(_searchQuery);
-                          }
-                          return canteenName.contains(_searchQuery);
-                        }
-                        return true;
-                      }).toList();
-
-                      if (filteredTxs.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Icon(CupertinoIcons.tray, color: AppColors.textGray, size: 48),
-                              SizedBox(height: 12),
-                              Text(
-                                'Tidak ada riwayat transaksi',
-                                style: TextStyle(fontSize: 14, color: AppColors.textGray, fontWeight: FontWeight.bold),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-
-                      final groupedTxs = _groupTransactionsByDate(filteredTxs);
-
-                      return ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: groupedTxs.length,
-                        itemBuilder: (context, sectionIndex) {
-                          final sectionTitle = groupedTxs.keys.elementAt(sectionIndex);
-                          final sectionItems = groupedTxs[sectionTitle]!;
-
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Section Header
-                              Padding(
-                                padding: const EdgeInsets.only(left: 4, bottom: 8, top: 8),
-                                child: Text(
-                                  sectionTitle,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textGray,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ),
-
-                              // Cards block container
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: AppColors.white,
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: AppColors.borderLight, width: 0.5),
-                                ),
-                                child: ListView.separated(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: sectionItems.length,
-                                  separatorBuilder: (context, index) => const Divider(
-                                    height: 0.5,
-                                    indent: 56,
-                                    color: AppColors.borderLight,
-                                  ),
-                                  itemBuilder: (context, index) {
-                                    final tx = sectionItems[index];
-                                    final String type = tx.type ?? 'purchase';
-                                    final int amount = tx.totalAmount;
-                                    final String canteenName = tx.canteenName ?? 'Kantin';
-                                    final bool isTopup = type == 'topup';
-                                    final String timeStr = tx.createdAt != null 
-                                        ? DateFormat('HH:mm', 'id_ID').format(tx.createdAt!.toLocal())
-                                        : '-';
-
-                                    return ListTile(
-                                      onTap: () => _showTransactionDetail(context, tx),
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                                      leading: Container(
-                                        width: 36,
-                                        height: 36,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: isTopup
-                                              ? AppColors.primary.withAlpha(20)
-                                              : AppColors.systemBackground,
-                                        ),
-                                        child: Icon(
-                                          isTopup ? CupertinoIcons.square_arrow_down : Icons.restaurant,
-                                          color: isTopup ? AppColors.primary : AppColors.textDark,
-                                          size: 18,
-                                        ),
-                                      ),
-                                      title: Text(
-                                        isTopup ? 'Top-Up Saldo' : canteenName,
-                                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.textDark),
-                                      ),
-                                       subtitle: Text(
-                                         '$timeStr WIB \u2022 ${isTopup ? "Koperasi" : (tx.purchaseMethod == 'app' ? "Jajan (Aplikasi)" : "Jajan (Kasir)")}',
-                                         style: const TextStyle(color: AppColors.textGray, fontSize: 11),
-                                       ),
-                                      trailing: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            '${isTopup ? "+" : "-"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w700,
-                                              fontSize: 14,
-                                              color: isTopup ? AppColors.primary : AppColors.error,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Icon(
-                                            isTopup ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down,
-                                            size: 12,
-                                            color: isTopup ? AppColors.primary : AppColors.error,
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                    loading: () => const Center(child: CupertinoActivityIndicator()),
-                    error: (err, stack) => Center(
+                  child: () {
+                    if (transactionsState.isLoading) {
+                      return const Center(child: CupertinoActivityIndicator());
+                    }
+                    if (transactionsState.error != null && transactionsState.items.isEmpty) {
+                      return Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text('${AppStrings.labelFailed} memuat riwayat', style: TextStyle(color: AppColors.error)),
                             const SizedBox(height: 8),
                             ElevatedButton(
-                              onPressed: () => ref.invalidate(siswaTransactionsProvider),
+                              onPressed: () {
+                                ref.read(paginatedTransactionsProvider(filter).notifier).loadFirstPage();
+                              },
                               child: const Text(AppStrings.buttonRetry),
                             ),
                           ],
                         ),
-                      ),
-                  ),
+                      );
+                    }
+
+                    // Apply client-side search query match on canteen name if search is active
+                    final filteredTxs = transactionsState.items.where((tx) {
+                      final String type = tx.type ?? 'purchase';
+                      final String canteenName = (tx.canteenName ?? 'Kantin').toLowerCase();
+                      
+                      if (_searchQuery.isNotEmpty) {
+                        if (type == 'topup') {
+                          return 'top-up saldo'.contains(_searchQuery) || 'koperasi'.contains(_searchQuery);
+                        }
+                        return canteenName.contains(_searchQuery);
+                      }
+                      return true;
+                    }).toList();
+
+                    if (filteredTxs.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(CupertinoIcons.tray, color: AppColors.textGray, size: 48),
+                            SizedBox(height: 12),
+                            Text(
+                              'Tidak ada riwayat transaksi',
+                              style: TextStyle(fontSize: 14, color: AppColors.textGray, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    final groupedTxs = _groupTransactionsByDate(filteredTxs);
+
+                    return ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(16),
+                      itemCount: groupedTxs.length + (transactionsState.isLoadingMore ? 1 : 0),
+                      itemBuilder: (context, sectionIndex) {
+                        if (sectionIndex == groupedTxs.length) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Center(child: CupertinoActivityIndicator()),
+                          );
+                        }
+
+                        final sectionTitle = groupedTxs.keys.elementAt(sectionIndex);
+                        final sectionItems = groupedTxs[sectionTitle]!;
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Section Header
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4, bottom: 8, top: 8),
+                              child: Text(
+                                sectionTitle,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textGray,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+
+                            // Cards block container
+                            Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: AppColors.borderLight, width: 0.5),
+                              ),
+                              child: ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: sectionItems.length,
+                                separatorBuilder: (context, index) => const Divider(
+                                  height: 0.5,
+                                  indent: 56,
+                                  color: AppColors.borderLight,
+                                ),
+                                itemBuilder: (context, index) {
+                                  final tx = sectionItems[index];
+                                  final String type = tx.type ?? 'purchase';
+                                  final int amount = tx.totalAmount;
+                                  final String canteenName = tx.canteenName ?? 'Kantin';
+                                  final bool isTopup = type == 'topup';
+                                  final String timeStr = tx.createdAt != null 
+                                      ? DateFormat('HH:mm', 'id_ID').format(tx.createdAt!.toLocal())
+                                      : '-';
+
+                                  return ListTile(
+                                    onTap: () => _showTransactionDetail(context, tx),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                    leading: Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: isTopup
+                                            ? AppColors.primary.withAlpha(20)
+                                            : AppColors.systemBackground,
+                                      ),
+                                      child: Icon(
+                                        isTopup ? CupertinoIcons.square_arrow_down : Icons.restaurant,
+                                        color: isTopup ? AppColors.primary : AppColors.textDark,
+                                        size: 18,
+                                      ),
+                                    ),
+                                    title: Text(
+                                      isTopup ? 'Top-Up Saldo' : canteenName,
+                                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.textDark),
+                                    ),
+                                    subtitle: Text(
+                                      '$timeStr WIB \u2022 ${isTopup ? "Koperasi" : (tx.purchaseMethod == 'app' ? "Jajan (Aplikasi)" : "Jajan (Kasir)")}',
+                                      style: const TextStyle(color: AppColors.textGray, fontSize: 11),
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          '${isTopup ? "+" : "-"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 14,
+                                            color: isTopup ? AppColors.primary : AppColors.error,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Icon(
+                                          isTopup ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down,
+                                          size: 12,
+                                          color: isTopup ? AppColors.primary : AppColors.error,
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                        );
+                      },
+                    );
+                  }(),
                 ),
               ],
             ),

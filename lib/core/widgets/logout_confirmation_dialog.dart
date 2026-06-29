@@ -1,24 +1,13 @@
-import 'package:flutter/cupertino.dart';
-import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:flutter/material.dart';
+import 'package:kantin_digital/core/widgets/custom_confirm_dialog.dart';
 
 Future<bool> showLogoutConfirmationDialog(BuildContext context) async {
-  final result = await showCupertinoDialog<bool>(
+  return showCustomConfirmDialog(
     context: context,
-    builder: (context) => CupertinoAlertDialog(
-      title: Text(AppStrings.titleConfirmation),
-      content: const Text('Apakah kamu yakin ingin keluar dari akun?'),
-      actions: [
-        CupertinoDialogAction(
-          isDestructiveAction: true,
-          onPressed: () => Navigator.pop(context, true),
-          child: const Text('Keluar dari Akun'),
-        ),
-        CupertinoDialogAction(
-          onPressed: () => Navigator.pop(context, false),
-          child: const Text(AppStrings.buttonCancel),
-        ),
-      ],
-    ),
+    title: 'Konfirmasi Keluar',
+    message: 'Apakah kamu yakin ingin keluar dari akun?',
+    confirmLabel: 'Keluar',
+    isDestructive: true,
+    icon: Icons.logout_rounded,
   );
-  return result ?? false;
 }

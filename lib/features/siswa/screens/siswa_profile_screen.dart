@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/widgets/custom_confirm_dialog.dart';
 import 'package:kantin_digital/core/services/storage_service.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
@@ -18,32 +19,22 @@ class SiswaProfileScreen extends ConsumerWidget {
   const SiswaProfileScreen({super.key});
 
   Future<void> _handleLogout(BuildContext context, WidgetRef ref) async {
-    showCupertinoDialog(
+    final confirmed = await showCustomConfirmDialog(
       context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: const Text('Keluar dari Akun'),
-        content: const Text(
-          'Apakah Anda yakin ingin keluar dari akun siswa ini?',
-        ),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await ref.read(authNotifierProvider.notifier).logout();
-              if (context.mounted) {
-                context.go('/welcome');
-              }
-            },
-            child: const Text(AppStrings.buttonLogout),
-          ),
-        ],
-      ),
+      title: 'Keluar dari Akun',
+      message: 'Apakah Anda yakin ingin keluar dari akun siswa ini?',
+      confirmLabel: AppStrings.buttonLogout,
+      cancelLabel: AppStrings.buttonCancel,
+      isDestructive: true,
+      icon: Icons.logout_rounded,
     );
+
+    if (confirmed && context.mounted) {
+      await ref.read(authNotifierProvider.notifier).logout();
+      if (context.mounted) {
+        context.go('/welcome');
+      }
+    }
   }
 
   void _showChangePasswordPanel(BuildContext context, WidgetRef ref) {

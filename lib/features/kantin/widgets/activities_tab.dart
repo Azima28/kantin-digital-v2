@@ -5,8 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
-import 'package:kantin_digital/core/models/models.dart';
-import 'package:kantin_digital/features/kantin/providers/operator_activities_provider.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
+import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 class ActivitiesTab extends ConsumerStatefulWidget {
   const ActivitiesTab({super.key});
@@ -15,12 +15,73 @@ class ActivitiesTab extends ConsumerStatefulWidget {
   ConsumerState<ActivitiesTab> createState() => _ActivitiesTabState();
 }
 
-class _ActivitiesTabState extends ConsumerState<ActivitiesTab> {
+class _ActivitiesTabState extends ConsumerState<ActivitiesTab>
+    with AutomaticKeepAliveClientMixin {
   String _selectedActivity = 'Semua Aktivitas';
+  late final ScrollController _scrollController;
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController()..addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      final authState = ref.read(authNotifierProvider);
+      final String? operatorId = authState.profile?['id'];
+      if (operatorId == null) return;
+
+      final String? actionType = _selectedActivity == 'Tambah Menu'
+          ? 'TAMBAH_PRODUK'
+          : _selectedActivity == 'Ubah Menu'
+              ? 'UBAH_PRODUK'
+              : _selectedActivity == 'Refund Transaksi'
+                  ? 'REFUND_TRANSAKSI'
+                  : null;
+
+      final filter = PaginatedAuditLogsFilter(
+        actorId: operatorId,
+        actionType: actionType,
+      );
+      ref.read(paginatedAuditLogsProvider(filter).notifier).loadNextPage();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final activitiesAsync = ref.watch(operatorActivitiesProvider);
+    super.build(context);
+
+    final authState = ref.watch(authNotifierProvider);
+    final String? operatorId = authState.profile?['id'];
+
+    if (operatorId == null) {
+      return const Center(child: CupertinoActivityIndicator());
+    }
+
+    final String? actionType = _selectedActivity == 'Tambah Menu'
+        ? 'TAMBAH_PRODUK'
+        : _selectedActivity == 'Ubah Menu'
+            ? 'UBAH_PRODUK'
+            : _selectedActivity == 'Refund Transaksi'
+                ? 'REFUND_TRANSAKSI'
+                : null;
+
+    final filter = PaginatedAuditLogsFilter(
+      actorId: operatorId,
+      actionType: actionType,
+    );
+
+    final activitiesState = ref.watch(paginatedAuditLogsProvider(filter));
 
     return Align(
       alignment: Alignment.topCenter,
@@ -71,49 +132,80 @@ class _ActivitiesTabState extends ConsumerState<ActivitiesTab> {
 
             // Activities List
             Expanded(
-              child: activitiesAsync.when(
-                data: (List<AuditLog> logs) {
-                  // Filter logs
-                  final filtered = logs.where((log) {
-                    final type = log.actionType;
-                    if (_selectedActivity == 'Tambah Menu') {
-                      return type == 'TAMBAH_PRODUK';
-                    } else if (_selectedActivity == 'Ubah Menu') {
-                      return type == 'UBAH_PRODUK';
-                    } else if (_selectedActivity == 'Refund Transaksi') {
-                      return type == 'REFUND_TRANSAKSI';
-                    }
-                    return true; // Semua Aktivitas
-                  }).toList();
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  await ref.read(paginatedAuditLogsProvider(filter).notifier).loadFirstPage();
+                },
+                child: () {
+                  if (activitiesState.isLoading) {
+                    return const Center(child: CupertinoActivityIndicator());
+                  }
 
-                  if (filtered.isEmpty) {
+                  if (activitiesState.error != null && activitiesState.items.isEmpty) {
                     return Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(CupertinoIcons.list_bullet,
-                              size: 48, color: AppColors.textGray),
-                          SizedBox(height: 12),
+                        children: [
                           Text(
-                            'Tidak ada aktivitas',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textDark,
-                            ),
-                            textAlign: TextAlign.center,
+                            '${AppStrings.labelFailed} memuat aktivitas',
+                            style: TextStyle(color: AppColors.error),
+                          ),
+                          const SizedBox(height: 8),
+                          ElevatedButton(
+                            onPressed: () {
+                              ref.read(paginatedAuditLogsProvider(filter).notifier).loadFirstPage();
+                            },
+                            child: const Text(AppStrings.buttonRetry),
                           ),
                         ],
                       ),
                     );
                   }
 
+                  final logs = activitiesState.items;
+
+                  if (logs.isEmpty) {
+                    return ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.15),
+                        Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(CupertinoIcons.list_bullet,
+                                  size: 48, color: AppColors.textGray),
+                              SizedBox(height: 12),
+                              Text(
+                                'Tidak ada aktivitas',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textDark,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+
                   return ListView.builder(
+                    controller: _scrollController,
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: filtered.length,
+                    itemCount: logs.length + (activitiesState.isLoadingMore ? 1 : 0),
                     itemBuilder: (context, index) {
-                      final log = filtered[index];
+                      if (index == logs.length) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Center(child: CupertinoActivityIndicator()),
+                        );
+                      }
+
+                      final log = logs[index];
                       final type = log.actionType;
                       final desc = log.description;
                       final createdAt = log.createdAt?.toLocal();
@@ -177,26 +269,7 @@ class _ActivitiesTabState extends ConsumerState<ActivitiesTab> {
                       );
                     },
                   );
-                },
-                loading: () =>
-                    const Center(child: CupertinoActivityIndicator()),
-                error: (err, stack) => Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '${AppStrings.labelFailed} memuat aktivitas',
-                        style: TextStyle(color: AppColors.error),
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: () =>
-                            ref.invalidate(operatorActivitiesProvider),
-                        child: const Text(AppStrings.buttonRetry),
-                      ),
-                    ],
-                  ),
-                ),
+                }(),
               ),
             ),
           ],

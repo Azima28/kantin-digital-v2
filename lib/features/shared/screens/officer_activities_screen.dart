@@ -47,7 +47,8 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
         .from('audit_logs')
         .select('id, action_type, description, created_at')
         .or('actor_id.eq.${widget.officerId},actor_name.eq.${widget.actorName}')
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .limit(100);
 
     return List<Map<String, dynamic>>.from(logs);
   }

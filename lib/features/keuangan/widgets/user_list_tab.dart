@@ -21,12 +21,47 @@ class StudentsTab extends ConsumerStatefulWidget {
   ConsumerState<StudentsTab> createState() => _StudentsTabState();
 }
 
-class _StudentsTabState extends ConsumerState<StudentsTab> {
+class _StudentsTabState extends ConsumerState<StudentsTab>
+    with AutomaticKeepAliveClientMixin {
+  final ScrollController _scrollController = ScrollController();
   String _selectedStatus = 'Semua';
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      final statusVal = _selectedStatus == 'Diblokir' ? 'Akun Diblokir' : _selectedStatus;
+      final filter = PaginatedStudentsFilter(
+        statusFilter: statusVal,
+        searchQuery: widget.searchQuery,
+      );
+      ref.read(paginatedStudentsProvider(filter).notifier).loadNextPage();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final studentsAsync = ref.watch(keuanganStudentsProvider);
+    super.build(context);
+    final statusVal = _selectedStatus == 'Diblokir' ? 'Akun Diblokir' : _selectedStatus;
+    final filter = PaginatedStudentsFilter(
+      statusFilter: statusVal,
+      searchQuery: widget.searchQuery,
+    );
+    final studentsState = ref.watch(paginatedStudentsProvider(filter));
     final fmt = NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp ',
@@ -34,123 +69,122 @@ class _StudentsTabState extends ConsumerState<StudentsTab> {
     );
 
     return RefreshIndicator(
-      onRefresh: () async => ref.invalidate(keuanganStudentsProvider),
+      onRefresh: () async => ref.invalidate(paginatedStudentsProvider(filter)),
       color: AppColors.darkTeal,
-      child: studentsAsync.when(
-        data: (list) {
-          final filtered = list.where((student) {
-            final name = student.fullName.toLowerCase();
-            final email = (student.email ?? '').toLowerCase();
-            final nisn = (student.nisn ?? '').toLowerCase();
-            final studentClass = (student.class_ ?? '').toLowerCase();
-            final matchesSearch = name.contains(widget.searchQuery) ||
-                email.contains(widget.searchQuery) ||
-                nisn.contains(widget.searchQuery) ||
-                studentClass.contains(widget.searchQuery);
+      child: Builder(
+        builder: (context) {
+          if (studentsState.isLoading) {
+            return const Center(
+              child: CupertinoActivityIndicator(color: AppColors.darkTeal),
+            );
+          }
 
-            bool matchesStatus = true;
-            final hasCard = student.hasRfid == true;
-            final isAc = student.isActive == true;
-
-            if (_selectedStatus == 'Aktif') {
-              matchesStatus = hasCard && isAc;
-            } else if (_selectedStatus == 'Belum Aktif') {
-              matchesStatus = !hasCard;
-            } else if (_selectedStatus == 'Diblokir') {
-              matchesStatus = !isAc;
-            }
-
-            return matchesSearch && matchesStatus;
-          }).toList();
-
-          return ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            children: [
-              // Dropdown Status Filter
-              KeuanganStatusFilter(
-                selectedStatus: _selectedStatus,
-                onChanged: (val) {
-                  setState(() {
-                    _selectedStatus = val;
-                  });
-                },
+          if (studentsState.error != null && studentsState.items.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      CupertinoIcons.xmark_circle,
+                      size: 48,
+                      color: AppColors.errorRed2,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '${AppStrings.labelFailed} memuat data',
+                      style: GoogleFonts.inter(color: AppColors.errorRed2),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: () => ref.invalidate(paginatedStudentsProvider(filter)),
+                      child: const Text(AppStrings.buttonRetry),
+                    ),
+                  ],
+                ),
               ),
-              if (filtered.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 40),
-                  child: Center(
-                    child: Column(
-                      children: [
-                        const Icon(
-                          CupertinoIcons.person_crop_circle_badge_exclam,
-                          size: 64,
+            );
+          }
+
+          final filtered = studentsState.items;
+          final List<Widget> children = [
+            // Dropdown Status Filter
+            KeuanganStatusFilter(
+              selectedStatus: _selectedStatus,
+              onChanged: (val) {
+                setState(() {
+                  _selectedStatus = val;
+                });
+              },
+            ),
+          ];
+
+          if (filtered.isEmpty) {
+            children.add(
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 40),
+                child: Center(
+                  child: Column(
+                    children: [
+                      const Icon(
+                        CupertinoIcons.person_crop_circle_badge_exclam,
+                        size: 64,
+                        color: AppColors.mutedGray,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Siswa tidak ditemukan',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.nearBlack,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Coba sesuaikan kata kunci pencarian atau status filter.',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
                           color: AppColors.mutedGray,
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Siswa tidak ditemukan',
-                          style: GoogleFonts.inter(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.nearBlack,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Coba sesuaikan kata kunci pencarian atau status filter.',
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: AppColors.mutedGray,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              else ...[
-                _sectionHeader('SEMUA SISWA (${filtered.length})'),
-                const SizedBox(height: 8),
-                ...filtered.map(
-                  (student) => KeuanganStudentCard(
-                    student: student,
-                    fmt: fmt,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ],
+              ),
+            );
+          } else {
+            children.add(_sectionHeader('SEMUA SISWA (${filtered.length})'));
+            children.add(const SizedBox(height: 8));
+            children.addAll(filtered.map(
+              (student) => KeuanganStudentCard(
+                student: student,
+                fmt: fmt,
+              ),
+            ));
+            if (studentsState.isLoadingMore) {
+              children.add(
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: CupertinoActivityIndicator(color: AppColors.darkTeal),
+                  ),
+                ),
+              );
+            }
+          }
+
+          return ListView(
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            children: children,
           );
         },
-        loading: () =>
-            const Center(child: CupertinoActivityIndicator(color: AppColors.darkTeal)),
-        error: (e, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  CupertinoIcons.xmark_circle,
-                  size: 48,
-                  color: AppColors.errorRed2,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  '${AppStrings.labelFailed} memuat data',
-                  style: GoogleFonts.inter(color: AppColors.errorRed2),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: () => ref.invalidate(keuanganStudentsProvider),
-                  child: const Text(AppStrings.buttonRetry),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

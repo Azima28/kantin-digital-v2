@@ -23,6 +23,11 @@ class _KeuanganUsersScreenState extends ConsumerState<KeuanganUsersScreen>
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  void _onSearchChanged(String val) {
+    setState(() {
+      _searchQuery = val.trim().toLowerCase();
+    });
+  }
 
   @override
   void initState() {
@@ -110,7 +115,7 @@ class _KeuanganUsersScreenState extends ConsumerState<KeuanganUsersScreen>
         children: [
           UsersSearchBar(
             controller: _searchController,
-            onChanged: (val) => setState(() => _searchQuery = val.trim().toLowerCase()),
+            onChanged: _onSearchChanged,
             hints: [_searchHint()],
             showClear: _searchQuery.isNotEmpty,
           ),

@@ -139,6 +139,8 @@ class _StudentWelcomeScreenState extends ConsumerState<StudentWelcomeScreen>
                                         child: CachedNetworkImage(
                                           imageUrl: imageUrl,
                                           fit: BoxFit.cover,
+                                          memCacheWidth: 200,
+                                          memCacheHeight: 200,
                                           placeholder: (c, i) => const Center(child: CupertinoActivityIndicator()),
                                           errorWidget: (c, i, e) {
                                             return Container(

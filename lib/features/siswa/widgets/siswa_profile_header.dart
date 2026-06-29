@@ -57,6 +57,8 @@ class SiswaProfileHeader extends StatelessWidget {
                               ? CachedNetworkImage(
                                   imageUrl: avatarUrl!,
                                   fit: BoxFit.cover,
+                                  memCacheWidth: 100,
+                                  memCacheHeight: 100,
                                   placeholder: (_, __) => const Center(child: CupertinoActivityIndicator()),
                                   errorWidget: (_, __, ___) => const Icon(
                                     CupertinoIcons.person,

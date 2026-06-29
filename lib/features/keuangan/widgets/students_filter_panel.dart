@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
-import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 
 class StudentsFilterPanel extends ConsumerWidget {
   final TextEditingController searchController;
@@ -27,7 +27,7 @@ class StudentsFilterPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final studentsAsync = ref.watch(keuanganStudentsProvider);
+    final classesAsync = ref.watch(classesProvider);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -60,15 +60,25 @@ class StudentsFilterPanel extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           // Dropdown Filters
-          studentsAsync.when(
-            data: (list) {
-              // Get unique classes
+          classesAsync.when(
+            data: (classesList) {
+              final rombelsList = ref.watch(rombelsProvider).value ?? [];
               final classes = {'Semua'};
-              for (var student in list) {
-                if (student.class_ != null) {
-                  classes.add(student.class_!);
+              for (var c in classesList) {
+                if (rombelsList.isEmpty) {
+                  classes.add(c.name);
+                } else {
+                  for (var r in rombelsList) {
+                    if (r.name != '-') {
+                      classes.add('${c.name}-${r.name}');
+                    } else {
+                      classes.add(c.name);
+                    }
+                  }
                 }
               }
+
+              final activeClass = classes.contains(selectedClass) ? selectedClass : 'Semua';
 
               return Row(
                 children: [
@@ -82,7 +92,7 @@ class StudentsFilterPanel extends ConsumerWidget {
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: selectedClass,
+                          value: activeClass,
                           isExpanded: true,
                           style: GoogleFonts.inter(color: AppColors.nearBlack, fontSize: 13),
                           onChanged: (val) {

@@ -8,7 +8,7 @@ import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 
-class StudentsListView extends ConsumerWidget {
+class StudentsListView extends ConsumerStatefulWidget {
   final String searchQuery;
   final String selectedClass;
   final String selectedStatus;
@@ -21,53 +21,84 @@ class StudentsListView extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final studentsAsync = ref.watch(keuanganStudentsProvider);
+  ConsumerState<StudentsListView> createState() => _StudentsListViewState();
+}
+
+class _StudentsListViewState extends ConsumerState<StudentsListView> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      final filter = PaginatedStudentsFilter(
+        classFilter: widget.selectedClass,
+        statusFilter: widget.selectedStatus,
+        searchQuery: widget.searchQuery,
+      );
+      ref.read(paginatedStudentsProvider(filter).notifier).loadNextPage();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filter = PaginatedStudentsFilter(
+      classFilter: widget.selectedClass,
+      statusFilter: widget.selectedStatus,
+      searchQuery: widget.searchQuery,
+    );
+    final studentsState = ref.watch(paginatedStudentsProvider(filter));
     final fmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
     return RefreshIndicator(
-      onRefresh: () async => ref.invalidate(keuanganStudentsProvider),
+      onRefresh: () async => ref.invalidate(paginatedStudentsProvider(filter)),
       color: AppColors.darkTeal,
-      child: studentsAsync.when(
-        data: (list) {
-          // Filter the list
-          final filtered = list.where((student) {
-            final fullName = student.fullName.toLowerCase();
-            final email = (student.email ?? '').toLowerCase();
-            final nisn = (student.nisn ?? '').toLowerCase();
-            final isAc = student.isActive;
+      child: Builder(
+        builder: (context) {
+          if (studentsState.isLoading) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(40),
+                child: CupertinoActivityIndicator(color: AppColors.darkTeal),
+              ),
+            );
+          }
 
-            final sClass = (student.class_ ?? '').toLowerCase();
-            final int sBalance = student.balance;
-            final rfid = student.rfidUid;
+          if (studentsState.error != null && studentsState.items.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+                    const SizedBox(height: 12),
+                    Text('${AppStrings.labelFailed} memuat data'),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () => ref.invalidate(paginatedStudentsProvider(filter)),
+                      child: const Text(AppStrings.buttonRetry),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
 
-            // Search query matching
-            final matchesSearch = fullName.contains(searchQuery) ||
-                email.contains(searchQuery) ||
-                nisn.contains(searchQuery) ||
-                sClass.contains(searchQuery);
+          final list = studentsState.items;
 
-            // Class filter matching
-            final matchesClass = selectedClass == 'Semua' || student.class_ == selectedClass;
-
-            // Status filter matching
-            bool matchesStatus = true;
-            if (selectedStatus == 'Aktif') {
-              matchesStatus = isAc && rfid != null && rfid.isNotEmpty && student.cardIsActive;
-            } else if (selectedStatus == 'Akun Diblokir') {
-              matchesStatus = !isAc && rfid != null && rfid.isNotEmpty;
-            } else if (selectedStatus == 'Kartu Diblokir') {
-              matchesStatus = isAc && !student.cardIsActive && rfid != null && rfid.isNotEmpty;
-            } else if (selectedStatus == 'Belum Aktif') {
-              matchesStatus = rfid == null || rfid.isEmpty;
-            } else if (selectedStatus == 'Saldo Rendah') {
-              matchesStatus = sBalance < 5000;
-            }
-
-            return matchesSearch && matchesClass && matchesStatus;
-          }).toList();
-
-          if (filtered.isEmpty) {
+          if (list.isEmpty) {
             return Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -96,11 +127,20 @@ class StudentsListView extends ConsumerWidget {
           }
 
           return ListView.builder(
+            controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            itemCount: filtered.length,
+            itemCount: list.length + (studentsState.isLoadingMore ? 1 : 0),
             itemBuilder: (context, index) {
-              final student = filtered[index];
+              if (index == list.length) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: CupertinoActivityIndicator(color: AppColors.darkTeal),
+                  ),
+                );
+              }
+              final student = list[index];
               final studentId = student.id;
               final fullName = student.fullName;
               final nisn = student.nisn ?? '-';
@@ -298,30 +338,6 @@ class StudentsListView extends ConsumerWidget {
             },
           );
         },
-        loading: () => const Center(
-          child: Padding(
-            padding: EdgeInsets.all(40),
-            child: CupertinoActivityIndicator(color: AppColors.darkTeal),
-          ),
-        ),
-        error: (e, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
-                const SizedBox(height: 12),
-                Text('${AppStrings.labelFailed} memuat data'),
-                const SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: () => ref.invalidate(keuanganStudentsProvider),
-                  child: const Text(AppStrings.buttonRetry),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

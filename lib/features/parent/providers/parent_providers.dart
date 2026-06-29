@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 
 // ============================================================================
 // PARENT DASHBOARD PROVIDER
@@ -12,6 +12,7 @@ import 'package:kantin_digital/core/models/models.dart';
 final parentDashboardProvider =
     FutureProvider.autoDispose.family<ParentDashboardData, String>(
         (ref, studentId) async {
+  ref.cacheFor(const Duration(minutes: 5));
   try {
     final client = ref.read(supabaseClientProvider);
 
@@ -21,7 +22,7 @@ final parentDashboardProvider =
 
     // 2. Fetch student
     final student =
-        await client.from('students').select().eq('id', studentId).maybeSingle();
+        await client.from('students').select('*, classes:classes(name), rombels:rombels(name)').eq('id', studentId).maybeSingle();
 
     // 3. Fetch recent transactions (fetch up to 100 to support rich charts & analytics)
     final List<dynamic> txs = await client

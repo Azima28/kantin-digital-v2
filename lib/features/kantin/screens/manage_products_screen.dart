@@ -7,6 +7,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
+import 'package:kantin_digital/core/widgets/custom_confirm_dialog.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
 
@@ -50,53 +51,45 @@ class ManageProductsScreen extends ConsumerWidget {
     String productName,
   ) async {
     // Confirm delete dialog
-    showCupertinoDialog(
+    final confirmed = await showCustomConfirmDialog(
       context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: const Text('Hapus Jajanan'),
-        content: Text('Apakah Anda yakin ingin menghapus "$productName" dari katalog stan Anda?'),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () async {
-              Navigator.pop(ctx);
-              try {
-                final client = ref.read(supabaseClientProvider);
-                await client.from('products').delete().eq('id', productId);
-
-                // Refresh providers
-                ref.invalidate(posProductsProvider);
-                ref.invalidate(manageProductsProvider);
-
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(AppStrings.successProductDeleted),
-                      backgroundColor: AppColors.success,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${AppStrings.labelFailed} menghapus jajanan'),
-                      backgroundColor: AppColors.error,
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text(AppStrings.buttonDelete),
-          ),
-        ],
-      ),
+      title: 'Hapus Jajanan',
+      message: 'Apakah Anda yakin ingin menghapus "$productName" dari katalog stan Anda?',
+      confirmLabel: AppStrings.buttonDelete,
+      cancelLabel: AppStrings.buttonCancel,
+      isDestructive: true,
+      icon: Icons.delete_forever_rounded,
     );
+
+    if (confirmed && context.mounted) {
+      try {
+        final client = ref.read(supabaseClientProvider);
+        await client.from('products').delete().eq('id', productId);
+
+        // Refresh providers
+        ref.invalidate(posProductsProvider);
+        ref.invalidate(manageProductsProvider);
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(AppStrings.successProductDeleted),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${AppStrings.labelFailed} menghapus jajanan'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    }
   }
 
   @override
@@ -229,6 +222,8 @@ class ManageProductsScreen extends ConsumerWidget {
                                             child: CachedNetworkImage(
                                               imageUrl: imageUrl,
                                               fit: BoxFit.cover,
+                                              memCacheWidth: 100,
+                                              memCacheHeight: 100,
                                               placeholder: (c, i) => const Center(child: CupertinoActivityIndicator()),
                                               errorWidget: (c, i, e) => Center(
                                                 child: Text(

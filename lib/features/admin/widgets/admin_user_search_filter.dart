@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
-import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 
 /// Search bar and role filter for the admin users screen.
 class AdminUserSearchFilter extends ConsumerWidget {
@@ -69,10 +68,6 @@ class AdminUserSearchFilter extends ConsumerWidget {
                 },
                 onValueChanged: (val) {
                   onRoleFilterChanged(val);
-                  // Push role filter to DB layer
-                  ref
-                      .read(adminRoleFilterProvider.notifier)
-                      .state = _getDbRoleKey(val);
                 },
               ),
             ),
@@ -100,20 +95,5 @@ class AdminUserSearchFilter extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  String? _getDbRoleKey(String filter) {
-    switch (filter) {
-      case 'Siswa':
-        return 'student';
-      case 'Kantin':
-        return 'petugas_kantin';
-      case 'Orang Tua':
-        return 'parent';
-      case 'Keuangan':
-        return 'petugas_keuangan';
-      default:
-        return null;
-    }
   }
 }

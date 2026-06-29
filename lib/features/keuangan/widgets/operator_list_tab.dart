@@ -5,20 +5,59 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/models/models.dart';
-import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 
 // ── Staff/Operator Tab ──────────────────────────────────────────────────────
 
-class StaffTab extends ConsumerWidget {
+class StaffTab extends ConsumerStatefulWidget {
   final String searchQuery;
   const StaffTab({required this.searchQuery, super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final staffAsync = ref.watch(keuanganStaffProvider);
+  ConsumerState<StaffTab> createState() => _StaffTabState();
+}
+
+class _StaffTabState extends ConsumerState<StaffTab>
+    with AutomaticKeepAliveClientMixin {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      final filter = PaginatedProfilesFilter(
+        role: 'petugas_kantin',
+        searchQuery: widget.searchQuery,
+      );
+      ref.read(paginatedProfilesProvider(filter).notifier).loadNextPage();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    final filter = PaginatedProfilesFilter(
+      role: 'petugas_kantin',
+      searchQuery: widget.searchQuery,
+    );
+    final staffState = ref.watch(paginatedProfilesProvider(filter));
     final fmt = NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp ',
@@ -26,81 +65,64 @@ class StaffTab extends ConsumerWidget {
     );
 
     return RefreshIndicator(
-      onRefresh: () async => ref.invalidate(keuanganStaffProvider),
+      onRefresh: () async => ref.invalidate(paginatedProfilesProvider(filter)),
       color: AppColors.darkTeal,
-      child: staffAsync.when(
-        data: (list) {
-          final profiles = list
-              .map((e) => UserProfile.fromJson(Map<String, dynamic>.from(e)))
-              .toList();
-          final filtered = profiles.where((s) {
-            final name = (s.fullName ?? '').toLowerCase();
-            final uname = (s.username ?? '').toLowerCase();
-            return name.contains(searchQuery) || uname.contains(searchQuery);
-          }).toList();
-
-          // Keep raw data for nested canteen_operators access
-          final rawItems = <String, Map<String, dynamic>>{};
-          for (final raw in list) {
-            final id = raw['id'] as String?;
-            if (id != null) {
-              rawItems[id] = Map<String, dynamic>.from(raw);
-            }
+      child: Builder(
+        builder: (context) {
+          if (staffState.isLoading) {
+            return const Center(child: CupertinoActivityIndicator(color: AppColors.darkTeal));
           }
 
-          if (filtered.isEmpty) {
+          if (staffState.error != null && staffState.items.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+                    const SizedBox(height: 12),
+                    Text('${AppStrings.labelFailed} memuat'),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () => ref.invalidate(paginatedProfilesProvider(filter)),
+                      child: const Text(AppStrings.buttonRetry),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          final profiles = staffState.items;
+
+          if (profiles.isEmpty) {
             return _buildEmptyState();
           }
 
-          return ListView(
+          return ListView.builder(
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            children: [
-              _sectionHeader('PETUGAS AKTIF (${filtered.length})'),
-              const SizedBox(height: 8),
-              ...filtered.map((s) => _buildStaffCard(
-                context, ref, s, fmt,
-                canteenData: rawItems[s.id]?['canteen_operators']
-                    as Map<String, dynamic>?,
-              )),
-            ],
+            itemCount: profiles.length + (staffState.isLoadingMore ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (index == profiles.length) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: CupertinoActivityIndicator(color: AppColors.darkTeal),
+                  ),
+                );
+              }
+              final s = profiles[index];
+              return _buildStaffCard(context, ref, s, fmt);
+            },
           );
         },
-        loading: () =>
-            const Center(child: CupertinoActivityIndicator(color: AppColors.darkTeal)),
-        error: (e, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
-                const SizedBox(height: 12),
-                Text('${AppStrings.labelFailed} memuat'),
-                const SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: () => ref.invalidate(keuanganStaffProvider),
-                  child: const Text(AppStrings.buttonRetry),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
 
-  Widget _sectionHeader(String text) => Padding(
-    padding: const EdgeInsets.only(bottom: 4),
-    child: Text(
-      text,
-      style: GoogleFonts.inter(
-        fontSize: 11,
-        fontWeight: FontWeight.w700,
-        color: AppColors.mutedGray,
-        letterSpacing: 1.1,
-      ),
-    ),
-  );
 
   Widget _buildEmptyState() => Center(
     child: Column(
@@ -137,18 +159,16 @@ class StaffTab extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     UserProfile staff,
-    NumberFormat fmt, {
-    required Map<String, dynamic>? canteenData,
-  }) {
+    NumberFormat fmt,
+  ) {
     final name = staff.fullName ?? 'Petugas';
     final isActive = staff.isActive == true;
     final initials = name.length >= 2
         ? '${name[0]}${name.split(' ').last[0]}'.toUpperCase()
         : name[0].toUpperCase();
 
-    final canteenName = canteenData?['canteen_name'] ?? 'Belum Ada Stan';
-    final omzet =
-        (canteenData?['balance_earned'] as num?)?.toInt() ?? 0;
+    final canteenName = staff.canteenName ?? 'Belum Ada Stan';
+    final omzet = staff.balanceEarned ?? 0;
 
     return GestureDetector(
       onTap: () {

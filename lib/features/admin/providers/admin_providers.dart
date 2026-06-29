@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 
 // ============================================================================
 // ADMIN DASHBOARD PROVIDER
@@ -13,6 +14,7 @@ import 'package:kantin_digital/core/models/models.dart';
 final adminDashboardProvider = FutureProvider.autoDispose<AdminDashboardData>((
   ref,
 ) async {
+  ref.cacheFor(const Duration(minutes: 5));
   final client = ref.read(supabaseClientProvider);
 
   int studentBalanceSum = 0;
@@ -117,33 +119,22 @@ final adminDashboardProvider = FutureProvider.autoDispose<AdminDashboardData>((
 // ADMIN USERS PROVIDER
 // ============================================================================
 
-/// State provider for the current admin role filter (null = no filter).
-/// Watched by [adminUsersProvider] to push filtering to the DB layer.
-final adminRoleFilterProvider = StateProvider<String?>((ref) => null);
-
 /// Fetch semua user profiles untuk manajemen user super admin.
-/// Applies role filter via DB layer when [adminRoleFilterProvider] is set.
 /// Digunakan di: admin_users_screen.dart
-final adminUsersProvider = FutureProvider<List<UserProfile>>((
-  ref,
-) async {
+final adminUsersProvider = FutureProvider.autoDispose<List<UserProfile>>((ref) async {
+  ref.cacheFor(const Duration(minutes: 5));
   final client = ref.read(supabaseClientProvider);
-  final roleFilter = ref.watch(adminRoleFilterProvider);
 
-  var query = client
+  final List<dynamic> res = await client
       .from('profiles')
-      .select('id, full_name, email, role, username, nisn, is_active');
-
-  if (roleFilter != null) {
-    query = query.eq('role', roleFilter);
-  }
-
-  final List<dynamic> res = await query.order('full_name', ascending: true).limit(50);
+      .select('id, full_name, email, role, username, nisn, is_active')
+      .order('full_name', ascending: true);
 
   return res
       .map((e) => UserProfile.fromJson(e as Map<String, dynamic>))
       .toList();
 });
+
 
 // ============================================================================
 // ADMIN AUDIT LOGS PROVIDER
@@ -154,6 +145,7 @@ final adminUsersProvider = FutureProvider<List<UserProfile>>((
 final adminAuditLogsProvider = FutureProvider.autoDispose<List<AuditLog>>((
   ref,
 ) async {
+  ref.cacheFor(const Duration(minutes: 5));
   final client = ref.read(supabaseClientProvider);
 
   final List<dynamic> res = await client
@@ -173,9 +165,10 @@ final adminAuditLogsProvider = FutureProvider.autoDispose<List<AuditLog>>((
 
 /// Fetch system settings untuk halaman pengaturan super admin.
 /// Digunakan di: admin_settings_screen.dart
-final adminSettingsProvider = FutureProvider<Map<String, dynamic>>((
+final adminSettingsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
   ref,
 ) async {
+  ref.cacheFor(const Duration(minutes: 5));
   final client = ref.read(supabaseClientProvider);
 
   final List<dynamic> res = await client
@@ -194,8 +187,9 @@ final adminSettingsProvider = FutureProvider<Map<String, dynamic>>((
 
 /// Fetch detail lengkap siswa (profile + student + recent transactions).
 /// Digunakan di: admin_student_detail_screen.dart
-final adminStudentDetailProvider = FutureProvider
+final adminStudentDetailProvider = FutureProvider.autoDispose
     .family<AdminStudentDetail, String>((ref, id) async {
+      ref.cacheFor(const Duration(minutes: 5));
       final client = ref.read(supabaseClientProvider);
 
       // 1. Fetch profile
@@ -208,7 +202,7 @@ final adminStudentDetailProvider = FutureProvider
       // 2. Fetch student
       final student = await client
           .from('students')
-          .select()
+          .select('*, classes:classes(name), rombels:rombels(name)')
           .eq('id', id)
           .maybeSingle();
 
@@ -235,8 +229,9 @@ final adminStudentDetailProvider = FutureProvider
 
 /// Fetch detail lengkap orang tua (profile + linked children).
 /// Digunakan di: admin_parent_detail_screen.dart
-final adminParentDetailProvider = FutureProvider
+final adminParentDetailProvider = FutureProvider.autoDispose
     .family<AdminParentDetail, String>((ref, id) async {
+      ref.cacheFor(const Duration(minutes: 5));
       final client = ref.read(supabaseClientProvider);
 
       // 1. Fetch profile
@@ -250,7 +245,7 @@ final adminParentDetailProvider = FutureProvider
       final List<dynamic> childrenRes = await client
           .from('parent_students')
           .select(
-            'student_id, students!parent_students_student_id_fkey(class, profiles!students_id_fkey(full_name, nisn))',
+            'student_id, students!parent_students_student_id_fkey(class_id, rombel_id, classes:classes(name), rombels:rombels(name), profiles!students_id_fkey(full_name, nisn))',
           )
           .eq('parent_id', id);
 
@@ -266,8 +261,9 @@ final adminParentDetailProvider = FutureProvider
 
 /// Fetch detail lengkap merchant (profile + operator + products + sales metrics).
 /// Digunakan di: admin_merchant_detail_screen.dart
-final adminMerchantDetailProvider = FutureProvider
+final adminMerchantDetailProvider = FutureProvider.autoDispose
     .family<AdminMerchantDetail, String>((ref, id) async {
+      ref.cacheFor(const Duration(minutes: 5));
       final client = ref.read(supabaseClientProvider);
 
       // 1. Fetch profile
@@ -352,8 +348,9 @@ final adminMerchantDetailProvider = FutureProvider
 
 /// Fetch detail lengkap finance officer (profile + officer + audit activities).
 /// Digunakan di: admin_finance_detail_screen.dart
-final adminFinanceDetailProvider = FutureProvider
+final adminFinanceDetailProvider = FutureProvider.autoDispose
     .family<AdminFinanceDetail, String>((ref, id) async {
+      ref.cacheFor(const Duration(minutes: 5));
       final client = ref.read(supabaseClientProvider);
 
       // 1. Fetch profile
@@ -385,3 +382,113 @@ final adminFinanceDetailProvider = FutureProvider
         'logs': List<Map<String, dynamic>>.from(logs),
       });
     });
+
+// ============================================================================
+// PAGINATED PROFILES PROVIDER
+// ============================================================================
+
+class PaginatedProfilesFilter {
+  final String? role;
+  final String? searchQuery;
+
+  const PaginatedProfilesFilter({
+    this.role,
+    this.searchQuery,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PaginatedProfilesFilter &&
+          runtimeType == other.runtimeType &&
+          role == other.role &&
+          searchQuery == other.searchQuery;
+
+  @override
+  int get hashCode => role.hashCode ^ searchQuery.hashCode;
+}
+
+class PaginatedProfilesNotifier
+    extends StateNotifier<PaginatedState<UserProfile>> {
+  final SupabaseClient _client;
+  final PaginatedProfilesFilter _filter;
+  int _currentPage = 0;
+  static const int _pageSize = 15;
+
+  PaginatedProfilesNotifier(this._client, this._filter)
+      : super(const PaginatedState(items: [])) {
+    loadFirstPage();
+  }
+
+  Future<void> loadFirstPage() async {
+    state = state.copyWith(isLoading: true, error: null);
+    _currentPage = 0;
+    try {
+      final data = await _fetchPage(0);
+      state = PaginatedState(
+        items: data,
+        isLoading: false,
+        isLoadingMore: false,
+        hasReachedMax: data.length < _pageSize,
+      );
+    } catch (e, st) {
+      debugPrint('PaginatedProfilesNotifier loadFirstPage error: $e\n$st');
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  Future<void> loadNextPage() async {
+    if (state.isLoading || state.isLoadingMore || state.hasReachedMax) return;
+    state = state.copyWith(isLoadingMore: true);
+    try {
+      final nextPage = _currentPage + 1;
+      final data = await _fetchPage(nextPage);
+      _currentPage = nextPage;
+      state = state.copyWith(
+        items: [...state.items, ...data],
+        isLoadingMore: false,
+        hasReachedMax: data.length < _pageSize,
+      );
+    } catch (e, st) {
+      debugPrint('PaginatedProfilesNotifier loadNextPage error: $e\n$st');
+      state = state.copyWith(isLoadingMore: false, error: e.toString());
+    }
+  }
+
+  Future<List<UserProfile>> _fetchPage(int page) async {
+    final start = page * _pageSize;
+    final end = start + _pageSize - 1;
+
+    var query = _client.from('profiles').select(
+        'id, full_name, email, role, username, nisn, is_active, phone_number, created_at, canteen_operators(canteen_name, balance_earned)');
+
+    if (_filter.role != null &&
+        _filter.role != 'all' &&
+        _filter.role != 'Semua') {
+      query = query.eq('role', _filter.role!);
+    }
+
+    if (_filter.searchQuery != null && _filter.searchQuery!.isNotEmpty) {
+      final queryStr = '%${_filter.searchQuery}%';
+      query = query.or(
+          'full_name.ilike.$queryStr,email.ilike.$queryStr,username.ilike.$queryStr,nisn.ilike.$queryStr');
+    }
+
+    final List<dynamic> response = await query
+        .order('full_name', ascending: true)
+        .range(start, end);
+
+    return response
+        .map((e) => UserProfile.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+}
+
+final paginatedProfilesProvider = StateNotifierProvider.family.autoDispose<
+    PaginatedProfilesNotifier,
+    PaginatedState<UserProfile>,
+    PaginatedProfilesFilter>((ref, filter) {
+  ref.cacheFor(const Duration(minutes: 5));
+  final client = ref.watch(supabaseClientProvider);
+  return PaginatedProfilesNotifier(client, filter);
+});

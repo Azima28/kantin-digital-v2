@@ -5,10 +5,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
-import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
-import 'package:kantin_digital/features/kantin/providers/operator_activities_provider.dart';
+import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
 import 'package:kantin_digital/features/kantin/widgets/activities_tab.dart';
 import 'package:kantin_digital/features/kantin/widgets/refund_confirmation_dialog.dart';
@@ -22,9 +22,46 @@ class SalesHistoryScreen extends ConsumerStatefulWidget {
 }
 
 class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
+  late final ScrollController _salesScrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _salesScrollController = ScrollController()..addListener(_onSalesScroll);
+  }
+
+  @override
+  void dispose() {
+    _salesScrollController.dispose();
+    super.dispose();
+  }
+
+  void _onSalesScroll() {
+    if (_salesScrollController.position.pixels >= _salesScrollController.position.maxScrollExtent - 200) {
+      final authState = ref.read(authNotifierProvider);
+      final String? operatorId = authState.profile?['id'];
+      if (operatorId == null) return;
+
+      final filter = PaginatedTransactionsFilter(operatorId: operatorId);
+      ref.read(paginatedTransactionsProvider(filter).notifier).loadNextPage();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final transactionsAsync = ref.watch(operatorTransactionsProvider);
+    final authState = ref.watch(authNotifierProvider);
+    final String? operatorId = authState.profile?['id'];
+
+    if (operatorId == null) {
+      return const Scaffold(
+        body: Center(
+          child: CupertinoActivityIndicator(),
+        ),
+      );
+    }
+
+    final filter = PaginatedTransactionsFilter(operatorId: operatorId);
+    final transactionsState = ref.watch(paginatedTransactionsProvider(filter));
     final revenueAsync = ref.watch(todayRevenueProvider);
 
     return DefaultTabController(
@@ -58,7 +95,7 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
             // Tab 1: Penjualan list
             RefreshIndicator(
               onRefresh: () async {
-                ref.invalidate(operatorTransactionsProvider);
+                await ref.read(paginatedTransactionsProvider(filter).notifier).loadFirstPage();
                 ref.invalidate(todayRevenueProvider);
               },
               child: Align(
@@ -66,6 +103,7 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 800),
                   child: CustomScrollView(
+                    controller: _salesScrollController,
                     physics: const AlwaysScrollableScrollPhysics(),
                     slivers: [
                       // Revenue statistics header
@@ -131,292 +169,306 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
                       ),
 
                       // Transactions list
-                      transactionsAsync.when(
-                        data: (List<OperatorTransaction> txs) {
-                          if (txs.isEmpty) {
-                            return SliverFillRemaining(
-                              hasScrollBody: false,
-                              child: Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(40),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
-                                      EmptyStateWidget(
-                                        message: AppStrings.adminNoSales,
-                                      ),
-                                    ],
-                                  ),
+                      () {
+                        if (transactionsState.isLoading) {
+                          return const SliverFillRemaining(
+                            child: Center(
+                              child: CupertinoActivityIndicator(radius: 12),
+                            ),
+                          );
+                        }
+
+                        if (transactionsState.error != null && transactionsState.items.isEmpty) {
+                          return SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(32),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      '${AppStrings.labelFailed} memuat transaksi',
+                                      style: TextStyle(
+                                          color: AppColors.error, fontSize: 13),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        ref.read(paginatedTransactionsProvider(filter).notifier).loadFirstPage();
+                                      },
+                                      child:
+                                          const Text(AppStrings.buttonRetry),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            );
-                          }
-
-                          return SliverPadding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            sliver: SliverList(
-                              delegate: SliverChildBuilderDelegate(
-                                (context, index) {
-                                  final tx = txs[index];
-                                  final String id = tx.id;
-                                  final int amount = tx.totalAmount;
-                                  final String studentName =
-                                      tx.studentName ?? AppStrings.adminStudents;
-                                  final String status = tx.status ?? 'success';
-
-                                  final DateTime createdAt =
-                                      tx.createdAt?.toLocal() ?? DateTime.now();
-                                  final String timeStr =
-                                      DateFormat('HH:mm', 'id_ID')
-                                          .format(createdAt);
-                                  final String dateStr =
-                                      DateFormat('dd MMM', 'id_ID')
-                                          .format(createdAt);
-
-                                  final bool isCancelled = status == 'cancelled';
-                                  final bool isFailed = status == 'failed';
-
-                                  final bool isWithinRefundWindow = DateTime
-                                          .now()
-                                          .difference(createdAt)
-                                          .inMinutes <
-                                      10;
-                                  final bool canRefund = status == 'success' &&
-                                      tx.type == 'purchase' &&
-                                      isWithinRefundWindow;
-
-                                  return Container(
-                                    margin:
-                                        const EdgeInsets.only(bottom: 12),
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.cardBackground,
-                                      borderRadius:
-                                          BorderRadius.circular(14),
-                                      border: Border.all(
-                                          color: AppColors.borderLight,
-                                          width: 0.5),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        // Icon Status
-                                        Container(
-                                          width: 40,
-                                          height: 40,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: isCancelled || isFailed
-                                                ? AppColors.error
-                                                    .withValues(alpha: 0.1)
-                                                : AppColors.primary
-                                                    .withValues(alpha: 0.1),
-                                          ),
-                                          child: Icon(
-                                            isCancelled
-                                                ? CupertinoIcons
-                                                    .arrow_counterclockwise
-                                                : isFailed
-                                                    ? CupertinoIcons.xmark
-                                                    : CupertinoIcons
-                                                        .shopping_cart,
-                                            color: isCancelled || isFailed
-                                                ? AppColors.error
-                                                : AppColors.primary,
-                                            size: 18,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-
-                                        // Description
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              GestureDetector(
-                                                onTap: () =>
-                                                    showTransactionDetailsSheet(
-                                                        context, tx),
-                                                child: Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    Flexible(
-                                                      child: Text(
-                                                        studentName,
-                                                        maxLines: 1,
-                                                        overflow:
-                                                            TextOverflow.ellipsis,
-                                                        style: TextStyle(
-                                                          fontSize: 14,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color: isCancelled
-                                                              ? AppColors.textGray
-                                                              : AppColors
-                                                                  .textDark,
-                                                          decoration:
-                                                              isCancelled
-                                                                  ? TextDecoration
-                                                                      .lineThrough
-                                                                  : null,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    const Icon(
-                                                        CupertinoIcons
-                                                            .info_circle,
-                                                        size: 12,
-                                                        color: AppColors
-                                                            .textGray),
-                                                  ],
-                                                ),
-                                              ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                '$timeStr WIB \u2022 $dateStr',
-                                                style: const TextStyle(
-                                                  fontSize: 11,
-                                                  color: AppColors.textGray,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-
-                                        // Right actions / values
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
-                                          children: [
-                                            Text(
-                                              '${isCancelled ? "" : "-"}${CurrencyFormatter.format(amount)}',
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.bold,
-                                                color: isCancelled || isFailed
-                                                    ? AppColors.textGray
-                                                    : AppColors.textDark,
-                                                decoration: isCancelled
-                                                    ? TextDecoration
-                                                        .lineThrough
-                                                    : null,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 6),
-                                            if (isCancelled)
-                                              Container(
-                                                padding: const EdgeInsets
-                                                    .symmetric(
-                                                    horizontal: 6,
-                                                    vertical: 2),
-                                                decoration: BoxDecoration(
-                                                  color: AppColors.error
-                                                      .withValues(alpha: 0.1),
-                                                  borderRadius:
-                                                      BorderRadius.circular(4),
-                                                ),
-                                                child: const Text(
-                                                  'Refunded',
-                                                  style: TextStyle(
-                                                      color: AppColors.error,
-                                                      fontSize: 9,
-                                                      fontWeight:
-                                                          FontWeight.bold),
-                                                ),
-                                              )
-                                            else if (canRefund)
-                                              GestureDetector(
-                                                onTap: () =>
-                                                    showRefundConfirmationDialog(
-                                                  context,
-                                                  ref,
-                                                  id,
-                                                  amount,
-                                                  studentName,
-                                                ),
-                                                child: Container(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 4),
-                                                  decoration: BoxDecoration(
-                                                    color:
-                                                        AppColors.errorLight,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            6),
-                                                    border: Border.all(
-                                                      color: AppColors.error
-                                                          .withValues(
-                                                              alpha: 0.5),
-                                                      width: 0.5,
-                                                    ),
-                                                  ),
-                                                  child: const Text(
-                                                    'Refund',
-                                                    style: TextStyle(
-                                                      color: AppColors.error,
-                                                      fontSize: 10,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    ),
-                                                  ),
-                                                ),
-                                              )
-                                            else
-                                              const Text(
-                                                AppStrings.labelSuccess,
-                                                style: TextStyle(
-                                                  color: AppColors.success,
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                                childCount: txs.length,
                               ),
                             ),
                           );
-                        },
-                        loading: () => const SliverFillRemaining(
-                          child: Center(
-                            child: CupertinoActivityIndicator(radius: 12),
-                          ),
-                        ),
-                        error: (err, stack) => SliverFillRemaining(
-                          hasScrollBody: false,
-                          child: Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(32),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    '${AppStrings.labelFailed} memuat transaksi',
-                                    style: TextStyle(
-                                        color: AppColors.error, fontSize: 13),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  ElevatedButton(
-                                    onPressed: () => ref
-                                        .invalidate(
-                                            operatorTransactionsProvider),
-                                    child:
-                                        const Text(AppStrings.buttonRetry),
-                                  ),
-                                ],
+                        }
+
+                        final txs = transactionsState.items;
+
+                        if (txs.isEmpty) {
+                          return const SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(40),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    EmptyStateWidget(
+                                      message: AppStrings.adminNoSales,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
+                          );
+                        }
+
+                        return SliverPadding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final tx = txs[index];
+                                final String id = tx.id;
+                                final int amount = tx.totalAmount;
+                                final String studentName =
+                                    tx.studentName ?? AppStrings.adminStudents;
+                                final String status = tx.status ?? 'success';
+
+                                final DateTime createdAt =
+                                    tx.createdAt?.toLocal() ?? DateTime.now();
+                                final String timeStr =
+                                    DateFormat('HH:mm', 'id_ID')
+                                        .format(createdAt);
+                                final String dateStr =
+                                    DateFormat('dd MMM', 'id_ID')
+                                        .format(createdAt);
+
+                                final bool isCancelled = status == 'cancelled';
+                                final bool isFailed = status == 'failed';
+
+                                final bool isWithinRefundWindow = DateTime
+                                        .now()
+                                        .difference(createdAt)
+                                        .inMinutes <
+                                    10;
+                                final bool canRefund = status == 'success' &&
+                                    tx.type == 'purchase' &&
+                                    isWithinRefundWindow;
+
+                                return Container(
+                                  margin:
+                                      const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.cardBackground,
+                                    borderRadius:
+                                        BorderRadius.circular(14),
+                                    border: Border.all(
+                                        color: AppColors.borderLight,
+                                        width: 0.5),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      // Icon Status
+                                      Container(
+                                        width: 40,
+                                        height: 40,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: isCancelled || isFailed
+                                              ? AppColors.error
+                                                  .withValues(alpha: 0.1)
+                                              : AppColors.primary
+                                                  .withValues(alpha: 0.1),
+                                        ),
+                                        child: Icon(
+                                          isCancelled
+                                              ? CupertinoIcons
+                                                  .arrow_counterclockwise
+                                              : isFailed
+                                                  ? CupertinoIcons.xmark
+                                                  : CupertinoIcons
+                                                      .shopping_cart,
+                                          color: isCancelled || isFailed
+                                              ? AppColors.error
+                                              : AppColors.primary,
+                                          size: 18,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+
+                                      // Description
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            GestureDetector(
+                                              onTap: () =>
+                                                  showTransactionDetailsSheet(
+                                                      context, tx),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Flexible(
+                                                    child: Text(
+                                                      studentName,
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: isCancelled
+                                                            ? AppColors.textGray
+                                                            : AppColors
+                                                                .textDark,
+                                                        decoration:
+                                                            isCancelled
+                                                                ? TextDecoration
+                                                                    .lineThrough
+                                                                : null,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  const Icon(
+                                                      CupertinoIcons
+                                                          .info_circle,
+                                                      size: 12,
+                                                      color: AppColors
+                                                          .textGray),
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              '$timeStr WIB \u2022 $dateStr',
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                color: AppColors.textGray,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+
+                                      // Right actions / values
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            '${isCancelled ? "" : "-"}${CurrencyFormatter.format(amount)}',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: isCancelled || isFailed
+                                                  ? AppColors.textGray
+                                                  : AppColors.textDark,
+                                              decoration: isCancelled
+                                                  ? TextDecoration
+                                                      .lineThrough
+                                                  : null,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          if (isCancelled)
+                                            Container(
+                                              padding: const EdgeInsets
+                                                  .symmetric(
+                                                  horizontal: 6,
+                                                  vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.error
+                                                    .withValues(alpha: 0.1),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                              child: const Text(
+                                                'Refunded',
+                                                style: TextStyle(
+                                                    color: AppColors.error,
+                                                    fontSize: 9,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                            )
+                                          else if (canRefund)
+                                            GestureDetector(
+                                              onTap: () =>
+                                                  showRefundConfirmationDialog(
+                                                context,
+                                                ref,
+                                                id,
+                                                amount,
+                                                studentName,
+                                              ),
+                                              child: Container(
+                                                padding: const EdgeInsets
+                                                    .symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      AppColors.errorLight,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          6),
+                                                  border: Border.all(
+                                                    color: AppColors.error
+                                                        .withValues(
+                                                            alpha: 0.5),
+                                                    width: 0.5,
+                                                  ),
+                                                ),
+                                                child: const Text(
+                                                  'Refund',
+                                                  style: TextStyle(
+                                                    color: AppColors.error,
+                                                    fontSize: 10,
+                                                    fontWeight:
+                                                        FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            )
+                                          else
+                                            const Text(
+                                              AppStrings.labelSuccess,
+                                              style: TextStyle(
+                                                color: AppColors.success,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                              childCount: txs.length,
+                            ),
+                          ),
+                        );
+                      }(),
+
+                      if (transactionsState.isLoadingMore)
+                        const SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Center(child: CupertinoActivityIndicator()),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -424,12 +476,7 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
             ),
 
             // Tab 2: Aktivitas list
-            RefreshIndicator(
-              onRefresh: () async {
-                ref.invalidate(operatorActivitiesProvider);
-              },
-              child: const ActivitiesTab(),
-            ),
+            const ActivitiesTab(),
           ],
         ),
       ),

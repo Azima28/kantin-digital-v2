@@ -5,7 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/models/operator_transaction.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 
 class StudentTransactionsScreen extends ConsumerStatefulWidget {
   final String studentId;
@@ -28,73 +29,64 @@ class StudentTransactionsScreen extends ConsumerStatefulWidget {
 
 class _StudentTransactionsScreenState
     extends ConsumerState<StudentTransactionsScreen> {
-  late Future<List<Map<String, dynamic>>> _transactionsFuture;
   DateTime? _selectedDate;
   int? _selectedMonth;
   int? _selectedYear;
-
+  late final ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
-    _transactionsFuture = _fetchTransactions();
+    _scrollController = ScrollController()..addListener(_onScroll);
   }
 
-  Future<List<Map<String, dynamic>>> _fetchTransactions() async {
-    final client = ref.read(supabaseClientProvider);
-    final List<dynamic> txs = await client
-        .from('transactions')
-        .select(
-          'id, total_amount, type, status, created_at, purchase_method, canteen_operators(canteen_name)',
-        )
-        .eq('student_id', widget.studentId)
-        .order('created_at', ascending: false);
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
-    return List<Map<String, dynamic>>.from(txs);
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      final filter = _buildFilter();
+      ref.read(paginatedTransactionsProvider(filter).notifier).loadNextPage();
+    }
+  }
+
+  PaginatedTransactionsFilter _buildFilter() {
+    DateTime? startDate;
+    DateTime? endDate;
+
+    if (_selectedDate != null) {
+      startDate = DateTime(
+          _selectedDate!.year, _selectedDate!.month, _selectedDate!.day, 0, 0, 0);
+      endDate = DateTime(_selectedDate!.year, _selectedDate!.month,
+          _selectedDate!.day, 23, 59, 59);
+    } else if (_selectedMonth != null && _selectedYear != null) {
+      startDate = DateTime(_selectedYear!, _selectedMonth!, 1, 0, 0, 0);
+      endDate = DateTime(_selectedYear!, _selectedMonth! + 1, 1, 0, 0, 0)
+          .subtract(const Duration(seconds: 1));
+    } else if (_selectedYear != null) {
+      startDate = DateTime(_selectedYear!, 1, 1, 0, 0, 0);
+      endDate = DateTime(_selectedYear!, 12, 31, 23, 59, 59);
+    }
+
+    return PaginatedTransactionsFilter(
+      studentId: widget.studentId,
+      startDate: startDate,
+      endDate: endDate,
+    );
   }
 
   void _refresh() {
-    setState(() {
-      _transactionsFuture = _fetchTransactions();
-    });
+    final filter = _buildFilter();
+    ref.read(paginatedTransactionsProvider(filter).notifier).loadFirstPage();
   }
 
-  List<Map<String, dynamic>> _applyFilters(List<Map<String, dynamic>> txs) {
-    return txs.where((tx) {
-      final createdAt = tx['created_at'];
-      if (createdAt == null) return false;
-      final date = DateTime.tryParse(createdAt.toString())?.toLocal();
-      if (date == null) return false;
-
-      if (_selectedDate != null &&
-          (date.year != _selectedDate!.year ||
-              date.month != _selectedDate!.month ||
-              date.day != _selectedDate!.day)) {
-        return false;
-      }
-
-      if (_selectedMonth != null && date.month != _selectedMonth) {
-        return false;
-      }
-
-      if (_selectedYear != null && date.year != _selectedYear) {
-        return false;
-      }
-
-      return true;
-    }).toList();
-  }
-
-  List<int> _availableYears(List<Map<String, dynamic>> txs) {
-    final years = <int>{DateTime.now().year};
-    for (final tx in txs) {
-      final createdAt = tx['created_at'];
-      final date = createdAt == null
-          ? null
-          : DateTime.tryParse(createdAt.toString())?.toLocal();
-      if (date != null) years.add(date.year);
-    }
-    return years.toList()..sort((a, b) => b.compareTo(a));
+  List<int> _availableYears() {
+    final currentYear = DateTime.now().year;
+    return List.generate(5, (i) => currentYear - i);
   }
 
   Future<void> _pickDate() async {
@@ -135,6 +127,10 @@ class _StudentTransactionsScreenState
 
   @override
   Widget build(BuildContext context) {
+    final filter = _buildFilter();
+    final transactionsState = ref.watch(paginatedTransactionsProvider(filter));
+    final years = _availableYears();
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
@@ -161,96 +157,100 @@ class _StudentTransactionsScreenState
           ),
         ],
       ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _transactionsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CupertinoActivityIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  '${AppStrings.labelFailed} memuat transaksi: ${snapshot.error}',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(color: AppColors.error),
-                ),
-              ),
-            );
-          }
-
-          final txs = snapshot.data ?? [];
-          final filtered = _applyFilters(txs);
-          final years = _availableYears(txs);
-
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                child: Column(
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+            child: Column(
+              children: [
+                _buildFilters(years),
+                const SizedBox(height: 10),
+                Row(
                   children: [
-                    _buildFilters(years),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Text(
-                          '${filtered.length} dari ${txs.length} transaksi',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: AppColors.textGray,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const Spacer(),
-                        if (_selectedDate != null ||
-                            _selectedMonth != null ||
-                            _selectedYear != null)
-                          TextButton.icon(
-                            onPressed: _resetFilters,
-                            icon: const Icon(CupertinoIcons.clear, size: 14),
-                            label: const Text('Reset'),
-                            style: TextButton.styleFrom(
-                              foregroundColor: widget.primaryColor,
-                              textStyle: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                      ],
+                    Text(
+                      '${transactionsState.items.length} transaksi dimuat',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: AppColors.textGray,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: filtered.isEmpty
-                    ? Center(
-                        child: Text(
-                          txs.isEmpty
-                              ? AppStrings.noTransactions
-                              : 'Tidak ada transaksi sesuai filter.',
-                          style: GoogleFonts.inter(color: AppColors.textGray),
-                        ),
-                      )
-                    : RefreshIndicator(
-                        color: widget.primaryColor,
-                        onRefresh: () async => _refresh(),
-                        child: ListView.separated(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                          itemCount: filtered.length,
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(height: 10),
-                          itemBuilder: (context, index) =>
-                              _buildTransactionTile(filtered[index]),
+                    const Spacer(),
+                    if (_selectedDate != null ||
+                        _selectedMonth != null ||
+                        _selectedYear != null)
+                      TextButton.icon(
+                        onPressed: _resetFilters,
+                        icon: const Icon(CupertinoIcons.clear, size: 14),
+                        label: const Text('Reset'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: widget.primaryColor,
+                          textStyle: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-              ),
-            ],
-          );
-        },
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: () {
+              if (transactionsState.isLoading) {
+                return const Center(child: CupertinoActivityIndicator());
+              }
+
+              if (transactionsState.error != null &&
+                  transactionsState.items.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      '${AppStrings.labelFailed} memuat transaksi: ${transactionsState.error}',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(color: AppColors.error),
+                    ),
+                  ),
+                );
+              }
+
+              final txs = transactionsState.items;
+
+              if (txs.isEmpty) {
+                return Center(
+                  child: Text(
+                    AppStrings.noTransactions,
+                    style: GoogleFonts.inter(color: AppColors.textGray),
+                  ),
+                );
+              }
+
+              return RefreshIndicator(
+                color: widget.primaryColor,
+                onRefresh: () async => _refresh(),
+                child: ListView.separated(
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                  itemCount: txs.length +
+                      (transactionsState.isLoadingMore ? 1 : 0),
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    if (index == txs.length) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Center(child: CupertinoActivityIndicator()),
+                      );
+                    }
+                    return _buildTransactionTile(txs[index]);
+                  },
+                ),
+              );
+            }(),
+          ),
+        ],
       ),
     );
   }
@@ -416,20 +416,13 @@ class _StudentTransactionsScreenState
     );
   }
 
-  Widget _buildTransactionTile(Map<String, dynamic> tx) {
-    final amount =
-        double.tryParse(tx['total_amount']?.toString() ?? '0') ?? 0.0;
-    final type = tx['type']?.toString() ?? 'purchase';
-    final status = tx['status']?.toString() ?? 'success';
+  Widget _buildTransactionTile(OperatorTransaction tx) {
+    final amount = tx.totalAmount;
+    final type = tx.type ?? 'purchase';
+    final status = tx.status ?? 'success';
     final isTopup = type == 'topup';
-    final canteenData = tx['canteen_operators'];
-    final canteen = canteenData is Map<String, dynamic>
-        ? canteenData['canteen_name']?.toString() ?? 'Stan Kantin'
-        : 'Stan Kantin';
-    final date = tx['created_at'] != null
-        ? DateTime.tryParse(tx['created_at'].toString())?.toLocal() ??
-              DateTime.now()
-        : DateTime.now();
+    final canteen = tx.canteenName ?? 'Stan Kantin';
+    final date = tx.createdAt?.toLocal() ?? DateTime.now();
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -455,7 +448,7 @@ class _StudentTransactionsScreenState
         ),
       ),
       subtitle: Text(
-        '${DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(date)} WIB • ${isTopup ? "Koperasi" : (tx['purchase_method'] == 'app' ? "Aplikasi" : "Kasir")}',
+        '${DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(date)} WIB • ${isTopup ? "Koperasi" : (tx.purchaseMethod == 'app' ? "Aplikasi" : "Kasir")}',
         style: GoogleFonts.inter(fontSize: 11, color: AppColors.textGray),
       ),
       trailing: Column(

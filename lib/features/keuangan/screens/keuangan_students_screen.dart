@@ -20,6 +20,11 @@ class _KeuanganStudentsScreenState extends ConsumerState<KeuanganStudentsScreen>
   String _searchQuery = '';
   String _selectedClass = 'Semua';
   String _selectedStatus = 'Semua';
+  void _onSearchChanged(String val) {
+    setState(() {
+      _searchQuery = val.trim().toLowerCase();
+    });
+  }
 
   @override
   void dispose() {
@@ -61,11 +66,7 @@ class _KeuanganStudentsScreenState extends ConsumerState<KeuanganStudentsScreen>
               searchQuery: _searchQuery,
               selectedClass: _selectedClass,
               selectedStatus: _selectedStatus,
-              onSearchChanged: (val) {
-                setState(() {
-                  _searchQuery = val.trim().toLowerCase();
-                });
-              },
+              onSearchChanged: _onSearchChanged,
               onClassChanged: (val) {
                 setState(() {
                   _selectedClass = val;

@@ -7,6 +7,8 @@ import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/widgets/custom_confirm_dialog.dart';
+import 'package:kantin_digital/core/widgets/custom_password_dialog.dart';
 
 class KeuanganProfileScreen extends ConsumerStatefulWidget {
   const KeuanganProfileScreen({super.key});
@@ -17,145 +19,62 @@ class KeuanganProfileScreen extends ConsumerStatefulWidget {
 
 class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
 
-  final _passwordController = TextEditingController();
-  bool _isChangingPassword = false;
-
-  @override
-  void dispose() {
-    _passwordController.dispose();
-    super.dispose();
-  }
-
   void _showChangePasswordDialog() {
-    showCupertinoDialog(
+    showCustomPasswordDialog(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return CupertinoAlertDialog(
-              title: const Text(AppStrings.adminChangePassword),
-              content: Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Column(
-                  children: [
-                    const Text('Masukkan kata sandi baru untuk akun Anda.'),
-                    const SizedBox(height: 12),
-                    CupertinoTextField(
-                      controller: _passwordController,
-                      placeholder: 'Kata sandi baru',
-                      obscureText: true,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: CupertinoColors.inactiveGray),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                CupertinoDialogAction(
-                  child: const Text(AppStrings.buttonCancel),
-                  onPressed: () {
-                    _passwordController.clear();
-                    Navigator.pop(context);
-                  },
-                ),
-                CupertinoDialogAction(
-                  isDefaultAction: true,
-                  onPressed: _isChangingPassword
-                      ? null
-                      : () async {
-                          final password = _passwordController.text.trim();
-                          if (password.isEmpty) return;
+      title: AppStrings.adminChangePassword,
+      description: 'Masukkan kata sandi baru untuk akun Anda.',
+      placeholder: 'Kata sandi baru',
+      onSave: (password) async {
+        final client = ref.read(supabaseClientProvider);
+        final profile = ref.read(authNotifierProvider).profile;
+        final profileId = profile?['id'];
 
-                          setDialogState(() {
-                            _isChangingPassword = true;
-                          });
+        // Client-side role check before RPC call
+        final currentUserRole = profile?['role'];
+        if (currentUserRole != 'super_admin' && currentUserRole != 'admin' && currentUserRole != 'petugas_keuangan') {
+          throw Exception('Tidak memiliki izin untuk mengubah password');
+        }
 
-                          final navigator = Navigator.of(context);
-                          final messenger = ScaffoldMessenger.of(this.context);
+        // Update password via RPC
+        final response = await client.rpc('update_auth_user_password', params: {
+          'p_user_id': profileId,
+          'p_new_password': password,
+          'p_caller_id': profileId,
+        });
+        if (response is Map && response['success'] == false) {
+          throw Exception(response['error'] ?? 'Gagal mengubah kata sandi');
+        }
 
-                          try {
-                            final client = ref.read(supabaseClientProvider);
-                            final profile = ref.read(authNotifierProvider).profile;
-                            final profileId = profile?['id'];
-
-                            // Client-side role check before RPC call
-                            final currentUserRole = profile?['role'];
-                            if (currentUserRole != 'super_admin' && currentUserRole != 'admin' && currentUserRole != 'petugas_keuangan') {
-                              throw Exception('Tidak memiliki izin untuk mengubah password');
-                            }
-
-                            // Update password via RPC
-                            final response = await client.rpc('update_auth_user_password', params: {
-                              'p_user_id': profileId,
-                              'p_new_password': password,
-                              'p_caller_id': profileId,
-                            });
-                            if (response is Map && response['success'] == false) {
-                              throw Exception(response['error'] ?? 'Gagal mengubah kata sandi');
-                            }
-
-                            _passwordController.clear();
-                            navigator.pop();
-                            messenger.showSnackBar(
-                              const SnackBar(
-                                content: Text(AppStrings.successPasswordChanged),
-                                backgroundColor: AppColors.successGreen,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          } catch (e) {
-                            messenger.showSnackBar(
-                              SnackBar(
-                                content: Text('${AppStrings.labelFailed} mengubah kata sandi'),
-                                backgroundColor: AppColors.errorRed2,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          } finally {
-                            setDialogState(() {
-                              _isChangingPassword = false;
-                            });
-                          }
-                        },
-                  child: _isChangingPassword
-                      ? const CupertinoActivityIndicator()
-                      : const Text(AppStrings.buttonSave),
-                ),
-              ],
-            );
-          },
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(AppStrings.successPasswordChanged),
+              backgroundColor: AppColors.successGreen,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       },
     );
   }
 
-  void _handleLogout() {
-    showCupertinoDialog(
+  void _handleLogout() async {
+    final confirmed = await showCustomConfirmDialog(
       context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: const Text('Keluar dari Akun'),
-        content: const Text('Apakah Anda yakin ingin keluar dari akun keuangan ini?'),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () async {
-              final router = GoRouter.of(context);
-              Navigator.pop(ctx);
-              await ref.read(authNotifierProvider.notifier).logout();
-              router.go('/login');
-            },
-            child: const Text(AppStrings.buttonLogout),
-          ),
-        ],
-      ),
+      title: 'Keluar dari Akun',
+      message: 'Apakah Anda yakin ingin keluar dari akun keuangan ini?',
+      confirmLabel: AppStrings.buttonLogout,
+      cancelLabel: AppStrings.buttonCancel,
+      isDestructive: true,
+      icon: Icons.logout_rounded,
     );
+
+    if (confirmed && mounted) {
+      final router = GoRouter.of(context);
+      await ref.read(authNotifierProvider.notifier).logout();
+      router.go('/login');
+    }
   }
 
   @override

@@ -23,6 +23,12 @@ import 'package:kantin_digital/features/siswa/screens/siswa_history_screen.dart'
 import 'package:kantin_digital/features/siswa/screens/siswa_cards_screen.dart';
 import 'package:kantin_digital/features/siswa/screens/siswa_profile_screen.dart';
 import 'package:kantin_digital/features/siswa/screens/siswa_notifications_screen.dart';
+import 'package:kantin_digital/features/siswa/screens/siswa_canteen_list_screen.dart';
+import 'package:kantin_digital/features/siswa/screens/siswa_menu_screen.dart';
+import 'package:kantin_digital/features/siswa/screens/siswa_cart_screen.dart';
+import 'package:kantin_digital/features/siswa/screens/siswa_checkout_screen.dart';
+import 'package:kantin_digital/features/siswa/screens/siswa_active_orders_screen.dart';
+import 'package:kantin_digital/features/siswa/screens/siswa_order_tracking_screen.dart';
 import 'package:kantin_digital/features/siswa/widgets/siswa_main_layout.dart';
 import 'package:kantin_digital/features/parent/screens/parent_dashboard_screen.dart';
 import 'package:kantin_digital/features/parent/screens/parent_topup_screen.dart';
@@ -75,6 +81,12 @@ class AppRouter {
   static const String studentCards = '/student/cards';
   static const String studentProfile = '/student/profile';
   static const String studentNotifications = '/student/notifications';
+  static const String studentCanteens  = '/student/canteens';
+  static const String studentMenu      = '/student/canteens/:operatorId';
+  static const String studentCart      = '/student/cart';
+  static const String studentCheckout  = '/student/checkout';
+  static const String studentOrders    = '/student/orders';
+  static const String studentOrderDetail = '/student/orders/:orderId';
 
   // Parent App Routes
   static const String parentHome = '/parent';
@@ -357,6 +369,40 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRouter.studentNotifications,
         builder: (BuildContext context, GoRouterState state) =>
             const SiswaNotificationsScreen(),
+      ),
+      GoRoute(
+        path: AppRouter.studentCanteens,
+        builder: (BuildContext context, GoRouterState state) =>
+            const SiswaCanteenListScreen(),
+      ),
+      GoRoute(
+        path: AppRouter.studentMenu,
+        builder: (BuildContext context, GoRouterState state) {
+          final canteen = state.extra as CanteenInfo;
+          return SiswaMenuScreen(canteen: canteen);
+        },
+      ),
+      GoRoute(
+        path: AppRouter.studentCart,
+        builder: (BuildContext context, GoRouterState state) =>
+            const SiswaCartScreen(),
+      ),
+      GoRoute(
+        path: AppRouter.studentCheckout,
+        builder: (BuildContext context, GoRouterState state) =>
+            const SiswaCheckoutScreen(),
+      ),
+      GoRoute(
+        path: AppRouter.studentOrders,
+        builder: (BuildContext context, GoRouterState state) =>
+            const SiswaActiveOrdersScreen(),
+      ),
+      GoRoute(
+        path: AppRouter.studentOrderDetail,
+        builder: (BuildContext context, GoRouterState state) {
+          final orderId = state.pathParameters['orderId']!;
+          return SiswaOrderTrackingScreen(orderId: orderId);
+        },
       ),
 
       // POS Cashier Tab Pages (Beranda, Cek Kartu, Menu, Riwayat)

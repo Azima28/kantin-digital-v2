@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
@@ -27,104 +28,216 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
   }
 
   void _showChangePasswordDialog() {
-    showCupertinoDialog(
+    showGeneralDialog(
       context: context,
-      builder: (context) {
+      barrierDismissible: true,
+      barrierLabel: 'Change Password',
+      barrierColor: AppColors.black.withValues(alpha: 0.5),
+      transitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (context, anim1, anim2) => const SizedBox.shrink(),
+      transitionBuilder: (context, anim1, anim2, child) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            return CupertinoAlertDialog(
-              title: const Text(AppStrings.adminChangePassword),
-              content: Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Column(
-                  children: [
-                    const Text('Masukkan kata sandi baru untuk akun Anda.'),
-                    const SizedBox(height: 12),
-                    CupertinoTextField(
-                      controller: _passwordController,
-                      placeholder: 'Kata sandi baru',
-                      obscureText: true,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: CupertinoColors.inactiveGray),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+            return Transform.scale(
+              scale: anim1.value * 0.1 + 0.9,
+              child: Opacity(
+                opacity: anim1.value,
+                child: Dialog(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.black.withValues(alpha: 0.15),
+                          blurRadius: 24,
+                          offset: const Offset(0, 12),
+                        ),
+                      ],
                     ),
-                  ],
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Circular lock badge
+                        Container(
+                          width: 68,
+                          height: 68,
+                          decoration: const BoxDecoration(
+                            color: AppColors.primaryLight,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.lock_rounded,
+                              color: AppColors.primary,
+                              size: 32,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          AppStrings.adminChangePassword,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.nearBlack,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Masukkan kata sandi baru untuk akun Anda.',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _passwordController,
+                          obscureText: true,
+                          style: GoogleFonts.inter(fontSize: 14),
+                          decoration: InputDecoration(
+                            hintText: 'Kata sandi baru',
+                            hintStyle: GoogleFonts.inter(
+                              color: AppColors.mutedGray,
+                              fontSize: 14,
+                            ),
+                            filled: true,
+                            fillColor: AppColors.offWhite,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: AppColors.borderLight),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: _isChangingPassword
+                                    ? null
+                                    : () {
+                                        _passwordController.clear();
+                                        Navigator.pop(context);
+                                      },
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: AppColors.borderLight),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                ),
+                                child: Text(
+                                  AppStrings.buttonCancel,
+                                  style: GoogleFonts.inter(
+                                    color: AppColors.textSecondary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: _isChangingPassword
+                                    ? null
+                                    : () async {
+                                        final password = _passwordController.text.trim();
+                                        if (password.isEmpty) return;
+
+                                        setDialogState(() {
+                                          _isChangingPassword = true;
+                                        });
+
+                                        final navigator = Navigator.of(context);
+                                        final messenger = ScaffoldMessenger.of(this.context);
+
+                                        try {
+                                          final client = ref.read(supabaseClientProvider);
+                                          final profile = ref.read(authNotifierProvider).profile;
+                                          final profileId = profile?['id'];
+
+                                          final currentUserRole = profile?['role'];
+                                          if (currentUserRole != 'super_admin' &&
+                                              currentUserRole != 'admin' &&
+                                              currentUserRole != 'petugas_keuangan') {
+                                            throw Exception('Tidak memiliki izin untuk mengubah password');
+                                          }
+
+                                          final response = await client.rpc('update_auth_user_password', params: {
+                                            'p_user_id': profileId,
+                                            'p_new_password': password,
+                                            'p_caller_id': profileId,
+                                          });
+                                          if (response is Map && response['success'] == false) {
+                                            throw Exception(response['error'] ?? 'Gagal mengubah kata sandi');
+                                          }
+
+                                          _passwordController.clear();
+                                          navigator.pop();
+                                          messenger.showSnackBar(
+                                            const SnackBar(
+                                              content: Text(AppStrings.successPasswordChanged),
+                                              backgroundColor: AppColors.successGreen,
+                                              behavior: SnackBarBehavior.floating,
+                                            ),
+                                          );
+                                        } catch (e) {
+                                          messenger.showSnackBar(
+                                            SnackBar(
+                                              content: Text('${AppStrings.labelFailed} mengubah kata sandi'),
+                                              backgroundColor: AppColors.errorRed2,
+                                              behavior: SnackBarBehavior.floating,
+                                            ),
+                                          );
+                                        } finally {
+                                          setDialogState(() {
+                                            _isChangingPassword = false;
+                                          });
+                                        }
+                                      },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: AppColors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                ),
+                                child: _isChangingPassword
+                                    ? const SizedBox(
+                                        height: 18,
+                                        width: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation(AppColors.white),
+                                        ),
+                                      )
+                                    : const Text(AppStrings.buttonSave),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-              actions: [
-                CupertinoDialogAction(
-                  child: const Text(AppStrings.buttonCancel),
-                  onPressed: () {
-                    _passwordController.clear();
-                    Navigator.pop(context);
-                  },
-                ),
-                CupertinoDialogAction(
-                  isDefaultAction: true,
-                  onPressed: _isChangingPassword
-                      ? null
-                      : () async {
-                          final password = _passwordController.text.trim();
-                          if (password.isEmpty) return;
-
-                          setDialogState(() {
-                            _isChangingPassword = true;
-                          });
-
-                          final navigator = Navigator.of(context);
-                          final messenger = ScaffoldMessenger.of(this.context);
-
-                          try {
-                            final client = ref.read(supabaseClientProvider);
-                            final profile = ref.read(authNotifierProvider).profile;
-                            final profileId = profile?['id'];
-
-                            // Client-side role check before RPC call
-                            final currentUserRole = profile?['role'];
-                            if (currentUserRole != 'super_admin' && currentUserRole != 'admin' && currentUserRole != 'petugas_keuangan') {
-                              throw Exception('Tidak memiliki izin untuk mengubah password');
-                            }
-
-                            // Update password via RPC
-                            final response = await client.rpc('update_auth_user_password', params: {
-                              'p_user_id': profileId,
-                              'p_new_password': password,
-                              'p_caller_id': profileId,
-                            });
-                            if (response is Map && response['success'] == false) {
-                              throw Exception(response['error'] ?? 'Gagal mengubah kata sandi');
-                            }
-
-                            _passwordController.clear();
-                            navigator.pop();
-                            messenger.showSnackBar(
-                              const SnackBar(
-                                content: Text(AppStrings.successPasswordChanged),
-                                backgroundColor: AppColors.successGreen,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          } catch (e) {
-                            messenger.showSnackBar(
-                              SnackBar(
-                                content: Text('${AppStrings.labelFailed} mengubah kata sandi'),
-                                backgroundColor: AppColors.errorRed2,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          } finally {
-                            setDialogState(() {
-                              _isChangingPassword = false;
-                            });
-                          }
-                        },
-                  child: _isChangingPassword
-                      ? const CupertinoActivityIndicator()
-                      : const Text(AppStrings.buttonSave),
-                ),
-              ],
             );
           },
         );
@@ -132,30 +245,13 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
     );
   }
 
-  void _handleLogout() {
-    showCupertinoDialog(
-      context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: const Text('Keluar dari Akun'),
-        content: const Text('Apakah Anda yakin ingin keluar dari akun keuangan ini?'),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () async {
-              final router = GoRouter.of(context);
-              Navigator.pop(ctx);
-              await ref.read(authNotifierProvider.notifier).logout();
-              router.go('/login');
-            },
-            child: const Text(AppStrings.buttonLogout),
-          ),
-        ],
-      ),
-    );
+  void _handleLogout() async {
+    final confirmed = await showLogoutConfirmationDialog(context);
+    if (confirmed) {
+      final router = GoRouter.of(context);
+      await ref.read(authNotifierProvider.notifier).logout();
+      router.go('/login');
+    }
   }
 
   @override

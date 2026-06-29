@@ -15,6 +15,10 @@ class UserProfile {
   final bool? isActive;
   final DateTime? createdAt;
 
+  /// Joined fields from canteen_operators table.
+  final String? canteenName;
+  final int? balanceEarned;
+
   const UserProfile({
     required this.id,
     this.email,
@@ -28,9 +32,19 @@ class UserProfile {
     this.role,
     this.isActive,
     this.createdAt,
+    this.canteenName,
+    this.balanceEarned,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
+    final canteenData = json['canteen_operators'];
+    Map<String, dynamic>? canteenMap;
+    if (canteenData is Map<String, dynamic>) {
+      canteenMap = canteenData;
+    } else if (canteenData is List && canteenData.isNotEmpty) {
+      canteenMap = canteenData.first as Map<String, dynamic>;
+    }
+
     return UserProfile(
       id: json['id']?.toString() ?? '',
       email: json['email'] as String?,
@@ -43,6 +57,8 @@ class UserProfile {
       relation: json['relation'] as String?,
       role: json['role'] as String?,
       isActive: json['is_active'] as bool?,
+      canteenName: canteenMap?['canteen_name'] as String?,
+      balanceEarned: (canteenMap?['balance_earned'] as num?)?.toInt(),
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
@@ -61,6 +77,8 @@ class UserProfile {
         'relation': relation,
         'role': role,
         'is_active': isActive,
+        'canteen_name': canteenName,
+        'balance_earned': balanceEarned,
         'created_at': createdAt?.toIso8601String(),
       };
 
@@ -78,6 +96,8 @@ class UserProfile {
     String? role,
     bool? isActive,
     DateTime? createdAt,
+    String? canteenName,
+    int? balanceEarned,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -92,6 +112,8 @@ class UserProfile {
       role: role ?? this.role,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
+      canteenName: canteenName ?? this.canteenName,
+      balanceEarned: balanceEarned ?? this.balanceEarned,
     );
   }
 

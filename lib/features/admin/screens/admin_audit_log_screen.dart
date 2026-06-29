@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
-import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/admin/widgets/audit_log_action_filter.dart';
 import 'package:kantin_digital/features/admin/widgets/audit_log_detail_sheet.dart';
 import 'package:kantin_digital/features/admin/widgets/audit_log_tile.dart';
@@ -18,6 +18,7 @@ class AdminAuditLogScreen extends ConsumerStatefulWidget {
 }
 
 class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
+  final ScrollController _scrollController = ScrollController();
   String _selectedAction = 'Semua Aksi';
 
   final List<String> _actions = [
@@ -39,6 +40,27 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
     'Tambah Pengguna',
     'Ubah Setelan',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      final actionKey = _selectedAction == 'Semua Aksi' ? 'Semua' : _mapActionTypeToFilter(_selectedAction);
+      final filter = PaginatedAuditLogsFilter(actionType: actionKey);
+      ref.read(paginatedAuditLogsProvider(filter).notifier).loadNextPage();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   String _mapActionTypeToFilter(String filter) {
     switch (filter) {
@@ -80,9 +102,10 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final logsAsync = ref.watch(adminAuditLogsProvider);
+    final actionKey = _selectedAction == 'Semua Aksi' ? 'Semua' : _mapActionTypeToFilter(_selectedAction);
+    final filter = PaginatedAuditLogsFilter(actionType: actionKey);
+    final logsState = ref.watch(paginatedAuditLogsProvider(filter));
 
-    // NOTE: Disini TIDAK pake Scaffold — udah di-wrap AdminMainLayout
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -130,18 +153,38 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
 
         // ── LIST SCROLLABLE ──
         Expanded(
-          child: logsAsync.when(
-            data: (logs) {
-              var filtered = logs;
-
-              if (_selectedAction != 'Semua Aksi') {
-                final dbActionKey = _mapActionTypeToFilter(_selectedAction);
-                filtered = filtered
-                    .where((l) => l.actionType == dbActionKey)
-                    .toList();
+          child: Builder(
+            builder: (context) {
+              if (logsState.isLoading) {
+                return const Center(
+                  child: CupertinoActivityIndicator(
+                    color: AppColors.darkTeal,
+                  ),
+                );
               }
 
-              if (filtered.isEmpty) {
+              if (logsState.error != null && logsState.items.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.error_outline,
+                          size: 48, color: AppColors.errorRed),
+                      const SizedBox(height: 12),
+                      Text('${AppStrings.labelFailed} memuat data'),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: () => ref.invalidate(paginatedAuditLogsProvider(filter)),
+                        child: const Text(AppStrings.buttonRetry),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              final logs = logsState.items;
+
+              if (logs.isEmpty) {
                 return Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -163,17 +206,27 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
 
               return RefreshIndicator(
                 onRefresh: () async {
-                  ref.invalidate(adminAuditLogsProvider);
+                  ref.invalidate(paginatedAuditLogsProvider(filter));
                 },
                 color: AppColors.darkTeal,
                 child: ListView.builder(
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
                     vertical: 12,
                   ),
-                  itemCount: filtered.length,
+                  itemCount: logs.length + (logsState.isLoadingMore ? 1 : 0),
                   itemBuilder: (context, index) {
-                    final log = filtered[index];
+                    if (index == logs.length) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: CupertinoActivityIndicator(color: AppColors.darkTeal),
+                        ),
+                      );
+                    }
+                    final log = logs[index];
                     return AuditLogTile(
                       log: log,
                       onDetailTap: () {
@@ -195,28 +248,6 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                 ),
               );
             },
-            loading: () => const Center(
-              child: CupertinoActivityIndicator(
-                color: AppColors.darkTeal,
-              ),
-            ),
-            error: (err, stack) => Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.error_outline,
-                      size: 48, color: AppColors.errorRed),
-                  const SizedBox(height: 12),
-                  Text('${AppStrings.labelFailed} memuat data'),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () =>
-                        ref.invalidate(adminAuditLogsProvider),
-                    child: const Text(AppStrings.buttonRetry),
-                  ),
-                ],
-              ),
-            ),
           ),
         ),
       ],

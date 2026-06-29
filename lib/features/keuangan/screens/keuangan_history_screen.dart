@@ -4,8 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
-import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
+import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
@@ -20,8 +21,41 @@ class KeuanganHistoryScreen extends ConsumerStatefulWidget {
 }
 
 class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
+  final ScrollController _scrollController = ScrollController();
   String _selectedType = 'Semua'; // 'Semua', 'Top-Up', 'Koreksi', 'Kartu'
   String _selectedDateFilter = 'Semua'; // 'Semua', 'Hari Ini', 'Minggu Ini', 'Bulan Ini'
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      final profile = ref.read(authNotifierProvider).profile;
+      final actorId = profile?['id']?.toString();
+      if (actorId == null) return;
+      final dbActionKey = _selectedType == 'Top-Up'
+          ? 'TOPUP_TUNAI'
+          : (_selectedType == 'Koreksi'
+              ? 'KOREKSI_SALDO'
+              : (_selectedType == 'Kartu' ? 'KARTU' : 'Semua'));
+      final filter = PaginatedAuditLogsFilter(
+        actorId: actorId,
+        actionType: dbActionKey,
+        dateFilter: _selectedDateFilter,
+      );
+      ref.read(paginatedAuditLogsProvider(filter).notifier).loadNextPage();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
 
   void _showDetailBottomSheet(AuditLog log, NumberFormat fmt) {
@@ -190,7 +224,19 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final historyAsync = ref.watch(keuanganHistoryProvider);
+    final profile = ref.watch(authNotifierProvider).profile;
+    final actorId = profile?['id']?.toString();
+    final dbActionKey = _selectedType == 'Top-Up'
+        ? 'TOPUP_TUNAI'
+        : (_selectedType == 'Koreksi'
+            ? 'KOREKSI_SALDO'
+            : (_selectedType == 'Kartu' ? 'KARTU' : 'Semua'));
+    final filter = PaginatedAuditLogsFilter(
+      actorId: actorId,
+      actionType: dbActionKey,
+      dateFilter: _selectedDateFilter,
+    );
+    final logsState = ref.watch(paginatedAuditLogsProvider(filter));
     final fmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
     return Scaffold(
@@ -283,121 +329,135 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
 
             // History List
             Expanded(
-              child: RefreshIndicator(
-                onRefresh: () async => ref.invalidate(keuanganHistoryProvider),
-                color: AppColors.darkTeal,
-                child: historyAsync.when(
-                  data: (auditLogs) {
-                    final today = DateTime.now();
-                    final todayStart = DateTime(today.year, today.month, today.day);
+              child: Builder(
+                builder: (context) {
+                  if (logsState.isLoading) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(40),
+                        child: CupertinoActivityIndicator(color: AppColors.darkTeal),
+                      ),
+                    );
+                  }
 
-                    // Filter logs
-                    final filtered = auditLogs.where((log) {
-                      final type = log.actionType;
-                      final created = log.createdAt?.toLocal() ?? DateTime.now();
-
-                      // Type filter
-                      bool matchesType = true;
-                      if (_selectedType == 'Top-Up') {
-                        matchesType = type == 'TOPUP_TUNAI';
-                      } else if (_selectedType == 'Koreksi') {
-                        matchesType = type == 'KOREKSI_SALDO';
-                      } else if (_selectedType == 'Kartu') {
-                        matchesType = type == 'REGISTRASI_KARTU' || type == 'UNLINK_KARTU';
-                      }
-
-                      // Date filter
-                      bool matchesDate = true;
-                      if (_selectedDateFilter == 'Hari Ini') {
-                        matchesDate = created.isAfter(todayStart);
-                      } else if (_selectedDateFilter == 'Minggu Ini') {
-                        matchesDate = created.isAfter(today.subtract(const Duration(days: 7)));
-                      } else if (_selectedDateFilter == 'Bulan Ini') {
-                        matchesDate = created.isAfter(today.subtract(const Duration(days: 30)));
-                      }
-
-                      return matchesType && matchesDate;
-                    }).toList();
-
-                    if (filtered.isEmpty) {
-                      return const EmptyStateWidget(
-                        message: AppStrings.noTransactions,
-                      );
-                    }
-
-                    // Calculation for header stats of the day
-                    double topupSum = 0.0;
-                    double correctionSum = 0.0;
-                    for (var log in filtered) {
-                      final type = log.actionType;
-                      final created = log.createdAt?.toLocal() ?? DateTime.now();
-
-                      if (created.isAfter(todayStart)) {
-                        final newValue = log.newValue;
-                        final oldValue = log.oldValue;
-                        
-                        if (type == 'TOPUP_TUNAI') {
-                          final int currentB = int.tryParse(oldValue['balance']?.toString() ?? '0') ?? 0;
-                          final int newB = int.tryParse(newValue['balance']?.toString() ?? '0') ?? 0;
-                          topupSum += (newB - currentB);
-                        } else if (type == 'KOREKSI_SALDO') {
-                          final int currentB = int.tryParse(oldValue['balance']?.toString() ?? '0') ?? 0;
-                          final int newB = int.tryParse(newValue['balance']?.toString() ?? '0') ?? 0;
-                          correctionSum += (newB - currentB);
-                        }
-                      }
-                    }
-
-                    return Column(
-                      children: [
-                        // Statistics Summary Banner (Sticky Header)
-                        if (_selectedDateFilter == 'Hari Ini' || _selectedDateFilter == 'Semua')
-                          Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppColors.darkTeal.withValues(alpha: 0.05),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: AppColors.darkTeal.withValues(alpha: 0.1)),
+                  if (logsState.error != null && logsState.items.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+                            const SizedBox(height: 12),
+                            Text('${AppStrings.labelFailed} memuat riwayat'),
+                            const SizedBox(height: 8),
+                            ElevatedButton(
+                              onPressed: () => ref.invalidate(paginatedAuditLogsProvider(filter)),
+                              child: const Text(AppStrings.buttonRetry),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Top-Up Hari Ini', style: GoogleFonts.inter(fontSize: 11, color: AppColors.mutedGray)),
-                                    const SizedBox(height: 2),
-                                    Text(fmt.format(topupSum), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.successGreen)),
-                                  ],
-                                ),
-                                Container(width: 1, height: 32, color: AppColors.borderGray),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Text('Koreksi Net Hari Ini', style: GoogleFonts.inter(fontSize: 11, color: AppColors.mutedGray)),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      '${correctionSum >= 0 ? "+" : ""}${fmt.format(correctionSum)}',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: correctionSum >= 0 ? AppColors.successGreen : AppColors.errorRed2,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  final list = logsState.items;
+
+                  if (list.isEmpty) {
+                    return const EmptyStateWidget(
+                      message: AppStrings.noTransactions,
+                    );
+                  }
+
+                  // Calculation for header stats of the day from loaded list
+                  double topupSum = 0.0;
+                  double correctionSum = 0.0;
+                  final today = DateTime.now();
+                  final todayStart = DateTime(today.year, today.month, today.day);
+
+                  for (var log in list) {
+                    final type = log.actionType;
+                    final created = log.createdAt?.toLocal() ?? DateTime.now();
+
+                    if (created.isAfter(todayStart)) {
+                      final newValue = log.newValue;
+                      final oldValue = log.oldValue;
+                      
+                      if (type == 'TOPUP_TUNAI') {
+                        final int currentB = int.tryParse(oldValue['balance']?.toString() ?? '0') ?? 0;
+                        final int newB = int.tryParse(newValue['balance']?.toString() ?? '0') ?? 0;
+                        topupSum += (newB - currentB);
+                      } else if (type == 'KOREKSI_SALDO') {
+                        final int currentB = int.tryParse(oldValue['balance']?.toString() ?? '0') ?? 0;
+                        final int newB = int.tryParse(newValue['balance']?.toString() ?? '0') ?? 0;
+                        correctionSum += (newB - currentB);
+                      }
+                    }
+                  }
+
+                  return Column(
+                    children: [
+                      // Statistics Summary Banner (Sticky Header)
+                      if (_selectedDateFilter == 'Hari Ini' || _selectedDateFilter == 'Semua')
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.darkTeal.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: AppColors.darkTeal.withValues(alpha: 0.1)),
                           ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Top-Up Hari Ini', style: GoogleFonts.inter(fontSize: 11, color: AppColors.mutedGray)),
+                                  const SizedBox(height: 2),
+                                  Text(fmt.format(topupSum), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.successGreen)),
+                                ],
+                              ),
+                              Container(width: 1, height: 32, color: AppColors.borderGray),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text('Koreksi Net Hari Ini', style: GoogleFonts.inter(fontSize: 11, color: AppColors.mutedGray)),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${correctionSum >= 0 ? "+" : ""}${fmt.format(correctionSum)}',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: correctionSum >= 0 ? AppColors.successGreen : AppColors.errorRed2,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
 
-                        // List of Audit Logs
-                        Expanded(
+                      // List of Audit Logs
+                      Expanded(
+                        child: RefreshIndicator(
+                          onRefresh: () async => ref.invalidate(paginatedAuditLogsProvider(filter)),
+                          color: AppColors.darkTeal,
                           child: ListView.builder(
+                            controller: _scrollController,
+                            physics: const AlwaysScrollableScrollPhysics(),
                             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                            itemCount: filtered.length,
+                            itemCount: list.length + (logsState.isLoadingMore ? 1 : 0),
                             itemBuilder: (context, index) {
-                              final log = filtered[index];
+                              if (index == list.length) {
+                                return const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 16),
+                                    child: CupertinoActivityIndicator(color: AppColors.darkTeal),
+                                  ),
+                                );
+                              }
+                              final log = list[index];
                               final actionType = log.actionType;
                               final desc = log.description;
                               final created = log.createdAt?.toLocal() ?? DateTime.now();
@@ -505,34 +565,10 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                             },
                           ),
                         ),
-                      ],
-                    );
-                  },
-                  loading: () => const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(40),
-                      child: CupertinoActivityIndicator(color: AppColors.darkTeal),
-                    ),
-                  ),
-                  error: (e, _) => Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
-                          const SizedBox(height: 12),
-                          Text('${AppStrings.labelFailed} memuat riwayat'),
-                          const SizedBox(height: 8),
-                          ElevatedButton(
-                            onPressed: () => ref.invalidate(keuanganHistoryProvider),
-                            child: const Text(AppStrings.buttonRetry),
-                          ),
-                        ],
                       ),
-                    ),
-                  ),
-                ),
+                    ],
+                  );
+                },
               ),
             ),
           ],

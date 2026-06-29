@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
+import 'package:kantin_digital/core/widgets/custom_confirm_dialog.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
@@ -112,23 +113,18 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
     }
   }
 
-  void _showSuccessDialog(double amount) {
-    showCupertinoDialog(
+  void _showSuccessDialog(double amount) async {
+    await showCustomConfirmDialog(
       context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Top-Up Berhasil!'),
-        content: Text('Selamat, saldo saku Anda telah bertambah sebesar ${CurrencyFormatter.format(amount)}.'),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text('Selesai'),
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context); // Go back to dashboard
-            },
-          ),
-        ],
-      ),
+      title: 'Top-Up Berhasil!',
+      message: 'Selamat, saldo saku Anda telah bertambah sebesar ${CurrencyFormatter.format(amount)}.',
+      confirmLabel: 'Selesai',
+      cancelLabel: '',
+      icon: Icons.check_circle_rounded,
     );
+    if (mounted) {
+      Navigator.pop(context); // Go back to dashboard
+    }
   }
 
   void _showCheckoutSheet() {

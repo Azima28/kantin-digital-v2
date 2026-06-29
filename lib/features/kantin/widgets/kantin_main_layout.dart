@@ -6,6 +6,7 @@ import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/utils/responsive.dart';
 import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/features/kantin/providers/order_provider.dart';
 
 import 'package:kantin_digital/core/widgets/premium_panel.dart';
 
@@ -81,6 +82,7 @@ class _KantinMainLayoutState extends ConsumerState<KantinMainLayout> {
     final int selectedIndex = _getSelectedIndex(context);
     final bool isDesktop = Responsive.showSidebar(context);
     final double sidebarW = Responsive.sidebarWidth(context);
+    final int newOrderCount = ref.watch(newOrderCountProvider);
 
     // Sync external navigation changes with our history stack
     if (_tabHistory.isEmpty || _tabHistory.last != selectedIndex) {
@@ -129,15 +131,23 @@ class _KantinMainLayoutState extends ConsumerState<KantinMainLayout> {
             selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
             unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
             elevation: 0,
-            items: const <BottomNavigationBarItem>[
-              BottomNavigationBarItem(
+            items: <BottomNavigationBarItem>[
+              const BottomNavigationBarItem(
                 icon: Icon(CupertinoIcons.home, size: 22),
                 activeIcon: Icon(CupertinoIcons.house_fill, size: 22),
                 label: 'Beranda',
               ),
               BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.cart, size: 22),
-                activeIcon: Icon(CupertinoIcons.cart_fill, size: 22),
+                icon: Badge(
+                  label: Text('$newOrderCount'),
+                  isLabelVisible: newOrderCount > 0,
+                  child: const Icon(CupertinoIcons.cart, size: 22),
+                ),
+                activeIcon: Badge(
+                  label: Text('$newOrderCount'),
+                  isLabelVisible: newOrderCount > 0,
+                  child: const Icon(CupertinoIcons.cart_fill, size: 22),
+                ),
                 label: 'Pesanan',
               ),
               BottomNavigationBarItem(
@@ -182,6 +192,7 @@ class _KantinMainLayoutState extends ConsumerState<KantinMainLayout> {
     final authState = ref.watch(authNotifierProvider);
     final String canteenName = authState.profile?['canteen_name'] ?? 'Stan Kantin';
     final String email = authState.profile?['email'] ?? '';
+    final int newOrderCount = ref.watch(newOrderCountProvider);
 
     return Container(
       width: sidebarWidth,
@@ -258,6 +269,7 @@ class _KantinMainLayoutState extends ConsumerState<KantinMainLayout> {
                   label: 'Daftar Pesanan',
                   isSelected: selectedIndex == 1,
                   onTap: () => _onItemTapped(1, context),
+                  badgeCount: newOrderCount,
                 ),
                 const SizedBox(height: 8),
                 _buildSidebarItem(
@@ -348,6 +360,7 @@ class _KantinMainLayoutState extends ConsumerState<KantinMainLayout> {
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
+    int badgeCount = 0,
   }) {
     return Material(
       color: Colors.transparent,
@@ -378,6 +391,22 @@ class _KantinMainLayoutState extends ConsumerState<KantinMainLayout> {
                   ),
                 ),
               ),
+              if (badgeCount > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.error,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '$badgeCount',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
@@ -22,208 +23,278 @@ void showEditStudentSheet(
   final parentPhoneCtrl = TextEditingController(text: profile.phoneNumber);
   final limitCtrl = TextEditingController(text: student.dailyLimit?.toStringAsFixed(0) ?? '0');
   final rfidCtrl = TextEditingController(text: student.rfidUid);
-  String selectedClass = student.class_ ?? '7-A';
-  bool isSaving = false;
-
-  final List<String> availableClasses = [
-    '7-A', '7-B', '7-C',
-    '8-A', '8-B', '8-C',
-    '9-A', '9-B', '9-C'
-  ];
-
-  if (!availableClasses.contains(selectedClass)) {
-    availableClasses.add(selectedClass);
+  String selectedClass = '7';
+  String selectedRombel = 'A';
+  if (student.class_ != null && student.class_!.isNotEmpty) {
+    if (student.class_!.contains('-')) {
+      selectedClass = student.class_!.split('-').first.trim();
+      selectedRombel = student.class_!.split('-').last.trim();
+    } else {
+      selectedClass = student.class_!.trim();
+      selectedRombel = '-';
+    }
   }
+  bool isSaving = false;
 
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (ctx) => StatefulBuilder(
-      builder: (ctx, setLocal) => Container(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-          top: 20,
-          left: 20,
-          right: 20,
-        ),
-        decoration: const BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: AppColors.borderGray,
-                    borderRadius: BorderRadius.circular(3),
+      builder: (ctx, setLocal) => Consumer(
+        builder: (ctx, ref, child) {
+          final classesAsync = ref.watch(classesProvider);
+          final rombelsAsync = ref.watch(rombelsProvider);
+
+          if (classesAsync.isLoading || rombelsAsync.isLoading) {
+            return Container(
+              height: 300,
+              decoration: const BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: const Center(
+                child: CupertinoActivityIndicator(radius: 12),
+              ),
+            );
+          }
+
+          if (classesAsync.hasError || rombelsAsync.hasError) {
+            final errorMsg = classesAsync.error ?? rombelsAsync.error;
+            return Container(
+              height: 300,
+              decoration: const BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Center(
+                child: Text('Gagal memuat data kelas/rombel: $errorMsg'),
+              ),
+            );
+          }
+
+          final classesList = classesAsync.value ?? [];
+          final rombelsList = rombelsAsync.value ?? [];
+
+          final classNames = classesList.map((c) => c.name).toList();
+          if (classNames.isEmpty) {
+            classNames.add('Belum Diisi');
+          }
+          if (!classNames.contains(selectedClass)) {
+            classNames.add(selectedClass);
+          }
+
+          final rombelNames = rombelsList.map((r) => r.name).toList();
+          if (rombelNames.isEmpty) {
+            rombelNames.add('-');
+          }
+          if (!rombelNames.contains(selectedRombel)) {
+            rombelNames.add(selectedRombel);
+          }
+
+          return Container(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+              top: 20,
+              left: 20,
+              right: 20,
+            ),
+            decoration: const BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: AppColors.borderGray,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Edit Profil Siswa',
-                style: GoogleFonts.inter(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.nearBlack,
-                ),
-              ),
-              const SizedBox(height: 20),
-              _sectionLabel('INFORMASI PRIBADI'),
-              const SizedBox(height: 8),
-              _buildFormField(nameCtrl, '${AppStrings.labelFullName} *'),
-              const SizedBox(height: 12),
-              _buildFormField(nisnCtrl, 'NISN *', inputType: TextInputType.number),
-              const SizedBox(height: 12),
-              _buildDropdownRow(
-                label: 'Kelas *',
-                value: selectedClass,
-                items: availableClasses,
-                onChanged: (v) => setLocal(() => selectedClass = v ?? selectedClass),
-              ),
-              const SizedBox(height: 12),
-              _buildFormField(parentPhoneCtrl, 'Nomor HP Orang Tua (WhatsApp)', inputType: TextInputType.phone),
-              const SizedBox(height: 12),
-              _buildFormField(emailCtrl, 'Email *', inputType: TextInputType.emailAddress),
-              const SizedBox(height: 20),
-              _sectionLabel('AKUN SISTEM'),
-              const SizedBox(height: 8),
-              _buildFormField(usernameCtrl, 'Username *'),
-              const SizedBox(height: 20),
-              _sectionLabel('PENGATURAN KARTU & LIMIT'),
-              const SizedBox(height: 8),
-              _buildFormField(rfidCtrl, 'RFID UID / Nomor Kartu (Kosongkan jika tidak ada)'),
-              const SizedBox(height: 12),
-              _buildFormField(limitCtrl, 'Batas Jajan Harian (0 = Tanpa Batas) *', inputType: TextInputType.number),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkTeal,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Edit Profil Siswa',
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.nearBlack,
+                    ),
                   ),
-                  onPressed: isSaving
-                      ? null
-                      : () async {
-                          final name = nameCtrl.text.trim();
-                          final nisn = nisnCtrl.text.trim();
-                          final email = emailCtrl.text.trim();
-                          final username = usernameCtrl.text.trim();
-                          final rfid = rfidCtrl.text.trim();
-                          final limitVal = double.tryParse(limitCtrl.text.trim()) ?? 0;
+                  const SizedBox(height: 20),
+                  _sectionLabel('INFORMASI PRIBADI'),
+                  const SizedBox(height: 8),
+                  _buildFormField(nameCtrl, '${AppStrings.labelFullName} *'),
+                  const SizedBox(height: 12),
+                  _buildFormField(nisnCtrl, 'NISN *', inputType: TextInputType.number),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildDropdownRow(
+                          label: 'Kelas *',
+                          value: selectedClass,
+                          items: classNames,
+                          onChanged: (v) => setLocal(() => selectedClass = v ?? selectedClass),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildDropdownRow(
+                          label: 'Rombel *',
+                          value: selectedRombel,
+                          items: rombelNames,
+                          onChanged: (v) => setLocal(() => selectedRombel = v ?? selectedRombel),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _buildFormField(parentPhoneCtrl, 'Nomor HP Orang Tua (WhatsApp)', inputType: TextInputType.phone),
+                  const SizedBox(height: 12),
+                  _buildFormField(emailCtrl, 'Email *', inputType: TextInputType.emailAddress),
+                  const SizedBox(height: 20),
+                  _sectionLabel('AKUN SISTEM'),
+                  const SizedBox(height: 8),
+                  _buildFormField(usernameCtrl, 'Username *'),
+                  const SizedBox(height: 20),
+                  _sectionLabel('PENGATURAN KARTU & LIMIT'),
+                  const SizedBox(height: 8),
+                  _buildFormField(rfidCtrl, 'RFID UID / Nomor Kartu (Kosongkan jika tidak ada)'),
+                  const SizedBox(height: 12),
+                  _buildFormField(limitCtrl, 'Batas Jajan Harian (0 = Tanpa Batas) *', inputType: TextInputType.number),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.darkTeal,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      onPressed: isSaving
+                          ? null
+                          : () async {
+                              final name = nameCtrl.text.trim();
+                              final nisn = nisnCtrl.text.trim();
+                              final email = emailCtrl.text.trim();
+                              final username = usernameCtrl.text.trim();
+                              final rfid = rfidCtrl.text.trim();
+                              final limitVal = double.tryParse(limitCtrl.text.trim()) ?? 0;
 
-                          if (name.isEmpty || nisn.isEmpty || email.isEmpty || username.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text(AppStrings.adminFieldRequired)),
-                            );
-                            return;
-                          }
+                              if (name.isEmpty || nisn.isEmpty || email.isEmpty || username.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text(AppStrings.adminFieldRequired)),
+                                );
+                                return;
+                              }
 
-                          setLocal(() => isSaving = true);
-                          try {
-                            final client = ref.read(supabaseClientProvider);
-                            final parentPhone = parentPhoneCtrl.text.trim().isNotEmpty
-                                ? parentPhoneCtrl.text.trim()
-                                : null;
-                            final rfidVal = rfid.isNotEmpty ? rfid : null;
+                              setLocal(() => isSaving = true);
+                              try {
+                                final client = ref.read(supabaseClientProvider);
+                                final parentPhone = parentPhoneCtrl.text.trim().isNotEmpty
+                                    ? parentPhoneCtrl.text.trim()
+                                    : null;
+                                final rfidVal = rfid.isNotEmpty ? rfid : null;
 
-                            // 1. Update profiles table
-                            await client.from('profiles').update({
-                              'full_name': name,
-                              'email': email,
-                              'username': username,
-                              'nisn': nisn,
-                              'phone_number': parentPhone,
-                            }).eq('id', profile.id);
+                                // Dapatkan classId dari nama kelas yang dipilih
+                                final matchedClass = classesList.firstWhere(
+                                  (c) => c.name == selectedClass,
+                                  orElse: () => classesList.first,
+                                );
+                                final String classIdVal = matchedClass.id;
 
-                            // 2. Update students table
-                            await client.from('students').update({
-                              'class': selectedClass,
-                              'rfid_uid': rfidVal,
-                              'daily_limit': limitVal,
-                            }).eq('id', profile.id);
+                                // Dapatkan rombelId dari nama rombel yang dipilih
+                                final matchedRombel = rombelsList.firstWhere(
+                                  (r) => r.name == selectedRombel,
+                                  orElse: () => rombelsList.first,
+                                );
+                                final String rombelIdVal = matchedRombel.id;
+                                final combinedClass = selectedRombel != '-' ? '$selectedClass-$selectedRombel' : selectedClass;
 
-                            // 3. Write audit log
-                            try {
-                              final authProfile = ref.read(authNotifierProvider).profile;
-                              final actorName = authProfile?['full_name'] ?? 'Super Admin';
-                              final actorId = authProfile?['id'];
-
-                              await client.from('audit_logs').insert({
-                                'actor_id': actorId,
-                                'actor_name': actorName,
-                                'action_type': 'EDIT_PENGGUNA',
-                                'description': 'Super Admin mengedit profil siswa: $name (NISN: $nisn)',
-                                'target_id': profile.id,
-                                'old_value': {
-                                  'full_name': profile.fullName,
-                                  'email': profile.email,
-                                  'nisn': profile.nisn,
-                                  'class': student.class_,
-                                  'rfid_uid': student.rfidUid,
-                                  'daily_limit': student.dailyLimit,
-                                  'phone_number': profile.phoneNumber,
-                                },
-                                'new_value': {
+                                // 1. Update profiles table
+                                await client.from('profiles').update({
                                   'full_name': name,
                                   'email': email,
+                                  'username': username,
                                   'nisn': nisn,
-                                  'class': selectedClass,
+                                  'phone_number': parentPhone,
+                                }).eq('id', profile.id);
+
+                                // 2. Update students table
+                                await client.from('students').update({
+                                  'class_id': classIdVal,
+                                  'rombel_id': selectedRombel == '-' ? null : rombelIdVal,
                                   'rfid_uid': rfidVal,
                                   'daily_limit': limitVal,
-                                  'phone_number': parentPhone,
-                                },
-                              });
-                            } catch (_) {}
+                                }).eq('id', profile.id);
 
-                            // Invalidate details and user list providers
-                            ref.invalidate(adminStudentDetailProvider(profile.id));
-                            ref.invalidate(adminUsersProvider);
+                                try {
+                                  final authProfile = ref.read(authNotifierProvider).profile;
+                                  final actorName = authProfile?['full_name'] ?? 'Super Admin';
+                                  final actorId = authProfile?['id'];
 
-                            if (ctx.mounted) Navigator.pop(ctx);
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Profil siswa $name berhasil diperbarui'),
-                                  backgroundColor: AppColors.successGreen,
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            setLocal(() => isSaving = false);
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('${AppStrings.labelFailedSave}: ${e.toString()}'),
-                                  backgroundColor: AppColors.errorRed2,
-                                ),
-                              );
-                            }
-                          }
-                        },
-                  child: isSaving
-                      ? const CupertinoActivityIndicator(color: AppColors.white)
-                      : Text(
-                          'SIMPAN PERUBAHAN',
-                          style: GoogleFonts.inter(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.white,
-                          ),
-                        ),
-                ),
+                                  await client.from('audit_logs').insert({
+                                    'actor_id': actorId,
+                                    'actor_name': actorName,
+                                    'action_type': 'EDIT_PENGGUNA',
+                                    'description': 'Super Admin mengubah profil siswa: $name (NISN: $nisn)',
+                                    'target_id': profile.id,
+                                    'new_value': {
+                                      'full_name': name,
+                                      'email': email,
+                                      'nisn': nisn,
+                                      'class': combinedClass,
+                                      'rfid_uid': rfidVal,
+                                      'daily_limit': limitVal,
+                                    },
+                                  });
+                                } catch (_) {}
+
+                                ref.invalidate(adminUsersProvider);
+                                if (ctx.mounted) Navigator.pop(ctx);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Profil $name berhasil diperbarui'),
+                                      backgroundColor: AppColors.successGreen,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                setLocal(() => isSaving = false);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(AppStrings.labelFailedSave),
+                                      backgroundColor: AppColors.errorRed2,
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                      child: isSaving
+                          ? const CupertinoActivityIndicator(color: AppColors.white)
+                          : Text(
+                              'SIMPAN PERUBAHAN',
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.white,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     ),
   );

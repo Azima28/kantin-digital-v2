@@ -259,5 +259,34 @@ void main() {
       expect(blockedAccountStudent.isActive, isFalse);
       expect(blockedAccountStudent.cardIsActive, isTrue);
     });
+
+    test('Student model parsing with class and rombel fields', () {
+      final json = {
+        'id': 's1',
+        'class_id': 'c-10',
+        'rombel_id': 'r-ipa1',
+        'balance': 15000,
+        'is_active': true,
+        'classes': {'name': '10'},
+        'rombels': {'name': 'IPA-1'}
+      };
+
+      final student = Student.fromJson(json);
+      expect(student.classId, equals('c-10'));
+      expect(student.rombelId, equals('r-ipa1'));
+      expect(student.class_, equals('10-IPA-1'));
+    });
+
+    test('SchoolRombel model parsing', () {
+      final json = {
+        'id': 'r-ipa1',
+        'name': 'IPA-1',
+        'created_at': '2026-06-26T00:00:00Z'
+      };
+
+      final rombel = SchoolRombel.fromJson(json);
+      expect(rombel.id, equals('r-ipa1'));
+      expect(rombel.name, equals('IPA-1'));
+    });
   });
 }

@@ -12,6 +12,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
+import 'package:kantin_digital/features/kantin/providers/order_provider.dart';
 import 'package:kantin_digital/core/widgets/notification_bell.dart';
 import 'package:intl/intl.dart';
 
@@ -21,6 +22,8 @@ class PosHomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authNotifierProvider);
+    final newOrderCount = ref.watch(newOrderCountProvider);
+    ref.watch(kantinOrdersProvider);
     final String canteenName =
         authState.profile?['canteen_name'] ?? 'Stan Kantin';
     final String? profilePhotoUrl = authState.profile?['avatar_url'];
@@ -48,7 +51,7 @@ class PosHomeScreen extends ConsumerWidget {
             CircleAvatar(
               radius: 20,
               backgroundImage: profilePhotoUrl != null
-                  ? CachedNetworkImageProvider(profilePhotoUrl)
+                  ? CachedNetworkImageProvider(profilePhotoUrl, maxWidth: 80, maxHeight: 80)
                   : null,
               child: profilePhotoUrl == null
                   ? const Icon(Icons.person, color: AppColors.teal)
@@ -350,7 +353,78 @@ class PosHomeScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 16),
+
+                  if (newOrderCount > 0) ...[
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [AppColors.accentOrange, Colors.deepOrange],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.accentOrange.withValues(alpha: 0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () => context.go('/pos/orders'),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(CupertinoIcons.bell_fill, color: Colors.white, size: 20),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Pesanan Online Baru!',
+                                        style: GoogleFonts.inter(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Ada $newOrderCount pesanan siswa yang belum diproses.',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          color: Colors.white.withValues(alpha: 0.9),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(CupertinoIcons.chevron_forward, color: Colors.white, size: 16),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 12),
 
                   // Penjualan Hari Ini Title & Lihat Semua link
                   Row(

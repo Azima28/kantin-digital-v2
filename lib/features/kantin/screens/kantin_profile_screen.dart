@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/widgets/custom_password_dialog.dart';
 import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/features/kantin/providers/order_provider.dart';
 
 class KantinProfileScreen extends ConsumerStatefulWidget {
   const KantinProfileScreen({super.key});
@@ -16,118 +19,41 @@ class KantinProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
-  final _passwordController = TextEditingController();
-  bool _isChangingPassword = false;
-
-  @override
-  void dispose() {
-    _passwordController.dispose();
-    super.dispose();
-  }
 
   void _showChangePasswordDialog() {
-    showCupertinoDialog(
+    showCustomPasswordDialog(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return CupertinoAlertDialog(
-              title: const Text(AppStrings.adminChangePassword),
-              content: Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Column(
-                  children: [
-                    const Text('Masukkan kata sandi baru untuk akun Anda.'),
-                    const SizedBox(height: 12),
-                    CupertinoTextField(
-                      controller: _passwordController,
-                      placeholder: 'Kata sandi baru',
-                      obscureText: true,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: CupertinoColors.inactiveGray),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                CupertinoDialogAction(
-                  child: const Text(AppStrings.buttonCancel),
-                  onPressed: () {
-                    _passwordController.clear();
-                    Navigator.pop(context);
-                  },
-                ),
-                CupertinoDialogAction(
-                  isDefaultAction: true,
-                  onPressed: _isChangingPassword
-                      ? null
-                      : () async {
-                          final password = _passwordController.text.trim();
-                          if (password.isEmpty) return;
+      title: AppStrings.adminChangePassword,
+      description: 'Masukkan kata sandi baru untuk akun Anda.',
+      placeholder: 'Kata sandi baru',
+      onSave: (password) async {
+        final client = ref.read(supabaseClientProvider);
+        final profile = ref.read(authNotifierProvider).profile;
+        final profileId = profile?['id'];
 
-                          setDialogState(() {
-                            _isChangingPassword = true;
-                          });
+        final currentUserRole = profile?['role'];
+        if (currentUserRole != 'petugas_kantin') {
+          throw Exception('Tidak memiliki izin untuk mengubah password');
+        }
 
-                          final navigator = Navigator.of(context);
-                          final messenger = ScaffoldMessenger.of(this.context);
+        final response = await client.rpc('update_auth_user_password', params: {
+          'p_user_id': profileId,
+          'p_new_password': password,
+          'p_caller_id': profileId,
+        });
+        if (response is Map && response['success'] == false) {
+          throw Exception(response['error'] ?? 'Gagal mengubah kata sandi');
+        }
 
-                          try {
-                            final client = ref.read(supabaseClientProvider);
-                            final profile = ref.read(authNotifierProvider).profile;
-                            final profileId = profile?['id'];
-
-                            final currentUserRole = profile?['role'];
-                            if (currentUserRole != 'petugas_kantin') {
-                              throw Exception('Tidak memiliki izin untuk mengubah password');
-                            }
-
-                            final response = await client.rpc('update_auth_user_password', params: {
-                              'p_user_id': profileId,
-                              'p_new_password': password,
-                              'p_caller_id': profileId,
-                            });
-                            if (response is Map && response['success'] == false) {
-                              throw Exception(response['error'] ?? 'Gagal mengubah kata sandi');
-                            }
-
-                            _passwordController.clear();
-                            navigator.pop();
-
-                            messenger.showSnackBar(
-                              const SnackBar(
-                                content: Text('Kata sandi berhasil diubah!'),
-                                backgroundColor: AppColors.successGreen,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          } catch (e) {
-                            navigator.pop();
-                            messenger.showSnackBar(
-                              SnackBar(
-                                content: Text('Error: ${e.toString().replaceFirst('Exception: ', '')}'),
-                                backgroundColor: AppColors.error,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          } finally {
-                            _passwordController.clear();
-                            if (mounted) {
-                              setState(() {
-                                _isChangingPassword = false;
-                              });
-                            }
-                          }
-                        },
-                  child: const Text(AppStrings.buttonSave),
-                ),
-              ],
-            );
-          },
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Kata sandi berhasil diubah!'),
+              backgroundColor: AppColors.successGreen,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       },
     );
   }
@@ -145,6 +71,7 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authNotifierProvider);
+    final settingsAsync = ref.watch(kantinOperatorSettingsProvider);
     final String canteenName = authState.profile?['canteen_name'] ?? 'Stan Kantin';
     final String fullName = authState.profile?['full_name'] ?? 'Petugas Kantin';
     final String email = authState.profile?['email'] ?? '';
@@ -253,6 +180,130 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
                 ],
               ),
               const SizedBox(height: 16),
+
+              // Pengaturan Layanan Antar Card
+              settingsAsync.when(
+                data: (settings) {
+                  if (settings == null) return const SizedBox();
+                  final bool deliveryEnabled = settings['delivery_enabled'] as bool? ?? false;
+                  final int deliveryFee = (settings['delivery_fee'] as num?)?.toInt() ?? 0;
+
+                  return Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.black.withValues(alpha: 0.04),
+                          blurRadius: 15,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: const [
+                            Icon(CupertinoIcons.paperplane_fill, color: AppColors.teal, size: 18),
+                            SizedBox(width: 8),
+                            Text(
+                              'Layanan Antar (Delivery)',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: AppColors.textDark,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        SwitchListTile.adaptive(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text(
+                            'Aktifkan Layanan Antar',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textDark,
+                            ),
+                          ),
+                          subtitle: const Text(
+                            'Siswa dapat memesan dengan opsi diantarkan ke kelas',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textGray,
+                            ),
+                          ),
+                          activeColor: AppColors.teal,
+                          value: deliveryEnabled,
+                          onChanged: (bool val) async {
+                            try {
+                              await updateKantinDeliverySettings(
+                                ref: ref,
+                                enabled: val,
+                                fee: deliveryFee,
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Gagal memperbarui layanan antar: $e'),
+                                  backgroundColor: AppColors.error,
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                        if (deliveryEnabled) ...[
+                          const Divider(height: 24, thickness: 0.5, color: AppColors.borderLight),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: const [
+                                  Text(
+                                    'Biaya Ongkir',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textDark,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Tarif pengiriman per pesanan',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.textGray,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              TextButton.icon(
+                                onPressed: () => _showEditFeeDialog(context, deliveryFee, deliveryEnabled),
+                                icon: const Icon(CupertinoIcons.pencil, size: 16, color: AppColors.teal),
+                                label: Text(
+                                  'Rp ${NumberFormat('#,###', 'id_ID').format(deliveryFee)}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.teal,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                },
+                loading: () => const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CupertinoActivityIndicator())),
+                error: (err, _) => const SizedBox(),
+              ),
 
               // Keamanan Card
               Container(
@@ -418,6 +469,65 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
                 fontWeight: FontWeight.w600,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditFeeDialog(BuildContext context, int currentFee, bool enabled) {
+    final textCtrl = TextEditingController(text: currentFee.toString());
+    showCupertinoDialog(
+      context: context,
+      builder: (_) => CupertinoAlertDialog(
+        title: const Text('Ubah Biaya Ongkir'),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: CupertinoTextField(
+            controller: textCtrl,
+            placeholder: 'Masukkan biaya ongkir (Rp)',
+            keyboardType: TextInputType.number,
+            autofocus: true,
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          CupertinoDialogAction(
+            onPressed: () async {
+              final newFee = int.tryParse(textCtrl.text) ?? 0;
+              Navigator.pop(context);
+              try {
+                await updateKantinDeliverySettings(
+                  ref: ref,
+                  enabled: enabled,
+                  fee: newFee,
+                );
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Biaya ongkir berhasil disimpan!'),
+                      backgroundColor: AppColors.successGreen,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Gagal mengubah biaya ongkir: $e'),
+                      backgroundColor: AppColors.error,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Simpan'),
           ),
         ],
       ),

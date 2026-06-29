@@ -26,11 +26,7 @@ class AdminStudentDetailScreen extends ConsumerStatefulWidget {
 class _AdminStudentDetailScreenState
     extends ConsumerState<AdminStudentDetailScreen> {
 
-  @override
-  void dispose() {
-    AdminStudentPasswordChange.dispose();
-    super.dispose();
-  }
+
 
   void _openAllTransactionsScreen({
     required String studentId,

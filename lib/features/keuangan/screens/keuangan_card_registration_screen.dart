@@ -8,8 +8,11 @@ import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/widgets/custom_confirm_dialog.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_card_registration_form.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_card_registration_success.dart';
+import 'package:kantin_digital/core/models/models.dart';
+
 
 class KeuanganCardRegistrationScreen extends ConsumerStatefulWidget {
   final String studentId;
@@ -51,12 +54,14 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
     try {
       final client = ref.read(supabaseClientProvider);
       final profile = await client.from('profiles').select().eq('id', widget.studentId).maybeSingle();
-      final student = await client.from('students').select().eq('id', widget.studentId).maybeSingle();
+      final student = await client.from('students').select('*, classes:classes(name), rombels:rombels(name)').eq('id', widget.studentId).maybeSingle();
+      final studentModel = Student.fromJson(student ?? {});
+      String className = studentModel.class_ ?? '';
 
       setState(() {
         _fullName = profile?['full_name'] ?? '';
         _nisn = profile?['nisn'] ?? '';
-        _class = student?['class'] ?? '';
+        _class = className;
         _oldRfid = student?['rfid_uid'];
       });
     } catch (e) {
@@ -99,84 +104,76 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
   }
 
   Future<void> _unlinkCard() async {
-    showCupertinoDialog(
+    final confirmed = await showCustomConfirmDialog(
       context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: const Text('Hapus Tautan Kartu'),
-        content: const Text('Apakah Anda yakin ingin menghapus tautan kartu dari siswa ini? Kartu tidak akan bisa digunakan lagi.'),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () async {
-              Navigator.pop(ctx);
-              setState(() {
-                _isLoading = true;
-              });
-
-              try {
-                final client = ref.read(supabaseClientProvider);
-                final profile = ref.read(authNotifierProvider).profile;
-                final actorName = profile?['full_name'] ?? 'Admin Keuangan';
-                final actorId = profile?['id'];
-
-                // 1. Update students table rfid_uid to null
-                await client.from('students').update({'rfid_uid': null}).eq('id', widget.studentId);
-
-                // 2. Write to audit logs
-                await client.from('audit_logs').insert({
-                  'actor_id': actorId,
-                  'actor_name': actorName,
-                  'action_type': 'UNLINK_KARTU',
-                  'description': 'Menghapus tautan kartu RFID dari siswa: $_fullName',
-                  'target_id': widget.studentId,
-                  'old_value': {'rfid_uid': _oldRfid},
-                  'new_value': {'rfid_uid': null},
-                });
-
-                // Update detail provider
-                ref.invalidate(keuanganStudentDetailProvider(widget.studentId));
-
-                setState(() {
-                  _oldRfid = null;
-                  _uidController.clear();
-                });
-
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(AppStrings.successCardUnlinked),
-                      backgroundColor: AppColors.successGreen,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${AppStrings.labelFailed} menghapus tautan kartu'),
-                      backgroundColor: AppColors.errorRed2,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              } finally {
-                if (mounted) {
-                  setState(() {
-                    _isLoading = false;
-                  });
-                }
-              }
-            },
-            child: const Text(AppStrings.buttonDelete),
-          ),
-        ],
-      ),
+      title: 'Hapus Tautan Kartu',
+      message: 'Apakah Anda yakin ingin menghapus tautan kartu dari siswa ini? Kartu tidak akan bisa digunakan lagi.',
+      confirmLabel: 'Hapus',
+      cancelLabel: AppStrings.buttonCancel,
+      isDestructive: true,
+      icon: Icons.link_off_rounded,
     );
+
+    if (confirmed && context.mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        final client = ref.read(supabaseClientProvider);
+        final profile = ref.read(authNotifierProvider).profile;
+        final actorName = profile?['full_name'] ?? 'Admin Keuangan';
+        final actorId = profile?['id'];
+
+        // 1. Update students table rfid_uid to null
+        await client.from('students').update({'rfid_uid': null}).eq('id', widget.studentId);
+
+        // 2. Write to audit logs
+        await client.from('audit_logs').insert({
+          'actor_id': actorId,
+          'actor_name': actorName,
+          'action_type': 'UNLINK_KARTU',
+          'description': 'Menghapus tautan kartu RFID dari siswa: $_fullName',
+          'target_id': widget.studentId,
+          'old_value': {'rfid_uid': _oldRfid},
+          'new_value': {'rfid_uid': null},
+        });
+
+        // Update detail provider
+        ref.invalidate(keuanganStudentDetailProvider(widget.studentId));
+
+        setState(() {
+          _oldRfid = null;
+          _uidController.clear();
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(AppStrings.successCardUnlinked),
+              backgroundColor: AppColors.successGreen,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${AppStrings.labelFailed} menghapus tautan kartu'),
+              backgroundColor: AppColors.errorRed2,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    }
   }
 
   Future<void> _linkCard() async {

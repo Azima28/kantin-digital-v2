@@ -684,6 +684,7 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
                             ? CachedNetworkImage(
                                 imageUrl: product.imageUrl!,
                                 fit: BoxFit.cover,
+                                memCacheWidth: 250,
                                 placeholder: (_, __) => const Center(child: CupertinoActivityIndicator()),
                                 errorWidget: (_, __, ___) => _buildPlaceholderImage(product.category),
                               )
@@ -879,6 +880,8 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
                       ? CachedNetworkImage(
                           imageUrl: product.imageUrl!,
                           fit: BoxFit.cover,
+                          memCacheWidth: 400,
+                          memCacheHeight: 250,
                           placeholder: (_, __) => const Center(child: CupertinoActivityIndicator()),
                           errorWidget: (_, __, ___) => _buildDetailFallbackImage(product.category),
                         )
