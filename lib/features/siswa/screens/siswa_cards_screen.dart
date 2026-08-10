@@ -2,8 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 
@@ -59,7 +60,7 @@ class SiswaCardsScreen extends ConsumerWidget {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(!currentStatus ? 'Kartu berhasil diaktifkan!' : 'Kartu berhasil dibekukan!'),
-                      backgroundColor: !currentStatus ? AppColors.success : AppColors.error,
+                      backgroundColor: !currentStatus ? Nebula.teal : Nebula.rose,
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -69,7 +70,7 @@ class SiswaCardsScreen extends ConsumerWidget {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('${AppStrings.labelFailed} memperbarui kartu: $e'),
-                      backgroundColor: AppColors.error,
+                      backgroundColor: Nebula.rose,
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -94,7 +95,7 @@ class SiswaCardsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Manajemen Kartu',
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
         ),
@@ -102,8 +103,8 @@ class SiswaCardsScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        shape: const Border(
-          bottom: BorderSide(color: AppColors.borderLight, width: 0.5),
+        shape: Border(
+          bottom: BorderSide(color: context.borderLight, width: 0.5),
         ),
       ),
       body: RefreshIndicator(
@@ -128,104 +129,144 @@ class SiswaCardsScreen extends ConsumerWidget {
                   final bool isActive = student.isActive;
                   final String studentId = student.id;
 
-                  return Column(
+                   return Column(
                     children: [
                       const SizedBox(height: 10),
 
-                      // RFID Card Replica Widget (Primary Teal color with Squircle design)
+                      // RFID Card Replica Widget — Stitch teal gradient
                       Container(
                         width: double.infinity,
                         height: 200,
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [AppColors.primary, AppColors.primary],
+                            colors: [
+                              Color(0xFF00C4B4),  // Stitch bright teal
+                              Color(0xFF00A896),  // Mid teal
+                              Color(0xFF007B6E),  // Deep teal
+                            ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.3),
-                              blurRadius: 15,
-                              offset: const Offset(0, 8),
+                              color: const Color(0xFF00C4B4).withValues(alpha: 0.35),
+                              blurRadius: 24,
+                              offset: const Offset(0, 10),
                             ),
                           ],
                         ),
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'KARTU SISWA DIGITAL',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white.withValues(alpha: 0.8),
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 1.0,
-                                  ),
-                                ),
-                                const Icon(
-                                  CupertinoIcons.wifi,
-                                  color: AppColors.white,
-                                  size: 20,
-                                ),
-                              ],
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  fullName,
-                                  style: GoogleFonts.inter(
-                                    color: AppColors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'NIS: $nis \u2022 Kelas $studentClass',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white.withValues(alpha: 0.8),
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'UID: $rfidUid',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white.withValues(alpha: 0.8),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Stack(
+                            children: [
+                              // Decorative circles
+                              Positioned(
+                                top: -40,
+                                right: -40,
+                                child: Container(
+                                  width: 160,
+                                  height: 160,
                                   decoration: BoxDecoration(
-                                    color: isActive ? Colors.white.withValues(alpha: 0.25) : Colors.red.withValues(alpha: 0.3),
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                  child: Text(
-                                    isActive ? 'Aktif' : 'Beku',
-                                    style: const TextStyle(
-                                      color: AppColors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    shape: BoxShape.circle,
+                                    color: Colors.white.withValues(alpha: 0.08),
                                   ),
                                 ),
-                              ],
-                            ),
-                          ],
+                              ),
+                              Positioned(
+                                bottom: -50,
+                                left: -30,
+                                child: Container(
+                                  width: 180,
+                                  height: 180,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white.withValues(alpha: 0.05),
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'KARTU SISWA DIGITAL',
+                                            style: GoogleFonts.inter(
+                                              color: Colors.white.withValues(alpha: 0.85),
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 1.5,
+                                            ),
+                                          ),
+                                          Icon(
+                                            CupertinoIcons.wifi,
+                                            color: Colors.white.withValues(alpha: 0.85),
+                                            size: 20,
+                                          ),
+                                        ],
+                                      ),
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            fullName,
+                                            style: GoogleFonts.inter(
+                                              color: Colors.white,
+                                              fontSize: 22,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'NIS: $nis • Kelas $studentClass',
+                                            style: GoogleFonts.inter(
+                                              color: Colors.white.withValues(alpha: 0.85),
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'UID: $rfidUid',
+                                            style: GoogleFonts.inter(
+                                              color: Colors.white.withValues(alpha: 0.7),
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                                            decoration: BoxDecoration(
+                                              color: isActive
+                                                  ? Colors.white.withValues(alpha: 0.25)
+                                                  : Colors.red.withValues(alpha: 0.3),
+                                              borderRadius: BorderRadius.circular(999),
+                                            ),
+                                            child: Text(
+                                              isActive ? 'Aktif' : 'Beku',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
 
@@ -234,9 +275,9 @@ class SiswaCardsScreen extends ConsumerWidget {
                       // IOS List Group
                       Container(
                         decoration: BoxDecoration(
-                          color: AppColors.white,
+                          color: context.cardBg,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.borderLight, width: 0.5),
+                          border: Border.all(color: context.borderLight, width: 0.5),
                         ),
                         child: Column(
                           children: [
@@ -246,30 +287,30 @@ class SiswaCardsScreen extends ConsumerWidget {
                                 width: 32,
                                 height: 32,
                                 decoration: BoxDecoration(
-                                  color: isActive ? AppColors.primaryLight : AppColors.errorLight,
+                                  color: isActive ? Nebula.teal.withValues(alpha: 0.08) : Nebula.rose.withValues(alpha: 0.08),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
                                   isActive ? CupertinoIcons.lock : CupertinoIcons.lock_open,
-                                  color: isActive ? AppColors.primary : AppColors.error,
+                                  color: isActive ? Nebula.teal : Nebula.rose,
                                   size: 16,
                                 ),
                               ),
-                              title: const Text(
+                              title: Text(
                                 'Bekukan Sementara',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textDark,
+                                  color: context.textPrimary,
                                 ),
                               ),
-                              subtitle: const Text(
+                              subtitle: Text(
                                 'Kunci kartu agar tidak bisa digunakan jajan.',
-                                style: TextStyle(fontSize: 11, color: AppColors.textGray),
+                                style: TextStyle(fontSize: 11, color: context.textSecondary),
                               ),
                               trailing: CupertinoSwitch(
                                 value: !isActive,
-                                activeTrackColor: AppColors.primary,
+                                activeTrackColor: Nebula.teal,
                                 onChanged: (bool val) {
                                   _toggleCardStatus(context, ref, studentId, isActive);
                                 },
@@ -290,7 +331,7 @@ class SiswaCardsScreen extends ConsumerWidget {
                 error: (err, stack) => Center(
                   child: Text(
                     '${AppStrings.labelFailed} memuat status kartu: $err',
-                    style: const TextStyle(color: AppColors.error),
+                    style: const TextStyle(color: Nebula.rose),
                   ),
                 ),
               ),

@@ -3,8 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
+import 'package:kantin_digital/core/widgets/nebula_components.dart';
+import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
@@ -53,7 +57,7 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(AppStrings.successPasswordUpdated),
-            backgroundColor: AppColors.successGreen,
+            backgroundColor: Nebula.teal,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -63,7 +67,7 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${AppStrings.labelFailed} mengubah kata sandi'),
-            backgroundColor: AppColors.errorRed2,
+            backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -83,7 +87,7 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Akun orang tua berhasil ' '${newStatus ? AppStrings.successCardActivatedBack : AppStrings.adminNonaktifkan}' '.'),
-            backgroundColor: newStatus ? AppColors.successGreen : AppColors.errorRed2,
+            backgroundColor: newStatus ? Nebula.teal : Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -93,7 +97,7 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppStrings.labelFailedDeactivate),
-            backgroundColor: AppColors.errorRed2,
+            backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -144,7 +148,7 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.left_chevron, color: AppColors.darkTeal),
+          icon: Icon(CupertinoIcons.left_chevron, color: Nebula.teal),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -152,13 +156,13 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
           style: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: AppColors.darkTeal,
+            color: Nebula.teal,
           ),
         ),
         actions: [
           parentAsync.maybeWhen(
             data: (data) => IconButton(
-              icon: const Icon(CupertinoIcons.pencil, color: AppColors.darkTeal),
+              icon: Icon(CupertinoIcons.pencil, color: Nebula.teal),
               onPressed: () => showEditParentSheet(
                 context,
                 ref,
@@ -186,25 +190,14 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Profile Header Card
-                Container(
+                NebulaCard(
                   padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.black.withValues(alpha: 0.04),
-                        blurRadius: 20,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
                   child: Column(
                     children: [
                       CircleAvatar(
                         radius: 36,
-                        backgroundColor: AppColors.darkTeal.withValues(alpha: 0.1),
-                        child: const Icon(CupertinoIcons.person_2_fill, color: AppColors.darkTeal, size: 36),
+                        backgroundColor: Nebula.teal.withValues(alpha: 0.1),
+                        child: Icon(CupertinoIcons.person_2_fill, color: Nebula.teal, size: 36),
                       ),
                       const SizedBox(height: 12),
                       Text(
@@ -212,14 +205,14 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                         style: GoogleFonts.inter(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.nearBlack,
+                          color: context.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.darkTeal.withValues(alpha: 0.1),
+                          color: Nebula.teal.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -227,7 +220,7 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.darkTeal,
+                            color: Nebula.teal,
                           ),
                         ),
                       ),
@@ -239,21 +232,12 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                   ),
                 ),
                 const SizedBox(height: 12),
+                const GradientLine(),
+                const SizedBox(height: 12),
 
                 // Data Anak Section
-                Container(
+                NebulaCard(
                   padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.black.withValues(alpha: 0.04),
-                        blurRadius: 20,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -265,24 +249,27 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                             style: GoogleFonts.inter(
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.nearBlack,
+                              color: context.textPrimary,
                             ),
                           ),
-                          const Icon(CupertinoIcons.group, color: AppColors.textGray),
+                          Icon(CupertinoIcons.group, color: context.textSecondary),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       if (children.isEmpty)
                         Text(
                           'Belum ada data anak yang ditautkan ke orang tua ini.',
-                          style: GoogleFonts.inter(color: AppColors.textGray, fontSize: 13),
+                          style: GoogleFonts.inter(color: context.textSecondary, fontSize: 13),
                         )
                       else
                         Column(
                           children: children.map((c) {
                             final String studentId = c['student_id'] ?? '';
                             final studentInfo = c['students'] ?? {};
-                            final String classStr = studentInfo['class'] ?? '-';
+                            final String classStr = (studentInfo['class'] ??
+                                (studentInfo['classes'] is Map
+                                    ? (studentInfo['classes'] as Map)['name']
+                                    : null))?.toString() ?? '-';
                             final profileInfo = studentInfo['profiles'] ?? {};
                             final String childName = profileInfo['full_name'] ?? AppStrings.adminStudents;
 
@@ -292,8 +279,8 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                                   children: [
                                     CircleAvatar(
                                       radius: 20,
-                                      backgroundColor: AppColors.darkTeal.withValues(alpha: 0.1),
-                                      child: const Icon(CupertinoIcons.person, color: AppColors.darkTeal, size: 20),
+                                      backgroundColor: Nebula.teal.withValues(alpha: 0.1),
+                                      child: Icon(CupertinoIcons.person, color: Nebula.teal, size: 20),
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
@@ -305,32 +292,32 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                                             style: GoogleFonts.inter(
                                               fontSize: 15,
                                               fontWeight: FontWeight.bold,
-                                              color: AppColors.nearBlack,
+                                              color: context.textPrimary,
                                             ),
                                           ),
                                           Text(
                                             'Kelas $classStr',
                                             style: GoogleFonts.inter(
                                               fontSize: 12,
-                                              color: AppColors.textGray,
+                                              color: context.textSecondary,
                                             ),
                                           ),
                                         ],
                                       ),
                                     ),
-                                    const Icon(CupertinoIcons.checkmark_circle_fill, color: AppColors.successGreen),
+                                    const Icon(CupertinoIcons.checkmark_circle_fill, color: Nebula.teal),
                                   ],
                                 ),
-                                const SizedBox(height: 12),
+                                SizedBox(height: 12),
                                 // Navigate shortcut to child
-                                InkWell(
+                                PressScale(
                                   onTap: () => context.push('/admin/users/student/$studentId'),
                                   child: Container(
-                                    padding: const EdgeInsets.all(12),
+                                    padding: EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: AppColors.darkTeal.withValues(alpha: 0.05),
+                                      color: Nebula.teal.withValues(alpha: 0.05),
                                       borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: AppColors.darkTeal.withValues(alpha: 0.15)),
+                                      border: Border.all(color: Nebula.teal.withValues(alpha: 0.15)),
                                     ),
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -340,10 +327,10 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                                           style: GoogleFonts.inter(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w700,
-                                            color: AppColors.darkTeal,
+                                            color: Nebula.teal,
                                           ),
                                         ),
-                                        const Icon(CupertinoIcons.chevron_right, size: 14, color: AppColors.darkTeal),
+                                        Icon(CupertinoIcons.chevron_right, size: 14, color: Nebula.teal),
                                       ],
                                     ),
                                   ),
@@ -356,21 +343,12 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                   ),
                 ),
                 const SizedBox(height: 24),
+                const GradientLine(),
+                const SizedBox(height: 24),
 
                 // Security Settings
-                Container(
+                NebulaCard(
                   padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.black.withValues(alpha: 0.04),
-                        blurRadius: 20,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -379,7 +357,7 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                         style: GoogleFonts.inter(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textGray,
+                          color: context.textSecondary,
                           letterSpacing: 0.05,
                         ),
                       ),
@@ -389,7 +367,7 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                         title: AppStrings.adminChangePassword,
                         onTap: () => _showChangePasswordDialog(profile.id),
                       ),
-                      const Divider(height: 20, thickness: 0.5, color: AppColors.borderGray),
+                      Divider(height: 20, thickness: 0.5, color: context.dividerCol),
                       _buildSecurityItem(
                         icon: CupertinoIcons.device_phone_portrait,
                         title: AppStrings.adminSessionActiveLabel,
@@ -421,8 +399,8 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.white,
-                    border: Border.all(color: AppColors.errorLightColor, width: 1),
+                    color: context.cardBg,
+                    border: Border.all(color: Nebula.rose.withValues(alpha: 0.1), width: 1),
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: TextButton.icon(
@@ -455,14 +433,14 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                     },
                     icon: Icon(
                       isAccountActive ? CupertinoIcons.minus_circle : CupertinoIcons.checkmark_seal,
-                      color: AppColors.errorRed2,
+                      color: Nebula.rose,
                     ),
                     label: Text(
                       isAccountActive ? 'Nonaktifkan Akun Orang Tua' : 'Aktifkan Kembali Akun Orang Tua',
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.errorRed2,
+                        color: Nebula.rose,
                       ),
                     ),
                   ),
@@ -471,12 +449,12 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
             ),
           );
         },
-        loading: () => const Center(child: CupertinoActivityIndicator(color: AppColors.darkTeal)),
+        loading: () => Center(child: CupertinoActivityIndicator(color: Nebula.teal)),
         error: (err, stack) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+              const Icon(Icons.error_outline, size: 48, color: Nebula.rose),
               const SizedBox(height: 12),
               Text('${AppStrings.labelFailed} memuat data'),
               const SizedBox(height: 8),
@@ -499,14 +477,14 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(icon, size: 16, color: AppColors.textGray),
+        Icon(icon, size: 16, color: context.textSecondary),
         const SizedBox(width: 6),
         Text(
           value,
           style: GoogleFonts.inter(
             fontSize: 15,
             fontWeight: FontWeight.w400,
-            color: AppColors.darkGray,
+            color: context.textSecondary,
           ),
         ),
       ],
@@ -518,10 +496,10 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
     required String title,
     required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4.0),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: PressScale(
+        onTap: onTap,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -529,8 +507,8 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
               children: [
                 CircleAvatar(
                   radius: 16,
-                  backgroundColor: AppColors.lightGray,
-                  child: Icon(icon, size: 16, color: AppColors.mutedGray),
+                  backgroundColor: context.cardBg,
+                  child: Icon(icon, size: 16, color: context.textSecondary),
                 ),
                 const SizedBox(width: 12),
                 Text(
@@ -538,12 +516,12 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                   style: GoogleFonts.inter(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.nearBlack,
+                    color: context.textPrimary,
                   ),
                 ),
               ],
             ),
-            const Icon(CupertinoIcons.chevron_right, size: 14, color: AppColors.gray400),
+            Icon(CupertinoIcons.chevron_right, size: 14, color: context.textSecondary),
           ],
         ),
       ),

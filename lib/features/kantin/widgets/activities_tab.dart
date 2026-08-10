@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/kantin/providers/operator_activities_provider.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 class ActivitiesTab extends ConsumerStatefulWidget {
   const ActivitiesTab({super.key});
@@ -34,16 +35,16 @@ class _ActivitiesTabState extends ConsumerState<ActivitiesTab> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: context.cardBg,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.borderLight, width: 0.5),
+                  border: Border.all(color: context.borderLight, width: 0.5),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: _selectedActivity,
                     isExpanded: true,
                     style: GoogleFonts.inter(
-                        color: AppColors.textDark, fontSize: 14),
+                        color: context.textPrimary, fontSize: 14),
                     onChanged: (val) {
                       if (val != null) {
                         setState(() {
@@ -90,16 +91,16 @@ class _ActivitiesTabState extends ConsumerState<ActivitiesTab> {
                     return Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
+                        children: [
                           Icon(CupertinoIcons.list_bullet,
-                              size: 48, color: AppColors.textGray),
+                              size: 48, color: context.textSecondary),
                           SizedBox(height: 12),
                           Text(
                             'Tidak ada aktivitas',
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.textDark,
+                              color: context.textPrimary,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -123,27 +124,27 @@ class _ActivitiesTabState extends ConsumerState<ActivitiesTab> {
                           : '-';
 
                       IconData iconData = CupertinoIcons.info;
-                      Color iconColor = AppColors.primary;
+                      Color iconColor = Nebula.teal;
 
                       if (type == 'TAMBAH_PRODUK') {
                         iconData = CupertinoIcons.add_circled;
-                        iconColor = AppColors.success;
+                        iconColor = Nebula.teal;
                       } else if (type == 'UBAH_PRODUK') {
                         iconData = CupertinoIcons.pencil_circle;
                         iconColor = Colors.orange;
                       } else if (type == 'REFUND_TRANSAKSI') {
                         iconData = CupertinoIcons.arrow_counterclockwise_circle;
-                        iconColor = AppColors.error;
+                        iconColor = Nebula.rose;
                       }
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: AppColors.white,
+                          color: context.cardBg,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                              color: AppColors.borderLight, width: 0.5),
+                              color: context.borderLight, width: 0.5),
                         ),
                         child: Row(
                           children: [
@@ -155,18 +156,18 @@ class _ActivitiesTabState extends ConsumerState<ActivitiesTab> {
                                 children: [
                                   Text(
                                     desc,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
-                                      color: AppColors.textDark,
+                                      color: context.textPrimary,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     timeStr,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 11,
-                                      color: AppColors.textGray,
+                                      color: context.textSecondary,
                                     ),
                                   ),
                                 ],
@@ -186,7 +187,7 @@ class _ActivitiesTabState extends ConsumerState<ActivitiesTab> {
                     children: [
                       Text(
                         '${AppStrings.labelFailed} memuat aktivitas',
-                        style: TextStyle(color: AppColors.error),
+                        style: TextStyle(color: Nebula.rose),
                       ),
                       const SizedBox(height: 8),
                       ElevatedButton(

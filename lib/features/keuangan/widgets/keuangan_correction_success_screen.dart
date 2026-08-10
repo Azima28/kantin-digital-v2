@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 /// Success screen displayed after a successful balance correction.
 class KeuanganCorrectionSuccessScreen extends StatelessWidget {
@@ -39,25 +40,25 @@ class KeuanganCorrectionSuccessScreen extends StatelessWidget {
         Container(
           height: 80,
           width: 80,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColors.errorLight,
+            color: Nebula.rose.withValues(alpha: 0.1),
           ),
           child: const Center(
             child: Icon(
               CupertinoIcons.checkmark_shield_fill,
-              color: AppColors.errorRed2,
+              color: Nebula.rose,
               size: 56,
             ),
           ),
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: 24),
         Text(
           'Koreksi Berhasil!',
           style: GoogleFonts.inter(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: AppColors.darkTeal,
+            color: Nebula.teal,
           ),
         ),
         const SizedBox(height: 8),
@@ -65,7 +66,7 @@ class KeuanganCorrectionSuccessScreen extends StatelessWidget {
           'Saldo $studentName berhasil disesuaikan.',
           style: GoogleFonts.inter(
             fontSize: 14,
-            color: AppColors.mutedGray,
+            color: context.textSecondary,
           ),
           textAlign: TextAlign.center,
         ),
@@ -76,48 +77,49 @@ class KeuanganCorrectionSuccessScreen extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColors.borderGray),
+            border: Border.all(color: context.dividerCol),
           ),
           child: Column(
             children: [
-              _buildInfoRow('Saldo Sebelum', fmt.format(studentBalance)),
-              const Divider(
+              _buildInfoRow(context, 'Saldo Sebelum', fmt.format(studentBalance)),
+              Divider(
                 height: 16,
                 thickness: 0.5,
-                color: AppColors.borderGray,
+                color: context.dividerCol,
               ),
               _buildInfoRow(
+                context,
                 'Penyesuaian',
                 '${isAddition ? "+" : "-"}${fmt.format(amount)}',
                 valueColor:
-                    isAddition ? AppColors.successGreen : AppColors.errorRed2,
+                    isAddition ? Nebula.teal : Nebula.rose,
                 isBold: true,
               ),
-              const Divider(
+              Divider(
                 height: 16,
                 thickness: 0.5,
-                color: AppColors.borderGray,
+                color: context.dividerCol,
               ),
-              _buildInfoRow('Saldo Baru', fmt.format(newBalance), isBold: true),
-              const Divider(
+              _buildInfoRow(context, 'Saldo Baru', fmt.format(newBalance), isBold: true),
+              Divider(
                 height: 16,
                 thickness: 0.5,
-                color: AppColors.borderGray,
+                color: context.dividerCol,
               ),
-              _buildInfoRow('Waktu Transaksi', successTime),
-              const Divider(
+              _buildInfoRow(context, 'Waktu Transaksi', successTime),
+              Divider(
                 height: 16,
                 thickness: 0.5,
-                color: AppColors.borderGray,
+                color: context.dividerCol,
               ),
-              _buildInfoRow('Kode Koreksi', refCode),
+              _buildInfoRow(context, 'Kode Koreksi', refCode),
             ],
           ),
         ),
 
-        const SizedBox(height: 40),
+        SizedBox(height: 40),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
@@ -125,7 +127,7 @@ class KeuanganCorrectionSuccessScreen extends StatelessWidget {
               context.go('/finance');
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.darkTeal,
+              backgroundColor: Nebula.teal,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -137,7 +139,7 @@ class KeuanganCorrectionSuccessScreen extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
-                color: AppColors.white,
+                color: Colors.white,
               ),
             ),
           ),
@@ -147,6 +149,7 @@ class KeuanganCorrectionSuccessScreen extends StatelessWidget {
   }
 
   Widget _buildInfoRow(
+    BuildContext context,
     String label,
     String value, {
     bool isBold = false,
@@ -158,7 +161,7 @@ class KeuanganCorrectionSuccessScreen extends StatelessWidget {
         Text(
           label,
           style: GoogleFonts.inter(
-            color: AppColors.mutedGray,
+            color: context.textSecondary,
             fontSize: 13,
           ),
         ),
@@ -167,7 +170,7 @@ class KeuanganCorrectionSuccessScreen extends StatelessWidget {
             value,
             style: GoogleFonts.inter(
               fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-              color: valueColor ?? AppColors.nearBlack,
+              color: valueColor ?? context.textPrimary,
               fontSize: 13,
             ),
             textAlign: TextAlign.right,

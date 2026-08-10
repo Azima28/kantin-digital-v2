@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selamat Datang - Kantin Digital</title>
+    <!-- Plus Jakarta Sans Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent-primary: #17d7a0;
+            --accent-glow: rgba(23, 215, 160, 0.4);
+            --accent-gradient: linear-gradient(135deg, #17d7a0 0%, #05b382 100%);
+            --bg-dark: #040812;
+            --card-bg: rgba(15, 23, 42, 0.65);
+            --card-border: rgba(23, 215, 160, 0.15);
+            --text-main: #ffffff;
+            --text-sub: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow-x: hidden;
+            padding: 24px 16px;
+        }
+
+        /* Ambient Radial Glow & Grid Pattern */
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: 
+                radial-gradient(rgba(23, 215, 160, 0.06) 1px, transparent 1px);
+            background-size: 24px 24px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-glow-top {
+            position: fixed;
+            top: -150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(23, 215, 160, 0.14) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-glow-bottom {
+            position: fixed;
+            bottom: -150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 500px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(5, 179, 130, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Container Layout */
+        .app-wrapper {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 0.7s ease-out forwards;
+        }
+
+        /* Navbar Header */
+        .navbar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--accent-primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #022018;
+            box-shadow: 0 0 15px rgba(23, 215, 160, 0.4);
+        }
+
+        .brand-name {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+            color: #ffffff;
+        }
+
+        .brand-name .highlight {
+            color: var(--accent-primary);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            text-decoration: none;
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn.active {
+            background: rgba(23, 215, 160, 0.1);
+            border: 1px solid rgba(23, 215, 160, 0.3);
+            color: var(--accent-primary);
+        }
+
+        .nav-btn:not(.active) {
+            color: var(--text-sub);
+        }
+
+        .nav-btn:not(.active):hover {
+            color: #ffffff;
+        }
+
+        /* Welcome Badge Pill */
+        .badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: rgba(23, 215, 160, 0.08);
+            border: 1px solid rgba(23, 215, 160, 0.25);
+            border-radius: 100px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--accent-primary);
+            margin-bottom: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .pulse-dot {
+            width: 7px;
+            height: 7px;
+            background-color: var(--accent-primary);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-primary);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(23, 215, 160, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(23, 215, 160, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(23, 215, 160, 0); }
+        }
+
+        /* Orbit Visual Container */
+        .orbit-container {
+            position: relative;
+            width: 260px;
+            height: 220px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .orbit-ring-outer {
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            border: 1.5px dashed rgba(23, 215, 160, 0.25);
+            border-radius: 50%;
+            animation: spin 25s linear infinite;
+        }
+
+        .orbit-ring-inner {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            border: 1px solid rgba(23, 215, 160, 0.15);
+            border-radius: 50%;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        .core-badge {
+            position: relative;
+            z-index: 2;
+            width: 105px;
+            height: 105px;
+            background: radial-gradient(circle, rgba(23, 215, 160, 0.15) 0%, rgba(9, 18, 33, 0.9) 100%);
+            border: 1px solid rgba(23, 215, 160, 0.35);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            box-shadow: 0 0 30px rgba(23, 215, 160, 0.15);
+            animation: floatCore 4s ease-in-out infinite;
+        }
+
+        @keyframes floatCore {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .core-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--accent-primary);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* Orbit Floating Nodes */
+        .node-card {
+            position: absolute;
+            z-index: 3;
+            background: rgba(11, 20, 36, 0.85);
+            border: 1px solid rgba(23, 215, 160, 0.25);
+            border-radius: 12px;
+            padding: 6px 12px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: floatNode 5s ease-in-out infinite alternate;
+        }
+
+        @keyframes floatNode {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-6px); }
+        }
+
+        .node-top-left {
+            top: 10px;
+            left: -10px;
+        }
+
+        .node-top-right {
+            top: 25px;
+            right: -15px;
+            animation-delay: -2.5s;
+        }
+
+        .node-bottom {
+            bottom: 0px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 50%;
+            padding: 8px;
+            animation-delay: -1.2s;
+        }
+
+        .node-val {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--accent-primary);
+            line-height: 1;
+        }
+
+        .node-lbl {
+            font-size: 10.5px;
+            color: var(--text-sub);
+            font-weight: 500;
+        }
+
+        .node-icon-play {
+            width: 20px;
+            height: 20px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #022018;
+        }
+
+        /* Headline */
+        .hero-text {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .hero-text h1 {
+            font-size: 38px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            line-height: 1.1;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #ffffff 0%, var(--accent-primary) 50%, #05b382 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-text p {
+            font-size: 15px;
+            color: var(--text-sub);
+            line-height: 1.5;
+            font-weight: 500;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 16px 10px;
+            text-align: center;
+            backdrop-filter: blur(12px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(23, 215, 160, 0.4);
+            box-shadow: 0 10px 25px -5px rgba(23, 215, 160, 0.2);
+            background: rgba(20, 32, 56, 0.75);
+        }
+
+        .feature-icon-wrapper {
+            width: 36px;
+            height: 36px;
+            background: rgba(23, 215, 160, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            color: var(--accent-primary);
+        }
+
+        .feature-card h3 {
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 4px;
+            letter-spacing: -0.2px;
+        }
+
+        .feature-card p {
+            font-size: 10.5px;
+            color: var(--text-sub);
+            line-height: 1.35;
+        }
+
+        /* Quick Stats Banner */
+        .stats-banner {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            margin-bottom: 24px;
+            backdrop-filter: blur(8px);
+        }
+
+        .stat-col {
+            text-align: center;
+        }
+
+        .stat-val {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--accent-primary);
+            display: block;
+        }
+
+        .stat-val .star-icon {
+            color: #fbbf24;
+            font-size: 13px;
+        }
+
+        .stat-lbl {
+            font-size: 11px;
+            color: var(--text-sub);
+            font-weight: 500;
+        }
+
+        .stat-divider {
+            width: 1px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        /* Action Buttons Stack */
+        .actions-stack {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: var(--accent-gradient);
+            color: #022018;
+            border: none;
+            padding: 16px;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 8px 24px rgba(23, 215, 160, 0.3);
+            transition: all 0.25s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(23, 215, 160, 0.45);
+            filter: brightness(1.06);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 15px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(23, 215, 160, 0.3);
+        }
+
+        .guest-link {
+            color: var(--accent-primary);
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 600;
+            margin-top: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .guest-link:hover {
+            gap: 10px;
+            color: #ffffff;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive Breakpoint for Large Screens */
+        @media (min-width: 768px) {
+            .app-wrapper {
+                max-width: 540px;
+            }
+            .hero-text h1 {
+                font-size: 44px;
+            }
+            .feature-card h3 {
+                font-size: 13.5px;
+            }
+            .feature-card p {
+                font-size: 11.5px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient Background Glow & Grid -->
+    <div class="bg-grid"></div>
+    <div class="bg-glow-top"></div>
+    <div class="bg-glow-bottom"></div>
+
+    <div class="app-wrapper">
+        
+        <!-- Header Navbar -->
+        <header class="navbar">
+            <div class="brand">
+                <div class="brand-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="5" ry="5"></rect>
+                        <circle cx="12" cy="12" r="3" fill="currentColor"></circle>
+                    </svg>
+                </div>
+                <span class="brand-name">Kantin<span class="highlight">Digital</span></span>
+            </div>
+            <nav class="nav-links">
+                <a href="#" class="nav-btn active">Beranda</a>
+                <a href="#" class="nav-btn">Menu</a>
+            </nav>
+        </header>
+
+        <!-- Welcome Badge Pill -->
+        <div class="badge-pill">
+            <span class="pulse-dot"></span>
+            <span>Selamat Datang di Kantin Digital!</span>
+        </div>
+
+        <!-- Orbit Hero Visual Graphics -->
+        <div class="orbit-container">
+            <div class="orbit-ring-outer"></div>
+            <div class="orbit-ring-inner"></div>
+
+            <!-- Central Food Cloche Core -->
+            <div class="core-badge">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#17d7a0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 4V2"></path>
+                    <path d="M4 14a8 8 0 0 1 16 0H4z"></path>
+                    <path d="M3 18h18"></path>
+                    <path d="M6 21h12"></path>
+                </svg>
+                <span class="core-title">Digital Canteen</span>
+            </div>
+
+            <!-- Orbit Node 1: Top Left Stat -->
+            <div class="node-card node-top-left">
+                <div>
+                    <div class="node-val">98%</div>
+                    <div class="node-lbl">Puas</div>
+                </div>
+            </div>
+
+            <!-- Orbit Node 2: Top Right Stat & Video Icon -->
+            <div class="node-card node-top-right">
+                <div class="node-icon-play">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                </div>
+                <div>
+                    <div class="node-val">2.4k+</div>
+                    <div class="node-lbl">Pengguna</div>
+                </div>
+            </div>
+
+            <!-- Orbit Node 3: Bottom Cutlery Badge -->
+            <div class="node-card node-bottom">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17d7a0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 2v6a3 3 0 0 1-3 3 3 3 0 0 1-3-3V2"></path>
+                    <path d="M15 2v16"></path>
+                    <path d="M7 2v8"></path>
+                    <path d="M4 2v4a3 3 0 0 0 6 0V2"></path>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Headline & Subtitle -->
+        <div class="hero-text">
+            <h1>Kantin <span class="gradient-text">Digital</span></h1>
+            <p>Mulai Jajan Praktis,<br>Tanpa Uang Tunai Lagi</p>
+        </div>
+
+        <!-- 3 Feature Cards Grid -->
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                        <line x1="2" y1="10" x2="22" y2="10"></line>
+                    </svg>
+                </div>
+                <h3>Tanpa Uang Tunai</h3>
+                <p>Bayar cashless, aman & higienis</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </div>
+                <h3>Pesan Lebih Cepat</h3>
+                <p>Antrian digital, tidak perlu tunggu lama</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                </div>
+                <h3>Transaksi Aman</h3>
+                <p>Data terenkripsi & terlindungi</p>
+            </div>
+        </div>
+
+        <!-- Quick Stats Banner -->
+        <div class="stats-banner">
+            <div class="stat-col">
+                <span class="stat-val">50+</span>
+                <span class="stat-lbl">Menu Pilihan</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-col">
+                <span class="stat-val">15+</span>
+                <span class="stat-lbl">Stan Kantin</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-col">
+                <span class="stat-val">4.9 <span class="star-icon">★</span></span>
+                <span class="stat-lbl">Rating</span>
+            </div>
+        </div>
+
+        <!-- Action Buttons Stack -->
+        <div class="actions-stack">
+            <button class="btn-primary">
+                <span>Masuk ke Akun</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </button>
+
+            <button class="btn-secondary">
+                Daftar Akun Baru
+            </button>
+
+            <a href="#" class="guest-link">
+                <span>Lihat menu kantin tanpa login</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </a>
+        </div>
+
+    </div>
+
+</body>
+</html>

@@ -2,7 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/nebula_components.dart';
+import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
@@ -34,11 +38,11 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
         authState.profile?['canteen_name'] ?? 'Stan Kantin';
 
     return Scaffold(
-      backgroundColor: AppColors.systemBackground,
+      backgroundColor: context.surfaceBg,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(CupertinoIcons.left_chevron,
-              color: AppColors.primary),
+              color: Nebula.teal),
           onPressed: () => context.go('/pos'),
         ),
         title: Text(
@@ -47,16 +51,16 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
               fontWeight: FontWeight.w800, fontSize: 17, letterSpacing: 1.1),
         ),
         centerTitle: true,
-        backgroundColor: AppColors.cardBackground,
+        backgroundColor: context.cardBg,
         elevation: 0,
         scrolledUnderElevation: 0,
-        shape: const Border(
-          bottom: BorderSide(color: AppColors.borderLight, width: 0.5),
+        shape: Border(
+          bottom: BorderSide(color: context.borderLight, width: 0.5),
         ),
         actions: [
           IconButton(
             icon: const Icon(CupertinoIcons.square_arrow_right,
-                color: AppColors.error),
+                color: Nebula.rose),
             onPressed: () {
               showCupertinoDialog(
                 context: context,
@@ -99,45 +103,40 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                 child: CustomScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   slivers: [
-                    // Header Revenue Info Card
+                    // Header Revenue Info Card (Nebula)
                     SliverToBoxAdapter(
-                      child: Container(
+                      child: NebulaCard(
                         margin: const EdgeInsets.all(16),
                         padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: AppColors.cardBackground,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                              color: AppColors.borderLight, width: 0.5),
-                        ),
+                        elevation: 2,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               AppStrings.labelBalanceEarned,
-                              style: TextStyle(
+                              style: GoogleFonts.inter(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textGray,
+                                color: context.textSecondary,
                               ),
                             ),
                             const SizedBox(height: 6),
                             revenueAsync.when(
                               data: (double revenue) => Text(
                                 CurrencyFormatter.format(revenue),
-                                style: const TextStyle(
+                                style: GoogleFonts.inter(
                                   fontSize: 28,
                                   fontWeight: FontWeight.w800,
-                                  color: AppColors.primary,
+                                  color: Nebula.teal,
                                 ),
                               ),
                               loading: () =>
                                   const CupertinoActivityIndicator(),
                               error: (err, stack) => Text(
                                 '${AppStrings.labelFailed} memuat',
-                                style: const TextStyle(
+                                style: GoogleFonts.inter(
                                     fontSize: 18,
-                                    color: AppColors.error,
+                                    color: Nebula.rose,
                                     fontWeight: FontWeight.bold),
                               ),
                             ),
@@ -156,10 +155,10 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                           height: 36,
                           child: CupertinoSegmentedControl<int>(
                             groupValue: _selectedCategoryIndex,
-                            selectedColor: AppColors.primary,
-                            unselectedColor: AppColors.cardBackground,
-                            borderColor: AppColors.borderLight,
-                            pressedColor: AppColors.primaryLight,
+                            selectedColor: Nebula.teal,
+                            unselectedColor: context.cardBg,
+                            borderColor: context.borderLight,
+                            pressedColor: Nebula.teal.withValues(alpha: 0.08),
                             children: const <int, Widget>{
                               0: Padding(
                                 padding: EdgeInsets.symmetric(vertical: 8),
@@ -234,11 +233,11 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                                           'Belum ada jajanan tersedia',
                                     ),
                                     const SizedBox(height: 4),
-                                    const Text(
+                                    Text(
                                       'Silakan tambahkan produk di menu "Menu" terlebih dahulu.',
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
-                                          color: AppColors.textGray,
+                                          color: context.textSecondary,
                                           fontSize: 13),
                                     ),
                                   ],
@@ -303,7 +302,7 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                               '${AppStrings.labelFailed} mengambil katalog jajanan:\n$err',
                               textAlign: TextAlign.center,
                               style: const TextStyle(
-                                  color: AppColors.error, fontSize: 14),
+                                  color: Nebula.rose, fontSize: 14),
                             ),
                           ),
                         ),
@@ -319,107 +318,96 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                 ),
               ),
 
-              // Floating Cart Bar (Orange style iOS bar)
+              // Floating Cart Bar (Teal GoFood/GrabFood style)
               if (cartState.totalItems > 0)
                 Positioned(
                   left: 16,
                   right: 16,
                   bottom: 16,
                   child: SafeArea(
-                    child: GestureDetector(
+                    child: PressScale(
                       onTap: () {
                         context.push('/pos/cart');
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 16),
+                            horizontal: 16, vertical: 12),
                         decoration: BoxDecoration(
-                          color: AppColors.accentOrange,
-                          borderRadius: BorderRadius.circular(16),
+                          color: Nebula.teal,
+                          borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.accentOrange
-                                  .withValues(alpha: 0.2),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
+                              color: Nebula.teal.withValues(alpha: 0.35),
+                              blurRadius: 16,
+                              offset: const Offset(0, 6),
                             ),
                           ],
                         ),
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            final bool isNarrow = constraints.maxWidth < 320;
-                            return Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
+                        child: Row(
+                          children: [
+                            // Item Count Chip
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.22),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    CupertinoIcons.bag_fill,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '${cartState.totalItems} Item',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+
+                            // Total Price
+                            Expanded(
+                              child: Text(
+                                CurrencyFormatter.format(cartState.totalAmount),
+                                style: GoogleFonts.inter(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+
+                            // Action label & Chevron icon
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        padding:
-                                            const EdgeInsets.symmetric(
-                                                horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white
-                                              .withValues(alpha: 0.25),
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                        child: Text(
-                                          '${cartState.totalItems}',
-                                          style: const TextStyle(
-                                            color: AppColors.white,
-                                            fontWeight: FontWeight.w800,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          alignment: Alignment.centerLeft,
-                                          child: Text(
-                                            isNarrow
-                                                ? CurrencyFormatter.format(
-                                                    cartState.totalAmount)
-                                                : 'Keranjang • ${CurrencyFormatter.format(cartState.totalAmount)}',
-                                            style: const TextStyle(
-                                              color: AppColors.white,
-                                              fontWeight: FontWeight.w700,
-                                              fontSize: 15,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                                Text(
+                                  'Lihat Keranjang',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    if (!isNarrow) ...[
-                                      const Text(
-                                        AppStrings.titleDetail,
-                                        style: TextStyle(
-                                          color: AppColors.white,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                    ],
-                                    const Icon(
-                                      CupertinoIcons.chevron_right,
-                                      color: AppColors.white,
-                                      size: 14,
-                                    ),
-                                  ],
+                                const SizedBox(width: 4),
+                                const Icon(
+                                  CupertinoIcons.chevron_right,
+                                  color: Colors.white,
+                                  size: 14,
                                 ),
                               ],
-                            );
-                          },
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -440,12 +428,8 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
     required String? imageUrl,
     required int quantity,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderLight, width: 0.5),
-      ),
+    return NebulaCard(
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -454,28 +438,28 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
             flex: 5,
             child: ClipRRect(
               borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(14)),
+                  const BorderRadius.vertical(top: Radius.circular(16)),
               child: imageUrl != null && imageUrl.isNotEmpty
                   ? CachedNetworkImage(
                       imageUrl: imageUrl,
                       width: double.infinity,
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
-                        color: AppColors.lightGray,
+                        color: context.surfaceBg,
                         child: const Center(
                             child: CupertinoActivityIndicator()),
                       ),
                       errorWidget: (context, url, error) => Container(
-                        color: AppColors.lightGray,
-                        child: const Icon(CupertinoIcons.photo,
-                            color: AppColors.textGray, size: 28),
+                        color: context.surfaceBg,
+                        child: Icon(CupertinoIcons.photo,
+                            color: context.textSecondary, size: 28),
                       ),
                     )
                   : Container(
-                      color: AppColors.lightGray,
-                      child: const Center(
+                      color: context.surfaceBg,
+                      child: Center(
                         child: Icon(CupertinoIcons.cart,
-                            color: AppColors.textGray, size: 28),
+                            color: context.textSecondary, size: 28),
                       ),
                     ),
             ),
@@ -495,10 +479,10 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                     name,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textDark,
+                      color: context.textPrimary,
                       height: 1.3,
                     ),
                   ),
@@ -509,10 +493,10 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                     children: [
                       Text(
                         CurrencyFormatter.format(price),
-                        style: const TextStyle(
+                        style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.primary,
+                          color: Nebula.teal,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -548,7 +532,7 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
           width: double.infinity,
           height: 28,
           decoration: BoxDecoration(
-            color: AppColors.primaryLight,
+            color: Nebula.teal.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Row(
@@ -557,7 +541,7 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
               Icon(
                 CupertinoIcons.add,
                 size: 14,
-                color: AppColors.primary,
+                color: Nebula.teal,
               ),
               SizedBox(width: 4),
               Text(
@@ -565,7 +549,7 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
+                  color: Nebula.teal,
                 ),
               ),
             ],
@@ -586,14 +570,14 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
           child: Container(
             width: 26,
             height: 26,
-            decoration: const BoxDecoration(
-              color: AppColors.lightGray,
+            decoration: BoxDecoration(
+              color: context.surfaceBg,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               CupertinoIcons.minus,
               size: 12,
-              color: AppColors.textDark,
+              color: context.textPrimary,
             ),
           ),
         ),
@@ -602,16 +586,16 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
             height: 26,
             margin: const EdgeInsets.symmetric(horizontal: 4),
             decoration: BoxDecoration(
-              color: AppColors.lightGray,
+              color: context.surfaceBg,
               borderRadius: BorderRadius.circular(8),
             ),
             alignment: Alignment.center,
             child: Text(
               '$quantity',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
+                color: context.textPrimary,
               ),
             ),
           ),
@@ -625,14 +609,14 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
           child: Container(
             width: 26,
             height: 26,
-            decoration: const BoxDecoration(
-              color: AppColors.primaryLight,
+            decoration: BoxDecoration(
+              color: Nebula.teal.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               CupertinoIcons.plus,
               size: 12,
-              color: AppColors.primary,
+              color: Nebula.teal,
             ),
           ),
         ),

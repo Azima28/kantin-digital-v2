@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/widgets/notification_bell.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 /// Dashboard header with logout button, title, and notification bell.
 class ParentDashboardHeader extends ConsumerWidget {
@@ -34,10 +35,10 @@ class ParentDashboardHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.white,
+      decoration: BoxDecoration(
+        color: context.cardBg,
         border: Border(
-            bottom: BorderSide(color: AppColors.borderGray, width: 1)),
+            bottom: BorderSide(color: context.dividerCol, width: 1)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
@@ -59,11 +60,11 @@ class ParentDashboardHeader extends ConsumerWidget {
               }
             },
             icon: const Icon(Icons.logout,
-                size: 16, color: AppColors.primary),
+                size: 16, color: Nebula.teal),
             label: Text(
               'Keluar',
               style: GoogleFonts.inter(
-                  color: AppColors.primary,
+                  color: Nebula.teal,
                   fontSize: 13,
                   fontWeight: FontWeight.w600),
             ),
@@ -79,11 +80,11 @@ class ParentDashboardHeader extends ConsumerWidget {
                 style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textDark),
+                    color: context.textPrimary),
               ),
             ),
           ),
-          const NotificationBell(color: AppColors.primary),
+          const NotificationBell(color: Nebula.teal),
         ],
       ),
     );

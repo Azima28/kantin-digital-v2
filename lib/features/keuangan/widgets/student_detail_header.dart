@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 
 class StudentDetailHeader extends StatelessWidget {
@@ -39,24 +40,24 @@ class StudentDetailHeader extends StatelessWidget {
     return Column(
       children: [
         // ─── Profile Summary Bento Card ───
-        _buildProfileSummary(),
+        _buildProfileSummary(context),
         const SizedBox(height: 16),
         // ─── Saldo & Card Info Card ───
-        _buildBalanceCard(),
+        _buildBalanceCard(context),
       ],
     );
   }
 
-  Widget _buildProfileSummary() {
+  Widget _buildProfileSummary(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.04),
+            color: context.shadowColor,
             blurRadius: 15,
             offset: const Offset(0, 4),
           ),
@@ -67,7 +68,7 @@ class StudentDetailHeader extends StatelessWidget {
           CircleAvatar(
             radius: 32,
             backgroundColor:
-                AppColors.darkTeal.withValues(alpha: 0.08),
+                Nebula.teal.withValues(alpha: 0.08),
             child: Text(
               fullName.isNotEmpty
                   ? fullName[0].toUpperCase()
@@ -75,7 +76,7 @@ class StudentDetailHeader extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: AppColors.darkTeal,
+                color: Nebula.teal,
               ),
             ),
           ),
@@ -85,7 +86,7 @@ class StudentDetailHeader extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.nearBlack,
+              color: context.textPrimary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -97,12 +98,12 @@ class StudentDetailHeader extends StatelessWidget {
             ),
             decoration: BoxDecoration(
               color: !isAccountActive
-                  ? AppColors.errorRed2.withValues(alpha: 0.08)
+                  ? Nebula.rose.withValues(alpha: 0.08)
                   : (!hasCard
-                      ? AppColors.borderGray
+                      ? context.dividerCol
                       : (!isCardActive
-                          ? AppColors.warningYellowLight
-                          : AppColors.successGreen
+                          ? Nebula.amberLight
+                          : Nebula.teal
                               .withValues(alpha: 0.08))),
               borderRadius: BorderRadius.circular(12),
             ),
@@ -116,31 +117,33 @@ class StudentDetailHeader extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
                 color: !isAccountActive
-                    ? AppColors.errorRed2
+                    ? Nebula.rose
                     : (!hasCard
-                        ? AppColors.mutedGray
+                        ? context.textSecondary
                         : (!isCardActive
-                            ? AppColors.warningYellow
-                            : AppColors.successGreen)),
+                            ? Nebula.amber
+                            : Nebula.teal)),
               ),
             ),
           ),
           const SizedBox(height: 16),
-          const Divider(
+          Divider(
             height: 1,
             thickness: 0.5,
-            color: AppColors.borderGray,
+            color: context.dividerCol,
           ),
           const SizedBox(height: 16),
-          _buildProfileRow(CupertinoIcons.mail, 'Email', email),
+          _buildProfileRow(context, CupertinoIcons.mail, 'Email', email),
           const SizedBox(height: 10),
           _buildProfileRow(
+            context,
             CupertinoIcons.book,
             AppStrings.labelStudentClass,
             'Kelas $sClass',
           ),
           const SizedBox(height: 10),
           _buildProfileRow(
+            context,
             CupertinoIcons.creditcard,
             'NISN',
             nisn,
@@ -150,16 +153,16 @@ class StudentDetailHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildBalanceCard() {
+  Widget _buildBalanceCard(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.04),
+            color: context.shadowColor,
             blurRadius: 15,
             offset: const Offset(0, 4),
           ),
@@ -173,7 +176,7 @@ class StudentDetailHeader extends StatelessWidget {
             style: GoogleFonts.inter(
               fontWeight: FontWeight.bold,
               fontSize: 14,
-              color: AppColors.nearBlack,
+              color: context.textPrimary,
             ),
           ),
           const SizedBox(height: 14),
@@ -183,7 +186,7 @@ class StudentDetailHeader extends StatelessWidget {
               Text(
                 'Saldo Aktif',
                 style: GoogleFonts.inter(
-                  color: AppColors.mutedGray,
+                  color: context.textSecondary,
                 ),
               ),
               Text(
@@ -191,8 +194,8 @@ class StudentDetailHeader extends StatelessWidget {
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
                   color: balance < 5000
-                      ? AppColors.errorRed2
-                      : AppColors.nearBlack,
+                      ? Nebula.rose
+                      : context.textPrimary,
                 ),
               ),
             ],
@@ -204,7 +207,7 @@ class StudentDetailHeader extends StatelessWidget {
               Text(
                 'Status Kartu',
                 style: GoogleFonts.inter(
-                  color: AppColors.mutedGray,
+                  color: context.textSecondary,
                 ),
               ),
               Text(
@@ -212,8 +215,8 @@ class StudentDetailHeader extends StatelessWidget {
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
                   color: hasCard
-                      ? AppColors.successGreen
-                      : AppColors.mutedGray,
+                      ? Nebula.teal
+                      : context.textSecondary,
                 ),
               ),
             ],
@@ -225,14 +228,14 @@ class StudentDetailHeader extends StatelessWidget {
               Text(
                 'UID Kartu',
                 style: GoogleFonts.inter(
-                  color: AppColors.mutedGray,
+                  color: context.textSecondary,
                 ),
               ),
               Text(
                 rfid ?? '-',
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.nearBlack,
+                  color: context.textPrimary,
                 ),
               ),
             ],
@@ -244,14 +247,14 @@ class StudentDetailHeader extends StatelessWidget {
               Text(
                 'Terakhir Tap',
                 style: GoogleFonts.inter(
-                  color: AppColors.mutedGray,
+                  color: context.textSecondary,
                 ),
               ),
               Text(
                 lastTapStr,
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.nearBlack,
+                  color: context.textPrimary,
                 ),
               ),
             ],
@@ -261,16 +264,16 @@ class StudentDetailHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileRow(IconData icon, String label, String value) {
+  Widget _buildProfileRow(BuildContext context, IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: AppColors.mutedGray),
+        Icon(icon, size: 18, color: context.textSecondary),
         const SizedBox(width: 12),
         Text(
           label,
           style: GoogleFonts.inter(
             fontSize: 13,
-            color: AppColors.mutedGray,
+            color: context.textSecondary,
           ),
         ),
         const Spacer(),
@@ -279,10 +282,11 @@ class StudentDetailHeader extends StatelessWidget {
           style: GoogleFonts.inter(
             fontSize: 13,
             fontWeight: FontWeight.bold,
-            color: AppColors.nearBlack,
+            color: context.textPrimary,
           ),
         ),
       ],
     );
   }
 }
+

@@ -1,8 +1,9 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_dropdown_row.dart';
@@ -45,8 +46,8 @@ void showEditParentSheet(
           left: 20,
           right: 20,
         ),
-        decoration: const BoxDecoration(
-          color: AppColors.white,
+        decoration: BoxDecoration(
+          color: context.cardBg,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SingleChildScrollView(
@@ -59,7 +60,7 @@ void showEditParentSheet(
                   width: 36,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: AppColors.borderGray,
+                    color: context.dividerCol,
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),
@@ -70,7 +71,7 @@ void showEditParentSheet(
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.nearBlack,
+                  color: context.textPrimary,
                 ),
               ),
               const SizedBox(height: 20),
@@ -108,13 +109,13 @@ void showEditParentSheet(
                 hintText: 'Daftar NISN Anak (Pisahkan dengan koma, misal: 20260012, 20260013)',
                 inputType: TextInputType.text,
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkTeal,
+                    backgroundColor: Nebula.teal,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                   onPressed: isSaving
@@ -234,7 +235,7 @@ void showEditParentSheet(
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('Profil orang tua $name berhasil diperbarui'),
-                                  backgroundColor: AppColors.successGreen,
+                                  backgroundColor: Nebula.teal,
                                 ),
                               );
                             }
@@ -244,19 +245,19 @@ void showEditParentSheet(
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(e.toString().replaceAll("Exception: ", "")),
-                                  backgroundColor: AppColors.errorRed2,
+                                  backgroundColor: Nebula.rose,
                                 ),
                               );
                             }
                           }
                         },
                   child: isSaving
-                      ? const CupertinoActivityIndicator(color: AppColors.white)
+                      ? CupertinoActivityIndicator(color: context.cardBg)
                       : Text(
                           'SIMPAN PERUBAHAN',
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold,
-                            color: AppColors.white,
+                            color: context.cardBg,
                           ),
                         ),
                 ),

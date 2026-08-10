@@ -1,8 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/kantin/providers/cart_provider.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 class CartItemTile extends ConsumerWidget {
   final CartItem item;
@@ -16,9 +17,9 @@ class CartItemTile extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderLight, width: 0.5),
+        border: Border.all(color: context.borderLight, width: 0.5),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -34,17 +35,17 @@ class CartItemTile extends ConsumerWidget {
                         margin: const EdgeInsets.only(right: 6),
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.accentOrangeLight,
+                          color: Nebula.amber.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
-                            color: AppColors.accentOrange.withValues(alpha: 0.3),
+                            color: Nebula.amber.withValues(alpha: 0.3),
                             width: 0.5,
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Kustom',
                           style: TextStyle(
-                            color: AppColors.accentOrange,
+                            color: Nebula.amber,
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
                           ),
@@ -53,10 +54,10 @@ class CartItemTile extends ConsumerWidget {
                     Expanded(
                       child: Text(
                         item.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
-                          color: AppColors.textDark,
+                          color: context.textPrimary,
                         ),
                       ),
                     ),
@@ -65,8 +66,8 @@ class CartItemTile extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(
                   '${CurrencyFormatter.format(item.price)} x ${item.quantity}',
-                  style: const TextStyle(
-                    color: AppColors.textGray,
+                  style: TextStyle(
+                    color: context.textSecondary,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -83,13 +84,13 @@ class CartItemTile extends ConsumerWidget {
                 style: const TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 15,
-                  color: AppColors.primary,
+                  color: Nebula.teal,
                 ),
               ),
               const SizedBox(width: 16),
               Container(
                 decoration: BoxDecoration(
-                  color: AppColors.systemBackground,
+                  color: context.surfaceBg,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
@@ -101,21 +102,21 @@ class CartItemTile extends ConsumerWidget {
                           item.name,
                         );
                       },
-                      child: const Padding(
+                      child: Padding(
                         padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         child: Icon(
                           CupertinoIcons.minus,
                           size: 14,
-                          color: AppColors.textDark,
+                          color: context.textPrimary,
                         ),
                       ),
                     ),
                     Text(
                       '${item.quantity}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
-                        color: AppColors.textDark,
+                        color: context.textPrimary,
                       ),
                     ),
                     GestureDetector(
@@ -125,12 +126,12 @@ class CartItemTile extends ConsumerWidget {
                           item.name,
                         );
                       },
-                      child: const Padding(
+                      child: Padding(
                         padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         child: Icon(
                           CupertinoIcons.plus,
                           size: 14,
-                          color: AppColors.textDark,
+                          color: context.textPrimary,
                         ),
                       ),
                     ),

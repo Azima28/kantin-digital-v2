@@ -19,7 +19,7 @@ final publicMenuProvider = FutureProvider.autoDispose
     res = await client
         .from('products')
         .select(
-            'id, operator_id, name, price, category, is_available, image_url, canteen_operators(canteen_name)')
+            'id, operator_id, name, price, category, is_available, image_url, customizable_options, canteen_operators(canteen_name)')
         .eq('category', category)
         .order('is_available', ascending: false)
         .order('name', ascending: true);
@@ -27,7 +27,7 @@ final publicMenuProvider = FutureProvider.autoDispose
     res = await client
         .from('products')
         .select(
-            'id, operator_id, name, price, category, is_available, image_url, canteen_operators(canteen_name)')
+            'id, operator_id, name, price, category, is_available, image_url, customizable_options, canteen_operators(canteen_name)')
         .order('is_available', ascending: false)
         .order('name', ascending: true);
   }
@@ -78,7 +78,7 @@ final categoryPreviewProvider = FutureProvider.autoDispose
   
   var query = client
       .from('products')
-      .select('id, operator_id, name, price, category, is_available, image_url, canteen_operators(canteen_name)')
+      .select('id, operator_id, name, price, category, is_available, image_url, customizable_options, canteen_operators(canteen_name)')
       .eq('category', filter.category);
 
   if (filter.canteenId != null) {
@@ -169,7 +169,7 @@ class PaginatedProductsNotifier extends StateNotifier<PaginatedProductsState> {
       final client = ref.read(supabaseClientProvider);
       var query = client
           .from('products')
-          .select('id, operator_id, name, price, category, is_available, image_url, canteen_operators(canteen_name)');
+          .select('id, operator_id, name, price, category, is_available, image_url, customizable_options, canteen_operators(canteen_name)');
 
       if (filter.category != null) {
         query = query.eq('category', filter.category!);
@@ -208,7 +208,7 @@ class PaginatedProductsNotifier extends StateNotifier<PaginatedProductsState> {
 
       var query = client
           .from('products')
-          .select('id, operator_id, name, price, category, is_available, image_url, canteen_operators(canteen_name)');
+          .select('id, operator_id, name, price, category, is_available, image_url, customizable_options, canteen_operators(canteen_name)');
 
       if (filter.category != null) {
         query = query.eq('category', filter.category!);

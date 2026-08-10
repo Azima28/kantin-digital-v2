@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 
 class MerchantTransactionListItem extends StatelessWidget {
@@ -30,14 +30,14 @@ class MerchantTransactionListItem extends StatelessWidget {
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.nearBlack,
+                  color: context.textPrimary,
                 ),
               ),
               Text(
                 DateFormat('HH:mm', 'id_ID').format(date),
                 style: GoogleFonts.inter(
                   fontSize: 11,
-                  color: AppColors.textGray,
+                  color: context.textSecondary,
                 ),
               ),
             ],
@@ -48,7 +48,7 @@ class MerchantTransactionListItem extends StatelessWidget {
           style: GoogleFonts.inter(
             fontSize: 13,
             fontWeight: FontWeight.bold,
-            color: AppColors.nearBlack,
+            color: context.textPrimary,
           ),
         ),
       ],

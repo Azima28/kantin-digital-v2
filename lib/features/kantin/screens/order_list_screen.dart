@@ -2,10 +2,17 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:go_router/go_router.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/kantin/models/order_item.dart';
+import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
 import 'package:kantin_digital/features/kantin/widgets/order_item_card.dart';
 import 'package:kantin_digital/features/kantin/widgets/order_status_tabs.dart';
+import 'package:kantin_digital/core/widgets/cancel_order_modal.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 
 class OrderListScreen extends ConsumerStatefulWidget {
   const OrderListScreen({super.key});
@@ -15,190 +22,305 @@ class OrderListScreen extends ConsumerStatefulWidget {
 }
 
 class _OrderListScreenState extends ConsumerState<OrderListScreen> {
-  String _selectedTab = 'semua';
-
-  late List<OrderItem> _orders;
+  String _selectedTab = 'baru';
+  late final PageController _pageController;
+  final List<String> _tabsKeys = ['baru', 'proses', 'selesai', 'batal'];
 
   @override
   void initState() {
     super.initState();
-    _orders = _buildMockOrders();
+    final int initialIndex = _tabsKeys.indexOf(_selectedTab);
+    _pageController = PageController(initialPage: initialIndex >= 0 ? initialIndex : 0);
   }
 
-  List<OrderItem> _buildMockOrders() {
-    return [
-      const OrderItem(
-        id: '1',
-        studentName: 'Budi Santoso',
-        time: '10:15 WIB',
-        status: 'Sedang Dimasak',
-        items: [
-          OrderSubItem(name: 'Nasi Goreng Spesial', qty: 1, price: 15000),
-          OrderSubItem(name: 'Es Teh Manis', qty: 1, price: 5000),
-        ],
-        totalAmount: 20000,
-      ),
-      const OrderItem(
-        id: '2',
-        studentName: 'Siti Aminah',
-        time: '09:45 WIB',
-        status: 'Siap Diambil',
-        items: [
-          OrderSubItem(name: 'Mie Ayam Bakso', qty: 2, price: 30000),
-          OrderSubItem(name: 'Jus Jeruk', qty: 1, price: 8000),
-        ],
-        totalAmount: 38000,
-      ),
-      const OrderItem(
-        id: '3',
-        studentName: 'Agus Pratama',
-        time: '09:30 WIB',
-        status: 'Siap Diantar',
-        deliveryLocation: 'Ruang Guru',
-        items: [
-          OrderSubItem(name: 'Kopi Hitam', qty: 3, price: 15000),
-          OrderSubItem(name: 'Roti Bakar Coklat', qty: 1, price: 12000),
-        ],
-        totalAmount: 27000,
-      ),
-      const OrderItem(
-        id: '4',
-        studentName: 'Dewi Lestari',
-        time: '10:30 WIB',
-        status: 'Baru',
-        items: [
-          OrderSubItem(name: 'Ayam Geprek', qty: 1, price: 15000),
-          OrderSubItem(name: 'Air Mineral', qty: 1, price: 3000),
-        ],
-        totalAmount: 18000,
-      ),
-      const OrderItem(
-        id: '5',
-        studentName: 'Rian Hidayat',
-        time: '10:25 WIB',
-        status: 'Baru',
-        items: [
-          OrderSubItem(name: 'Roti Bakar', qty: 2, price: 16000),
-          OrderSubItem(name: 'Susu Coklat', qty: 2, price: 10000),
-        ],
-        totalAmount: 26000,
-      ),
-      const OrderItem(
-        id: '6',
-        studentName: 'Eka Saputra',
-        time: '10:20 WIB',
-        status: 'Baru',
-        items: [
-          OrderSubItem(name: 'Nasi Uduk', qty: 1, price: 12000),
-          OrderSubItem(name: 'Teh Tawar', qty: 1, price: 3000),
-        ],
-        totalAmount: 15000,
-      ),
-      const OrderItem(
-        id: '7',
-        studentName: 'Lina Marlina',
-        time: '10:10 WIB',
-        status: 'Baru',
-        items: [
-          OrderSubItem(name: 'Batagor', qty: 1, price: 10000),
-        ],
-        totalAmount: 10000,
-      ),
-      const OrderItem(
-        id: '8',
-        studentName: 'Dedi Kurniawan',
-        time: '10:05 WIB',
-        status: 'Baru',
-        items: [
-          OrderSubItem(name: 'Siomay', qty: 2, price: 16000),
-          OrderSubItem(name: 'Es Jeruk', qty: 1, price: 7000),
-        ],
-        totalAmount: 23000,
-      ),
-      const OrderItem(
-        id: '9',
-        studentName: 'Fajar Siddiq',
-        time: '09:55 WIB',
-        status: 'Sedang Dimasak',
-        items: [
-          OrderSubItem(name: 'Soto Ayam', qty: 1, price: 15000),
-          OrderSubItem(name: 'Es Teh Manis', qty: 1, price: 5000),
-        ],
-        totalAmount: 20000,
-      ),
-      const OrderItem(
-        id: '10',
-        studentName: 'Hendra Wijaya',
-        time: '09:50 WIB',
-        status: 'Sedang Dimasak',
-        items: [
-          OrderSubItem(name: 'Bakso Kuah', qty: 2, price: 24000),
-        ],
-        totalAmount: 24000,
-      ),
-      const OrderItem(
-        id: '11',
-        studentName: 'Rini Anggraini',
-        time: '09:40 WIB',
-        status: 'Sedang Dimasak',
-        items: [
-          OrderSubItem(name: 'Gado-Gado', qty: 1, price: 12000),
-          OrderSubItem(name: 'Es Jeruk', qty: 1, price: 7000),
-        ],
-        totalAmount: 19000,
-      ),
-      const OrderItem(
-        id: '12',
-        studentName: 'Mega Lestari',
-        time: '09:35 WIB',
-        status: 'Sedang Dimasak',
-        items: [
-          OrderSubItem(name: 'Mie Goreng', qty: 1, price: 12000),
-        ],
-        totalAmount: 12000,
-      ),
-    ];
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
-  void _updateOrderStatus(String id, String newStatus) {
-    setState(() {
-      _orders = _orders.map((order) {
-        if (order.id == id) {
-          return order.copyWith(status: newStatus);
+  Future<void> _updateOrderStatus(String id, String newStatus, String studentId) async {
+    try {
+      final client = ref.read(supabaseClientProvider);
+      
+      if (newStatus == 'Dibatalkan') {
+        final success = await CancelOrderModal.show(
+          context,
+          orderId: id,
+          onSuccess: () {
+            ref.invalidate(canteenOrdersProvider);
+          },
+        );
+        
+        if (success == true && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Pesanan berhasil dibatalkan. Saldo telah dikembalikan.'),
+              backgroundColor: Nebula.teal,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 2),
+            ),
+          );
         }
-        return order;
-      }).toList();
-    });
+        return;
+      }
+      
+      // Ambil status sebelum update untuk notifikasi spesifik
+      final orderData = await client
+          .from('orders')
+          .select('status, student_name, student_id, total_amount, order_items(product_name, quantity)')
+          .eq('id', id)
+          .maybeSingle();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Status pesanan berhasil diubah menjadi "$newStatus"'),
-        backgroundColor: AppColors.teal,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-      ),
+      final String prevStatus = orderData?['status'] as String? ?? '';
+      final num totalAmount = (orderData?['total_amount'] as num?) ?? 0;
+      final String operatorId = orderData?['operator_id'] as String? ?? '';
+      
+      await client.from('orders').update({'status': newStatus}).eq('id', id);
+
+      // Escrow Release: If status becomes 'Selesai', release held escrow funds to canteen operator
+      if (newStatus == 'Selesai' && prevStatus != 'Selesai') {
+        try {
+          await client.rpc('complete_order_release_escrow', params: {'p_order_id': id});
+        } catch (_) {
+          // Fallback if RPC not yet deployed to remote DB
+          if (operatorId.isNotEmpty && totalAmount > 0) {
+            final opData = await client
+                .from('canteen_operators')
+                .select('balance_earned')
+                .eq('id', operatorId)
+                .maybeSingle();
+            if (opData != null) {
+              final double opEarned = (opData['balance_earned'] as num).toDouble();
+              await client
+                  .from('canteen_operators')
+                  .update({'balance_earned': opEarned + totalAmount.toDouble()})
+                  .eq('id', operatorId);
+            }
+          }
+          if (studentId.isNotEmpty && totalAmount > 0) {
+            await client
+                .from('transactions')
+                .update({'status': 'success'})
+                .eq('student_id', studentId)
+                .eq('type', 'purchase')
+                .filter('status', 'in', '("pending_escrow","pending")');
+          }
+        }
+      }
+
+      // Send notification to student based on status
+      if (studentId.isNotEmpty) {
+        String title = '';
+        String message = '';
+        
+        String itemSummary = '';
+        if (orderData != null && orderData['order_items'] != null) {
+          final List<dynamic> items = orderData['order_items'];
+          itemSummary = items.map((item) => "${item['quantity']}x ${item['product_name']}").join(', ');
+        }
+
+        final String prefix = itemSummary.isNotEmpty ? "($itemSummary) " : "";
+
+        if (newStatus == 'Sedang Dimasak') {
+          if (prevStatus == 'Menunggu Pembatalan') {
+            title = 'Pengajuan Batal Ditolak 🍳';
+            message = 'Pengajuan pembatalan untuk pesanan Anda ${prefix}telah ditolak. Pesanan Anda tetap diproses dan sedang dimasak.';
+          } else {
+            title = 'Pesanan Diterima! 🍳';
+            message = 'Pesanan Anda ${prefix}telah diterima oleh kantin dan sedang dimasak.';
+          }
+        } else if (newStatus == 'Siap Diambil') {
+          title = 'Pesanan Siap Diambil! 🛍️';
+          message = 'Pesanan Anda ${prefix}siap diambil di stan kantin.';
+        } else if (newStatus == 'Siap Diantar') {
+          title = 'Pesanan Siap Diantar! 🚴';
+          message = 'Pesanan Anda ${prefix}sedang diantar.';
+        } else if (newStatus == 'Selesai') {
+          title = 'Pesanan Selesai! 🎉';
+          message = 'Pesanan Anda ${prefix}telah selesai. Dana yang ditahan sistem telah diserahkan ke kantin.';
+        }
+
+        if (title.isNotEmpty && message.isNotEmpty) {
+          await client.from('notifications').insert({
+            'student_id': studentId,
+            'title': title,
+            'message': message,
+            'type': 'system',
+          });
+        }
+      }
+
+      ref.invalidate(canteenOrdersProvider);
+      ref.invalidate(todayRevenueProvider);
+      ref.invalidate(operatorTransactionsProvider);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Status pesanan berhasil diubah menjadi "$newStatus"'),
+            backgroundColor: Nebula.teal,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mengubah status pesanan: $e'),
+            backgroundColor: Nebula.rose,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  List<OrderItem> _getFilteredOrders(List<OrderItem> orders, String tab) {
+    final now = DateTime.now();
+    return orders.where((order) {
+      final bool isToday = order.createdAt != null &&
+          order.createdAt!.year == now.year &&
+          order.createdAt!.month == now.month &&
+          order.createdAt!.day == now.day;
+
+      if (tab == 'baru') {
+        return order.status == 'Baru';
+      } else if (tab == 'proses') {
+        return order.status == 'Sedang Dimasak' ||
+            order.status == 'Siap Diambil' ||
+            order.status == 'Siap Diantar' ||
+            order.status == 'Menunggu Pembatalan' ||
+            order.status == 'Menunggu Persetujuan Murid';
+      } else if (tab == 'selesai') {
+        return order.status == 'Selesai' && isToday;
+      } else if (tab == 'batal') {
+        return order.status == 'Dibatalkan' && isToday;
+      }
+      return false;
+    }).toList();
+  }
+
+  Widget _buildEmptyState() {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        SizedBox(height: MediaQuery.of(context).size.height * 0.12),
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Custom Shopping Basket + Magnifier Illustration matching user reference image
+                SizedBox(
+                  width: 130,
+                  height: 110,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Positioned(
+                        top: 4,
+                        child: Icon(
+                          Icons.shopping_basket_rounded,
+                          size: 88,
+                          color: Nebula.teal,
+                        ),
+                      ),
+                      Positioned(
+                        right: 12,
+                        bottom: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: context.isDark ? const Color(0xFF1E293B) : Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Nebula.teal, width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.08),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            CupertinoIcons.search,
+                            size: 20,
+                            color: Nebula.teal,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Belum ada pesanan',
+                  style: GoogleFonts.inter(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: context.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Pesanan yang kamu buat akan muncul di sini.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: context.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                PressScale(
+                  onTap: () {
+                    context.go('/pos/products');
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Nebula.teal,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Nebula.teal.withValues(alpha: 0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Lihat Produk',
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final List<OrderItem> filteredOrders = _orders.where((order) {
-      if (_selectedTab == 'baru') {
-        return order.status == 'Baru';
-      } else if (_selectedTab == 'proses') {
-        return order.status == 'Sedang Dimasak' ||
-            order.status == 'Siap Diambil' ||
-            order.status == 'Siap Diantar';
-      }
-      return true;
-    }).toList();
-
-    final int countSemua = _orders.length;
-    final int countBaru = _orders.where((o) => o.status == 'Baru').length;
-    final int countProses = _orders.where((o) =>
-        o.status == 'Sedang Dimasak' ||
-        o.status == 'Siap Diambil' ||
-        o.status == 'Siap Diantar').length;
+    final ordersAsync = ref.watch(canteenOrdersProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -207,114 +329,234 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        shape: Border(
-          bottom: BorderSide(
-            color: AppColors.gray400.withValues(alpha: 0.3),
-            width: 0.5,
-          ),
-        ),
-        leading: Center(
-          child: Container(
-            margin: const EdgeInsets.only(left: 12),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.borderLight, width: 1),
-            ),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              icon: const Icon(
-                CupertinoIcons.person_crop_circle,
-                color: AppColors.teal,
-                size: 24,
-              ),
-              onPressed: () {},
-            ),
-          ),
-        ),
+        titleSpacing: 24,
+        centerTitle: false,
         title: Text(
           'Daftar Pesanan',
           style: GoogleFonts.inter(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: AppColors.teal,
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: Nebula.teal,
+            letterSpacing: -0.5,
           ),
         ),
-        centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(
               CupertinoIcons.bell,
-              color: AppColors.teal,
-              size: 24,
+              color: Nebula.teal,
+              size: 22,
             ),
             onPressed: () {},
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 16),
         ],
       ),
-      body: SafeArea(
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
+      body: ordersAsync.when(
+        loading: () => ListView.builder(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+          itemCount: 3,
+          itemBuilder: (context, index) => const SkeletonCard(),
+        ),
+        error: (err, stack) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Segmented Tabs Header Row
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                  child: OrderStatusTabs(
-                    selectedTab: _selectedTab,
-                    countSemua: countSemua,
-                    countBaru: countBaru,
-                    countProses: countProses,
-                    onTabChanged: (tab) {
-                      setState(() => _selectedTab = tab);
-                    },
-                  ),
+                const Icon(CupertinoIcons.exclamationmark_triangle, size: 48, color: Nebula.rose),
+                const SizedBox(height: 16),
+                Text(
+                  'Gagal Memuat Pesanan',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-
-                // Order Cards List
-                Expanded(
-                  child: filteredOrders.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                CupertinoIcons.square_list,
-                                size: 64,
-                                color: AppColors.gray400,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Tidak ada pesanan',
-                                style: GoogleFonts.inter(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textGray,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                          itemCount: filteredOrders.length,
-                          itemBuilder: (context, index) {
-                            return OrderItemCard(
-                              order: filteredOrders[index],
-                              onStatusChanged: _updateOrderStatus,
-                            );
-                          },
-                        ),
+                const SizedBox(height: 8),
+                Text(err.toString(), textAlign: TextAlign.center, style: GoogleFonts.inter(fontSize: 12, color: context.textSecondary)),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => ref.invalidate(canteenOrdersProvider),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Nebula.teal,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Coba Lagi'),
                 ),
               ],
             ),
           ),
         ),
+        data: (orders) {
+          // Count status statistics
+          final now = DateTime.now();
+          final int countBaru = orders.where((o) => o.status == 'Baru').length;
+          final int countProses = orders.where((o) =>
+              o.status == 'Sedang Dimasak' ||
+              o.status == 'Siap Diambil' ||
+              o.status == 'Siap Diantar' ||
+              o.status == 'Menunggu Pembatalan' ||
+              o.status == 'Menunggu Persetujuan Murid').length;
+          final int countSelesai = orders.where((o) {
+            final bool isToday = o.createdAt != null &&
+                o.createdAt!.year == now.year &&
+                o.createdAt!.month == now.month &&
+                o.createdAt!.day == now.day;
+            return o.status == 'Selesai' && isToday;
+          }).length;
+          final int countBatal = orders.where((o) {
+            final bool isToday = o.createdAt != null &&
+                o.createdAt!.year == now.year &&
+                o.createdAt!.month == now.month &&
+                o.createdAt!.day == now.day;
+            return o.status == 'Dibatalkan' && isToday;
+          }).length;
+
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(canteenOrdersProvider);
+            },
+            child: SafeArea(
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Segmented Tabs Header Row
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                        child: OrderStatusTabs(
+                          selectedTab: _selectedTab,
+                          countBaru: countBaru,
+                          countProses: countProses,
+                          countSelesai: countSelesai,
+                          countBatal: countBatal,
+                          onTabChanged: (tab) {
+                            setState(() => _selectedTab = tab);
+                            final int index = _tabsKeys.indexOf(tab);
+                            if (index >= 0) {
+                              _pageController.animateToPage(
+                                index,
+                                duration: const Duration(milliseconds: 280),
+                                curve: Curves.easeInOut,
+                              );
+                            }
+                          },
+                        ),
+                      ),
+
+                      // Order Cards List wrapped in PageView (ViewPager transition)
+                      Expanded(
+                        child: PageView.builder(
+                          controller: _pageController,
+                          onPageChanged: (index) {
+                            setState(() {
+                              _selectedTab = _tabsKeys[index];
+                            });
+                          },
+                          itemCount: _tabsKeys.length,
+                          itemBuilder: (context, pageIndex) {
+                            final String tabKey = _tabsKeys[pageIndex];
+                            final List<OrderItem> filteredOrders = _getFilteredOrders(orders, tabKey);
+
+                            if (filteredOrders.isEmpty) {
+                              return _buildEmptyState();
+                            }
+
+                            return ListView.builder(
+                              key: PageStorageKey<String>(tabKey),
+                              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                              itemCount: filteredOrders.length,
+                              itemBuilder: (context, index) {
+                                return _AnimatedCardEntry(
+                                  index: index,
+                                  child: OrderItemCard(
+                                    order: filteredOrders[index],
+                                    onStatusChanged: _updateOrderStatus,
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
+    );
+  }
+}
+
+// Stagger entrance animation
+class _AnimatedCardEntry extends StatefulWidget {
+  final Widget child;
+  final int index;
+
+  const _AnimatedCardEntry({
+    required this.child,
+    required this.index,
+  });
+
+  @override
+  State<_AnimatedCardEntry> createState() => _AnimatedCardEntryState();
+}
+
+class _AnimatedCardEntryState extends State<_AnimatedCardEntry> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _opacityAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 20),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+
+    Future.delayed(Duration(milliseconds: widget.index * 60), () {
+      if (mounted) {
+        _controller.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Opacity(
+          opacity: _opacityAnimation.value,
+          child: Transform.translate(
+            offset: _slideAnimation.value,
+            child: child,
+          ),
+        );
+      },
+      child: widget.child,
     );
   }
 }

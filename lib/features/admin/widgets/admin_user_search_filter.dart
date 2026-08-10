@@ -1,7 +1,8 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 
 /// Search bar and role filter for the admin users screen.
@@ -28,7 +29,7 @@ class AdminUserSearchFilter extends ConsumerWidget {
           // Search input field
           Container(
             decoration: BoxDecoration(
-              color: AppColors.lightGray,
+              color: context.dividerCol,
               borderRadius: BorderRadius.circular(12),
             ),
             child: TextField(
@@ -37,17 +38,17 @@ class AdminUserSearchFilter extends ConsumerWidget {
                 onSearchChanged(val.toLowerCase().trim());
               },
               style: const TextStyle(fontSize: 15),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Cari nama, email, NISN, usn...',
-                hintStyle: TextStyle(color: AppColors.textGray),
+                hintStyle: TextStyle(color: context.textSecondary),
                 prefixIcon:
-                    Icon(CupertinoIcons.search, color: AppColors.mutedGray),
+                    Icon(CupertinoIcons.search, color: context.textSecondary),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(vertical: 12),
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           // Cupertino Segmented Control Filter Peran
           SizedBox(
@@ -56,10 +57,10 @@ class AdminUserSearchFilter extends ConsumerWidget {
               scrollDirection: Axis.horizontal,
               child: CupertinoSegmentedControl<String>(
                 groupValue: selectedRoleFilter,
-                selectedColor: AppColors.darkTeal,
-                unselectedColor: AppColors.white,
-                borderColor: AppColors.borderGray,
-                pressedColor: AppColors.darkTeal.withValues(alpha: 0.1),
+                selectedColor: Nebula.teal,
+                unselectedColor: context.cardBg,
+                borderColor: context.dividerCol,
+                pressedColor: Nebula.teal.withValues(alpha: 0.1),
                 children: {
                   'Semua': _buildRoleFilterSegment('Semua'),
                   'Keuangan': _buildRoleFilterSegment('Keuangan'),

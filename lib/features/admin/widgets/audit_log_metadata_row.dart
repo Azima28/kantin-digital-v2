@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 /// Metadata row widget for audit log detail sheet.
 class AuditLogMetadataRow extends StatelessWidget {
@@ -27,7 +27,7 @@ class AuditLogMetadataRow extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: AppColors.darkGray,
+                color: context.textSecondary,
               ),
             ),
           ),
@@ -37,7 +37,7 @@ class AuditLogMetadataRow extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: AppColors.nearBlack,
+                color: context.textPrimary,
               ),
             ),
           ),

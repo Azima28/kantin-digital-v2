@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
@@ -65,8 +65,8 @@ class _AdminStudentRfidSectionState
               'Kartu RFID berhasil ${newStatus ? "diaktifkan kembali" : "dibekukan"}.',
             ),
             backgroundColor: newStatus
-                ? AppColors.successGreen
-                : AppColors.darkOrange,
+                ? Nebula.teal
+                : Nebula.amber,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -76,7 +76,7 @@ class _AdminStudentRfidSectionState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${AppStrings.labelFailed} memperbarui status kartu'),
-            backgroundColor: AppColors.errorRed2,
+            backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -92,12 +92,12 @@ class _AdminStudentRfidSectionState
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           color: widget.isCardActive
-              ? AppColors.errorLightColor
-              : AppColors.successLight,
+              ? Nebula.rose.withValues(alpha: 0.1)
+              : Nebula.teal.withValues(alpha: 0.1),
           border: Border.all(
             color: widget.isCardActive
-                ? AppColors.errorLightColor
-                : AppColors.successLight,
+                ? Nebula.rose.withValues(alpha: 0.1)
+                : Nebula.teal.withValues(alpha: 0.1),
             width: 1,
           ),
           borderRadius: BorderRadius.circular(16),
@@ -109,8 +109,8 @@ class _AdminStudentRfidSectionState
                   ? CupertinoIcons.snow
                   : CupertinoIcons.checkmark_circle,
               color: widget.isCardActive
-                  ? AppColors.errorRed2
-                  : AppColors.successGreen,
+                  ? Nebula.rose
+                  : Nebula.teal,
             ),
             const SizedBox(height: 8),
             Text(
@@ -120,8 +120,8 @@ class _AdminStudentRfidSectionState
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: widget.isCardActive
-                    ? AppColors.errorRed2
-                    : AppColors.successGreen,
+                    ? Nebula.rose
+                    : Nebula.teal,
               ),
             ),
           ],

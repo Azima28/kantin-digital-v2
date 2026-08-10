@@ -1,13 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/operator_activities_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 Future<void> showRefundConfirmationDialog(
   BuildContext context,
@@ -75,7 +75,7 @@ Future<void> showRefundConfirmationDialog(
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text(AppStrings.successTransactionRefunded),
-                    backgroundColor: AppColors.success,
+                    backgroundColor: Nebula.teal,
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
@@ -85,7 +85,7 @@ Future<void> showRefundConfirmationDialog(
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('${AppStrings.labelFailed} memproses refund'),
-                    backgroundColor: AppColors.error,
+                    backgroundColor: Nebula.rose,
                     behavior: SnackBarBehavior.floating,
                   ),
                 );

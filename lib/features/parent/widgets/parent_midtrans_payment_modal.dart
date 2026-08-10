@@ -2,13 +2,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/parent/widgets/midtrans_cstore_detail_form.dart';
 import 'package:kantin_digital/features/parent/widgets/midtrans_payment_method_item.dart';
 import 'package:kantin_digital/features/parent/widgets/midtrans_qris_detail_form.dart';
 import 'package:kantin_digital/features/parent/widgets/midtrans_va_detail_form.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 /// Shows the Midtrans Snap payment modal dialog.
 ///
@@ -62,7 +63,7 @@ Future<void> showParentMidtransPaymentModal({
           final bool isModalMobile = modalWidth < 600;
 
           return Dialog(
-            backgroundColor: AppColors.white,
+            backgroundColor: context.cardBg,
             insetPadding: isModalMobile
                 ? const EdgeInsets.all(12)
                 : const EdgeInsets.symmetric(
@@ -84,7 +85,7 @@ Future<void> showParentMidtransPaymentModal({
                   // Header
                   Container(
                     decoration: BoxDecoration(
-                      color: AppColors.offWhite2,
+                      color: context.surfaceBg,
                       borderRadius: BorderRadius.vertical(
                           top: Radius.circular(isModalMobile ? 16 : 24)),
                     ),
@@ -95,22 +96,22 @@ Future<void> showParentMidtransPaymentModal({
                       children: [
                         Row(
                           children: [
-                            const Icon(CupertinoIcons.shield_fill,
-                                color: AppColors.teal, size: 20),
+                            Icon(CupertinoIcons.shield_fill,
+                                color: Nebula.teal, size: 20),
                             const SizedBox(width: 8),
                             Text(
                               'MIDTRANS SNAP',
                               style: GoogleFonts.inter(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.textDark,
+                                color: context.textPrimary,
                               ),
                             ),
                           ],
                         ),
                         IconButton(
-                          icon: const Icon(CupertinoIcons.xmark,
-                              color: AppColors.textGray, size: 20),
+                          icon: Icon(CupertinoIcons.xmark,
+                              color: context.textSecondary, size: 20),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ],
@@ -132,18 +133,18 @@ Future<void> showParentMidtransPaymentModal({
                                     style: GoogleFonts.inter(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,
-                                      color: AppColors.textDark,
+                                      color: context.textPrimary,
                                     ),
                                   ),
                                 ),
                                 const SizedBox(height: 24),
                                 // Selected method indicator
                                 Container(
-                                  padding: const EdgeInsets.all(16),
+                                  padding: EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: AppColors.offWhite,
+                                    color: context.cardBg,
                                     border: Border.all(
-                                        color: AppColors.borderGray),
+                                        color: context.dividerCol),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Row(
@@ -151,7 +152,7 @@ Future<void> showParentMidtransPaymentModal({
                                       Icon(
                                           methodDetails[selectedMethod]
                                               ['icon'],
-                                          color: AppColors.teal),
+                                          color: Nebula.teal),
                                       const SizedBox(width: 12),
                                       Text(
                                         methodDetails[selectedMethod]
@@ -161,12 +162,12 @@ Future<void> showParentMidtransPaymentModal({
                                           fontSize: 14,
                                         ),
                                       ),
-                                      const Spacer(),
+                                      Spacer(),
                                       Text(
                                         CurrencyFormatter.format(amount),
                                         style: GoogleFonts.inter(
                                           fontWeight: FontWeight.w700,
-                                          color: AppColors.teal,
+                                          color: Nebula.teal,
                                           fontSize: 16,
                                         ),
                                       ),
@@ -187,7 +188,7 @@ Future<void> showParentMidtransPaymentModal({
 
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.accentOrange,
+                                    backgroundColor: Nebula.amber,
                                     shape: RoundedRectangleBorder(
                                       borderRadius:
                                           BorderRadius.circular(12),
@@ -207,19 +208,19 @@ Future<void> showParentMidtransPaymentModal({
                                                   ['title']);
                                         },
                                   child: isLoading
-                                      ? const CupertinoActivityIndicator(
-                                          color: AppColors.white)
+                                      ? CupertinoActivityIndicator(
+                                          color: context.cardBg)
                                       : Text(
                                           'SIMULASIKAN PEMBAYARAN SUKSES',
                                           style:
                                               GoogleFonts.inter(
-                                            color: AppColors.white,
+                                            color: context.cardBg,
                                             fontWeight: FontWeight.w700,
                                             fontSize: 14,
                                           ),
                                         ),
                                 ),
-                                const SizedBox(height: 12),
+                                SizedBox(height: 12),
                                 TextButton(
                                   onPressed: () {
                                     setModalState(() {
@@ -229,7 +230,7 @@ Future<void> showParentMidtransPaymentModal({
                                   child: Text(
                                     'Ganti Metode Pembayaran',
                                     style: GoogleFonts.inter(
-                                      color: AppColors.teal,
+                                      color: Nebula.teal,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -244,9 +245,9 @@ Future<void> showParentMidtransPaymentModal({
                                 // Total bill box
                                 Container(
                                   decoration: BoxDecoration(
-                                    color: AppColors.offWhite,
+                                    color: context.cardBg,
                                     border: Border.all(
-                                        color: AppColors.borderGray),
+                                        color: context.dividerCol),
                                     borderRadius:
                                         BorderRadius.circular(12),
                                   ),
@@ -260,16 +261,16 @@ Future<void> showParentMidtransPaymentModal({
                                         style: GoogleFonts.inter(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w500,
-                                          color: AppColors.textGray,
+                                          color: context.textSecondary,
                                         ),
                                       ),
-                                      const SizedBox(height: 6),
+                                      SizedBox(height: 6),
                                       Text(
                                         CurrencyFormatter.format(amount),
                                         style: GoogleFonts.inter(
                                           fontSize: 28,
                                           fontWeight: FontWeight.w700,
-                                          color: AppColors.teal,
+                                          color: Nebula.teal,
                                         ),
                                       ),
                                       const SizedBox(height: 8),
@@ -277,7 +278,7 @@ Future<void> showParentMidtransPaymentModal({
                                         'Order ID: $orderId',
                                         style: GoogleFonts.inter(
                                           fontSize: 12,
-                                          color: AppColors.textGray,
+                                          color: context.textSecondary,
                                         ),
                                       ),
                                     ],
@@ -290,7 +291,7 @@ Future<void> showParentMidtransPaymentModal({
                                   style: GoogleFonts.inter(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.textDark,
+                                    color: context.textPrimary,
                                   ),
                                 ),
                                 const SizedBox(height: 16),
@@ -351,11 +352,11 @@ Future<void> showParentMidtransPaymentModal({
                   // Footer
                   if (!showInstructions)
                     Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: const BoxDecoration(
+                      padding: EdgeInsets.all(24),
+                      decoration: BoxDecoration(
                         border: Border(
                           top: BorderSide(
-                              color: AppColors.borderGray, width: 1),
+                              color: context.dividerCol, width: 1),
                         ),
                       ),
                       child: Column(
@@ -363,7 +364,7 @@ Future<void> showParentMidtransPaymentModal({
                         children: [
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.teal,
+                              backgroundColor: Nebula.teal,
                               shape: RoundedRectangleBorder(
                                 borderRadius:
                                     BorderRadius.circular(12),
@@ -383,14 +384,14 @@ Future<void> showParentMidtransPaymentModal({
                                 Text(
                                   'LANJUTKAN PEMBAYARAN',
                                   style: GoogleFonts.inter(
-                                    color: AppColors.white,
+                                    color: context.cardBg,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 14,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                const Icon(CupertinoIcons.arrow_right,
-                                    color: AppColors.white, size: 16),
+                                Icon(CupertinoIcons.arrow_right,
+                                    color: context.cardBg, size: 16),
                               ],
                             ),
                           ),
@@ -398,14 +399,14 @@ Future<void> showParentMidtransPaymentModal({
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(CupertinoIcons.lock_fill,
-                                  color: AppColors.textGray, size: 12),
+                              Icon(CupertinoIcons.lock_fill,
+                                  color: context.textSecondary, size: 12),
                               const SizedBox(width: 4),
                               Text(
                                 'Pembayaran Aman via Midtrans',
                                 style: GoogleFonts.inter(
                                   fontSize: 12,
-                                  color: AppColors.textGray,
+                                  color: context.textSecondary,
                                 ),
                               ),
                             ],

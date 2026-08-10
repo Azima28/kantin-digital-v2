@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/services/pdf_service.dart';
@@ -30,7 +31,7 @@ void showTransactionDetailSheet(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
-    backgroundColor: AppColors.white,
+    backgroundColor: context.cardBg,
     builder: (context) {
       return Consumer(
         builder: (context, ref, child) {
@@ -66,7 +67,7 @@ void showTransactionDetailSheet(
                       style: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textDark,
+                        color: context.textPrimary,
                       ),
                     ),
                   ),
@@ -80,15 +81,13 @@ void showTransactionDetailSheet(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: type == 'topup'
-                                ? AppColors.primary.withAlpha(20)
-                                : AppColors.success.withAlpha(20),
+                            color: Nebula.teal.withValues(alpha: 0.1),
                           ),
                           child: Icon(
                             type == 'topup'
                                 ? CupertinoIcons.square_arrow_down
                                 : CupertinoIcons.check_mark_circled,
-                            color: type == 'topup' ? AppColors.primary : AppColors.success,
+                            color: Nebula.teal,
                             size: 36,
                           ),
                         ),
@@ -103,11 +102,12 @@ void showTransactionDetailSheet(
                   const SizedBox(height: 24),
 
                   // Details
-                  _buildDataRow('ID Transaksi', txId.substring(0, 10).toUpperCase()),
+                  _buildDataRow(context, 'ID Transaksi', txId.substring(0, 10).toUpperCase()),
                   const Divider(height: 20),
-                  _buildDataRow('Waktu', timeStr),
+                  _buildDataRow(context, 'Waktu', timeStr),
                   const Divider(height: 20),
                   _buildDataRow(
+                    context,
                     'Metode/Lokasi',
                     type == 'topup'
                         ? 'QRIS / Koperasi'
@@ -116,12 +116,12 @@ void showTransactionDetailSheet(
 
                   if (type == 'purchase') ...[
                     const Divider(height: 20),
-                    const Text(
+                    Text(
                       'Rincian Pembelian:',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
-                        color: AppColors.textDark,
+                        color: context.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -145,16 +145,17 @@ void showTransactionDetailSheet(
                                   children: [
                                     Text(
                                       '$qty x  $name',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 13,
-                                        color: AppColors.textDark,
+                                        color: context.textPrimary,
                                       ),
                                     ),
                                     Text(
                                       CurrencyFormatter.format(itemPrice * qty),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w500,
+                                        color: context.textPrimary,
                                       ),
                                     ),
                                   ],
@@ -170,7 +171,7 @@ void showTransactionDetailSheet(
                         children: [
                           Text(
                             '${AppStrings.labelFailed} memuat detail barang',
-                            style: TextStyle(color: AppColors.error, fontSize: 11),
+                            style: TextStyle(color: context.errorColor, fontSize: 11),
                           ),
                           const SizedBox(height: 4),
                           TextButton(
@@ -191,14 +192,14 @@ void showTransactionDetailSheet(
                     children: [
                       Text(
                         type == 'topup' ? 'Total Masuk Saldo:' : 'Total Potong Saldo:',
-                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: context.textPrimary),
                       ),
                       Text(
                         CurrencyFormatter.format(amount),
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 16,
-                          color: type == 'topup' ? AppColors.primary : AppColors.textDark,
+                          color: type == 'topup' ? Nebula.teal : context.textPrimary,
                         ),
                       ),
                     ],
@@ -210,7 +211,7 @@ void showTransactionDetailSheet(
                     width: double.infinity,
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.primary),
+                        side: const BorderSide(color: Nebula.teal),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -220,7 +221,7 @@ void showTransactionDetailSheet(
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text(AppStrings.successPdfDownloaded),
-                            backgroundColor: AppColors.success,
+                            backgroundColor: Nebula.teal,
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
@@ -229,7 +230,7 @@ void showTransactionDetailSheet(
                       child: const Text(
                         'Simpan Struk PDF',
                         style: TextStyle(
-                          color: AppColors.primary,
+                          color: Nebula.teal,
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
                         ),
@@ -243,7 +244,7 @@ void showTransactionDetailSheet(
                     width: double.infinity,
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.primary),
+                        side: const BorderSide(color: Nebula.teal),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -274,7 +275,7 @@ void showTransactionDetailSheet(
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text('${AppStrings.labelFailed} membuat struk PDF: $e'),
-                                backgroundColor: AppColors.error,
+                                backgroundColor: context.errorColor,
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
@@ -284,12 +285,12 @@ void showTransactionDetailSheet(
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(CupertinoIcons.share, color: AppColors.primary, size: 16),
+                          Icon(CupertinoIcons.share, color: Nebula.teal, size: 16),
                           SizedBox(width: 8),
                           Text(
                             'Bagikan Struk PDF',
                             style: TextStyle(
-                              color: AppColors.primary,
+                              color: Nebula.teal,
                               fontWeight: FontWeight.w600,
                               fontSize: 14,
                             ),
@@ -310,11 +311,11 @@ void showTransactionDetailSheet(
 }
 
 /// Internal helper — builds a label + value row.
-Widget _buildDataRow(String label, String value) {
+Widget _buildDataRow(BuildContext context, String label, String value) {
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
-      Text(label, style: const TextStyle(color: AppColors.textGray, fontSize: 13)),
+      Text(label, style: TextStyle(color: context.textSecondary, fontSize: 13)),
       Text(
         value,
         style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),

@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
@@ -126,7 +126,7 @@ class _PasswordChangeDialogState extends ConsumerState<_PasswordChangeDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(AppStrings.successPasswordUpdated),
-            backgroundColor: AppColors.successGreen,
+            backgroundColor: Nebula.teal,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -136,7 +136,7 @@ class _PasswordChangeDialogState extends ConsumerState<_PasswordChangeDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${AppStrings.labelFailed} mengubah kata sandi'),
-            backgroundColor: AppColors.errorRed2,
+            backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
         );

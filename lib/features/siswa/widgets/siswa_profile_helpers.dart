@@ -2,19 +2,23 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 // ── Reusable Card ──
 
-Widget buildProfileCard({required Widget child}) {
+Widget buildProfileCard(BuildContext context, {required Widget child}) {
   return Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: AppColors.white,
+      color: context.cardBg,
       borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: context.cardBorder,
+        width: 1.0,
+      ),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.04),
+          color: context.shadowColor,
           blurRadius: 12,
           offset: const Offset(0, 4),
         ),
@@ -26,7 +30,7 @@ Widget buildProfileCard({required Widget child}) {
 
 // ── Section Header ──
 
-Widget buildSectionHeader(String title) {
+Widget buildSectionHeader(BuildContext context, String title) {
   return Padding(
     padding: const EdgeInsets.only(left: 4),
     child: Text(
@@ -34,7 +38,7 @@ Widget buildSectionHeader(String title) {
       style: GoogleFonts.inter(
         fontSize: 11,
         fontWeight: FontWeight.w700,
-        color: AppColors.textGray,
+        color: context.textSecondary,
         letterSpacing: 0.5,
       ),
     ),
@@ -43,7 +47,8 @@ Widget buildSectionHeader(String title) {
 
 // ── Icon Row (label + value) ──
 
-Widget buildIconRow({
+Widget buildIconRow(
+  BuildContext context, {
   required IconData icon,
   required Color iconColor,
   required String label,
@@ -63,7 +68,7 @@ Widget buildIconRow({
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: AppColors.textDark,
+                color: context.textPrimary,
               ),
             ),
             const SizedBox(width: 16),
@@ -74,7 +79,7 @@ Widget buildIconRow({
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
                   fontSize: 14,
-                  color: AppColors.textDark,
+                  color: context.textPrimary,
                 ),
               ),
             ),
@@ -87,7 +92,7 @@ Widget buildIconRow({
           child: Divider(
             height: 1,
             thickness: 0.5,
-            color: AppColors.borderLight,
+            color: context.borderLight,
           ),
         ),
     ],
@@ -96,7 +101,8 @@ Widget buildIconRow({
 
 // ── Icon Action Row (tappable) ──
 
-Widget buildIconActionRow({
+Widget buildIconActionRow(
+  BuildContext context, {
   required IconData icon,
   required Color iconColor,
   required String label,
@@ -120,14 +126,14 @@ Widget buildIconActionRow({
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: textColor ?? AppColors.textDark,
+                    color: textColor ?? context.textPrimary,
                   ),
                 ),
               ),
-              const Icon(
+              Icon(
                 CupertinoIcons.chevron_right,
                 size: 14,
-                color: AppColors.textGray,
+                color: context.textSecondary,
               ),
             ],
           ),
@@ -139,7 +145,7 @@ Widget buildIconActionRow({
           child: Divider(
             height: 1,
             thickness: 0.5,
-            color: AppColors.borderLight,
+            color: context.borderLight,
           ),
         ),
     ],

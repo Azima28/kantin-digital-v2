@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 class AdminDropdownRow extends StatelessWidget {
   final String label;
@@ -20,17 +20,17 @@ class AdminDropdownRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: AppColors.offWhite,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderGray),
+        border: Border.all(color: context.dividerCol),
       ),
       child: Row(
         children: [
           Text(
             '$label: ',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
-              color: AppColors.mutedGray,
+              color: context.textSecondary,
             ),
           ),
           Expanded(
@@ -38,8 +38,8 @@ class AdminDropdownRow extends StatelessWidget {
               child: DropdownButton<String>(
                 value: value,
                 isExpanded: true,
-                style: const TextStyle(
-                  color: AppColors.nearBlack,
+                style: TextStyle(
+                  color: context.textPrimary,
                   fontSize: 14,
                 ),
                 onChanged: onChanged,

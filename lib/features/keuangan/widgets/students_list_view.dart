@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 
@@ -27,7 +28,7 @@ class StudentsListView extends ConsumerWidget {
 
     return RefreshIndicator(
       onRefresh: () async => ref.invalidate(keuanganStudentsProvider),
-      color: AppColors.darkTeal,
+      color: Nebula.teal,
       child: studentsAsync.when(
         data: (list) {
           // Filter the list
@@ -72,14 +73,14 @@ class StudentsListView extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(CupertinoIcons.person_crop_circle_badge_exclam, size: 64, color: AppColors.mutedGray),
+                  Icon(CupertinoIcons.person_crop_circle_badge_exclam, size: 64, color: context.textSecondary),
                   const SizedBox(height: 16),
                   Text(
                     'Siswa tidak ditemukan',
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.nearBlack,
+                      color: context.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -87,7 +88,7 @@ class StudentsListView extends ConsumerWidget {
                     'Coba sesuaikan kata kunci pencarian Anda.',
                     style: GoogleFonts.inter(
                       fontSize: 13,
-                      color: AppColors.mutedGray,
+                      color: context.textSecondary,
                     ),
                   ),
                 ],
@@ -114,11 +115,11 @@ class StudentsListView extends ConsumerWidget {
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: context.cardBg,
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.black.withValues(alpha: 0.04),
+                      color: context.shadowColor,
                       blurRadius: 15,
                       offset: const Offset(0, 4),
                     ),
@@ -130,19 +131,19 @@ class StudentsListView extends ConsumerWidget {
                     onTap: () => context.push('/finance/students/$studentId'),
                     borderRadius: BorderRadius.circular(24),
                     child: Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(16),
                       child: Row(
                         children: [
                           // Avatar
                           CircleAvatar(
                             radius: 22,
-                            backgroundColor: AppColors.darkTeal.withValues(alpha: 0.08),
+                            backgroundColor: Nebula.teal.withValues(alpha: 0.08),
                             child: Text(
                               fullName.isNotEmpty ? fullName[0].toUpperCase() : 'S',
                               style: GoogleFonts.inter(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.darkTeal,
+                                color: Nebula.teal,
                               ),
                             ),
                           ),
@@ -157,7 +158,7 @@ class StudentsListView extends ConsumerWidget {
                                   style: GoogleFonts.inter(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 15,
-                                    color: AppColors.nearBlack,
+                                    color: context.textPrimary,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -167,7 +168,7 @@ class StudentsListView extends ConsumerWidget {
                                   'NISN: $nisn · Kelas $sClass',
                                   style: GoogleFonts.inter(
                                     fontSize: 12,
-                                    color: AppColors.mutedGray,
+                                    color: context.textSecondary,
                                   ),
                                 ),
                                 const SizedBox(height: 6),
@@ -177,19 +178,19 @@ class StudentsListView extends ConsumerWidget {
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                         decoration: BoxDecoration(
-                                          color: AppColors.errorRed2.withValues(alpha: 0.08),
+                                          color: Nebula.rose.withValues(alpha: 0.08),
                                           borderRadius: BorderRadius.circular(12),
                                         ),
                                         child: Row(
                                           children: [
-                                            const Icon(CupertinoIcons.clear_circled_solid, size: 10, color: AppColors.errorRed2),
+                                            const Icon(CupertinoIcons.clear_circled_solid, size: 10, color: Nebula.rose),
                                             const SizedBox(width: 4),
                                             Text(
                                               'AKUN DIBLOKIR',
                                               style: GoogleFonts.inter(
                                                 fontSize: 9,
                                                 fontWeight: FontWeight.bold,
-                                                color: AppColors.errorRed2,
+                                                color: Nebula.rose,
                                               ),
                                             ),
                                           ],
@@ -199,19 +200,19 @@ class StudentsListView extends ConsumerWidget {
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                         decoration: BoxDecoration(
-                                          color: AppColors.borderGray,
+                                          color: context.dividerCol,
                                           borderRadius: BorderRadius.circular(12),
                                         ),
                                         child: Row(
                                           children: [
-                                            const Icon(CupertinoIcons.info_circle_fill, size: 10, color: AppColors.mutedGray),
+                                            Icon(CupertinoIcons.info_circle_fill, size: 10, color: context.textSecondary),
                                             const SizedBox(width: 4),
                                             Text(
                                               'BELUM AKTIF',
                                               style: GoogleFonts.inter(
                                                 fontSize: 9,
                                                 fontWeight: FontWeight.bold,
-                                                color: AppColors.mutedGray,
+                                                color: context.textSecondary,
                                               ),
                                             ),
                                           ],
@@ -221,19 +222,19 @@ class StudentsListView extends ConsumerWidget {
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                         decoration: BoxDecoration(
-                                          color: AppColors.warningYellowLight,
+                                          color: Nebula.amberLight,
                                           borderRadius: BorderRadius.circular(12),
                                         ),
                                         child: Row(
                                           children: [
-                                            const Icon(CupertinoIcons.exclamationmark_circle_fill, size: 10, color: AppColors.warningYellow),
+                                            const Icon(CupertinoIcons.exclamationmark_circle_fill, size: 10, color: Nebula.amber),
                                             const SizedBox(width: 4),
                                             Text(
                                               'KARTU DIBLOKIR',
                                               style: GoogleFonts.inter(
                                                 fontSize: 9,
                                                 fontWeight: FontWeight.bold,
-                                                color: AppColors.warningYellow,
+                                                color: Nebula.amber,
                                               ),
                                             ),
                                           ],
@@ -243,19 +244,19 @@ class StudentsListView extends ConsumerWidget {
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                         decoration: BoxDecoration(
-                                          color: AppColors.successGreen.withValues(alpha: 0.08),
+                                          color: Nebula.teal.withValues(alpha: 0.08),
                                           borderRadius: BorderRadius.circular(12),
                                         ),
                                         child: Row(
                                           children: [
-                                            const Icon(CupertinoIcons.checkmark_circle_fill, size: 10, color: AppColors.successGreen),
+                                            const Icon(CupertinoIcons.checkmark_circle_fill, size: 10, color: Nebula.teal),
                                             const SizedBox(width: 4),
                                             Text(
                                               'AKTIF',
                                               style: GoogleFonts.inter(
                                                 fontSize: 9,
                                                 fontWeight: FontWeight.bold,
-                                                color: AppColors.successGreen,
+                                                color: Nebula.teal,
                                               ),
                                             ),
                                           ],
@@ -275,7 +276,7 @@ class StudentsListView extends ConsumerWidget {
                                 'Saldo',
                                 style: GoogleFonts.inter(
                                   fontSize: 11,
-                                  color: AppColors.mutedGray,
+                                  color: context.textSecondary,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -284,7 +285,7 @@ class StudentsListView extends ConsumerWidget {
                                 style: GoogleFonts.inter(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
-                                  color: balance < 5000 ? AppColors.errorRed2 : AppColors.nearBlack,
+                                  color: balance < 5000 ? Nebula.rose : context.textPrimary,
                                 ),
                               ),
                             ],
@@ -298,10 +299,10 @@ class StudentsListView extends ConsumerWidget {
             },
           );
         },
-        loading: () => const Center(
+        loading: () => Center(
           child: Padding(
             padding: EdgeInsets.all(40),
-            child: CupertinoActivityIndicator(color: AppColors.darkTeal),
+            child: CupertinoActivityIndicator(color: Nebula.teal),
           ),
         ),
         error: (e, _) => Center(
@@ -310,7 +311,7 @@ class StudentsListView extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+                const Icon(Icons.error_outline, size: 48, color: Nebula.rose),
                 const SizedBox(height: 12),
                 Text('${AppStrings.labelFailed} memuat data'),
                 const SizedBox(height: 8),

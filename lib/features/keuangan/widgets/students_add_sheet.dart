@@ -2,7 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
@@ -30,8 +31,8 @@ void showAddStudentSheet(BuildContext context, WidgetRef ref) {
             top: 20,
             left: 20,
             right: 20),
-        decoration: const BoxDecoration(
-          color: AppColors.white,
+        decoration: BoxDecoration(
+          color: context.cardBg,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SingleChildScrollView(
@@ -44,7 +45,7 @@ void showAddStudentSheet(BuildContext context, WidgetRef ref) {
                   width: 36,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: AppColors.borderGray,
+                    color: context.dividerCol,
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),
@@ -55,47 +56,48 @@ void showAddStudentSheet(BuildContext context, WidgetRef ref) {
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.nearBlack,
+                  color: context.textPrimary,
                 ),
               ),
               const SizedBox(height: 20),
-              _sectionLabel('INFORMASI PRIBADI'),
+              _sectionLabel(context, 'INFORMASI PRIBADI'),
               const SizedBox(height: 8),
-              _buildFormField(nameCtrl, '${AppStrings.labelFullName} *'),
+              _buildFormField(context, nameCtrl, '${AppStrings.labelFullName} *'),
               const SizedBox(height: 12),
-              _buildFormField(nisnCtrl, 'NISN *', inputType: TextInputType.number),
+              _buildFormField(context, nisnCtrl, 'NISN *', inputType: TextInputType.number),
               const SizedBox(height: 12),
               _buildDropdownRow(
+                context: context,
                 label: 'Kelas *',
                 value: selectedClass,
                 items: ['7-A', '7-B', '7-C', '8-A', '8-B', '8-C', '9-A', '9-B', '9-C'],
                 onChanged: (v) => setLocal(() => selectedClass = v ?? selectedClass),
               ),
               const SizedBox(height: 12),
-              _buildFormField(parentPhoneCtrl, 'Nomor HP Orang Tua (WhatsApp)', inputType: TextInputType.phone),
+              _buildFormField(context, parentPhoneCtrl, 'Nomor HP Orang Tua (WhatsApp)', inputType: TextInputType.phone),
               const SizedBox(height: 12),
-              _buildFormField(emailCtrl, 'Email (Opsional, otomatis jika kosong)', inputType: TextInputType.emailAddress),
+              _buildFormField(context, emailCtrl, 'Email (Opsional, otomatis jika kosong)', inputType: TextInputType.emailAddress),
               const SizedBox(height: 20),
-              _sectionLabel('AKUN SISTEM'),
+              _sectionLabel(context, 'AKUN SISTEM'),
               const SizedBox(height: 8),
-              _buildFormField(usernameCtrl, 'Username (Opsional, otomatis jika kosong)'),
+              _buildFormField(context, usernameCtrl, 'Username (Opsional, otomatis jika kosong)'),
               const SizedBox(height: 12),
-              _buildFormField(passCtrl, 'Password Awal *',
+              _buildFormField(context, passCtrl, 'Password Awal *',
                   suffix: IconButton(
-                    icon: const Icon(CupertinoIcons.refresh, size: 18, color: AppColors.darkTeal),
+                    icon: const Icon(CupertinoIcons.refresh, size: 18, color: Nebula.teal),
                     onPressed: () => setLocal(() => passCtrl.text = 'siswa${_randomSuffix()}'),
                   )),
               const SizedBox(height: 20),
-              _sectionLabel('KARTU RFID / NFC'),
+              _sectionLabel(context, 'KARTU RFID / NFC'),
               const SizedBox(height: 8),
-              _buildFormField(rfidCtrl, 'RFID UID / Nomor Kartu *'),
+              _buildFormField(context, rfidCtrl, 'RFID UID / Nomor Kartu *'),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkTeal,
+                    backgroundColor: Nebula.teal,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                   onPressed: isSaving
@@ -124,9 +126,7 @@ void showAddStudentSheet(BuildContext context, WidgetRef ref) {
                             final parentPhone = parentPhoneCtrl.text.trim().isNotEmpty
                                 ? parentPhoneCtrl.text.trim()
                                 : null;
-                            final rfid = rfidCtrl.text.trim().isNotEmpty
-                                ? rfidCtrl.text.trim()
-                                : null;
+                            final rfidVal = rfid.isNotEmpty ? rfid : null;
 
                             // 1. Call RPC function to create the user account
                             final newProfile = await client.rpc('create_user_account', params: {
@@ -137,65 +137,42 @@ void showAddStudentSheet(BuildContext context, WidgetRef ref) {
                               'p_phone_number': parentPhone,
                               'p_username': username,
                               'p_nisn': nisn,
-                              'p_class': selectedClass,
-                              'p_is_active': true,
-                              'p_rfid_uid': rfid,
-                              'p_parent_phone': parentPhone,
                             });
 
-                            final String studentId = newProfile['id'];
+                            if (newProfile == null) {
+                              throw Exception('Gagal membuat profil auth / database.');
+                            }
 
-                            // 3. Write to audit logs
-                            try {
-                              final authProfile = ref.read(authNotifierProvider).profile;
-                              final actorName = authProfile?['full_name'] ?? 'Admin Keuangan';
-                              final actorId = authProfile?['id'];
+                            final newProfileMap = Map<String, dynamic>.from(newProfile as Map);
+                            final studentId = newProfileMap['id'] as String;
 
-                              await client.from('audit_logs').insert({
-                                'actor_id': actorId,
-                                'actor_name': actorName,
-                                'action_type': 'TAMBAH_PENGGUNA',
-                                'description': 'Menambahkan siswa baru secara manual: $name (NISN: $nisn)',
-                                'target_id': studentId,
-                                'new_value': {
-                                  'full_name': name,
-                                  'email': email,
-                                  'nisn': nisn,
-                                  'class': selectedClass,
-                                  'rfid_uid': rfid,
-                                  'is_active': true,
-                                },
-                              });
-                            } catch (_) {}
+                            // 2. Call RPC process_topup to register the card UID
+                            await client.rpc('register_rfid_card', params: {
+                              'p_student_id': studentId,
+                              'p_rfid_uid': rfidVal,
+                            });
 
                             ref.invalidate(keuanganStudentsProvider);
-
-                            if (ctx.mounted) Navigator.pop(ctx);
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Siswa $name berhasil didaftarkan'),
-                                  backgroundColor: AppColors.successGreen,
-                                ),
+                                const SnackBar(content: Text('Siswa baru berhasil terdaftar & aktif.')),
                               );
+                              Navigator.pop(context);
                             }
                           } catch (e) {
                             setLocal(() => isSaving = false);
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('${AppStrings.labelFailed} menyimpan'),
-                                  backgroundColor: AppColors.errorRed2,
-                                ),
+                                SnackBar(content: Text('Pendaftaran gagal: $e')),
                               );
                             }
                           }
                         },
                   child: isSaving
-                      ? const CupertinoActivityIndicator(color: AppColors.white)
+                      ? const CupertinoActivityIndicator(color: Colors.white)
                       : Text(
                           'SIMPAN & DAFTARKAN SISWA',
-                          style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.white),
+                          style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.white),
                         ),
                 ),
               ),
@@ -212,17 +189,18 @@ String _randomSuffix() {
   return '${now.second}${now.millisecond % 100}';
 }
 
-Widget _sectionLabel(String label) => Text(
+Widget _sectionLabel(BuildContext context, String label) => Text(
       label,
       style: GoogleFonts.inter(
         fontSize: 11,
         fontWeight: FontWeight.w700,
-        color: AppColors.mutedGray,
+        color: context.textSecondary,
         letterSpacing: 1.2,
       ),
     );
 
 Widget _buildFormField(
+  BuildContext context,
   TextEditingController ctrl,
   String hint, {
   TextInputType inputType = TextInputType.text,
@@ -231,27 +209,28 @@ Widget _buildFormField(
     TextField(
       controller: ctrl,
       keyboardType: inputType,
-      style: GoogleFonts.inter(fontSize: 14),
+      style: GoogleFonts.inter(fontSize: 14, color: context.textPrimary),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: GoogleFonts.inter(color: AppColors.mutedGray, fontSize: 14),
+        hintStyle: GoogleFonts.inter(color: context.textSecondary, fontSize: 14),
         suffixIcon: suffix,
         filled: true,
-        fillColor: AppColors.offWhite,
+        fillColor: context.surfaceBg,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.borderGray)),
+            borderSide: BorderSide(color: context.dividerCol)),
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.borderGray)),
+            borderSide: BorderSide(color: context.dividerCol)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.darkTeal, width: 1.5)),
+            borderSide: const BorderSide(color: Nebula.teal, width: 1.5)),
       ),
     );
 
 Widget _buildDropdownRow({
+  required BuildContext context,
   required String label,
   required String value,
   required List<String> items,
@@ -260,21 +239,22 @@ Widget _buildDropdownRow({
     Container(
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: AppColors.offWhite,
+        color: context.surfaceBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderGray),
+        border: Border.all(color: context.dividerCol),
       ),
       child: Row(
         children: [
-          Text('$label: ', style: GoogleFonts.inter(fontSize: 13, color: AppColors.mutedGray)),
+          Text('$label: ', style: GoogleFonts.inter(fontSize: 13, color: context.textSecondary)),
           Expanded(
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: value,
                 isExpanded: true,
-                style: GoogleFonts.inter(color: AppColors.nearBlack, fontSize: 14),
+                style: GoogleFonts.inter(color: context.textPrimary, fontSize: 14),
+                dropdownColor: context.cardBg,
                 onChanged: onChanged,
-                items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                items: items.map((e) => DropdownMenuItem(value: e, child: Text(e, style: TextStyle(color: context.textPrimary)))).toList(),
               ),
             ),
           ),

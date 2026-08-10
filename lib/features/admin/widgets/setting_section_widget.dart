@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 /// A reusable section card used in admin settings screens.
 ///
@@ -42,11 +43,11 @@ class SettingSectionWidget extends StatelessWidget {
         vertical: verticalPadding,
       ),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.04),
+            color: context.shadowColor,
             blurRadius: shadowBlurRadius,
             offset: const Offset(0, 4),
           ),
@@ -60,16 +61,16 @@ class SettingSectionWidget extends StatelessWidget {
               CircleAvatar(
                 radius: iconRadius,
                 backgroundColor: iconBackgroundColor ??
-                    AppColors.darkTeal.withValues(alpha: 0.1),
-                child: Icon(icon, color: iconColor ?? AppColors.darkTeal, size: iconRadius),
+                    Nebula.teal.withValues(alpha: 0.1),
+                child: Icon(icon, color: iconColor ?? Nebula.teal, size: iconRadius),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Text(
                 title,
                 style: GoogleFonts.inter(
                   fontSize: iconRadius > 16 ? 17 : 15,
                   fontWeight: FontWeight.bold,
-                  color: titleColor ?? AppColors.darkTeal,
+                  color: titleColor ?? Nebula.teal,
                 ),
               ),
             ],

@@ -1,8 +1,9 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 
 class StudentsFilterPanel extends ConsumerWidget {
@@ -39,22 +40,22 @@ class StudentsFilterPanel extends ConsumerWidget {
             onChanged: onSearchChanged,
             decoration: InputDecoration(
               hintText: 'Cari nama, NISN, atau kelas...',
-              hintStyle: GoogleFonts.inter(color: AppColors.mutedGray, fontSize: 14),
-              prefixIcon: const Icon(CupertinoIcons.search, color: AppColors.mutedGray),
+              hintStyle: GoogleFonts.inter(color: context.textSecondary, fontSize: 14),
+              prefixIcon: Icon(CupertinoIcons.search, color: context.textSecondary),
               filled: true,
-              fillColor: AppColors.white,
+              fillColor: context.cardBg,
               contentPadding: const EdgeInsets.symmetric(vertical: 12),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.borderGray),
+                borderSide: BorderSide(color: context.dividerCol),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.borderGray),
+                borderSide: BorderSide(color: context.dividerCol),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.darkTeal, width: 1.5),
+                borderSide: BorderSide(color: Nebula.teal, width: 1.5),
               ),
             ),
           ),
@@ -76,15 +77,15 @@ class StudentsFilterPanel extends ConsumerWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        color: AppColors.white,
+                        color: context.cardBg,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.borderGray),
+                        border: Border.all(color: context.dividerCol),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           value: selectedClass,
                           isExpanded: true,
-                          style: GoogleFonts.inter(color: AppColors.nearBlack, fontSize: 13),
+                          style: GoogleFonts.inter(color: context.textPrimary, fontSize: 13),
                           onChanged: (val) {
                             if (val != null) {
                               onClassChanged(val);
@@ -105,15 +106,15 @@ class StudentsFilterPanel extends ConsumerWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        color: AppColors.white,
+                        color: context.cardBg,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.borderGray),
+                        border: Border.all(color: context.dividerCol),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           value: selectedStatus,
                           isExpanded: true,
-                          style: GoogleFonts.inter(color: AppColors.nearBlack, fontSize: 13),
+                          style: GoogleFonts.inter(color: context.textPrimary, fontSize: 13),
                           onChanged: (val) {
                             if (val != null) {
                               onStatusChanged(val);

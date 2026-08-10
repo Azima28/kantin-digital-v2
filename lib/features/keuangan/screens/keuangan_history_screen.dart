@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,8 +7,9 @@ import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 // keuanganHistoryProvider is defined in keuangan_providers.dart
 
@@ -28,7 +29,7 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.white,
+      backgroundColor: context.cardBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -64,30 +65,32 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                       width: 36,
                       height: 5,
                       decoration: BoxDecoration(
-                        color: AppColors.borderGray,
+                        color: context.dividerCol,
                         borderRadius: BorderRadius.circular(2.5),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   Text(
                     '${AppStrings.titleDetail} Aktivitas Keuangan',
-                    style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.darkTeal),
+                    style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: Nebula.teal),
                   ),
                   const SizedBox(height: 16),
                   _buildDetailRow('Tipe Aksi', actionType.toString().replaceAll('_', ' ')),
-                  const Divider(height: 16, thickness: 0.5, color: AppColors.borderGray),
+                  Divider(height: 16, thickness: 0.5, color: context.dividerCol),
                   _buildDetailRow('Waktu', timeStr),
-                  const Divider(height: 16, thickness: 0.5, color: AppColors.borderGray),
+                  Divider(height: 16, thickness: 0.5, color: context.dividerCol),
                   _buildDetailRow('Keterangan', desc),
                   if (reason.toString().isNotEmpty) ...[
-                    const Divider(height: 16, thickness: 0.5, color: AppColors.borderGray),
+                    Divider(height: 16, thickness: 0.5, color: context.dividerCol),
                     _buildDetailRow('Alasan Koreksi', reason.toString()),
                   ],
+                  Divider(height: 16, thickness: 0.5, color: context.dividerCol),
+                  _buildDetailRow('Pelaku (Actor)', log.actorName.isNotEmpty ? log.actorName : '-'),
                   const SizedBox(height: 24),
                   Text(
                     'Perubahan Data:',
-                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.nearBlack),
+                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: context.textPrimary),
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -96,65 +99,65 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppColors.offWhite,
+                            color: context.cardBg,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.borderGray),
+                            border: Border.all(color: context.dividerCol),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('SEBELUM', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.mutedGray)),
+                              Text('SEBELUM', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: context.textSecondary)),
                               const SizedBox(height: 6),
                               if (balanceBefore != null)
                                 Text(fmt.format(int.tryParse(balanceBefore.toString()) ?? 0), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold))
                               else if (rfidBefore != null)
                                 Text('UID: $rfidBefore', style: GoogleFonts.inter(fontSize: 13))
                               else
-                                Text('-', style: GoogleFonts.inter(fontSize: 13, color: AppColors.mutedGray)),
+                                Text('-', style: GoogleFonts.inter(fontSize: 13, color: context.textSecondary)),
                             ],
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Expanded(
                         child: Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppColors.offWhite,
+                            color: context.cardBg,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.borderGray),
+                            border: Border.all(color: context.dividerCol),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('SESUDAH', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.darkTeal)),
-                              const SizedBox(height: 6),
+                              Text('SESUDAH', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: Nebula.teal)),
+                              SizedBox(height: 6),
                               if (balanceAfter != null)
-                                Text(fmt.format(int.tryParse(balanceAfter.toString()) ?? 0), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.darkTeal))
+                                Text(fmt.format(int.tryParse(balanceAfter.toString()) ?? 0), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: Nebula.teal))
                               else if (rfidAfter != null)
-                                Text('UID: $rfidAfter', style: GoogleFonts.inter(fontSize: 13, color: AppColors.darkTeal))
+                                Text('UID: $rfidAfter', style: GoogleFonts.inter(fontSize: 13, color: Nebula.teal))
                               else
-                                Text('-', style: GoogleFonts.inter(fontSize: 13, color: AppColors.mutedGray)),
+                                Text('-', style: GoogleFonts.inter(fontSize: 13, color: context.textSecondary)),
                             ],
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 32),
+                  SizedBox(height: 32),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.darkTeal,
+                        backgroundColor: Nebula.teal,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         elevation: 0,
                       ),
                       child: Text(
                         'TUTUP',
-                        style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.white),
+                        style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.cardBg),
                       ),
                     ),
                   ),
@@ -175,13 +178,13 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
           width: 100,
           child: Text(
             label,
-            style: GoogleFonts.inter(color: AppColors.mutedGray, fontSize: 13),
+            style: GoogleFonts.inter(color: context.textSecondary, fontSize: 13),
           ),
         ),
         Expanded(
           child: Text(
             value,
-            style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.nearBlack, fontSize: 13),
+            style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.textPrimary, fontSize: 13),
           ),
         ),
       ],
@@ -203,7 +206,7 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
           'Riwayat Transaksi',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
-            color: AppColors.darkTeal,
+            color: Nebula.teal,
             fontSize: 20,
           ),
         ),
@@ -220,15 +223,15 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        color: AppColors.white,
+                        color: context.cardBg,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.borderGray),
+                        border: Border.all(color: context.dividerCol),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           value: _selectedType,
                           isExpanded: true,
-                          style: GoogleFonts.inter(color: AppColors.nearBlack, fontSize: 13),
+                          style: GoogleFonts.inter(color: context.textPrimary, fontSize: 13),
                           onChanged: (val) {
                             if (val != null) {
                               setState(() {
@@ -251,15 +254,15 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        color: AppColors.white,
+                        color: context.cardBg,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.borderGray),
+                        border: Border.all(color: context.dividerCol),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           value: _selectedDateFilter,
                           isExpanded: true,
-                          style: GoogleFonts.inter(color: AppColors.nearBlack, fontSize: 13),
+                          style: GoogleFonts.inter(color: context.textPrimary, fontSize: 13),
                           onChanged: (val) {
                             if (val != null) {
                               setState(() {
@@ -285,7 +288,7 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async => ref.invalidate(keuanganHistoryProvider),
-                color: AppColors.darkTeal,
+                color: Nebula.teal,
                 child: historyAsync.when(
                   data: (auditLogs) {
                     final today = DateTime.now();
@@ -299,7 +302,7 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                       // Type filter
                       bool matchesType = true;
                       if (_selectedType == 'Top-Up') {
-                        matchesType = type == 'TOPUP_TUNAI';
+                        matchesType = type == 'TOPUP' || type == 'TOPUP_TUNAI';
                       } else if (_selectedType == 'Koreksi') {
                         matchesType = type == 'KOREKSI_SALDO';
                       } else if (_selectedType == 'Kartu') {
@@ -336,7 +339,7 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                         final newValue = log.newValue;
                         final oldValue = log.oldValue;
                         
-                        if (type == 'TOPUP_TUNAI') {
+                        if (type == 'TOPUP' || type == 'TOPUP_TUNAI') {
                           final int currentB = int.tryParse(oldValue['balance']?.toString() ?? '0') ?? 0;
                           final int newB = int.tryParse(newValue['balance']?.toString() ?? '0') ?? 0;
                           topupSum += (newB - currentB);
@@ -353,12 +356,12 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                         // Statistics Summary Banner (Sticky Header)
                         if (_selectedDateFilter == 'Hari Ini' || _selectedDateFilter == 'Semua')
                           Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                            padding: const EdgeInsets.all(16),
+                            margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                            padding: EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: AppColors.darkTeal.withValues(alpha: 0.05),
+                              color: Nebula.teal.withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: AppColors.darkTeal.withValues(alpha: 0.1)),
+                              border: Border.all(color: Nebula.teal.withValues(alpha: 0.1)),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -366,23 +369,23 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Top-Up Hari Ini', style: GoogleFonts.inter(fontSize: 11, color: AppColors.mutedGray)),
+                                    Text('Top-Up Hari Ini', style: GoogleFonts.inter(fontSize: 11, color: context.textSecondary)),
                                     const SizedBox(height: 2),
-                                    Text(fmt.format(topupSum), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.successGreen)),
+                                    Text(fmt.format(topupSum), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: Nebula.teal)),
                                   ],
                                 ),
-                                Container(width: 1, height: 32, color: AppColors.borderGray),
+                                Container(width: 1, height: 32, color: context.dividerCol),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
-                                    Text('Koreksi Net Hari Ini', style: GoogleFonts.inter(fontSize: 11, color: AppColors.mutedGray)),
+                                    Text('Koreksi Net Hari Ini', style: GoogleFonts.inter(fontSize: 11, color: context.textSecondary)),
                                     const SizedBox(height: 2),
                                     Text(
                                       '${correctionSum >= 0 ? "+" : ""}${fmt.format(correctionSum)}',
                                       style: GoogleFonts.inter(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
-                                        color: correctionSum >= 0 ? AppColors.successGreen : AppColors.errorRed2,
+                                        color: correctionSum >= 0 ? Nebula.teal : Nebula.rose,
                                       ),
                                     ),
                                   ],
@@ -394,7 +397,7 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                         // List of Audit Logs
                         Expanded(
                           child: ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                             itemCount: filtered.length,
                             itemBuilder: (context, index) {
                               final log = filtered[index];
@@ -405,30 +408,30 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                               final dateStr = DateFormat('dd MMM', 'id_ID').format(created);
 
                               IconData icon = CupertinoIcons.doc_text_fill;
-                              Color iconColor = AppColors.darkTeal;
+                              Color iconColor = Nebula.teal;
 
-                              if (actionType == 'TOPUP_TUNAI') {
+                              if (actionType == 'TOPUP' || actionType == 'TOPUP_TUNAI') {
                                 icon = CupertinoIcons.arrow_up_circle_fill;
-                                iconColor = AppColors.successGreen;
+                                iconColor = Nebula.teal;
                               } else if (actionType == 'KOREKSI_SALDO') {
                                 icon = CupertinoIcons.arrow_right_arrow_left_circle_fill;
-                                iconColor = AppColors.errorRed2;
+                                iconColor = Nebula.rose;
                               } else if (actionType == 'REGISTRASI_KARTU') {
                                 icon = CupertinoIcons.wifi;
-                                iconColor = AppColors.darkOrange;
+                                iconColor = Nebula.amber;
                               } else if (actionType == 'UNLINK_KARTU') {
                                 icon = CupertinoIcons.clear_circled_solid;
-                                iconColor = AppColors.mutedGray;
+                                iconColor = context.textSecondary;
                               }
 
                               return Container(
                                 margin: const EdgeInsets.only(bottom: 12),
                                 decoration: BoxDecoration(
-                                  color: AppColors.white,
+                                  color: context.cardBg,
                                   borderRadius: BorderRadius.circular(24),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.black.withValues(alpha: 0.04),
+                                      color: context.cardBg.withValues(alpha: 0.04),
                                       blurRadius: 15,
                                       offset: const Offset(0, 4),
                                     ),
@@ -467,7 +470,7 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                                                   desc,
                                                   style: GoogleFonts.inter(
                                                     fontSize: 12,
-                                                    color: AppColors.nearBlack,
+                                                    color: context.textPrimary,
                                                   ),
                                                   maxLines: 2,
                                                   overflow: TextOverflow.ellipsis,
@@ -484,14 +487,14 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                                                 style: GoogleFonts.inter(
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.bold,
-                                                  color: AppColors.nearBlack,
+                                                  color: context.textPrimary,
                                                 ),
                                               ),
                                               Text(
                                                 dateStr,
                                                 style: GoogleFonts.inter(
                                                   fontSize: 10,
-                                                  color: AppColors.mutedGray,
+                                                  color: context.textSecondary,
                                                 ),
                                               ),
                                             ],
@@ -508,10 +511,10 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                       ],
                     );
                   },
-                  loading: () => const Center(
+                  loading: () => Center(
                     child: Padding(
                       padding: EdgeInsets.all(40),
-                      child: CupertinoActivityIndicator(color: AppColors.darkTeal),
+                      child: CupertinoActivityIndicator(color: Nebula.teal),
                     ),
                   ),
                   error: (e, _) => Center(
@@ -520,7 +523,7 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+                          const Icon(Icons.error_outline, size: 48, color: Nebula.rose),
                           const SizedBox(height: 12),
                           Text('${AppStrings.labelFailed} memuat riwayat'),
                           const SizedBox(height: 8),

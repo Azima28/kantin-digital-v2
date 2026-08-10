@@ -1,12 +1,15 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_users_tabs.dart';
 import 'package:kantin_digital/features/keuangan/widgets/users_add_sheet.dart';
 import 'package:kantin_digital/features/keuangan/widgets/users_search_bar.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
+import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 
 // ── Main Screen ─────────────────────────────────────────────────────────────
 
@@ -61,33 +64,36 @@ class _KeuanganUsersScreenState extends ConsumerState<KeuanganUsersScreen>
           'Manajemen Pengguna',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
-            color: AppColors.darkTeal,
+            color: Nebula.teal,
             fontSize: 20,
           ),
         ),
         actions: [
           if (_tabController.index != 1)
-            IconButton(
-              icon: const Icon(
-                CupertinoIcons.add_circled_solid,
-                color: AppColors.darkTeal,
-                size: 26,
+            PressScale(
+              onTap: () => showAddUserBottomSheet(context, ref, _tabController.index),
+              child: IconButton(
+                icon: Icon(
+                  CupertinoIcons.add_circled_solid,
+                  color: Nebula.teal,
+                  size: 26,
+                ),
+                tooltip: _tabController.index == 0
+                    ? '${AppStrings.buttonAdd} Siswa'
+                    : '${AppStrings.buttonAdd} Petugas',
+                onPressed: () => showAddUserBottomSheet(context, ref, _tabController.index),
               ),
-              tooltip: _tabController.index == 0
-                  ? '${AppStrings.buttonAdd} Siswa'
-                  : '${AppStrings.buttonAdd} Petugas',
-              onPressed: () => showAddUserBottomSheet(context, ref, _tabController.index),
             ),
         ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
+          preferredSize: Size.fromHeight(48),
           child: Container(
-            color: AppColors.white,
+            color: context.cardBg,
             child: TabBar(
               controller: _tabController,
-              labelColor: AppColors.darkTeal,
-              unselectedLabelColor: AppColors.mutedGray,
-              indicatorColor: AppColors.darkTeal,
+              labelColor: Nebula.teal,
+              unselectedLabelColor: context.textSecondary,
+              indicatorColor: Nebula.teal,
               indicatorWeight: 2.5,
               labelStyle: GoogleFonts.inter(
                 fontWeight: FontWeight.w700,
@@ -114,7 +120,7 @@ class _KeuanganUsersScreenState extends ConsumerState<KeuanganUsersScreen>
             hints: [_searchHint()],
             showClear: _searchQuery.isNotEmpty,
           ),
-          const SizedBox(height: 8),
+          GradientLine(height: 1, margin: EdgeInsets.symmetric(vertical: 4)),
           Expanded(
             child: TabBarView(
               controller: _tabController,

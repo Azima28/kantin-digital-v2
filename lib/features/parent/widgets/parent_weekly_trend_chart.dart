@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 /// Weekly spending trend chart bar widget.
 class ParentWeeklyTrendChart extends StatelessWidget {
@@ -21,9 +22,9 @@ class ParentWeeklyTrendChart extends StatelessWidget {
       height: 190,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderGray, width: 1),
+        border: Border.all(color: context.dividerCol, width: 1),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -41,7 +42,7 @@ class ParentWeeklyTrendChart extends StatelessWidget {
                 style: GoogleFonts.inter(
                   fontSize: 9,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textGray,
+                  color: context.textSecondary,
                 ),
               ),
               const SizedBox(height: 4),
@@ -49,7 +50,7 @@ class ParentWeeklyTrendChart extends StatelessWidget {
                 width: 18,
                 height: barHeight < 4 ? 4 : barHeight,
                 decoration: BoxDecoration(
-                  color: value > 0 ? AppColors.primary : AppColors.offWhite2,
+                  color: value > 0 ? Nebula.teal : context.surfaceBg,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -59,7 +60,7 @@ class ParentWeeklyTrendChart extends StatelessWidget {
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textDark,
+                  color: context.textPrimary,
                 ),
               ),
             ],

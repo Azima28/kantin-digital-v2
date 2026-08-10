@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 
 class MerchantDailySalesCard extends StatelessWidget {
@@ -13,11 +14,11 @@ class MerchantDailySalesCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.04),
+            color: context.shadowColor,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -31,7 +32,7 @@ class MerchantDailySalesCard extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: AppColors.textGray,
+              color: context.textSecondary,
               letterSpacing: 0.05,
             ),
           ),
@@ -43,7 +44,7 @@ class MerchantDailySalesCard extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.nearBlack,
+              color: context.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
@@ -51,7 +52,7 @@ class MerchantDailySalesCard extends StatelessWidget {
             '+12% from yesterday',
             style: GoogleFonts.inter(
               fontSize: 10,
-              color: AppColors.successGreen,
+              color: Nebula.teal,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -71,11 +72,11 @@ class MerchantMonthlySalesCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.04),
+            color: context.shadowColor,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -89,7 +90,7 @@ class MerchantMonthlySalesCard extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: AppColors.textGray,
+              color: context.textSecondary,
               letterSpacing: 0.05,
             ),
           ),
@@ -101,15 +102,15 @@ class MerchantMonthlySalesCard extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.nearBlack,
+              color: context.textPrimary,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             'On track for target',
             style: GoogleFonts.inter(
               fontSize: 10,
-              color: AppColors.darkTeal,
+              color: Nebula.teal,
               fontWeight: FontWeight.w500,
             ),
           ),

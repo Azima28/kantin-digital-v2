@@ -7,7 +7,8 @@ import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 
 // ── Parents Tab ─────────────────────────────────────────────────────────────
@@ -22,7 +23,7 @@ class ParentsTab extends ConsumerWidget {
 
     return RefreshIndicator(
       onRefresh: () async => ref.invalidate(keuanganParentsProvider),
-      color: AppColors.darkTeal,
+      color: Nebula.teal,
       child: parentsAsync.when(
         data: (list) {
           final profiles = list
@@ -38,6 +39,7 @@ class ParentsTab extends ConsumerWidget {
 
           if (filtered.isEmpty) {
             return _buildEmptyState(
+              context,
               'Tidak ada orang tua yang terdaftar.',
               'Akun orang tua otomatis terbuat saat data siswa baru didaftarkan.',
             );
@@ -48,7 +50,7 @@ class ParentsTab extends ConsumerWidget {
             children: [
               // Pending verification section
               if (pending.isNotEmpty && searchQuery.isEmpty) ...[
-                _sectionHeader('⚠️  PERLU VERIFIKASI (${pending.length})'),
+                _sectionHeader(context, '⚠️  PERLU VERIFIKASI (${pending.length})'),
                 const SizedBox(height: 8),
                 ...pending.map(
                   (p) => _buildParentCard(context, ref, p, isPending: true),
@@ -56,7 +58,7 @@ class ParentsTab extends ConsumerWidget {
                 const SizedBox(height: 20),
               ],
               // All active parents
-              _sectionHeader('SEMUA ORANG TUA (${filtered.length})'),
+              _sectionHeader(context, 'SEMUA ORANG TUA (${filtered.length})'),
               const SizedBox(height: 8),
               ...filtered.map(
                 (p) => _buildParentCard(context, ref, p, isPending: false),
@@ -65,7 +67,7 @@ class ParentsTab extends ConsumerWidget {
           );
         },
         loading: () =>
-            const Center(child: CupertinoActivityIndicator(color: AppColors.darkTeal)),
+            Center(child: CupertinoActivityIndicator(color: Nebula.teal)),
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -75,12 +77,12 @@ class ParentsTab extends ConsumerWidget {
                 const Icon(
                   CupertinoIcons.xmark_circle,
                   size: 48,
-                  color: AppColors.errorRed2,
+                  color: Nebula.rose,
                 ),
                 const SizedBox(height: 12),
                 Text(
                   '${AppStrings.labelFailed} memuat data',
-                  style: GoogleFonts.inter(color: AppColors.errorRed2),
+                  style: GoogleFonts.inter(color: Nebula.rose),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
@@ -96,14 +98,14 @@ class ParentsTab extends ConsumerWidget {
     );
   }
 
-  Widget _sectionHeader(String text) => Padding(
+  Widget _sectionHeader(BuildContext context, String text) => Padding(
     padding: const EdgeInsets.only(bottom: 4),
     child: Text(
       text,
       style: GoogleFonts.inter(
         fontSize: 11,
         fontWeight: FontWeight.w700,
-        color: AppColors.mutedGray,
+        color: context.textSecondary,
         letterSpacing: 1.1,
       ),
     ),
@@ -129,21 +131,21 @@ class ParentsTab extends ConsumerWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: context.cardBg,
           borderRadius: BorderRadius.circular(20),
           border: isPending
               ? Border.all(color: Colors.amber.withValues(alpha: 0.4), width: 1)
               : null,
           boxShadow: [
             BoxShadow(
-              color: AppColors.black.withValues(alpha: 0.04),
+              color: context.shadowColor,
               blurRadius: 12,
               offset: const Offset(0, 3),
             ),
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: EdgeInsets.all(14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -153,13 +155,13 @@ class ParentsTab extends ConsumerWidget {
                     radius: 20,
                     backgroundColor: isPending
                         ? Colors.amber.withValues(alpha: 0.1)
-                        : AppColors.darkTeal.withValues(alpha: 0.08),
+                        : Nebula.teal.withValues(alpha: 0.08),
                     child: Text(
                       initials,
                       style: GoogleFonts.inter(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
-                        color: isPending ? Colors.amber : AppColors.darkTeal,
+                        color: isPending ? Colors.amber : Nebula.teal,
                       ),
                     ),
                   ),
@@ -173,14 +175,14 @@ class ParentsTab extends ConsumerWidget {
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
-                            color: AppColors.nearBlack,
+                            color: context.textPrimary,
                           ),
                         ),
                         Text(
                           email,
                           style: GoogleFonts.inter(
                             fontSize: 12,
-                            color: AppColors.mutedGray,
+                            color: context.textSecondary,
                           ),
                         ),
                       ],
@@ -189,9 +191,9 @@ class ParentsTab extends ConsumerWidget {
                   if (isPending)
                     _statusBadge('PENDING', Colors.amber)
                   else if (isActive)
-                    _statusBadge('AKTIF', AppColors.successGreen)
+                    _statusBadge('AKTIF', Nebula.teal)
                   else
-                    _statusBadge('DIBLOKIR', AppColors.errorRed2),
+                    _statusBadge('DIBLOKIR', Nebula.rose),
                 ],
               ),
               if (isPending) ...[
@@ -203,8 +205,8 @@ class ParentsTab extends ConsumerWidget {
                     Expanded(
                       child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.errorRed2,
-                          side: const BorderSide(color: AppColors.errorRed2),
+                          foregroundColor: Nebula.rose,
+                          side: const BorderSide(color: Nebula.rose),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -225,7 +227,7 @@ class ParentsTab extends ConsumerWidget {
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.successGreen,
+                          backgroundColor: Nebula.teal,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -238,7 +240,7 @@ class ParentsTab extends ConsumerWidget {
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
-                            color: AppColors.white,
+                            color: Colors.white,
                           ),
                         ),
                       ),
@@ -269,14 +271,14 @@ class ParentsTab extends ConsumerWidget {
     ),
   );
 
-  Widget _buildEmptyState(String title, String subtitle) => Center(
+  Widget _buildEmptyState(BuildContext context, String title, String subtitle) => Center(
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(
+        Icon(
           CupertinoIcons.person_2,
           size: 64,
-          color: AppColors.mutedGray,
+          color: context.textSecondary,
         ),
         const SizedBox(height: 16),
         Text(
@@ -284,7 +286,7 @@ class ParentsTab extends ConsumerWidget {
           style: GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: AppColors.nearBlack,
+            color: context.textPrimary,
           ),
           textAlign: TextAlign.center,
         ),
@@ -293,7 +295,7 @@ class ParentsTab extends ConsumerWidget {
           subtitle,
           style: GoogleFonts.inter(
             fontSize: 13,
-            color: AppColors.mutedGray,
+            color: context.textSecondary,
           ),
           textAlign: TextAlign.center,
         ),
@@ -318,14 +320,14 @@ class ParentsTab extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('$name berhasil diverifikasi'),
-            backgroundColor: AppColors.successGreen,
+            backgroundColor: Nebula.teal,
           ),
         );
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppStrings.labelFailed), backgroundColor: AppColors.errorRed2),
+          SnackBar(content: Text(AppStrings.labelFailed), backgroundColor: Nebula.rose),
         );
       }
     }
@@ -362,7 +364,7 @@ class ParentsTab extends ConsumerWidget {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Pendaftaran $name ditolak'),
-                      backgroundColor: AppColors.errorRed2,
+                      backgroundColor: Nebula.rose,
                     ),
                   );
                 }
@@ -371,7 +373,7 @@ class ParentsTab extends ConsumerWidget {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(AppStrings.labelFailed),
-                      backgroundColor: AppColors.errorRed2,
+                      backgroundColor: Nebula.rose,
                     ),
                   );
                 }

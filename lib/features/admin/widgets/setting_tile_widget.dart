@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 /// A reusable setting tile used inside admin setting sections.
 ///
@@ -34,7 +34,7 @@ class SettingTileWidget extends StatelessWidget {
     final tile = Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppColors.offWhite2,
+        color: backgroundColor ?? context.surfaceBg,
         borderRadius: BorderRadius.circular(borderRadius),
       ),
       child: Row(
@@ -52,7 +52,7 @@ class SettingTileWidget extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: subtitle != null ? 14 : 13,
                     fontWeight: subtitle != null ? FontWeight.w700 : FontWeight.w600,
-                    color: AppColors.nearBlack,
+                    color: context.textPrimary,
                   ),
                 ),
                 if (subtitle != null) ...[
@@ -61,7 +61,7 @@ class SettingTileWidget extends StatelessWidget {
                     subtitle!,
                     style: GoogleFonts.inter(
                       fontSize: 11,
-                      color: AppColors.textGray,
+                      color: context.textSecondary,
                     ),
                   ),
                 ],

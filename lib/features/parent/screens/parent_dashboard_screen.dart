@@ -2,9 +2,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kantin_digital/core/widgets/premium_panel.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/widgets/premium_bottom_nav_bar.dart';
+import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
+import 'package:kantin_digital/core/widgets/notification_bell.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/parent/providers/parent_providers.dart';
@@ -124,7 +130,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Pengaturan berhasil disimpan!'),
-            backgroundColor: AppColors.successGreen,
+            backgroundColor: Nebula.teal,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -134,7 +140,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${AppStrings.labelFailed} menyimpan pengaturan'),
-            backgroundColor: AppColors.errorRed2,
+            backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -248,6 +254,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
   // Tab View Builders
   Widget _buildHomeTab(String name, String classStr, int balance, double? dailyLimit, List<OperatorTransaction> transactions) {
     return ParentHomeTab(
+      studentId: widget.studentId,
       studentName: name,
       studentClass: classStr,
       balance: balance,
@@ -297,7 +304,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                 builder: (context, child) {
                   return Theme(
                     data: Theme.of(context).copyWith(
-                      colorScheme: const ColorScheme.light(primary: AppColors.primary),
+                      colorScheme: const ColorScheme.light(primary: Nebula.teal),
                     ),
                     child: child!,
                   );
@@ -328,7 +335,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
         // Kategori breakdown bars
         Text(
           'KATEGORI JAJAN PALING BANYAK',
-          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textDark, letterSpacing: 0.5),
+          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: context.textPrimary, letterSpacing: 0.5),
         ),
         const SizedBox(height: 12),
         ParentCategoryBreakdown(
@@ -344,7 +351,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
         // Tren Jajan Mingguan
         Text(
           'TREN JAJAN MINGGUAN (RP)',
-          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textDark, letterSpacing: 0.5),
+          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: context.textPrimary, letterSpacing: 0.5),
         ),
         const SizedBox(height: 12),
         ParentWeeklyTrendChart(
@@ -356,7 +363,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
         // Produk Terfavorit
         Text(
           'PRODUK TERFAVORIT ANAK',
-          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textDark, letterSpacing: 0.5),
+          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: context.textPrimary, letterSpacing: 0.5),
         ),
         const SizedBox(height: 12),
         ParentFavoriteProducts(favorites: favorites),
@@ -379,7 +386,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
           builder: (context, child) {
             return Theme(
               data: Theme.of(context).copyWith(
-                colorScheme: const ColorScheme.light(primary: AppColors.teal),
+                colorScheme: ColorScheme.light(primary: Nebula.teal),
               ),
               child: child!,
             );
@@ -399,7 +406,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
   void _showReceiptBottomSheet(OperatorTransaction tx) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.white,
+      backgroundColor: context.cardBg,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) {
         return ParentReceiptBottomSheet(
@@ -440,13 +447,344 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
     );
   }
 
+  Widget _buildSidebar(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authNotifierProvider);
+    final String fullName = authState.profile?['full_name'] ?? 'Wali Murid';
+    final String email = authState.profile?['email'] ?? '';
+
+    return Container(
+      width: 240,
+      color: context.cardBg,
+      child: Column(
+        children: [
+          // Sidebar Header (Logo & Title)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Nebula.teal.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.square_grid_2x2_fill,
+                    color: Nebula.teal,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'PORTAL',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: Nebula.teal,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      Text(
+                        'ORANG TUA',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          color: context.textPrimary,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, thickness: 0.5, color: context.borderLight),
+          const SizedBox(height: 16),
+
+          // Sidebar Navigation Items
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              children: [
+                _buildSidebarItem(
+                  icon: Icons.home_outlined,
+                  activeIcon: Icons.home_rounded,
+                  label: 'Beranda',
+                  index: 0,
+                ),
+                const SizedBox(height: 8),
+                _buildSidebarItem(
+                  icon: Icons.analytics_outlined,
+                  activeIcon: Icons.analytics_rounded,
+                  label: 'Analisis',
+                  index: 1,
+                ),
+                const SizedBox(height: 8),
+                _buildSidebarItem(
+                  icon: Icons.receipt_long_outlined,
+                  activeIcon: Icons.receipt_long_rounded,
+                  label: 'Riwayat',
+                  index: 2,
+                ),
+                const SizedBox(height: 8),
+                _buildSidebarItem(
+                  icon: Icons.settings_outlined,
+                  activeIcon: Icons.settings_rounded,
+                  label: 'Setting',
+                  index: 3,
+                ),
+              ],
+            ),
+          ),
+
+          // User Profile Card & Logout at bottom
+          Divider(height: 1, thickness: 0.5, color: context.borderLight),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: Nebula.teal.withValues(alpha: 0.08),
+                  child: const Icon(Icons.person_outline_rounded, color: Nebula.teal, size: 16),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        fullName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: context.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        email,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: context.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.logout_rounded, color: Nebula.rose, size: 18),
+                  onPressed: () async {
+                    final confirmed = await showLogoutConfirmationDialog(context);
+                    if (confirmed == true && context.mounted) {
+                      await ref.read(authNotifierProvider.notifier).logout();
+                      if (context.mounted) {
+                        context.go('/login');
+                      }
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSidebarItem({
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+    required int index,
+  }) {
+    final isSelected = _currentIndex == index;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color activeColor = isDark ? const Color(0xFF00C4B4) : Nebula.teal;
+    final Color activeBg = isDark
+        ? const Color(0xFF00C4B4).withValues(alpha: 0.12)
+        : Nebula.teal.withValues(alpha: 0.08);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? activeBg : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                isSelected ? activeIcon : icon,
+                color: isSelected ? activeColor : context.textSecondary,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color: isSelected ? activeColor : context.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopHeader(BuildContext context) {
+    String title = '';
+    switch (_currentIndex) {
+      case 0:
+        title = 'Beranda Wali';
+        break;
+      case 1:
+        title = 'Analisis Jajan';
+        break;
+      case 2:
+        title = 'Riwayat Saku';
+        break;
+      case 3:
+        title = 'Pengaturan';
+        break;
+    }
+
+    return Container(
+      height: 64,
+      decoration: BoxDecoration(
+        color: context.cardBg,
+        border: Border(bottom: BorderSide(color: context.dividerCol, width: 0.5)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: context.textPrimary,
+            ),
+          ),
+          const NotificationBell(color: Nebula.teal),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final dataAsync = ref.watch(parentDashboardProvider(widget.studentId));
-
+    final bool isWide = MediaQuery.of(context).size.width >= 768;
 
     Widget buildHeader() {
       return ParentDashboardHeader(currentIndex: _currentIndex);
+    }
+
+    if (isWide) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Row(
+          children: [
+            _buildSidebar(context, ref),
+            VerticalDivider(width: 0.5, thickness: 0.5, color: context.borderLight),
+            Expanded(
+              child: Column(
+                children: [
+                  _buildDesktopHeader(context),
+                  Expanded(
+                    child: PremiumPanel(
+                      isDesktop: true,
+                      child: dataAsync.when(
+                        data: (data) {
+                          final profile = data.profile;
+                          final student = data.student;
+                          final txs = data.transactions;
+
+                          final String name = profile.fullName ?? AppStrings.adminStudents;
+                          final String classStr = student.class_ ?? AppStrings.labelStudentClass;
+                          final int balance = student.balance;
+                          final double? dailyLimit = student.dailyLimit;
+
+                          // Bind settings to local state once
+                          _initSettingsIfRequired(student);
+
+                          return Align(
+                            alignment: Alignment.topCenter,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 800),
+                              child: SingleChildScrollView(
+                                padding: const EdgeInsets.all(24.0),
+                                child: _currentIndex == 0
+                                    ? _buildHomeTab(name, classStr, balance, dailyLimit, txs)
+                                    : _currentIndex == 1
+                                        ? _buildAnalisisTab(txs)
+                                        : _currentIndex == 2
+                                            ? _buildRiwayatTab(txs)
+                                            : _buildPengaturanTab(),
+                              ),
+                            ),
+                          );
+                        },
+                        loading: () => const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(80.0),
+                            child: CupertinoActivityIndicator(radius: 16),
+                          ),
+                        ),
+                        error: (err, stack) => Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.error_outline, color: Nebula.rose, size: 48),
+                                const SizedBox(height: 12),
+                                Text('${AppStrings.labelFailed} memuat data', textAlign: TextAlign.center),
+                                const SizedBox(height: 8),
+                                PressScale(
+                                  onTap: () => ref.invalidate(parentDashboardProvider(widget.studentId)),
+                                  child: ElevatedButton(
+                                    onPressed: () {},
+                                    child: Text(AppStrings.buttonRetry),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     return Scaffold(
@@ -456,7 +794,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
           SafeArea(child: buildHeader()),
           Expanded(
             child: PremiumPanel(
-              isDesktop: MediaQuery.of(context).size.width >= 768,
+              isDesktop: false,
               child: dataAsync.when(
                 data: (data) {
                   final profile = data.profile;
@@ -500,13 +838,16 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline, color: AppColors.errorRed, size: 48),
+                        const Icon(Icons.error_outline, color: Nebula.rose, size: 48),
                         const SizedBox(height: 12),
                         Text('${AppStrings.labelFailed} memuat data', textAlign: TextAlign.center),
                         const SizedBox(height: 8),
-                        ElevatedButton(
-                          onPressed: () => ref.invalidate(parentDashboardProvider(widget.studentId)),
-                          child: const Text(AppStrings.buttonRetry),
+                        PressScale(
+                          onTap: () => ref.invalidate(parentDashboardProvider(widget.studentId)),
+                          child: ElevatedButton(
+                            onPressed: () {},
+                            child: Text(AppStrings.buttonRetry),
+                          ),
                         ),
                       ],
                     ),
@@ -517,50 +858,35 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.white,
-          border: Border(
-            top: BorderSide(color: AppColors.borderLight, width: 0.5),
+      bottomNavigationBar: PremiumBottomNavBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        items: const [
+          PremiumBottomNavBarItem(
+            icon: Icons.home_outlined,
+            activeIcon: Icons.home_rounded,
+            label: 'Beranda',
           ),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textGray,
-          backgroundColor: AppColors.white,
-          type: BottomNavigationBarType.fixed,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
-          unselectedLabelStyle: const TextStyle(fontSize: 11),
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.house, size: 20),
-              activeIcon: Icon(CupertinoIcons.house_fill, size: 20),
-              label: 'Beranda',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.chart_bar, size: 20),
-              activeIcon: Icon(CupertinoIcons.chart_bar_fill, size: 20),
-              label: 'Analisis',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.doc_text, size: 20),
-              activeIcon: Icon(CupertinoIcons.doc_text_fill, size: 20),
-              label: 'Riwayat',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.settings, size: 20),
-              activeIcon: Icon(CupertinoIcons.settings_solid, size: 20),
-              label: 'Setting',
-            ),
-          ],
-        ),
+          PremiumBottomNavBarItem(
+            icon: Icons.analytics_outlined,
+            activeIcon: Icons.analytics_rounded,
+            label: 'Analisis',
+          ),
+          PremiumBottomNavBarItem(
+            icon: Icons.receipt_long_outlined,
+            activeIcon: Icons.receipt_long_rounded,
+            label: 'Riwayat',
+          ),
+          PremiumBottomNavBarItem(
+            icon: Icons.settings_outlined,
+            activeIcon: Icons.settings_rounded,
+            label: 'Setting',
+          ),
+        ],
       ),
     );
   }

@@ -6,8 +6,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_card_registration_form.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_card_registration_success.dart';
 
@@ -64,7 +65,7 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${AppStrings.labelFailed} memuat profil'),
-            backgroundColor: AppColors.errorRed2,
+            backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -91,7 +92,7 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Kartu terdeteksi: $mockUid'),
-        backgroundColor: AppColors.successGreen,
+        backgroundColor: Nebula.teal,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),
@@ -139,6 +140,7 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
 
                 // Update detail provider
                 ref.invalidate(keuanganStudentDetailProvider(widget.studentId));
+                ref.invalidate(keuanganHistoryProvider);
 
                 setState(() {
                   _oldRfid = null;
@@ -149,7 +151,7 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text(AppStrings.successCardUnlinked),
-                      backgroundColor: AppColors.successGreen,
+                      backgroundColor: Nebula.teal,
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -159,7 +161,7 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('${AppStrings.labelFailed} menghapus tautan kartu'),
-                      backgroundColor: AppColors.errorRed2,
+                      backgroundColor: Nebula.rose,
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -185,7 +187,7 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(AppStrings.errorRfidRequired),
-          backgroundColor: AppColors.errorRed2,
+          backgroundColor: Nebula.rose,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -240,6 +242,7 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
 
       // Update details
       ref.invalidate(keuanganStudentDetailProvider(widget.studentId));
+      ref.invalidate(keuanganHistoryProvider);
 
       setState(() {
         _savedUid = uid;
@@ -251,7 +254,7 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${AppStrings.labelFailed} menghubungkan kartu'),
-            backgroundColor: AppColors.errorRed2,
+            backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -268,9 +271,9 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
   @override
   Widget build(BuildContext context) {
     if (_isLoading && _fullName.isEmpty) {
-      return const Scaffold(
+      return Scaffold(
         body: Center(
-          child: CupertinoActivityIndicator(color: AppColors.darkTeal),
+          child: CupertinoActivityIndicator(color: Nebula.teal),
         ),
       );
     }
@@ -294,27 +297,31 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
           'Registrasi Kartu NFC',
           style: GoogleFonts.inter(
               fontWeight: FontWeight.bold,
-              color: AppColors.darkTeal,
+              color: Nebula.teal,
               fontSize: 18),
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
               Text(
                 'Siswa: $_fullName (NISN: $_nisn)',
                 style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.nearBlack),
+                    color: context.textPrimary),
               ),
               Text(
                 'Kelas: $_class · SMP Terpadu',
                 style: GoogleFonts.inter(
-                    fontSize: 13, color: AppColors.mutedGray),
+                    fontSize: 13, color: context.textSecondary),
               ),
               const SizedBox(height: 20),
               KeuanganCardRegistrationForm(
@@ -329,7 +336,8 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
-
 }

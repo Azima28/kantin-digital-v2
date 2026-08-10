@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 /// A selectable radio-style payment method item card.
 class MidtransPaymentMethodItem extends StatelessWidget {
@@ -31,10 +32,10 @@ class MidtransPaymentMethodItem extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0x0D006767)
-              : AppColors.white,
+              ? Nebula.teal.withValues(alpha: 0.08)
+              : context.cardBg,
           border: Border.all(
-            color: isSelected ? AppColors.teal : AppColors.borderGray,
+            color: isSelected ? Nebula.teal : context.dividerCol,
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
@@ -45,10 +46,10 @@ class MidtransPaymentMethodItem extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: AppColors.offWhite2,
+                color: context.surfaceBg,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, color: AppColors.teal, size: 22),
+              child: Icon(icon, color: Nebula.teal, size: 22),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -60,7 +61,7 @@ class MidtransPaymentMethodItem extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textDark,
+                      color: context.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -68,7 +69,7 @@ class MidtransPaymentMethodItem extends StatelessWidget {
                     subtext,
                     style: GoogleFonts.inter(
                       fontSize: 12,
-                      color: AppColors.textGray,
+                      color: context.textSecondary,
                     ),
                   ),
                 ],
@@ -81,8 +82,8 @@ class MidtransPaymentMethodItem extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: isSelected
-                      ? AppColors.teal
-                      : AppColors.textGray,
+                      ? Nebula.teal
+                      : context.textSecondary,
                   width: 2,
                 ),
               ),
@@ -91,9 +92,9 @@ class MidtransPaymentMethodItem extends StatelessWidget {
                       child: Container(
                         width: 10,
                         height: 10,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.teal,
+                          color: Nebula.teal,
                         ),
                       ),
                     )

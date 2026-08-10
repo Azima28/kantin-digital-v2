@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,7 +8,8 @@ import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.da
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_users_filter.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_users_list.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 
 // ── Students Tab ────────────────────────────────────────────────────────────
@@ -35,7 +36,7 @@ class _StudentsTabState extends ConsumerState<StudentsTab> {
 
     return RefreshIndicator(
       onRefresh: () async => ref.invalidate(keuanganStudentsProvider),
-      color: AppColors.darkTeal,
+      color: Nebula.teal,
       child: studentsAsync.when(
         data: (list) {
           final filtered = list.where((student) {
@@ -82,10 +83,10 @@ class _StudentsTabState extends ConsumerState<StudentsTab> {
                   child: Center(
                     child: Column(
                       children: [
-                        const Icon(
+                        Icon(
                           CupertinoIcons.person_crop_circle_badge_exclam,
                           size: 64,
-                          color: AppColors.mutedGray,
+                          color: context.textSecondary,
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -93,7 +94,7 @@ class _StudentsTabState extends ConsumerState<StudentsTab> {
                           style: GoogleFonts.inter(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.nearBlack,
+                            color: context.textPrimary,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -102,7 +103,7 @@ class _StudentsTabState extends ConsumerState<StudentsTab> {
                           'Coba sesuaikan kata kunci pencarian atau status filter.',
                           style: GoogleFonts.inter(
                             fontSize: 13,
-                            color: AppColors.mutedGray,
+                            color: context.textSecondary,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -124,7 +125,7 @@ class _StudentsTabState extends ConsumerState<StudentsTab> {
           );
         },
         loading: () =>
-            const Center(child: CupertinoActivityIndicator(color: AppColors.darkTeal)),
+            Center(child: CupertinoActivityIndicator(color: Nebula.teal)),
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -134,12 +135,12 @@ class _StudentsTabState extends ConsumerState<StudentsTab> {
                 const Icon(
                   CupertinoIcons.xmark_circle,
                   size: 48,
-                  color: AppColors.errorRed2,
+                  color: Nebula.rose,
                 ),
                 const SizedBox(height: 12),
                 Text(
                   '${AppStrings.labelFailed} memuat data',
-                  style: GoogleFonts.inter(color: AppColors.errorRed2),
+                  style: GoogleFonts.inter(color: Nebula.rose),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
@@ -162,7 +163,7 @@ class _StudentsTabState extends ConsumerState<StudentsTab> {
       style: GoogleFonts.inter(
         fontSize: 11,
         fontWeight: FontWeight.w700,
-        color: AppColors.mutedGray,
+        color: context.textSecondary,
         letterSpacing: 1.1,
       ),
     ),

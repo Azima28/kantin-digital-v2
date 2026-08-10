@@ -5,12 +5,13 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/widgets/notification_bell.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 // keuanganDashboardProvider is defined in keuangan_providers.dart
 
@@ -34,7 +35,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async => ref.invalidate(keuanganDashboardProvider),
-          color: AppColors.darkTeal,
+          color: Nebula.teal,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -53,7 +54,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                             '$greeting, 👋',
                             style: GoogleFonts.inter(
                               fontSize: 13,
-                              color: AppColors.mutedGray,
+                              color: context.textSecondary,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -62,7 +63,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                             style: GoogleFonts.inter(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.darkTeal,
+                              color: context.textPrimary,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -70,7 +71,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                             'Admin Keuangan · $school',
                             style: GoogleFonts.inter(
                               fontSize: 12,
-                              color: AppColors.mutedGray,
+                              color: context.textSecondary,
                             ),
                           ),
                         ],
@@ -79,19 +80,19 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const NotificationBell(color: AppColors.darkTeal),
-                        const SizedBox(width: 8),
+                        NotificationBell(color: Nebula.teal),
+                        SizedBox(width: 8),
                         GestureDetector(
                           onTap: () => context.go('/finance/settings'),
                           child: CircleAvatar(
                             radius: 22,
-                            backgroundColor: AppColors.darkTeal.withValues(alpha: 0.1),
+                            backgroundColor: Nebula.teal.withValues(alpha: 0.1),
                             child: Text(
                               fullName.isNotEmpty ? fullName[0].toUpperCase() : 'A',
                               style: GoogleFonts.inter(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.darkTeal,
+                                color: Nebula.teal,
                               ),
                             ),
                           ),
@@ -104,17 +105,17 @@ class KeuanganDashboardScreen extends ConsumerWidget {
 
                 dashAsync.when(
                   data: (data) => _buildContent(context, data, fmt),
-                  loading: () => const Center(
+                  loading: () => Center(
                     child: Padding(
                       padding: EdgeInsets.all(40),
-                      child: CupertinoActivityIndicator(color: AppColors.darkTeal),
+                      child: CupertinoActivityIndicator(color: Nebula.teal),
                     ),
                   ),
                   error: (e, _) => Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+                        const Icon(Icons.error_outline, size: 48, color: Nebula.rose),
                         const SizedBox(height: 12),
                         Text('${AppStrings.labelFailed} memuat data'),
                         const SizedBox(height: 8),
@@ -150,8 +151,8 @@ class KeuanganDashboardScreen extends ConsumerWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.darkTeal, AppColors.darkTeal2],
+            gradient: LinearGradient(
+              colors: [Nebula.teal, Nebula.teal],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -176,16 +177,16 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                 style: GoogleFonts.inter(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.white,
+                  color: Colors.white,
                 ),
               ),
               const SizedBox(height: 4),
               Row(
                 children: [
-                  const Icon(Icons.arrow_upward, color: AppColors.success, size: 14),
+                  const Icon(Icons.arrow_upward, color: Nebula.teal, size: 14),
                   Text(
                     ' +${fmt.format(topupToday)} hari ini',
-                    style: GoogleFonts.inter(fontSize: 12, color: AppColors.success),
+                    style: GoogleFonts.inter(fontSize: 12, color: Nebula.teal),
                   ),
                 ],
               ),
@@ -199,8 +200,9 @@ class KeuanganDashboardScreen extends ConsumerWidget {
           children: [
             Expanded(
               child: _buildStatCard(
+                context,
                 icon: CupertinoIcons.arrow_up_circle_fill,
-                iconColor: AppColors.successGreen,
+                iconColor: Nebula.teal,
                 label: 'Top-Up Tunai',
                 value: fmt.format(topupToday),
                 sub: '$topupCount Transaksi',
@@ -209,8 +211,9 @@ class KeuanganDashboardScreen extends ConsumerWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _buildStatCard(
+                context,
                 icon: CupertinoIcons.arrow_right_arrow_left_circle_fill,
-                iconColor: AppColors.errorRed2,
+                iconColor: Nebula.rose,
                 label: 'Koreksi Hari Ini',
                 value: fmt.format(koreksNet.abs()),
                 sub: '$koreksCount Transaksi',
@@ -226,7 +229,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
           style: GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: AppColors.nearBlack,
+            color: context.textPrimary,
           ),
         ),
         const SizedBox(height: 12),
@@ -235,7 +238,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
             Expanded(child: _buildQuickAction(
               context,
               icon: CupertinoIcons.arrow_up_circle_fill,
-              color: AppColors.successGreen,
+              color: Nebula.teal,
               label: 'Top-Up\nTunai',
               route: '/finance/topup',
             )),
@@ -243,21 +246,21 @@ class KeuanganDashboardScreen extends ConsumerWidget {
             Expanded(child: _buildQuickAction(
               context,
               icon: CupertinoIcons.arrow_right_arrow_left_circle_fill,
-              color: AppColors.errorRed2,
+              color: Nebula.rose,
               label: 'Koreksi\nSaldo',
               route: '/finance/correction',
             )),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Expanded(child: _buildQuickAction(
               context,
               icon: CupertinoIcons.chart_bar_fill,
-              color: AppColors.darkTeal,
+              color: Nebula.teal,
               label: 'Laporan\nKeuangan',
               route: '/finance/report',
             )),
           ],
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
 
         // ─── Aktivitas Terbaru ───
         Row(
@@ -268,7 +271,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
               style: GoogleFonts.inter(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.nearBlack,
+                color: context.textPrimary,
               ),
             ),
             GestureDetector(
@@ -278,7 +281,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.darkTeal,
+                  color: Nebula.teal,
                 ),
               ),
             ),
@@ -291,7 +294,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: context.cardBg,
               borderRadius: BorderRadius.circular(24),
             ),
             child: const EmptyStateWidget(
@@ -301,11 +304,11 @@ class KeuanganDashboardScreen extends ConsumerWidget {
         else
           Container(
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: context.cardBg,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.black.withValues(alpha: 0.04),
+                  color: context.shadowColor,
                   blurRadius: 20,
                   offset: const Offset(0, 4),
                 ),
@@ -322,16 +325,16 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                     : DateTime.now();
                 final timeStr = DateFormat('HH:mm', 'id_ID').format(date);
 
-                Color dotColor = AppColors.darkTeal;
+                Color dotColor = Nebula.teal;
                 IconData dotIcon = CupertinoIcons.doc_text_fill;
                 if (actionType.contains('TOPUP') || actionType.contains('TOP')) {
-                  dotColor = AppColors.successGreen;
+                  dotColor = Nebula.teal;
                   dotIcon = CupertinoIcons.arrow_up_circle_fill;
                 } else if (actionType.contains('KOREKSI')) {
-                  dotColor = AppColors.errorRed2;
+                  dotColor = Nebula.rose;
                   dotIcon = CupertinoIcons.arrow_right_arrow_left_circle_fill;
                 } else if (actionType.contains('REGISTRASI')) {
-                  dotColor = AppColors.darkOrange;
+                  dotColor = Nebula.amber;
                   dotIcon = CupertinoIcons.creditcard_fill;
                 }
 
@@ -352,7 +355,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                               desc,
                               style: GoogleFonts.inter(
                                 fontSize: 13,
-                                color: AppColors.nearBlack,
+                                color: context.textPrimary,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -363,14 +366,14 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                             timeStr,
                             style: GoogleFonts.inter(
                               fontSize: 11,
-                              color: AppColors.mutedGray,
+                              color: context.textSecondary,
                             ),
                           ),
                         ],
                       ),
                     ),
                     if (i < logs.length - 1)
-                      const Divider(height: 1, thickness: 0.5, indent: 16, color: AppColors.borderGray),
+                      Divider(height: 1, thickness: 0.5, indent: 16, color: context.dividerCol),
                   ],
                 );
               }).toList(),
@@ -381,7 +384,8 @@ class KeuanganDashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatCard({
+  Widget _buildStatCard(
+    BuildContext context, {
     required IconData icon,
     required Color iconColor,
     required String label,
@@ -391,11 +395,11 @@ class KeuanganDashboardScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.04),
+            color: context.shadowColor,
             blurRadius: 15,
             offset: const Offset(0, 4),
           ),
@@ -408,7 +412,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
           const SizedBox(height: 10),
           Text(
             label,
-            style: GoogleFonts.inter(fontSize: 11, color: AppColors.mutedGray),
+            style: GoogleFonts.inter(fontSize: 11, color: context.textSecondary),
           ),
           const SizedBox(height: 4),
           Text(
@@ -416,13 +420,13 @@ class KeuanganDashboardScreen extends ConsumerWidget {
             style: GoogleFonts.inter(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: AppColors.nearBlack,
+              color: context.textPrimary,
             ),
             overflow: TextOverflow.ellipsis,
           ),
           Text(
             sub,
-            style: GoogleFonts.inter(fontSize: 11, color: AppColors.mutedGray),
+            style: GoogleFonts.inter(fontSize: 11, color: context.textSecondary),
           ),
         ],
       ),

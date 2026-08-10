@@ -25,17 +25,24 @@ class Student {
 
   factory Student.fromJson(Map<String, dynamic> json) {
     return Student(
-      id: json['id'] as String,
-      class_: json['class'] as String?,
-      balance: (double.tryParse(json['balance']?.toString() ?? '0') ?? 0.0).toInt(),
-      rfidUid: json['rfid_uid'] as String?,
+      id: json['id']?.toString() ?? '',
+      class_: json['class']?.toString() ??
+          (json['classes'] is Map ? (json['classes'] as Map)['name']?.toString() : null),
+      balance: _parseBalance(json['balance']),
+      rfidUid: json['rfid_uid']?.toString(),
       dailyLimit: json['daily_limit'] != null
           ? double.tryParse(json['daily_limit'].toString())
           : null,
       isActive: json['is_active'] == true,
       waNotificationsEnabled: json['wa_notifications_enabled'] == true,
-      parentPhone: json['parent_phone'] as String?,
+      parentPhone: json['parent_phone']?.toString(),
     );
+  }
+
+  static int _parseBalance(dynamic value) {
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    return (double.tryParse(value?.toString() ?? '0') ?? 0.0).toInt();
   }
 
   Map<String, dynamic> toJson() => {
@@ -158,7 +165,10 @@ class StudentWithProfile {
       email: json['email'] as String?,
       nisn: json['nisn'] as String?,
       isActive: json['is_active'] == true,
-      class_: studentData?['class'] as String?,
+      class_: (studentData?['class'] ??
+          (studentData?['classes'] is Map
+              ? (studentData?['classes'] as Map)['name']
+              : null))?.toString(),
       balance:
           (double.tryParse(studentData?['balance']?.toString() ?? '0') ?? 0.0).toInt(),
       rfidUid: studentData?['rfid_uid'] as String?,

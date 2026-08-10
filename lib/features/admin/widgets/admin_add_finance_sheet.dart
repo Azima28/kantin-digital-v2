@@ -1,8 +1,9 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_dropdown_row.dart';
@@ -31,8 +32,8 @@ Future<void> showAddFinanceSheet(BuildContext context, WidgetRef ref) async {
           left: 20,
           right: 20,
         ),
-        decoration: const BoxDecoration(
-          color: AppColors.white,
+        decoration: BoxDecoration(
+          color: context.cardBg,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SingleChildScrollView(
@@ -45,7 +46,7 @@ Future<void> showAddFinanceSheet(BuildContext context, WidgetRef ref) async {
                   width: 36,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: AppColors.borderGray,
+                    color: context.dividerCol,
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),
@@ -56,7 +57,7 @@ Future<void> showAddFinanceSheet(BuildContext context, WidgetRef ref) async {
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.nearBlack,
+                  color: context.textPrimary,
                 ),
               ),
               const SizedBox(height: 20),
@@ -78,10 +79,10 @@ Future<void> showAddFinanceSheet(BuildContext context, WidgetRef ref) async {
                 controller: passCtrl,
                 hintText: 'Password Awal *',
                 suffix: IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     CupertinoIcons.refresh,
                     size: 18,
-                    color: AppColors.darkTeal,
+                    color: Nebula.teal,
                   ),
                   onPressed: () => setLocal(
                     () => passCtrl.text = 'keu${_randomSuffix()}',
@@ -104,13 +105,13 @@ Future<void> showAddFinanceSheet(BuildContext context, WidgetRef ref) async {
                 items: ['L1', 'L2', 'L3'],
                 onChanged: (v) => setLocal(() => authLevel = v ?? authLevel),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkTeal,
+                    backgroundColor: Nebula.teal,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -181,7 +182,7 @@ Future<void> showAddFinanceSheet(BuildContext context, WidgetRef ref) async {
                                   content: Text(
                                     '${nameCtrl.text.trim()} berhasil ditambahkan',
                                   ),
-                                  backgroundColor: AppColors.successGreen,
+                                  backgroundColor: Nebula.teal,
                                 ),
                               );
                             }
@@ -191,19 +192,19 @@ Future<void> showAddFinanceSheet(BuildContext context, WidgetRef ref) async {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('${AppStrings.labelFailed} menyimpan'),
-                                  backgroundColor: AppColors.errorRed2,
+                                  backgroundColor: Nebula.rose,
                                 ),
                               );
                             }
                           }
                         },
                   child: isSaving
-                      ? const CupertinoActivityIndicator(color: AppColors.white)
+                      ? CupertinoActivityIndicator(color: context.cardBg)
                       : Text(
                           'SIMPAN & AKTIFKAN PETUGAS KEUANGAN',
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold,
-                            color: AppColors.white,
+                            color: context.cardBg,
                           ),
                         ),
                 ),

@@ -1,7 +1,8 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 /// Step indicator bar for multi-step flows.
 ///
@@ -38,41 +39,41 @@ class KeuanganStepIndicator extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: AppColors.mutedGray,
+              color: context.textSecondary,
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Row(
             children: [
               Expanded(
                 child: Container(
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.darkTeal,
+                    color: Nebula.teal,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
-              const SizedBox(width: 6),
+              SizedBox(width: 6),
               Expanded(
                 child: Container(
                   height: 4,
                   decoration: BoxDecoration(
                     color: currentStep >= 2
-                        ? AppColors.darkTeal
-                        : AppColors.borderGray,
+                        ? Nebula.teal
+                        : context.dividerCol,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
-              const SizedBox(width: 6),
+              SizedBox(width: 6),
               Expanded(
                 child: Container(
                   height: 4,
                   decoration: BoxDecoration(
                     color: currentStep >= 3
-                        ? AppColors.darkTeal
-                        : AppColors.borderGray,
+                        ? Nebula.teal
+                        : context.dividerCol,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),

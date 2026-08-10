@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/utils/responsive.dart';
 import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
@@ -14,6 +14,8 @@ import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
 import 'package:kantin_digital/core/widgets/notification_bell.dart';
 import 'package:intl/intl.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/nebula_components.dart';
 
 class PosHomeScreen extends ConsumerWidget {
   const PosHomeScreen({super.key});
@@ -38,7 +40,7 @@ class PosHomeScreen extends ConsumerWidget {
         scrolledUnderElevation: 0,
         shape: Border(
           bottom: BorderSide(
-            color: AppColors.gray400.withValues(alpha: 0.3),
+            color: context.dividerCol,
             width: 0.5,
           ),
         ),
@@ -51,10 +53,10 @@ class PosHomeScreen extends ConsumerWidget {
                   ? CachedNetworkImageProvider(profilePhotoUrl)
                   : null,
               child: profilePhotoUrl == null
-                  ? const Icon(Icons.person, color: AppColors.teal)
+                  ? Icon(Icons.person, color: Nebula.teal)
                   : null,
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Flexible(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,9 +65,9 @@ class PosHomeScreen extends ConsumerWidget {
                     'Halo, $canteenName!',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: AppColors.darkGray,
+                      color: context.textSecondary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -75,7 +77,7 @@ class PosHomeScreen extends ConsumerWidget {
                       textStyle: TextStyle(
                         fontSize: Responsive.headingFontSize(context),
                         fontWeight: FontWeight.w600,
-                        color: AppColors.teal,
+                        color: Nebula.teal,
                       ),
                     ),
                   ),
@@ -84,8 +86,8 @@ class PosHomeScreen extends ConsumerWidget {
             ),
           ],
         ),
-        actions: const [
-          NotificationBell(color: AppColors.teal),
+        actions: [
+          NotificationBell(color: Nebula.teal),
           SizedBox(width: 8),
         ],
 
@@ -111,132 +113,155 @@ class PosHomeScreen extends ConsumerWidget {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: AppColors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: AppColors.borderLight,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  // Decorative Background Shape
-                                  Positioned(
-                                    top: -48,
-                                    right: -48,
-                                    child: Container(
-                                      width: 128,
-                                      height: 128,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: AppColors.softTeal.withValues(
-                                          alpha: 0.2,
-                                        ),
-                                      ),
-                                    ),
+                          Builder(
+                            builder: (context) {
+                              final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+                              return ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    gradient: isDarkMode
+                                        ? const LinearGradient(
+                                            colors: [
+                                              Nebula.teal,
+                                              Nebula.purple,
+                                              Nebula.tealDark,
+                                            ],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          )
+                                        : null,
+                                    color: isDarkMode ? null : context.cardBg,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: isDarkMode
+                                        ? null
+                                        : Border.all(color: context.borderLight, width: 1),
+                                    boxShadow: isDarkMode
+                                        ? [
+                                            BoxShadow(
+                                              color: Nebula.tealGlow,
+                                              blurRadius: 24,
+                                              offset: const Offset(0, 8),
+                                            ),
+                                          ]
+                                        : null,
                                   ),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                  child: Stack(
+                                    clipBehavior: Clip.none,
                                     children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          const Expanded(
-                                            child: Text(
-                                              'PENDAPATAN HARI INI',
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w500,
-                                                color: AppColors.darkGray,
-                                                letterSpacing: 1.1,
-                                              ),
+                                      // Decorative Background Shape
+                                      Positioned(
+                                        top: -48,
+                                        right: -48,
+                                        child: Container(
+                                          width: 128,
+                                          height: 128,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.white.withValues(
+                                              alpha: isDarkMode ? 0.06 : 0.08,
                                             ),
                                           ),
-                                          const SizedBox(width: 8),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 12,
-                                              vertical: 4,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.teal.withValues(
-                                                alpha: 0.1,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(999),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: const [
-                                                Text(
-                                                  'Buka',
+                                        ),
+                                      ),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  'PENDAPATAN HARI INI',
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
                                                   style: TextStyle(
-                                                    fontSize: 11,
+                                                    fontSize: 13,
                                                     fontWeight: FontWeight.w500,
-                                                    color: AppColors.teal,
+                                                    color: isDarkMode ? Colors.white.withValues(alpha: 0.75) : context.textSecondary,
+                                                    letterSpacing: 1.1,
                                                   ),
                                                 ),
-                                                SizedBox(width: 4),
-                                                Icon(
-                                                  CupertinoIcons
-                                                      .checkmark_seal_fill,
-                                                  size: 14,
-                                                  color: AppColors.teal,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 12,
+                                                  vertical: 4,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: isDarkMode
+                                                      ? Colors.white.withValues(alpha: 0.15)
+                                                      : Nebula.teal.withValues(alpha: 0.1),
+                                                  borderRadius:
+                                                      BorderRadius.circular(999),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Text(
+                                                      'Buka',
+                                                      style: TextStyle(
+                                                        fontSize: 11,
+                                                        fontWeight: FontWeight.w500,
+                                                        color: isDarkMode ? Colors.white : Nebula.teal,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Icon(
+                                                      CupertinoIcons.checkmark_seal_fill,
+                                                      size: 14,
+                                                      color: isDarkMode ? Colors.white : Nebula.teal,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 12),
+                                          FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            alignment: Alignment.centerLeft,
+                                            child: Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.baseline,
+                                              textBaseline: TextBaseline.alphabetic,
+                                              children: [
+                                                Text(
+                                                  'Rp',
+                                                  style: TextStyle(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: isDarkMode ? Colors.white : context.textPrimary,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  NumberFormat(
+                                                    '#,###',
+                                                    'id_ID',
+                                                  ).format(revenue),
+                                                  style: TextStyle(
+                                                    fontSize: 34,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: isDarkMode ? Colors.white : Nebula.teal,
+                                                    letterSpacing: -0.5,
+                                                  ),
                                                 ),
                                               ],
                                             ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 12),
-                                      FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        alignment: Alignment.centerLeft,
-                                        child: Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.baseline,
-                                          textBaseline: TextBaseline.alphabetic,
-                                          children: [
-                                            const Text(
-                                              'Rp',
-                                              style: TextStyle(
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.textDark,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              NumberFormat(
-                                                '#,###',
-                                                'id_ID',
-                                              ).format(revenue),
-                                              style: const TextStyle(
-                                                fontSize: 34,
-                                                fontWeight: FontWeight.w700,
-                                                color: AppColors.teal,
-                                                letterSpacing: -0.5,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
                                     ],
                                   ),
-                                ],
-                              ),
-                            ),
+                                ),
+                              );
+                            }
                           ),
                         ],
                       );
@@ -254,7 +279,7 @@ class PosHomeScreen extends ConsumerWidget {
                           const Icon(
                             Icons.error_outline,
                             size: 48,
-                            color: AppColors.error,
+                            color: Nebula.rose,
                           ),
                           const SizedBox(height: 12),
                           Text('${AppStrings.labelFailed} memuat pendapatan'),
@@ -262,13 +287,13 @@ class PosHomeScreen extends ConsumerWidget {
                           ElevatedButton(
                             onPressed: () =>
                                 ref.invalidate(todayRevenueProvider),
-                            child: const Text(AppStrings.buttonRetry),
+                            child: Text(AppStrings.buttonRetry),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
 
                   // Quick Actions Grid Row
                   Row(
@@ -279,26 +304,26 @@ class PosHomeScreen extends ConsumerWidget {
                           child: Container(
                             height: 48,
                             decoration: BoxDecoration(
-                              color: AppColors.teal,
+                              color: Nebula.teal,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                padding: EdgeInsets.symmetric(horizontal: 8.0),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
-                                  children: const [
+                                  children: [
                                     Icon(
                                       CupertinoIcons.square_grid_2x2,
-                                      color: AppColors.white,
+                                      color: context.cardBg,
                                       size: 20,
                                     ),
                                     SizedBox(width: 8),
                                     Text(
                                       'Kasir POS',
                                       style: TextStyle(
-                                        color: AppColors.white,
+                                        color: context.cardBg,
                                         fontWeight: FontWeight.w600,
                                         fontSize: 17,
                                       ),
@@ -317,26 +342,26 @@ class PosHomeScreen extends ConsumerWidget {
                           child: Container(
                             height: 48,
                             decoration: BoxDecoration(
-                              color: AppColors.grayLight,
+                              color: context.surfaceBg,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                padding: EdgeInsets.symmetric(horizontal: 8.0),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
-                                  children: const [
+                                  children: [
                                     Icon(
                                       CupertinoIcons.creditcard,
-                                      color: AppColors.textDark,
+                                      color: context.textPrimary,
                                       size: 20,
                                     ),
                                     SizedBox(width: 8),
                                     Text(
                                       'Cek Kartu',
                                       style: TextStyle(
-                                        color: AppColors.textDark,
+                                        color: context.textPrimary,
                                         fontWeight: FontWeight.w600,
                                         fontSize: 17,
                                       ),
@@ -359,10 +384,10 @@ class PosHomeScreen extends ConsumerWidget {
                       Text(
                         'Penjualan Hari Ini',
                         style: GoogleFonts.inter(
-                          textStyle: const TextStyle(
+                          textStyle: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textDark,
+                            color: context.textPrimary,
                           ),
                         ),
                       ),
@@ -372,7 +397,7 @@ class PosHomeScreen extends ConsumerWidget {
                           'Lihat Semua',
                           style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.primary,
+                            color: Nebula.teal,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -394,17 +419,8 @@ class PosHomeScreen extends ConsumerWidget {
                       }).toList();
 
                       if (todayTxs.isEmpty) {
-                        return Container(
-                          width: double.infinity,
+                        return NebulaCard(
                           padding: const EdgeInsets.symmetric(vertical: 40),
-                          decoration: BoxDecoration(
-                            color: AppColors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: AppColors.borderLight,
-                              width: 0.5,
-                            ),
-                          ),
                           child: const EmptyStateWidget(
                             message: AppStrings.labelNoData,
                           ),
@@ -426,17 +442,9 @@ class PosHomeScreen extends ConsumerWidget {
                                 ).format(tx.createdAt!.toLocal())
                               : '-';
 
-                          return Container(
+                          return NebulaCard(
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: AppColors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: AppColors.borderLight,
-                                width: 1,
-                              ),
-                            ),
                             child: Row(
                               children: [
                                 Container(
@@ -444,10 +452,10 @@ class PosHomeScreen extends ConsumerWidget {
                                   height: 48,
                                   decoration: BoxDecoration(
                                     color: isCancelled
-                                        ? AppColors.errorRed2.withValues(
+                                        ? Nebula.rose.withValues(
                                             alpha: 0.1,
                                           )
-                                        : AppColors.teal.withValues(alpha: 0.1),
+                                        : Nebula.teal.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(
@@ -455,8 +463,8 @@ class PosHomeScreen extends ConsumerWidget {
                                         ? CupertinoIcons.xmark_circle
                                         : CupertinoIcons.creditcard,
                                     color: isCancelled
-                                        ? AppColors.errorRed2
-                                        : AppColors.teal,
+                                        ? Nebula.rose
+                                        : Nebula.teal,
                                     size: 20,
                                   ),
                                 ),
@@ -472,32 +480,32 @@ class PosHomeScreen extends ConsumerWidget {
                                             : studentName,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontWeight: FontWeight.w600,
                                           fontSize: 17,
-                                          color: AppColors.textDark,
+                                          color: context.textPrimary,
                                         ),
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
                                         '$txTime WIB \u2022 ${isCancelled ? "Refund" : "Penjualan"}',
-                                        style: const TextStyle(
-                                          color: AppColors.darkGray,
+                                        style: TextStyle(
+                                          color: context.textSecondary,
                                           fontSize: 11,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                const SizedBox(width: 8),
+                                SizedBox(width: 8),
                                 Text(
                                   '${isCancelled ? "-" : "+"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
                                   style: TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 17,
                                     color: isCancelled
-                                        ? AppColors.errorRed2
-                                        : AppColors.teal,
+                                        ? Nebula.rose
+                                        : Nebula.teal,
                                   ),
                                 ),
                               ],
@@ -515,7 +523,7 @@ class PosHomeScreen extends ConsumerWidget {
                           const Icon(
                             Icons.error_outline,
                             size: 48,
-                            color: AppColors.error,
+                            color: Nebula.rose,
                           ),
                           const SizedBox(height: 12),
                           Text('${AppStrings.labelFailed} memuat riwayat'),

@@ -1,6 +1,7 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/features/admin/widgets/setting_section_widget.dart';
 import 'package:kantin_digital/features/admin/widgets/setting_tile_widget.dart';
 
@@ -23,19 +24,19 @@ class AdminSystemAccessCard extends StatelessWidget {
       horizontalPadding: 16,
       verticalPadding: 16,
       iconRadius: 16,
-      iconBackgroundColor: AppColors.errorLightColor,
-      iconColor: AppColors.errorRed2,
-      titleColor: AppColors.errorRed2,
+      iconBackgroundColor: Nebula.rose.withValues(alpha: 0.1),
+      iconColor: Nebula.rose,
+      titleColor: Nebula.rose,
       shadowBlurRadius: 15,
       children: [
         Text(
           'Mode pemeliharaan memblokir semua akses login non-admin.',
           style: GoogleFonts.inter(
             fontSize: 10,
-            color: AppColors.textGray,
+            color: context.textSecondary,
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         SettingTileWidget(
           title: 'Maintenance',
           trailing: SizedBox(
@@ -45,7 +46,7 @@ class AdminSystemAccessCard extends StatelessWidget {
               fit: BoxFit.contain,
               child: CupertinoSwitch(
                 value: isMaintenanceMode,
-                activeTrackColor: AppColors.darkTeal,
+                activeTrackColor: Nebula.teal,
                 onChanged: onMaintenanceChanged,
               ),
             ),

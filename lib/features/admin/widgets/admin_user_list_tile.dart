@@ -1,7 +1,8 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
 
@@ -47,11 +48,11 @@ class AdminUserListTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.04),
+            color: context.shadowColor,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -65,14 +66,14 @@ class AdminUserListTile extends StatelessWidget {
               // Avatar profile picture
               CircleAvatar(
                 radius: 20,
-                backgroundColor: AppColors.darkTeal.withValues(alpha: 0.1),
+                backgroundColor: Nebula.teal.withValues(alpha: 0.1),
                 child: Icon(
                   role == 'student'
                       ? CupertinoIcons.person
                       : (role == 'petugas_kantin'
                           ? Icons.shopping_bag
                           : CupertinoIcons.person_solid),
-                  color: AppColors.darkTeal,
+                  color: Nebula.teal,
                   size: 20,
                 ),
               ),
@@ -93,17 +94,17 @@ class AdminUserListTile extends StatelessWidget {
                             style: GoogleFonts.inter(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.nearBlack,
+                              color: context.textPrimary,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         // Role badge chip
                         Container(
-                          padding: const EdgeInsets.symmetric(
+                          padding: EdgeInsets.symmetric(
                               horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppColors.darkTeal.withValues(alpha: 0.1),
+                            color: Nebula.teal.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(99),
                           ),
                           child: Text(
@@ -111,7 +112,7 @@ class AdminUserListTile extends StatelessWidget {
                             style: GoogleFonts.inter(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.darkTeal,
+                              color: Nebula.teal,
                             ),
                           ),
                         ),
@@ -122,7 +123,7 @@ class AdminUserListTile extends StatelessWidget {
                       subText,
                       style: GoogleFonts.inter(
                         fontSize: 11,
-                        color: AppColors.textGray,
+                        color: context.textSecondary,
                       ),
                     ),
                   ],
@@ -131,7 +132,7 @@ class AdminUserListTile extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1, thickness: 0.5, color: AppColors.borderGray),
+          Divider(height: 1, thickness: 0.5, color: context.dividerCol),
           const SizedBox(height: 12),
 
           // Cupertino Switch & Action button
@@ -143,7 +144,7 @@ class AdminUserListTile extends StatelessWidget {
                     'Status: ',
                     style: GoogleFonts.inter(
                       fontSize: 13,
-                      color: AppColors.darkGray,
+                      color: context.textSecondary,
                     ),
                   ),
                   Flexible(
@@ -155,11 +156,11 @@ class AdminUserListTile extends StatelessWidget {
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color:
-                            isActive ? AppColors.successGreen : AppColors.errorRed2,
+                            isActive ? Nebula.teal : Nebula.rose,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6),
                   SizedBox(
                     width: 44,
                     height: 28,
@@ -167,7 +168,7 @@ class AdminUserListTile extends StatelessWidget {
                       fit: BoxFit.contain,
                       child: CupertinoSwitch(
                         value: isActive,
-                        activeTrackColor: AppColors.darkTeal,
+                        activeTrackColor: Nebula.teal,
                         onChanged: (val) => onToggleStatus(id, role, isActive),
                       ),
                     ),
@@ -179,7 +180,7 @@ class AdminUserListTile extends StatelessWidget {
                 onTap: () => onNavigateToDetail(id, role),
                 borderRadius: BorderRadius.circular(8),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  padding: EdgeInsets.symmetric(vertical: 4),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -190,14 +191,14 @@ class AdminUserListTile extends StatelessWidget {
                         style: GoogleFonts.inter(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.darkTeal,
+                          color: Nebula.teal,
                         ),
                       ),
                       const SizedBox(width: 4),
-                      const Icon(
+                      Icon(
                         CupertinoIcons.chevron_right,
                         size: 14,
-                        color: AppColors.darkTeal,
+                        color: Nebula.teal,
                       ),
                     ],
                   ),

@@ -10,6 +10,7 @@ import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/app_theme.dart';
 import 'package:kantin_digital/core/widgets/premium_background.dart';
+import 'package:kantin_digital/core/providers/theme_provider.dart';
 
 void main() async {
   // runZonedGuarded bungkus SEMUA inisialisasi + runApp biar zone konsisten.
@@ -20,24 +21,24 @@ void main() async {
     // Custom error page — no red screen of death
     ErrorWidget.builder = (FlutterErrorDetails details) {
       return Material(
-        color: AppColors.white,
+        color: AppColors.systemBackground,
         child: Center(
           child: Padding(
-            padding: EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
-                SizedBox(height: 16),
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
                 Text(
-                    AppStrings.labelError,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  AppStrings.labelError,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
                   'Silakan tutup dan buka kembali aplikasi',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey[600]),
+                  style: TextStyle(color: AppColors.textSecondary),
                 ),
               ],
             ),
@@ -74,10 +75,13 @@ class MainApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    final themeMode = ref.watch(themeProvider);
 
     return MaterialApp.router(
       title: 'Kantin Digital',
       theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
       builder: (context, child) {

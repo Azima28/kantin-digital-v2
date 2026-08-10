@@ -1,18 +1,20 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
 import 'package:kantin_digital/features/parent/widgets/parent_balance_card.dart';
 import 'package:kantin_digital/features/parent/widgets/parent_action_grid.dart';
 import 'package:kantin_digital/features/parent/widgets/parent_transaction_tile.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 /// Home tab of the parent dashboard.
 ///
 /// Shows profile card, saldo card, daily limit progress, and today's transactions.
 class ParentHomeTab extends StatelessWidget {
+  final String studentId;
   final String studentName;
   final String studentClass;
   final int balance;
@@ -22,6 +24,7 @@ class ParentHomeTab extends StatelessWidget {
 
   const ParentHomeTab({
     super.key,
+    required this.studentId,
     required this.studentName,
     required this.studentClass,
     required this.balance,
@@ -68,21 +71,21 @@ class ParentHomeTab extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.borderGray, width: 1),
+            border: Border.all(color: context.dividerCol, width: 1),
           ),
           child: Row(
             children: [
               Container(
                 width: 54,
                 height: 54,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: Color(0x1A006767),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(CupertinoIcons.person_fill,
-                    color: AppColors.primary, size: 28),
+                    color: Nebula.teal, size: 28),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -94,14 +97,14 @@ class ParentHomeTab extends StatelessWidget {
                       style: GoogleFonts.inter(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textDark),
+                          color: context.textPrimary),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       studentClass,
                       style: GoogleFonts.inter(
                           fontSize: 13,
-                          color: AppColors.textGray,
+                          color: context.textSecondary,
                           fontWeight: FontWeight.w500),
                     ),
                   ],
@@ -115,7 +118,7 @@ class ParentHomeTab extends StatelessWidget {
         // Saldo Card
         ParentBalanceCard(
           balance: balance,
-          studentId: '', // Handled internally
+          studentId: studentId,
         ),
         const SizedBox(height: 24),
 
@@ -125,7 +128,7 @@ class ParentHomeTab extends StatelessWidget {
           style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: AppColors.textDark,
+              color: context.textPrimary,
               letterSpacing: 0.5),
         ),
         const SizedBox(height: 12),
@@ -145,19 +148,19 @@ class ParentHomeTab extends StatelessWidget {
                 style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textDark,
+                    color: context.textPrimary,
                     letterSpacing: 0.5),
               ),
             ),
             const SizedBox(width: 8),
             GestureDetector(
               onTap: onViewAllHistory,
-              child: const Text(
+              child: Text(
                 'Lihat Semua',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
+                  color: Nebula.teal,
                 ),
               ),
             ),
@@ -168,9 +171,9 @@ class ParentHomeTab extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 32),
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: context.cardBg,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.borderGray, width: 1),
+              border: Border.all(color: context.dividerCol, width: 1),
             ),
             child: const EmptyStateWidget(
               message: AppStrings.labelNoData,
@@ -179,16 +182,16 @@ class ParentHomeTab extends StatelessWidget {
         else
           Container(
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: context.cardBg,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.borderGray, width: 1),
+              border: Border.all(color: context.dividerCol, width: 1),
             ),
             child: ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: todayTxs.length,
               separatorBuilder: (context, i) =>
-                  const Divider(height: 1, color: AppColors.borderGray),
+                  Divider(height: 1, color: context.dividerCol),
               itemBuilder: (context, i) {
                 final tx = todayTxs[i];
                 return ParentTransactionTile(transaction: tx);

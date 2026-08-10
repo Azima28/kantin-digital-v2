@@ -1,11 +1,12 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import 'package:kantin_digital/core/models/models.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 class KeuanganStudentCard extends StatelessWidget {
   final StudentWithProfile student;
@@ -25,11 +26,11 @@ class KeuanganStudentCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.04),
+            color: context.shadowColor,
             blurRadius: 12,
             offset: const Offset(0, 3),
           ),
@@ -41,13 +42,13 @@ class KeuanganStudentCard extends StatelessWidget {
           onTap: () => context.push('/finance/students/${student.id}'),
           borderRadius: BorderRadius.circular(20),
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: EdgeInsets.all(14),
             child: Row(
               children: [
                 CircleAvatar(
                   radius: 22,
                   backgroundColor:
-                      AppColors.darkTeal.withValues(alpha: 0.08),
+                      Nebula.teal.withValues(alpha: 0.08),
                   child: Text(
                     student.fullName.isNotEmpty
                         ? student.fullName[0].toUpperCase()
@@ -55,7 +56,7 @@ class KeuanganStudentCard extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.darkTeal,
+                      color: Nebula.teal,
                     ),
                   ),
                 ),
@@ -71,7 +72,7 @@ class KeuanganStudentCard extends StatelessWidget {
                         style: GoogleFonts.inter(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
-                          color: AppColors.nearBlack,
+                          color: context.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -81,7 +82,7 @@ class KeuanganStudentCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
                           fontSize: 12,
-                          color: AppColors.mutedGray,
+                          color: context.textSecondary,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -95,14 +96,14 @@ class KeuanganStudentCard extends StatelessWidget {
                                 ? CupertinoIcons.checkmark_circle_fill
                                 : CupertinoIcons.clear_circled_solid,
                             hasCard
-                                ? AppColors.successGreen
-                                : AppColors.mutedGray,
+                                ? Nebula.teal
+                                : context.textSecondary,
                           ),
                           if (student.isActive != true)
                             _statusPill(
                               'DIBLOKIR',
                               CupertinoIcons.exclamationmark_circle_fill,
-                              AppColors.errorRed2,
+                              Nebula.rose,
                             ),
                         ],
                       ),
@@ -117,7 +118,7 @@ class KeuanganStudentCard extends StatelessWidget {
                       'Saldo',
                       style: GoogleFonts.inter(
                         fontSize: 11,
-                        color: AppColors.mutedGray,
+                        color: context.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -127,8 +128,8 @@ class KeuanganStudentCard extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                         color: student.balance < 5000
-                            ? AppColors.errorRed2
-                            : AppColors.nearBlack,
+                            ? Nebula.rose
+                            : context.textPrimary,
                       ),
                     ),
                   ],

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/cart_provider.dart';
@@ -54,8 +54,8 @@ class _NfcPaymentModalState extends ConsumerState<NfcPaymentModal> {
     }
 
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.cardBackground,
+      decoration: BoxDecoration(
+        color: context.cardBg,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(24),
           topRight: Radius.circular(24),
@@ -76,7 +76,7 @@ class _NfcPaymentModalState extends ConsumerState<NfcPaymentModal> {
             width: 40,
             height: 5,
             decoration: BoxDecoration(
-              color: AppColors.borderLight,
+              color: context.borderLight,
               borderRadius: BorderRadius.circular(2.5),
             ),
           ),
@@ -132,10 +132,10 @@ class _NfcPaymentModalState extends ConsumerState<NfcPaymentModal> {
                   ref.read(nfcPaymentProvider.notifier).resetState();
                   Navigator.pop(context);
                 },
-                child: const Text(
+                child: Text(
                   AppStrings.buttonCancel,
                   style: TextStyle(
-                    color: AppColors.textGray,
+                    color: context.textSecondary,
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
                   ),

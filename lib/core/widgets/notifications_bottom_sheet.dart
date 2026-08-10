@@ -1,12 +1,16 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 
 /// Bottom Sheet for viewing and managing notifications across all roles.
 class NotificationsBottomSheet extends ConsumerStatefulWidget {
@@ -72,42 +76,134 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
     final String? userId = authState.profile?['id']?.toString() ?? client.auth.currentUser?.id;
     if (userId == null) return;
 
-    showCupertinoDialog(
+    showDialog(
       context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: const Text('Hapus Semua Notifikasi'),
-        content: const Text('Apakah Anda yakin ingin menghapus semua notifikasi dari kotak masuk Anda?'),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () async {
-              Navigator.pop(ctx);
-              try {
-                await client
-                    .from('notifications')
-                    .delete()
-                    .eq('user_id', userId);
-                
-                ref.invalidate(userNotificationsProvider);
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Gagal menghapus notifikasi'),
-                      backgroundColor: AppColors.error,
-                      behavior: SnackBarBehavior.floating,
+      builder: (BuildContext ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Container(
+            decoration: BoxDecoration(
+              color: context.cardBg,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: context.borderLight, width: 0.5),
+              boxShadow: [
+                BoxShadow(
+                  color: context.shadowColor,
+                  blurRadius: 24,
+                  spreadRadius: 4,
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Nebula.rose.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(CupertinoIcons.trash, color: Nebula.rose, size: 24),
                     ),
-                  );
-                }
-              }
-            },
-            child: const Text(AppStrings.buttonDelete),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Text(
+                        'Hapus Semua Notifikasi',
+                        style: GoogleFonts.inter(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: context.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Apakah Anda yakin ingin menghapus semua notifikasi dari kotak masuk Anda?',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: context.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text(
+                          AppStrings.buttonCancel,
+                          style: GoogleFonts.inter(
+                            color: context.textSecondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: PressScale(
+                        onTap: () async {
+                          Navigator.pop(ctx);
+                          try {
+                            await client
+                                .from('notifications')
+                                .delete()
+                                .eq('user_id', userId);
+                            
+                            ref.invalidate(userNotificationsProvider);
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Gagal menghapus notifikasi'),
+                                  backgroundColor: AppColors.error,
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        child: ElevatedButton(
+                          onPressed: null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Nebula.rose,
+                            disabledBackgroundColor: Nebula.rose,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text(
+                            'Hapus',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -119,9 +215,19 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,
-      decoration: const BoxDecoration(
-        color: AppColors.scaffoldBackground,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: context.cardBg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border(
+          top: BorderSide(color: context.borderLight, width: 0.5),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: context.shadowColor,
+            blurRadius: 16,
+            spreadRadius: 4,
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -151,20 +257,20 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
                       'Notifikasi Saya',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textDark,
+                        color: context.textPrimary,
                       ),
                     ),
                   ],
                 ),
                 IconButton(
-                  icon: const Icon(CupertinoIcons.trash, color: AppColors.error, size: 20),
+                  icon: Icon(CupertinoIcons.trash, color: AppColors.error, size: 20),
                   tooltip: 'Hapus Semua',
                   onPressed: () => _clearAllNotifications(context),
                 ),
               ],
             ),
           ),
-          const Divider(height: 1, thickness: 0.5, color: AppColors.borderLight),
+          Divider(height: 1, thickness: 0.5, color: context.borderLight),
 
           // Notifications List
           Expanded(
@@ -176,23 +282,23 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
                 data: (List<AppNotification> notifs) {
                   if (notifs.isEmpty) {
                     return ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
+                      physics: AlwaysScrollableScrollPhysics(),
                       children: [
                         SizedBox(height: MediaQuery.of(context).size.height * 0.2),
                         Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Icon(CupertinoIcons.bell_slash, size: 48, color: AppColors.textGray),
+                            children: [
+                              Icon(CupertinoIcons.bell_slash, size: 48, color: context.textSecondary),
                               SizedBox(height: 12),
                               Text(
                                 'Kotak masuk kosong',
-                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: context.textPrimary),
                               ),
                               SizedBox(height: 4),
                               Text(
                                 'Pemberitahuan transaksi atau broadcast akan muncul di sini.',
-                                style: TextStyle(color: AppColors.textGray, fontSize: 12),
+                                style: TextStyle(color: context.textSecondary, fontSize: 12),
                               ),
                             ],
                           ),
@@ -238,10 +344,10 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
                           margin: const EdgeInsets.only(bottom: 12),
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: AppColors.white,
+                            color: context.cardBg,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: AppColors.borderLight,
+                              color: context.borderLight,
                               width: 0.5,
                             ),
                           ),
@@ -275,10 +381,10 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
                                         Expanded(
                                           child: Text(
                                             notif.title,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.w600,
-                                              color: AppColors.textDark,
+                                              color: context.textPrimary,
                                             ),
                                           ),
                                         ),
@@ -287,18 +393,18 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
                                     const SizedBox(height: 4),
                                     Text(
                                       notif.message,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 12,
-                                        color: AppColors.textGray,
+                                        color: context.textSecondary,
                                         height: 1.3,
                                       ),
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
                                       timeStr,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 10,
-                                        color: AppColors.textGray,
+                                        color: context.textSecondary,
                                       ),
                                     ),
                                   ],

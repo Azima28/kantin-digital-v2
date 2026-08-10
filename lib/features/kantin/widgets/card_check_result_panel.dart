@@ -2,12 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/core/widgets/nfc_pulse_animator.dart';
 import 'package:kantin_digital/features/shared/screens/student_transactions_screen.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 /// Displays the scanning/idle state when no card has been read yet.
 class ScanningView extends StatelessWidget {
@@ -21,38 +22,38 @@ class ScanningView extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderLight, width: 0.5),
+        border: Border.all(color: context.borderLight, width: 0.5),
       ),
       child: Column(
         children: [
           // Visual Scanning indicator
           const NfcPulseAnimator(
             size: 100,
-            color: AppColors.primary,
+            color: Nebula.teal,
             child: Icon(
               CupertinoIcons.creditcard,
               size: 48,
-              color: AppColors.primary,
+              color: Nebula.teal,
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'Siap Memindai Kartu',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: AppColors.textDark,
+              color: context.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Tempelkan kartu RFID/NFC siswa pada bagian belakang HP untuk membaca data.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
-              color: AppColors.textGray,
+              color: context.textSecondary,
               height: 1.4,
             ),
           ),
@@ -63,7 +64,7 @@ class ScanningView extends StatelessWidget {
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 11,
-                color: AppColors.accentOrange,
+                color: Nebula.amber,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -91,40 +92,40 @@ class ErrorView extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderLight, width: 0.5),
+        border: Border.all(color: context.borderLight, width: 0.5),
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
-              color: AppColors.errorLight,
+            decoration: BoxDecoration(
+              color: Nebula.rose.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               CupertinoIcons.exclamationmark_triangle,
               size: 36,
-              color: AppColors.error,
+              color: Nebula.rose,
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Verifikasi ${AppStrings.labelFailed}',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: AppColors.textDark,
+              color: context.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             errorMessage,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
-              color: AppColors.textGray,
+              color: context.textSecondary,
               height: 1.4,
             ),
           ),
@@ -133,13 +134,13 @@ class ErrorView extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: Nebula.teal,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: onRetry,
-              child: const Text(AppStrings.buttonRetry,
-                  style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+              child: Text(AppStrings.buttonRetry,
+                  style: TextStyle(color: context.cardBg, fontWeight: FontWeight.bold)),
             ),
           ),
         ],
@@ -175,9 +176,9 @@ class StudentCardView extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderLight, width: 0.5),
+        border: Border.all(color: context.borderLight, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -191,8 +192,8 @@ class StudentCardView extends StatelessWidget {
                 Container(
                   width: 64,
                   height: 64,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primaryLight,
+                  decoration: BoxDecoration(
+                    color: Nebula.teal.withValues(alpha: 0.08),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -201,7 +202,7 @@ class StudentCardView extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
+                        color: Nebula.teal,
                       ),
                     ),
                   ),
@@ -214,18 +215,18 @@ class StudentCardView extends StatelessWidget {
                     children: [
                       Text(
                         studentName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textDark,
+                          color: context.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'NIS: $nis \u2022 Kelas $studentClass',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
-                          color: AppColors.textGray,
+                          color: context.textSecondary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -235,7 +236,7 @@ class StudentCardView extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(height: 0.5, color: AppColors.borderLight),
+          Divider(height: 0.5, color: context.borderLight),
           // Body Card Info (Balance)
           Padding(
             padding: const EdgeInsets.all(20.0),
@@ -245,12 +246,12 @@ class StudentCardView extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'STATUS KARTU',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textGray,
+                        color: context.textSecondary,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -258,8 +259,8 @@ class StudentCardView extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: isActive
-                            ? AppColors.primary.withValues(alpha: 0.1)
-                            : AppColors.error.withValues(alpha: 0.1),
+                            ? Nebula.teal.withValues(alpha: 0.1)
+                            : Nebula.rose.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Row(
@@ -269,7 +270,7 @@ class StudentCardView extends StatelessWidget {
                                 ? CupertinoIcons.checkmark_seal_fill
                                 : CupertinoIcons.lock_fill,
                             size: 11,
-                            color: isActive ? AppColors.primary : AppColors.error,
+                            color: isActive ? Nebula.teal : Nebula.rose,
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -277,7 +278,7 @@ class StudentCardView extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: isActive ? AppColors.primary : AppColors.error,
+                              color: isActive ? Nebula.teal : Nebula.rose,
                             ),
                           ),
                         ],
@@ -286,12 +287,12 @@ class StudentCardView extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'SALDO AKTIF',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textGray,
+                    color: context.textSecondary,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -301,14 +302,14 @@ class StudentCardView extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 32,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.primary,
+                    color: Nebula.teal,
                     letterSpacing: -0.5,
                   ),
                 ),
               ],
             ),
           ),
-          const Divider(height: 0.5, color: AppColors.borderLight),
+          Divider(height: 0.5, color: context.borderLight),
           // Riwayat Transaksi Card
           Padding(
             padding: const EdgeInsets.all(20.0),
@@ -318,12 +319,12 @@ class StudentCardView extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'RIWAYAT TRANSAKSI (10 TERAKHIR)',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textGray,
+                        color: context.textSecondary,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -333,18 +334,18 @@ class StudentCardView extends StatelessWidget {
                           MaterialPageRoute(
                             builder: (_) => StudentTransactionsScreen(
                               studentId: student.id,
-                              primaryColor: AppColors.primary,
-                              accentColor: AppColors.accentOrange,
+                              primaryColor: Nebula.teal,
+                              accentColor: Nebula.amber,
                             ),
                           ),
                         );
                       },
-                      child: const Text(
+                      child: Text(
                         'Lihat Semua',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
+                          color: Nebula.teal,
                         ),
                       ),
                     ),
@@ -359,7 +360,7 @@ class StudentCardView extends StatelessWidget {
                           AppStrings.noTransactions,
                         style: GoogleFonts.inter(
                           fontSize: 13,
-                          color: AppColors.textGray,
+                          color: context.textSecondary,
                         ),
                       ),
                     ),
@@ -386,12 +387,12 @@ class StudentCardView extends StatelessWidget {
                                 CircleAvatar(
                                   radius: 14,
                                   backgroundColor: isTopup
-                                      ? AppColors.successGreen.withValues(alpha: 0.08)
-                                      : AppColors.primary.withValues(alpha: 0.08),
+                                      ? Nebula.teal.withValues(alpha: 0.08)
+                                      : Nebula.teal.withValues(alpha: 0.08),
                                   child: Icon(
                                     isTopup ? CupertinoIcons.arrow_up : CupertinoIcons.cart,
                                     size: 14,
-                                    color: isTopup ? AppColors.successGreen : AppColors.primary,
+                                    color: isTopup ? Nebula.teal : Nebula.teal,
                                   ),
                                 ),
                                 const SizedBox(width: 10),
@@ -403,14 +404,14 @@ class StudentCardView extends StatelessWidget {
                                       style: GoogleFonts.inter(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 13,
-                                        color: AppColors.textDark,
+                                        color: context.textPrimary,
                                       ),
                                     ),
                                     Text(
                                       timeStr,
                                       style: GoogleFonts.inter(
                                         fontSize: 11,
-                                        color: AppColors.textGray,
+                                        color: context.textSecondary,
                                       ),
                                     ),
                                   ],
@@ -425,7 +426,7 @@ class StudentCardView extends StatelessWidget {
                                   style: GoogleFonts.inter(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13,
-                                    color: isTopup ? AppColors.successGreen : AppColors.primary,
+                                    color: isTopup ? Nebula.teal : Nebula.teal,
                                   ),
                                 ),
                                 if (!isSuccess)
@@ -434,7 +435,7 @@ class StudentCardView extends StatelessWidget {
                                     style: GoogleFonts.inter(
                                       fontSize: 9,
                                       fontWeight: FontWeight.bold,
-                                      color: AppColors.error,
+                                      color: Nebula.rose,
                                     ),
                                   ),
                               ],
@@ -447,7 +448,7 @@ class StudentCardView extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(height: 0.5, color: AppColors.borderLight),
+          Divider(height: 0.5, color: context.borderLight),
           // Footer actions
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -455,15 +456,15 @@ class StudentCardView extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: Nebula.teal,
                   elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 onPressed: onReset,
-                child: const Text(
+                child: Text(
                   'Scan Kartu Lain',
-                  style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: context.cardBg, fontWeight: FontWeight.bold),
                 ),
               ),
             ),

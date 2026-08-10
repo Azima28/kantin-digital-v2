@@ -250,7 +250,7 @@ final adminParentDetailProvider = FutureProvider
       final List<dynamic> childrenRes = await client
           .from('parent_students')
           .select(
-            'student_id, students!parent_students_student_id_fkey(class, profiles!students_id_fkey(full_name, nisn))',
+            'student_id, students!parent_students_student_id_fkey(classes:classes(name), profiles!students_id_fkey(full_name, nisn))',
           )
           .eq('parent_id', id);
 

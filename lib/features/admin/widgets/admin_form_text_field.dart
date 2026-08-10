@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 class AdminFormTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -23,25 +24,25 @@ class AdminFormTextField extends StatelessWidget {
       style: const TextStyle(fontSize: 14),
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: const TextStyle(
-          color: AppColors.mutedGray,
+        hintStyle: TextStyle(
+          color: context.textSecondary,
           fontSize: 14,
         ),
         suffixIcon: suffix,
         filled: true,
-        fillColor: AppColors.offWhite,
+        fillColor: context.cardBg,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.borderGray),
+          borderSide: BorderSide(color: context.dividerCol),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.borderGray),
+          borderSide: BorderSide(color: context.dividerCol),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.darkTeal, width: 1.5),
+          borderSide: BorderSide(color: Nebula.teal, width: 1.5),
         ),
       ),
     );

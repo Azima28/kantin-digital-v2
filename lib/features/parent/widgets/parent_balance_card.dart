@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 /// A gradient card widget displaying the student's active balance
 /// with an "ISI SALDO" (top-up) action button.
@@ -19,17 +20,17 @@ class ParentBalanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.teal, AppColors.primary],
+        gradient: LinearGradient(
+          colors: [Nebula.teal, Nebula.teal],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.teal.withValues(alpha: 0.2),
+            color: Nebula.teal.withValues(alpha: 0.2),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -63,7 +64,7 @@ class ParentBalanceCard extends StatelessWidget {
                         style: GoogleFonts.inter(
                           fontSize: 28,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.white,
+                          color: context.cardBg,
                           letterSpacing: -0.5,
                         ),
                       ),
@@ -73,7 +74,7 @@ class ParentBalanceCard extends StatelessWidget {
                       width: double.infinity,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.accentOrange,
+                          backgroundColor: Nebula.amber,
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
@@ -83,7 +84,7 @@ class ParentBalanceCard extends StatelessWidget {
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.white,
+                            color: context.cardBg,
                           ),
                         ),
                       ),
@@ -103,7 +104,7 @@ class ParentBalanceCard extends StatelessWidget {
                       style: GoogleFonts.inter(
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.white,
+                        color: context.cardBg,
                         letterSpacing: -0.5,
                       ),
                     ),
@@ -111,7 +112,7 @@ class ParentBalanceCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.accentOrange,
+                      backgroundColor: Nebula.amber,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
@@ -121,7 +122,7 @@ class ParentBalanceCard extends StatelessWidget {
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.white,
+                        color: context.cardBg,
                       ),
                     ),
                   ),

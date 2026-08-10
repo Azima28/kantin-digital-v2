@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 /// Bottom sheet widget for displaying transaction receipt details.
 class ParentReceiptBottomSheet extends ConsumerWidget {
@@ -41,7 +42,7 @@ class ParentReceiptBottomSheet extends ConsumerWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.borderGray,
+                  color: context.dividerCol,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -54,7 +55,7 @@ class ParentReceiptBottomSheet extends ConsumerWidget {
                 style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textDark,
+                  color: context.textPrimary,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -67,7 +68,7 @@ class ParentReceiptBottomSheet extends ConsumerWidget {
               children: [
                 const Icon(
                   CupertinoIcons.checkmark_circle_fill,
-                  color: AppColors.successGreen,
+                  color: Nebula.teal,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
@@ -76,7 +77,7 @@ class ParentReceiptBottomSheet extends ConsumerWidget {
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.successGreen,
+                    color: Nebula.teal,
                   ),
                 ),
               ],
@@ -84,15 +85,17 @@ class ParentReceiptBottomSheet extends ConsumerWidget {
             const SizedBox(height: 24),
 
             // Transaction parameters
-            _buildReceiptRow('ID Transaksi',
+            _buildReceiptRow(context, 'ID Transaksi',
                 transaction.id.substring(0, 18).toUpperCase()),
             const SizedBox(height: 12),
             _buildReceiptRow(
+              context,
               'Waktu Transaksi',
               '${DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(date)} WIB',
             ),
             const SizedBox(height: 12),
             _buildReceiptRow(
+              context,
               'Lokasi / Metode',
               isTopup
                   ? 'Top-up Transfer Bank'
@@ -100,7 +103,7 @@ class ParentReceiptBottomSheet extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
 
-            const Divider(color: AppColors.borderGray, height: 1),
+            Divider(color: context.dividerCol, height: 1),
             const SizedBox(height: 16),
 
             if (!isTopup && items.isNotEmpty) ...[
@@ -109,7 +112,7 @@ class ParentReceiptBottomSheet extends ConsumerWidget {
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textGray,
+                  color: context.textSecondary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -130,7 +133,7 @@ class ParentReceiptBottomSheet extends ConsumerWidget {
                         '${qty}x $name',
                         style: GoogleFonts.inter(
                           fontSize: 13,
-                          color: AppColors.textDark,
+                          color: context.textPrimary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -138,7 +141,7 @@ class ParentReceiptBottomSheet extends ConsumerWidget {
                         CurrencyFormatter.format((qty * price).toInt()),
                         style: GoogleFonts.inter(
                           fontSize: 13,
-                          color: AppColors.textDark,
+                          color: context.textPrimary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -147,7 +150,7 @@ class ParentReceiptBottomSheet extends ConsumerWidget {
                 },
               ),
               const SizedBox(height: 16),
-              const Divider(color: AppColors.borderGray, height: 1),
+              Divider(color: context.dividerCol, height: 1),
               const SizedBox(height: 16),
             ],
 
@@ -159,7 +162,7 @@ class ParentReceiptBottomSheet extends ConsumerWidget {
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textDark,
+                    color: context.textPrimary,
                   ),
                 ),
                 Text(
@@ -167,7 +170,7 @@ class ParentReceiptBottomSheet extends ConsumerWidget {
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.primary,
+                    color: Nebula.teal,
                   ),
                 ),
               ],
@@ -176,7 +179,7 @@ class ParentReceiptBottomSheet extends ConsumerWidget {
 
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: Nebula.teal,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -195,7 +198,7 @@ class ParentReceiptBottomSheet extends ConsumerWidget {
               },
               icon: const Icon(
                 CupertinoIcons.arrow_down_to_line,
-                color: AppColors.white,
+                color: Colors.white,
                 size: 16,
               ),
               label: Text(
@@ -203,7 +206,7 @@ class ParentReceiptBottomSheet extends ConsumerWidget {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.white,
+                  color: Colors.white,
                 ),
               ),
             ),
@@ -213,7 +216,7 @@ class ParentReceiptBottomSheet extends ConsumerWidget {
     );
   }
 
-  Widget _buildReceiptRow(String label, String value) {
+  Widget _buildReceiptRow(BuildContext context, String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -221,7 +224,7 @@ class ParentReceiptBottomSheet extends ConsumerWidget {
           label,
           style: GoogleFonts.inter(
             fontSize: 13,
-            color: AppColors.textGray,
+            color: context.textSecondary,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -229,7 +232,7 @@ class ParentReceiptBottomSheet extends ConsumerWidget {
           value,
           style: GoogleFonts.inter(
             fontSize: 13,
-            color: AppColors.textDark,
+            color: context.textPrimary,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -237,3 +240,4 @@ class ParentReceiptBottomSheet extends ConsumerWidget {
     );
   }
 }
+

@@ -124,22 +124,14 @@ final keuanganDashboardProvider =
 final keuanganHistoryProvider =
     FutureProvider.autoDispose<List<AuditLog>>((ref) async {
       final client = ref.read(supabaseClientProvider);
-      final profile = ref.read(authNotifierProvider).profile;
-      final actorId = profile?['id'];
-
-      // Guard: if actor ID is not available, return empty list
-      if (actorId == null || actorId.toString().isEmpty) {
-        return <AuditLog>[];
-      }
 
       final List<dynamic> res = await client
           .from('audit_logs')
           .select(
-            'id, action_type, description, created_at, old_value, new_value, target_id',
+            'id, action_type, description, created_at, old_value, new_value, target_id, actor_id, actor_name',
           )
-          .eq('actor_id', actorId)
           .order('created_at', ascending: false)
-          .limit(50);
+          .limit(100);
 
       return res
           .map((e) => AuditLog.fromJson(e as Map<String, dynamic>))
@@ -225,7 +217,7 @@ final keuanganStudentsProvider =
       final List<dynamic> res = await client
           .from('profiles')
           .select(
-            'id, full_name, email, nisn, is_active, students:students!students_id_fkey(class, balance, rfid_uid, is_active)',
+            'id, full_name, email, nisn, is_active, students:students!students_id_fkey(balance, rfid_uid, is_active, classes:classes(name))',
           )
           .eq('role', 'student')
           .order('full_name', ascending: true);
@@ -257,7 +249,7 @@ final keuanganStudentDetailProvider = FutureProvider
       // 2. Fetch student
       final student = await client
           .from('students')
-          .select()
+          .select('*, classes:classes(name)')
           .eq('id', id)
           .maybeSingle();
 
@@ -290,7 +282,7 @@ final keuanganParentsProvider =
       final List<dynamic> res = await client
           .from('profiles')
           .select(
-            'id, full_name, email, phone_number, is_active, created_at, parent_students!parent_id(students!parent_students_student_id_fkey(id, class, profiles:profiles!students_id_fkey(full_name, nisn)))',
+            'id, full_name, email, phone_number, is_active, created_at, parent_students!parent_students_parent_id_fkey(students!parent_students_student_id_fkey(id, classes:classes(name), profiles:profiles!students_id_fkey(full_name, nisn)))',
           )
           .eq('role', 'parent')
           .order('full_name', ascending: true);

@@ -1,5 +1,7 @@
-import 'package:flutter/cupertino.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+﻿import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/features/admin/widgets/setting_section_widget.dart';
 
 /// Payment API configuration card (Midtrans).
@@ -30,23 +32,23 @@ class AdminPaymentApiCard extends StatelessWidget {
       horizontalPadding: 16,
       verticalPadding: 16,
       iconRadius: 16,
-      iconBackgroundColor: AppColors.softOrange.withValues(alpha: 0.3),
-      iconColor: AppColors.darkOrange,
+      iconBackgroundColor: Nebula.amber.withValues(alpha: 0.3).withValues(alpha: 0.3),
+      iconColor: Nebula.amber,
       shadowBlurRadius: 15,
       children: [
         Row(
           children: [
-            const Text('Midtrans', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            Text('Midtrans', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: AppColors.successLight,
+                color: Nebula.teal.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(99),
               ),
               child: const Text(
                 'Active',
-                style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: AppColors.successGreen),
+                style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Nebula.teal),
               ),
             ),
           ],
@@ -55,7 +57,7 @@ class AdminPaymentApiCard extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Env', style: TextStyle(fontSize: 11, color: AppColors.textGray)),
+            Text('Env', style: TextStyle(fontSize: 11, color: context.textSecondary)),
             const SizedBox(height: 6),
             Wrap(
               spacing: 4,
@@ -64,9 +66,9 @@ class AdminPaymentApiCard extends StatelessWidget {
                 GestureDetector(
                   onTap: onToggleSandbox,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: isSandbox ? AppColors.darkTeal : AppColors.offWhite2,
+                      color: isSandbox ? Nebula.teal : context.surfaceBg,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -74,7 +76,7 @@ class AdminPaymentApiCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
-                        color: isSandbox ? AppColors.white : AppColors.textDark,
+                        color: isSandbox ? Colors.white : context.textPrimary,
                       ),
                     ),
                   ),
@@ -82,9 +84,9 @@ class AdminPaymentApiCard extends StatelessWidget {
                 GestureDetector(
                   onTap: onToggleProd,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: !isSandbox ? AppColors.darkTeal : AppColors.offWhite2,
+                      color: !isSandbox ? Nebula.teal : context.surfaceBg,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -92,7 +94,7 @@ class AdminPaymentApiCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
-                        color: !isSandbox ? AppColors.white : AppColors.textDark,
+                        color: !isSandbox ? Colors.white : context.textPrimary,
                       ),
                     ),
                   ),
@@ -102,12 +104,12 @@ class AdminPaymentApiCard extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        const Text('Client Key', style: TextStyle(fontSize: 10, color: AppColors.textGray)),
+        Text('Client Key', style: TextStyle(fontSize: 10, color: context.textSecondary)),
         const SizedBox(height: 4),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
-            color: AppColors.offWhite2,
+            color: context.surfaceBg,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
@@ -127,7 +129,7 @@ class AdminPaymentApiCard extends StatelessWidget {
                 child: Icon(
                   obscureKey ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
                   size: 14,
-                  color: AppColors.darkTeal,
+                  color: Nebula.teal,
                 ),
               ),
             ],

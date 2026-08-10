@@ -19,10 +19,12 @@ import 'package:kantin_digital/features/kantin/widgets/kantin_main_layout.dart';
 import 'package:kantin_digital/features/siswa/screens/student_welcome_screen.dart';
 import 'package:kantin_digital/features/siswa/screens/siswa_dashboard_screen.dart';
 import 'package:kantin_digital/features/siswa/screens/siswa_topup_screen.dart';
+import 'package:kantin_digital/features/siswa/screens/siswa_cart_screen.dart';
 import 'package:kantin_digital/features/siswa/screens/siswa_history_screen.dart';
 import 'package:kantin_digital/features/siswa/screens/siswa_cards_screen.dart';
 import 'package:kantin_digital/features/siswa/screens/siswa_profile_screen.dart';
 import 'package:kantin_digital/features/siswa/screens/siswa_notifications_screen.dart';
+import 'package:kantin_digital/features/siswa/screens/siswa_active_orders_screen.dart';
 import 'package:kantin_digital/features/siswa/widgets/siswa_main_layout.dart';
 import 'package:kantin_digital/features/parent/screens/parent_dashboard_screen.dart';
 import 'package:kantin_digital/features/parent/screens/parent_topup_screen.dart';
@@ -71,10 +73,12 @@ class AppRouter {
   static const String studentLogin = '/student/login';
   static const String studentHome = '/student';
   static const String studentTopUp = '/student/topup';
+  static const String studentCart = '/student/cart';
   static const String studentHistory = '/student/history';
   static const String studentCards = '/student/cards';
   static const String studentProfile = '/student/profile';
   static const String studentNotifications = '/student/notifications';
+  static const String studentActiveOrders = '/student/active-orders';
 
   // Parent App Routes
   static const String parentHome = '/parent';
@@ -262,7 +266,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // ─── Public Routes (Tanpa Login) ───
       GoRoute(
         path: AppRouter.publicHome,
-        builder: (context, state) => const PublicHomeScreen(),
+        builder: (context, state) => PublicHomeScreen(),
         routes: [
           GoRoute(
             path: 'info',
@@ -335,6 +339,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                 const SiswaHistoryScreen(),
           ),
           GoRoute(
+            path: AppRouter.studentCart,
+            builder: (BuildContext context, GoRouterState state) =>
+                const SiswaCartScreen(),
+          ),
+          GoRoute(
             path: AppRouter.studentCards,
             builder: (BuildContext context, GoRouterState state) =>
                 const SiswaCardsScreen(),
@@ -343,6 +352,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: AppRouter.studentProfile,
             builder: (BuildContext context, GoRouterState state) =>
                 const SiswaProfileScreen(),
+          ),
+          GoRoute(
+            path: AppRouter.studentActiveOrders,
+            builder: (BuildContext context, GoRouterState state) =>
+                const SiswaActiveOrdersScreen(),
           ),
         ],
       ),
@@ -419,7 +433,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRouter.adminSecureEntry,
         builder: (BuildContext context, GoRouterState state) =>
-            const SecureEntryScreen(),
+            SecureEntryScreen(),
       ),
 
       // Super Admin Main tab layouts (Home, Users, Audit, Settings)
@@ -505,12 +519,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: AppRouter.financeStudents,
             builder: (BuildContext context, GoRouterState state) =>
-                const KeuanganStudentsScreen(),
+                KeuanganStudentsScreen(),
           ),
           GoRoute(
             path: AppRouter.financeUsers,
             builder: (BuildContext context, GoRouterState state) =>
-                const KeuanganUsersScreen(),
+                KeuanganUsersScreen(),
           ),
           GoRoute(
             path: AppRouter.financeHistory,
@@ -520,7 +534,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: AppRouter.financeReport,
             builder: (BuildContext context, GoRouterState state) =>
-                const KeuanganReportScreen(),
+                KeuanganReportScreen(),
           ),
         ],
       ),

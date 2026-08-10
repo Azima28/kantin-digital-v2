@@ -5,43 +5,117 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 import 'package:kantin_digital/core/services/storage_service.dart';
+import 'package:kantin_digital/core/widgets/change_password_panel.dart';
+import 'package:kantin_digital/core/widgets/theme_toggle_tile.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 import 'package:kantin_digital/features/siswa/widgets/siswa_profile_header.dart';
-import 'package:kantin_digital/features/siswa/widgets/siswa_change_password_panel.dart';
 import 'package:kantin_digital/features/siswa/widgets/siswa_profile_helpers.dart';
 
 class SiswaProfileScreen extends ConsumerWidget {
   const SiswaProfileScreen({super.key});
 
   Future<void> _handleLogout(BuildContext context, WidgetRef ref) async {
-    showCupertinoDialog(
+    final isDark = context.isDark;
+    showDialog(
       context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: const Text('Keluar dari Akun'),
-        content: const Text(
-          'Apakah Anda yakin ingin keluar dari akun siswa ini?',
+      barrierDismissible: true,
+      builder: (BuildContext ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: isDark ? const Color(0xFF242424) : Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Nebula.rose.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.logout_rounded,
+                  color: Nebula.rose,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Keluar dari Akun',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Apakah Anda yakin ingin keluar dari akun siswa ini?',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        side: BorderSide(
+                          color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                        ),
+                      ),
+                      onPressed: () => Navigator.pop(ctx),
+                      child: Text(
+                        AppStrings.buttonCancel,
+                        style: GoogleFonts.poppins(
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Nebula.rose,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () async {
+                        Navigator.pop(ctx);
+                        await ref.read(authNotifierProvider.notifier).logout();
+                        if (context.mounted) {
+                          context.go('/welcome');
+                        }
+                      },
+                      child: Text(
+                        AppStrings.buttonLogout,
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await ref.read(authNotifierProvider.notifier).logout();
-              if (context.mounted) {
-                context.go('/welcome');
-              }
-            },
-            child: const Text(AppStrings.buttonLogout),
-          ),
-        ],
       ),
     );
   }
@@ -79,7 +153,7 @@ class SiswaProfileScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
-              child: SiswaChangePasswordPanel(parentContext: context),
+              child: ChangePasswordPanel(parentContext: context),
             ),
           ),
         );
@@ -147,7 +221,7 @@ class SiswaProfileScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Foto profil berhasil diperbarui!'),
-            backgroundColor: AppColors.success,
+            backgroundColor: Nebula.teal,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -158,7 +232,7 @@ class SiswaProfileScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${AppStrings.labelFailed} upload foto: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -215,7 +289,7 @@ class SiswaProfileScreen extends ConsumerWidget {
                             style: GoogleFonts.inter(
                               fontSize: 17,
                               fontWeight: FontWeight.w800,
-                              color: AppColors.textDark,
+                              color: context.textPrimary,
                             ),
                           ),
                         ),
@@ -233,21 +307,21 @@ class SiswaProfileScreen extends ConsumerWidget {
                       const SizedBox(height: 24),
 
                       // Kontak Orang Tua
-                      buildSectionHeader('KONTAK ORANG TUA'),
+                      buildSectionHeader(context, 'KONTAK ORANG TUA'),
                       const SizedBox(height: 8),
-                      buildProfileCard(
+                      buildProfileCard(context, 
                         child: Column(
                           children: [
-                            buildIconRow(
+                            buildIconRow(context, 
                               icon: CupertinoIcons.envelope,
-                              iconColor: AppColors.textGray,
+                              iconColor: context.textSecondary,
                               label: 'Email',
                               value: parentEmail,
                               showDivider: true,
                             ),
-                            buildIconRow(
+                            buildIconRow(context, 
                               icon: CupertinoIcons.phone,
-                              iconColor: AppColors.textGray,
+                              iconColor: context.textSecondary,
                               label: 'No. HP',
                               value: parentPhone,
                               showDivider: false,
@@ -257,25 +331,28 @@ class SiswaProfileScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 24),
 
+                      const GradientLine(),
+
                       // Keamanan & Akses
-                      buildSectionHeader('KEAMANAN & AKSES'),
+                      buildSectionHeader(context, 'KEAMANAN & AKSES'),
                       const SizedBox(height: 8),
-                      buildProfileCard(
+                      buildProfileCard(context, 
                         child: Column(
                           children: [
-                            buildIconActionRow(
+                            const ThemeToggleTile(showDivider: true),
+                            buildIconActionRow(context, 
                               icon: CupertinoIcons.lock,
-                              iconColor: AppColors.textGray,
+                              iconColor: context.textSecondary,
                               label: 'Ubah Sandi Akun',
                               onTap: () =>
                                   _showChangePasswordPanel(context, ref),
                               showDivider: true,
                             ),
-                            buildIconActionRow(
+                            buildIconActionRow(context, 
                               icon: CupertinoIcons.square_arrow_right,
-                              iconColor: AppColors.error,
+                              iconColor: Nebula.rose,
                               label: 'Keluar dari Akun',
-                              textColor: AppColors.error,
+                              textColor: Nebula.rose,
                               onTap: () => _handleLogout(context, ref),
                               showDivider: false,
                             ),
@@ -299,7 +376,7 @@ class SiswaProfileScreen extends ConsumerWidget {
         error: (err, stack) => Center(
           child: Text(
             '${AppStrings.labelFailed} memuat profil: $err',
-            style: const TextStyle(color: AppColors.error),
+            style: const TextStyle(color: Nebula.rose),
           ),
         ),
       ),

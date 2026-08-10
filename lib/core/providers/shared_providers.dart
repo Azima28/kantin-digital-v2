@@ -75,7 +75,7 @@ final studentByIdProvider =
     final data = await client
         .from('profiles')
         .select(
-            'id, full_name, email, nisn, is_active, students:students!students_id_fkey(class, balance, rfid_uid)')
+            'id, full_name, email, nisn, is_active, students:students!students_id_fkey(balance, rfid_uid, classes:classes(name))')
         .eq('id', id)
         .maybeSingle();
 

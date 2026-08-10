@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
+import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/parent/widgets/parent_topup_form.dart';
@@ -65,18 +68,21 @@ class _ParentTopUpScreenState extends ConsumerState<ParentTopUpScreen> {
         children: [
           // Header Bar
           Container(
-            decoration: const BoxDecoration(
-              color: AppColors.white,
+            decoration: BoxDecoration(
+              color: context.cardBg,
               border: Border(
-                bottom: BorderSide(color: AppColors.borderGray, width: 1),
+                bottom: BorderSide(color: context.dividerCol, width: 1),
               ),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             child: Row(
               children: [
-                IconButton(
-                  icon: const Icon(CupertinoIcons.arrow_left, color: AppColors.primary, size: 22),
-                  onPressed: () => context.pop(),
+                PressScale(
+                  onTap: () => context.pop(),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    child: const Icon(CupertinoIcons.arrow_left, color: Nebula.teal, size: 22),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -84,12 +90,13 @@ class _ParentTopUpScreenState extends ConsumerState<ParentTopUpScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+                    color: Nebula.teal,
                   ),
                 ),
               ],
             ),
           ),
+          GradientLine(margin: const EdgeInsets.symmetric(vertical: 0)),
 
           Expanded(
             child: SingleChildScrollView(
@@ -110,15 +117,15 @@ class _ParentTopUpScreenState extends ConsumerState<ParentTopUpScreen> {
 
           // Minimal Footer
           Container(
-            decoration: const BoxDecoration(
-              color: AppColors.offWhite2,
-              border: Border(top: BorderSide(color: AppColors.borderGray, width: 1)),
+            decoration: BoxDecoration(
+              color: context.surfaceBg,
+              border: Border(top: BorderSide(color: context.dividerCol, width: 1)),
             ),
             padding: const EdgeInsets.symmetric(vertical: 16),
             child: Center(
               child: Text(
                 '© 2024 Kantin Digital. All rights reserved.',
-                style: GoogleFonts.inter(fontSize: 11, color: AppColors.textGray),
+                style: GoogleFonts.inter(fontSize: 11, color: context.textSecondary),
               ),
             ),
           ),

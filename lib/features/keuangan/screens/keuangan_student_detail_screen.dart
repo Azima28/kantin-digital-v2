@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,8 +11,12 @@ import 'package:kantin_digital/features/keuangan/widgets/student_detail_password
 import 'package:kantin_digital/features/keuangan/widgets/student_detail_status_toggle.dart';
 import 'package:kantin_digital/features/shared/screens/student_transactions_screen.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
+import 'package:kantin_digital/core/widgets/nebula_components.dart';
+import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 
 // keuanganStudentDetailProvider is defined in keuangan_providers.dart
 
@@ -45,8 +49,8 @@ class _KeuanganStudentDetailScreenState
       MaterialPageRoute(
         builder: (_) => StudentTransactionsScreen(
           studentId: widget.studentId,
-          primaryColor: AppColors.darkTeal,
-          accentColor: AppColors.darkOrange,
+          primaryColor: Nebula.teal,
+          accentColor: Nebula.amber,
         ),
       ),
     );
@@ -73,7 +77,7 @@ class _KeuanganStudentDetailScreenState
           'Profil Siswa',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
-            color: AppColors.darkTeal,
+            color: Nebula.teal,
             fontSize: 18,
           ),
         ),
@@ -107,7 +111,7 @@ class _KeuanganStudentDetailScreenState
               onRefresh: () async => ref.invalidate(
                 keuanganStudentDetailProvider(widget.studentId),
               ),
-              color: AppColors.darkTeal,
+              color: Nebula.teal,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.symmetric(
@@ -133,19 +137,8 @@ class _KeuanganStudentDetailScreenState
                     const SizedBox(height: 16),
 
                     // ─── Aksi Admin Card ───
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.black.withValues(alpha: 0.04),
-                            blurRadius: 15,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
+                    NebulaCard(
+                      padding: EdgeInsets.zero,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -161,13 +154,13 @@ class _KeuanganStudentDetailScreenState
                               style: GoogleFonts.inter(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
-                                color: AppColors.nearBlack,
+                                color: context.textPrimary,
                               ),
                             ),
                           ),
                           _buildActionTile(
                             icon: CupertinoIcons.arrow_up_circle,
-                            iconColor: AppColors.successGreen,
+                            iconColor: Nebula.teal,
                             title: 'Top-Up Saldo Tunai',
                             onTap: () {
                               final studentProfile = StudentWithProfile(
@@ -187,15 +180,15 @@ class _KeuanganStudentDetailScreenState
                               );
                             },
                           ),
-                          const Divider(
+                          Divider(
                             height: 1,
                             thickness: 0.5,
                             indent: 56,
-                            color: AppColors.borderGray,
+                            color: context.dividerCol,
                           ),
                           _buildActionTile(
                             icon: CupertinoIcons.arrow_right_arrow_left_circle,
-                            iconColor: AppColors.errorRed2,
+                            iconColor: Nebula.rose,
                             title: AppStrings.keuanganKoreksiSaldo,
                             onTap: () {
                               final studentProfile = StudentWithProfile(
@@ -215,15 +208,15 @@ class _KeuanganStudentDetailScreenState
                               );
                             },
                           ),
-                          const Divider(
+                          Divider(
                             height: 1,
                             thickness: 0.5,
                             indent: 56,
-                            color: AppColors.borderGray,
+                            color: context.dividerCol,
                           ),
                           _buildActionTile(
                             icon: CupertinoIcons.wifi,
-                            iconColor: AppColors.darkTeal,
+                            iconColor: Nebula.teal,
                             title: 'Registrasi / Ganti Kartu NFC',
                             onTap: () {
                               context.push(
@@ -231,15 +224,15 @@ class _KeuanganStudentDetailScreenState
                               );
                             },
                           ),
-                          const Divider(
+                          Divider(
                             height: 1,
                             thickness: 0.5,
                             indent: 56,
-                            color: AppColors.borderGray,
+                            color: context.dividerCol,
                           ),
                           _buildActionTile(
                             icon: Icons.key,
-                            iconColor: AppColors.darkOrange,
+                            iconColor: Nebula.amber,
                             title: AppStrings.adminChangePassword,
                             onTap: () => StudentDetailPasswordChange.show(
                               context, ref, profile.id,
@@ -249,22 +242,11 @@ class _KeuanganStudentDetailScreenState
                       ),
                     ),
                     const SizedBox(height: 16),
+                    GradientLine(height: 1, margin: EdgeInsets.zero),
 
                     // ─── Riwayat Transaksi Card ───
-                    Container(
-                      width: double.infinity,
+                    NebulaCard(
                       padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.black.withValues(alpha: 0.04),
-                            blurRadius: 15,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -276,18 +258,21 @@ class _KeuanganStudentDetailScreenState
                                   style: GoogleFonts.inter(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
-                                    color: AppColors.nearBlack,
+                                    color: context.textPrimary,
                                   ),
                                 ),
                               ),
-                              TextButton(
-                                onPressed: _openAllTransactionsScreen,
-                                child: Text(
-                                  'Lihat Semua',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.darkTeal,
+                              PressScale(
+                                onTap: _openAllTransactionsScreen,
+                                child: TextButton(
+                                  onPressed: null,
+                                  child: Text(
+                                    'Lihat Semua',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: Nebula.teal,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -301,7 +286,7 @@ class _KeuanganStudentDetailScreenState
                                 child: Text(
                                   AppStrings.noTransactions,
                                   style: GoogleFonts.inter(
-                                    color: AppColors.mutedGray,
+                                    color: context.textSecondary,
                                   ),
                                 ),
                               ),
@@ -320,7 +305,7 @@ class _KeuanganStudentDetailScreenState
                                 final canteenName = tx.canteenName ?? 'Top-up';
 
                                 return Padding(
-                                  padding: const EdgeInsets.symmetric(
+                                  padding: EdgeInsets.symmetric(
                                     vertical: 8,
                                   ),
                                   child: Row(
@@ -332,10 +317,10 @@ class _KeuanganStudentDetailScreenState
                                           CircleAvatar(
                                             radius: 14,
                                             backgroundColor: isTopup
-                                                ? AppColors.successGreen.withValues(
+                                                ? Nebula.teal.withValues(
                                                     alpha: 0.08,
                                                   )
-                                                : AppColors.darkTeal.withValues(
+                                                : Nebula.teal.withValues(
                                                     alpha: 0.08,
                                                   ),
                                             child: Icon(
@@ -344,8 +329,8 @@ class _KeuanganStudentDetailScreenState
                                                   : CupertinoIcons.cart,
                                               size: 14,
                                               color: isTopup
-                                                  ? AppColors.successGreen
-                                                  : AppColors.darkTeal,
+                                                  ? Nebula.teal
+                                                  : Nebula.teal,
                                             ),
                                           ),
                                           const SizedBox(width: 10),
@@ -388,8 +373,8 @@ class _KeuanganStudentDetailScreenState
                                               fontWeight: FontWeight.bold,
                                               fontSize: 13,
                                               color: isTopup
-                                                  ? AppColors.successGreen
-                                                  : AppColors.darkTeal,
+                                                  ? Nebula.teal
+                                                  : Nebula.teal,
                                             ),
                                           ),
                                           if (!isSuccess)
@@ -400,7 +385,7 @@ class _KeuanganStudentDetailScreenState
                                               style: GoogleFonts.inter(
                                                 fontSize: 9,
                                                 fontWeight: FontWeight.bold,
-                                                color: AppColors.errorRed2,
+                                                color: Nebula.rose,
                                               ),
                                             ),
                                         ],
@@ -414,6 +399,7 @@ class _KeuanganStudentDetailScreenState
                       ),
                     ),
                     const SizedBox(height: 20),
+                    GradientLine(height: 1, margin: EdgeInsets.zero),
 
                     // ─── Block Account Button ───
                     StudentDetailStatusToggle(
@@ -426,10 +412,10 @@ class _KeuanganStudentDetailScreenState
               ),
             );
           },
-          loading: () => const Center(
+          loading: () => Center(
             child: Padding(
               padding: EdgeInsets.all(40),
-              child: CupertinoActivityIndicator(color: AppColors.darkTeal),
+              child: CupertinoActivityIndicator(color: Nebula.teal),
             ),
           ),
           error: (e, _) => Center(
@@ -438,7 +424,7 @@ class _KeuanganStudentDetailScreenState
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+                  const Icon(Icons.error_outline, size: 48, color: Nebula.rose),
                   const SizedBox(height: 12),
                   Text('${AppStrings.labelFailed} memuat profil'),
                   const SizedBox(height: 8),
@@ -461,26 +447,29 @@ class _KeuanganStudentDetailScreenState
     required String title,
     required VoidCallback onTap,
   }) {
-    return ListTile(
-      leading: CircleAvatar(
-        radius: 18,
-        backgroundColor: iconColor.withValues(alpha: 0.08),
-        child: Icon(icon, color: iconColor, size: 20),
-      ),
-      title: Text(
-        title,
-        style: GoogleFonts.inter(
-          fontWeight: FontWeight.w600,
-          fontSize: 14,
-          color: AppColors.nearBlack,
-        ),
-      ),
-      trailing: const Icon(
-        CupertinoIcons.chevron_forward,
-        size: 16,
-        color: AppColors.mutedGray,
-      ),
+    return PressScale(
       onTap: onTap,
+      child: ListTile(
+        leading: CircleAvatar(
+          radius: 18,
+          backgroundColor: iconColor.withValues(alpha: 0.08),
+          child: Icon(icon, color: iconColor, size: 20),
+        ),
+        title: Text(
+          title,
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            color: context.textPrimary,
+          ),
+        ),
+        trailing: Icon(
+          CupertinoIcons.chevron_forward,
+          size: 16,
+          color: context.textSecondary,
+        ),
+        onTap: null,
+      ),
     );
   }
 }

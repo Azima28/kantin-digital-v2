@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 /// Success screen widget displayed after a successful top-up by keuangan staff.
 class KeuanganTopupSuccessScreen extends StatelessWidget {
@@ -34,25 +35,25 @@ class KeuanganTopupSuccessScreen extends StatelessWidget {
         Container(
           height: 80,
           width: 80,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColors.successLight,
+            color: Nebula.teal.withValues(alpha: 0.1),
           ),
           child: const Center(
             child: Icon(
               CupertinoIcons.checkmark_alt_circle_fill,
-              color: AppColors.successGreen,
+              color: Nebula.teal,
               size: 56,
             ),
           ),
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: 24),
         Text(
           'Top-Up Berhasil!',
           style: GoogleFonts.inter(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: AppColors.darkTeal,
+            color: Nebula.teal,
           ),
         ),
         const SizedBox(height: 8),
@@ -60,7 +61,7 @@ class KeuanganTopupSuccessScreen extends StatelessWidget {
           'Saldo $studentName berhasil ditambah.',
           style: GoogleFonts.inter(
             fontSize: 14,
-            color: AppColors.mutedGray,
+            color: context.textSecondary,
           ),
           textAlign: TextAlign.center,
         ),
@@ -71,36 +72,37 @@ class KeuanganTopupSuccessScreen extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColors.borderGray),
+            border: Border.all(color: context.dividerCol),
           ),
           child: Column(
             children: [
               _buildInfoRow(
+                context,
                 'Nominal Pengisian',
                 fmt.format(amount),
-                valueColor: AppColors.successGreen,
+                valueColor: Nebula.teal,
                 isBold: true,
               ),
-              const Divider(
+              Divider(
                 height: 16,
                 thickness: 0.5,
-                color: AppColors.borderGray,
+                color: context.dividerCol,
               ),
-              _buildInfoRow('Saldo Baru', fmt.format(newBalance), isBold: true),
-              const Divider(
+              _buildInfoRow(context, 'Saldo Baru', fmt.format(newBalance), isBold: true),
+              Divider(
                 height: 16,
                 thickness: 0.5,
-                color: AppColors.borderGray,
+                color: context.dividerCol,
               ),
-              _buildInfoRow('Waktu Transaksi', successTime),
-              const Divider(
+              _buildInfoRow(context, 'Waktu Transaksi', successTime),
+              Divider(
                 height: 16,
                 thickness: 0.5,
-                color: AppColors.borderGray,
+                color: context.dividerCol,
               ),
-              _buildInfoRow('Kode Referensi', refCode),
+              _buildInfoRow(context, 'Kode Referensi', refCode),
             ],
           ),
         ),
@@ -116,12 +118,12 @@ class KeuanganTopupSuccessScreen extends StatelessWidget {
                   content: Text(
                     'Simulasi Cetak Struk: Struk dikirim ke printer thermal.',
                   ),
-                  backgroundColor: AppColors.successGreen,
+                  backgroundColor: Nebula.teal,
                   behavior: SnackBarBehavior.floating,
                 ),
               );
             },
-            icon: const Icon(CupertinoIcons.printer_fill, size: 18),
+            icon: Icon(CupertinoIcons.printer_fill, size: 18),
             label: Text(
               'CETAK STRUK / BAGIKAN',
               style: GoogleFonts.inter(
@@ -130,8 +132,8 @@ class KeuanganTopupSuccessScreen extends StatelessWidget {
               ),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.darkTeal,
-              side: const BorderSide(color: AppColors.darkTeal),
+              foregroundColor: Nebula.teal,
+              side: BorderSide(color: Nebula.teal),
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -139,7 +141,7 @@ class KeuanganTopupSuccessScreen extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
@@ -147,7 +149,7 @@ class KeuanganTopupSuccessScreen extends StatelessWidget {
               context.go('/finance');
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.darkTeal,
+              backgroundColor: Nebula.teal,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -159,7 +161,7 @@ class KeuanganTopupSuccessScreen extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
-                color: AppColors.white,
+                color: Colors.white,
               ),
             ),
           ),
@@ -170,6 +172,7 @@ class KeuanganTopupSuccessScreen extends StatelessWidget {
   }
 
   Widget _buildInfoRow(
+    BuildContext context,
     String label,
     String value, {
     Color? valueColor,
@@ -182,7 +185,7 @@ class KeuanganTopupSuccessScreen extends StatelessWidget {
           label,
           style: GoogleFonts.inter(
             fontSize: 13,
-            color: AppColors.mutedGray,
+            color: context.textSecondary,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -190,7 +193,7 @@ class KeuanganTopupSuccessScreen extends StatelessWidget {
           value,
           style: GoogleFonts.inter(
             fontSize: 13,
-            color: valueColor ?? AppColors.nearBlack,
+            color: valueColor ?? context.textPrimary,
             fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
           ),
         ),

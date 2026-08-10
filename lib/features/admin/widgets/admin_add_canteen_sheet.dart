@@ -82,7 +82,7 @@ void showAddCanteenSheet(BuildContext context, WidgetRef ref) {
                 passCtrl,
                 'Password Awal *',
                 suffix: IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     CupertinoIcons.refresh,
                     size: 18,
                     color: AppColors.darkTeal,
@@ -246,15 +246,15 @@ Widget _buildFormField(
             const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.borderGray),
+          borderSide: BorderSide(color: AppColors.borderGray),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.borderGray),
+          borderSide: BorderSide(color: AppColors.borderGray),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.darkTeal, width: 1.5),
+          borderSide: BorderSide(color: AppColors.darkTeal, width: 1.5),
         ),
       ),
     );

@@ -1,9 +1,10 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
 
@@ -66,7 +67,7 @@ class _TopupFormState extends State<TopupForm> {
         Text(
           label,
           style: GoogleFonts.inter(
-            color: AppColors.mutedGray,
+            color: context.textSecondary,
             fontSize: 13,
           ),
         ),
@@ -75,7 +76,7 @@ class _TopupFormState extends State<TopupForm> {
             value,
             style: GoogleFonts.inter(
               fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-              color: valueColor ?? AppColors.nearBlack,
+              color: valueColor ?? context.textPrimary,
               fontSize: 13,
             ),
             textAlign: TextAlign.right,
@@ -100,11 +101,11 @@ class _TopupFormState extends State<TopupForm> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: AppColors.black.withValues(alpha: 0.04),
+                color: context.shadowColor,
                 blurRadius: 15,
                 offset: const Offset(0, 4),
               ),
@@ -116,7 +117,7 @@ class _TopupFormState extends State<TopupForm> {
                 children: [
                   const Icon(
                     CupertinoIcons.checkmark_circle_fill,
-                    color: AppColors.successGreen,
+                    color: Nebula.teal,
                     size: 18,
                   ),
                   const SizedBox(width: 6),
@@ -124,7 +125,7 @@ class _TopupFormState extends State<TopupForm> {
                     'Siswa Ditemukan',
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.successGreen,
+                      color: Nebula.teal,
                       fontSize: 13,
                     ),
                   ),
@@ -132,22 +133,22 @@ class _TopupFormState extends State<TopupForm> {
               ),
               const SizedBox(height: 12),
               _buildInfoRow('Nama', _studentName),
-              const Divider(
+              Divider(
                 height: 16,
                 thickness: 0.5,
-                color: AppColors.borderGray,
+                color: context.dividerCol,
               ),
               _buildInfoRow('NISN', _studentNisn),
-              const Divider(
+              Divider(
                 height: 16,
                 thickness: 0.5,
-                color: AppColors.borderGray,
+                color: context.dividerCol,
               ),
               _buildInfoRow(AppStrings.labelStudentClass, 'Kelas $_studentClass'),
-              const Divider(
+              Divider(
                 height: 16,
                 thickness: 0.5,
-                color: AppColors.borderGray,
+                color: context.dividerCol,
               ),
               _buildInfoRow('Saldo Saat Ini', fmt.format(_studentBalance)),
             ],
@@ -159,7 +160,7 @@ class _TopupFormState extends State<TopupForm> {
           'Nominal Top-Up (Uang Tunai Diterima)',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
-            color: AppColors.nearBlack,
+            color: context.textPrimary,
             fontSize: 13,
           ),
         ),
@@ -176,45 +177,45 @@ class _TopupFormState extends State<TopupForm> {
             prefixText: 'Rp ',
             prefixStyle: GoogleFonts.inter(
               fontWeight: FontWeight.bold,
-              color: AppColors.nearBlack,
+              color: context.textPrimary,
             ),
             hintText: '0',
             hintStyle: GoogleFonts.inter(
-              color: AppColors.mutedGray,
+              color: context.textSecondary,
               fontSize: 14,
             ),
             filled: true,
-            fillColor: AppColors.white,
+            fillColor: context.cardBg,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 14,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.borderGray),
+              borderSide: BorderSide(color: context.dividerCol),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.borderGray),
+              borderSide: BorderSide(color: context.dividerCol),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide:
-                  const BorderSide(color: AppColors.darkTeal, width: 1.5),
+                  BorderSide(color: Nebula.teal, width: 1.5),
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
 
         // Quick select chips
         Text(
           '${AppStrings.buttonSelect} Cepat:',
           style: GoogleFonts.inter(
             fontSize: 12,
-            color: AppColors.mutedGray,
+            color: context.textSecondary,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -225,7 +226,7 @@ class _TopupFormState extends State<TopupForm> {
                 fmt.format(val).replaceAll('Rp ', ''),
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
-                  color: isSelected ? AppColors.white : AppColors.darkTeal,
+                  color: isSelected ? Colors.white : Nebula.teal,
                   fontSize: 12,
                 ),
               ),
@@ -233,26 +234,26 @@ class _TopupFormState extends State<TopupForm> {
               onSelected: (selected) {
                 if (selected) _onQuickAmountSelected(val);
               },
-              selectedColor: AppColors.darkTeal,
-              backgroundColor: AppColors.white,
+              selectedColor: Nebula.teal,
+              backgroundColor: context.cardBg,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
                 side: BorderSide(
-                    color: AppColors.darkTeal.withValues(alpha: 0.15)),
+                    color: Nebula.teal.withValues(alpha: 0.15)),
               ),
             );
           }).toList(),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
         Text(
           'Saldo Baru (Preview): ${fmt.format(newBalance)}',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
             fontSize: 14,
-            color: AppColors.darkTeal,
+            color: Nebula.teal,
           ),
         ),
-        const SizedBox(height: 32),
+        SizedBox(height: 32),
 
         SizedBox(
           width: double.infinity,
@@ -263,7 +264,7 @@ class _TopupFormState extends State<TopupForm> {
                     widget.onSubmit(_getAmount());
                   },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.darkTeal,
+              backgroundColor: Nebula.teal,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -275,7 +276,7 @@ class _TopupFormState extends State<TopupForm> {
               style: GoogleFonts.inter(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
-                color: AppColors.white,
+                color: context.cardBg,
               ),
             ),
           ),

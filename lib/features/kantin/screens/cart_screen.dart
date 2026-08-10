@@ -2,12 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/kantin/providers/cart_provider.dart';
 import 'package:kantin_digital/features/kantin/widgets/cart_item_tile.dart';
 import 'package:kantin_digital/features/kantin/widgets/cart_summary_bar.dart';
 import 'package:kantin_digital/features/kantin/widgets/nfc_payment_modal.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 class CartScreen extends ConsumerWidget {
   const CartScreen({super.key});
@@ -20,7 +21,7 @@ class CartScreen extends ConsumerWidget {
     showCupertinoDialog(
       context: context,
       builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: const Text(
+        title: Text(
           AppStrings.labelAddExtraCharge,
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
@@ -32,12 +33,12 @@ class CartScreen extends ConsumerWidget {
               CupertinoTextField(
                 controller: nameController,
                 placeholder: 'Nama biaya (contoh: Nasi Tambah)',
-                placeholderStyle: const TextStyle(color: AppColors.textGray, fontSize: 13),
-                style: const TextStyle(fontSize: 14, color: AppColors.textDark),
+                placeholderStyle: TextStyle(color: context.textSecondary, fontSize: 13),
+                style: TextStyle(fontSize: 14, color: context.textPrimary),
                 decoration: BoxDecoration(
                   color: CupertinoColors.extraLightBackgroundGray,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.borderLight, width: 0.5),
+                  border: Border.all(color: context.borderLight, width: 0.5),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               ),
@@ -45,13 +46,13 @@ class CartScreen extends ConsumerWidget {
               CupertinoTextField(
                 controller: priceController,
                 placeholder: 'Nominal harga (Rp)',
-                placeholderStyle: const TextStyle(color: AppColors.textGray, fontSize: 13),
+                placeholderStyle: TextStyle(color: context.textSecondary, fontSize: 13),
                 keyboardType: TextInputType.number,
-                style: const TextStyle(fontSize: 14, color: AppColors.textDark),
+                style: TextStyle(fontSize: 14, color: context.textPrimary),
                 decoration: BoxDecoration(
                   color: CupertinoColors.extraLightBackgroundGray,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.borderLight, width: 0.5),
+                  border: Border.all(color: context.borderLight, width: 0.5),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               ),
@@ -103,7 +104,7 @@ class CartScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           AppStrings.titleCart,
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
         ),
@@ -112,7 +113,7 @@ class CartScreen extends ConsumerWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.left_chevron, color: AppColors.primary),
+          icon: const Icon(CupertinoIcons.left_chevron, color: Nebula.teal),
           onPressed: () => context.pop(),
         ),
         actions: [
@@ -121,18 +122,18 @@ class CartScreen extends ConsumerWidget {
               onPressed: () {
                 ref.read(cartProvider.notifier).clearCart();
               },
-              child: const Text(
+              child: Text(
                 'Kosongkan',
                 style: TextStyle(
-                  color: AppColors.error,
+                  color: Nebula.rose,
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
                 ),
               ),
             ),
         ],
-        shape: const Border(
-          bottom: BorderSide(color: AppColors.borderLight, width: 0.5),
+        shape: Border(
+          bottom: BorderSide(color: context.borderLight, width: 0.5),
         ),
       ),
       body: Align(
@@ -144,33 +145,33 @@ class CartScreen extends ConsumerWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(CupertinoIcons.shopping_cart, size: 64, color: AppColors.textGray),
+                      Icon(CupertinoIcons.shopping_cart, size: 64, color: context.textSecondary),
                       const SizedBox(height: 16),
                       Text(
                         'Keranjang Belanja Kosong',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: AppColors.textDark,
+                              color: context.textPrimary,
                               fontWeight: FontWeight.w700,
                             ),
                       ),
                       const SizedBox(height: 6),
-                      const Text(
+                      Text(
                         '${AppStrings.buttonSelect} makanan atau minuman dari katalog kasir.',
-                        style: TextStyle(color: AppColors.textGray, fontSize: 13),
+                        style: TextStyle(color: context.textSecondary, fontSize: 13),
                       ),
                       const SizedBox(height: 24),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: Nebula.teal,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         ),
                         onPressed: () => context.pop(),
-                        child: const Text(
+                        child: Text(
                           'Kembali Belanja',
-                          style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: context.cardBg, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],

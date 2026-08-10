@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 /// Screen yang ditampilkan ketika user tidak memiliki hak akses
 /// ke suatu halaman (role mismatch).
@@ -22,16 +23,16 @@ class UnauthorizedScreen extends StatelessWidget {
                 const Icon(
                   Icons.lock_outline_rounded,
                   size: 80,
-                  color: AppColors.error,
+                  color: Nebula.rose,
                 ),
                 const SizedBox(height: 24),
                 Text(
                   'Akses Ditolak',
                   style: GoogleFonts.inter(
-                    textStyle: const TextStyle(
+                    textStyle: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textDark,
+                      color: context.textPrimary,
                     ),
                   ),
                 ),
@@ -40,9 +41,9 @@ class UnauthorizedScreen extends StatelessWidget {
                   'Anda tidak memiliki izin untuk mengakses halaman ini. Silakan hubungi administrator sekolah.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
-                    textStyle: const TextStyle(
+                    textStyle: TextStyle(
                       fontSize: 15,
-                      color: AppColors.textGray,
+                      color: context.textSecondary,
                       height: 1.4,
                     ),
                   ),
@@ -53,18 +54,18 @@ class UnauthorizedScreen extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () => context.go('/login'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: Nebula.teal,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Kembali ke Login',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.white,
+                        color: context.cardBg,
                       ),
                     ),
                   ),

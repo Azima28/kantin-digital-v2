@@ -10,6 +10,7 @@ class Product {
   final bool isAvailable;
   final String? imageUrl;
   final DateTime? createdAt;
+  final List<String> customizableOptions;
 
   const Product({
     required this.id,
@@ -20,6 +21,7 @@ class Product {
     this.isAvailable = true,
     this.imageUrl,
     this.createdAt,
+    this.customizableOptions = const <String>[],
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -34,6 +36,10 @@ class Product {
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
+      customizableOptions: (json['customizable_options'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const <String>[],
     );
   }
 
@@ -46,6 +52,7 @@ class Product {
     'is_available': isAvailable,
     'image_url': imageUrl,
     'created_at': createdAt?.toIso8601String(),
+    'customizable_options': customizableOptions,
   };
 
   Product copyWith({
@@ -57,6 +64,7 @@ class Product {
     bool? isAvailable,
     String? imageUrl,
     DateTime? createdAt,
+    List<String>? customizableOptions,
   }) {
     return Product(
       id: id ?? this.id,
@@ -67,6 +75,7 @@ class Product {
       isAvailable: isAvailable ?? this.isAvailable,
       imageUrl: imageUrl ?? this.imageUrl,
       createdAt: createdAt ?? this.createdAt,
+      customizableOptions: customizableOptions ?? this.customizableOptions,
     );
   }
 

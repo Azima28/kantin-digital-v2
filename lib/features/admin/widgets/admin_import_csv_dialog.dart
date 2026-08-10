@@ -2,7 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
@@ -71,7 +72,7 @@ void showImportUsersDialog(BuildContext context, WidgetRef ref, String roleFilte
                 Text(
                   formatGuidance,
                   style: GoogleFonts.inter(
-                      fontSize: 12, color: AppColors.mutedGray),
+                      fontSize: 12, color: context.textSecondary),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -113,7 +114,7 @@ void showImportUsersDialog(BuildContext context, WidgetRef ref, String roleFilte
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.darkTeal,
+                backgroundColor: Nebula.teal,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
               ),
@@ -416,11 +417,11 @@ void showImportUsersDialog(BuildContext context, WidgetRef ref, String roleFilte
                       }
                     },
               child: isProcessing
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20,
                       height: 20,
                       child:
-                          CupertinoActivityIndicator(color: AppColors.white))
+                          CupertinoActivityIndicator(color: context.cardBg))
                   : Text('Proses Import',
                       style: GoogleFonts.inter()),
             )

@@ -1,7 +1,8 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 /// Registration form for NFC card linking.
 ///
@@ -35,11 +36,11 @@ class KeuanganCardRegistrationForm extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: AppColors.black.withValues(alpha: 0.04),
+                color: context.shadowColor,
                 blurRadius: 15,
                 offset: const Offset(0, 4),
               ),
@@ -52,21 +53,21 @@ class KeuanganCardRegistrationForm extends StatelessWidget {
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: AppColors.darkTeal,
+                  color: Nebula.teal,
                   letterSpacing: 0.5,
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Text(
                 'Tempelkan kartu siswa ke sensor NFC perangkat ini atau gunakan tombol simulasi di bawah.',
                 style: GoogleFonts.inter(
                   fontSize: 13,
-                  color: AppColors.mutedGray,
+                  color: context.textSecondary,
                   height: 1.4,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               // Animated ripple design
               GestureDetector(
                 onTap: onSimulateNfcScan,
@@ -75,15 +76,15 @@ class KeuanganCardRegistrationForm extends StatelessWidget {
                   width: 100,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.darkTeal.withValues(alpha: 0.05),
+                    color: Nebula.teal.withValues(alpha: 0.05),
                     border: Border.all(
-                        color: AppColors.darkTeal.withValues(alpha: 0.15),
+                        color: Nebula.teal.withValues(alpha: 0.15),
                         width: 1.5),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Icon(
                       CupertinoIcons.antenna_radiowaves_left_right,
-                      color: AppColors.darkTeal,
+                      color: Nebula.teal,
                       size: 44,
                     ),
                   ),
@@ -92,13 +93,13 @@ class KeuanganCardRegistrationForm extends StatelessWidget {
               const SizedBox(height: 16),
               TextButton.icon(
                 onPressed: onSimulateNfcScan,
-                icon: const Icon(CupertinoIcons.play_circle_fill, size: 18),
+                icon: Icon(CupertinoIcons.play_circle_fill, size: 18),
                 label: Text(
                   'Simulasikan Tap Kartu',
                   style: GoogleFonts.inter(fontWeight: FontWeight.bold),
                 ),
                 style:
-                    TextButton.styleFrom(foregroundColor: AppColors.darkTeal),
+                    TextButton.styleFrom(foregroundColor: Nebula.teal),
               ),
             ],
           ),
@@ -111,7 +112,7 @@ class KeuanganCardRegistrationForm extends StatelessWidget {
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
             fontSize: 13,
-            color: AppColors.nearBlack,
+            color: context.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -120,23 +121,23 @@ class KeuanganCardRegistrationForm extends StatelessWidget {
           decoration: InputDecoration(
             hintText: 'Contoh: 04:F8:A1:22',
             hintStyle:
-                GoogleFonts.inter(color: AppColors.mutedGray, fontSize: 14),
+                GoogleFonts.inter(color: context.textSecondary, fontSize: 14),
             filled: true,
-            fillColor: AppColors.white,
+            fillColor: context.cardBg,
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.borderGray),
+              borderSide: BorderSide(color: context.dividerCol),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.borderGray),
+              borderSide: BorderSide(color: context.dividerCol),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide:
-                  const BorderSide(color: AppColors.darkTeal, width: 1.5),
+                  BorderSide(color: Nebula.teal, width: 1.5),
             ),
           ),
         ),
@@ -146,11 +147,11 @@ class KeuanganCardRegistrationForm extends StatelessWidget {
             'ℹ UID Lama: $oldRfid (aktif)',
             style: GoogleFonts.inter(
               fontSize: 12,
-              color: AppColors.mutedGray,
+              color: context.textSecondary,
               fontStyle: FontStyle.italic,
             ),
           ),
-        const SizedBox(height: 32),
+        SizedBox(height: 32),
 
         // ─── Action Buttons ───
         SizedBox(
@@ -158,20 +159,20 @@ class KeuanganCardRegistrationForm extends StatelessWidget {
           child: ElevatedButton(
             onPressed: isLoading ? null : onLinkCard,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.darkTeal,
+              backgroundColor: Nebula.teal,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape:
                   RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               elevation: 0,
             ),
             child: isLoading
-                ? const CupertinoActivityIndicator(color: AppColors.white)
+                ? CupertinoActivityIndicator(color: context.cardBg)
                 : Text(
                     'HUBUNGKAN KARTU',
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: AppColors.white,
+                      color: context.cardBg,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -184,7 +185,7 @@ class KeuanganCardRegistrationForm extends StatelessWidget {
             child: OutlinedButton(
               onPressed: isLoading ? null : onUnlinkCard,
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppColors.errorRed2),
+                side: const BorderSide(color: Nebula.rose),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape:
                     RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -194,7 +195,7 @@ class KeuanganCardRegistrationForm extends StatelessWidget {
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
-                  color: AppColors.errorRed2,
+                  color: Nebula.rose,
                 ),
               ),
             ),

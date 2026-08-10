@@ -1,10 +1,12 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_import_csv_dialog.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_user_list_tile.dart';
@@ -88,7 +90,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Status akun berhasil ${newStatus ? "diaktifkan" : "dinonaktifkan"}.'),
-            backgroundColor: AppColors.successGreen,
+            backgroundColor: Nebula.teal,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -98,7 +100,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${AppStrings.labelFailed} memperbarui status akun'),
-            backgroundColor: AppColors.errorRed2,
+            backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -145,7 +147,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
           style: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: AppColors.darkTeal,
+            color: Nebula.teal,
           ),
         ),
         actions: [
@@ -153,7 +155,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
               _selectedRoleFilter != 'Admin' &&
               _selectedRoleFilter != 'Orang Tua')
             IconButton(
-              icon: const Icon(CupertinoIcons.square_arrow_down, color: AppColors.darkTeal),
+              icon: Icon(CupertinoIcons.square_arrow_down, color: Nebula.teal),
               tooltip: 'Import $_selectedRoleFilter (CSV)',
               onPressed: () => showImportUsersDialog(context, ref, _selectedRoleFilter),
             ),
@@ -203,7 +205,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                     child: Text(
                       'Tidak ada pengguna ditemukan.',
                       style: GoogleFonts.inter(
-                        color: AppColors.textGray,
+                        color: context.textSecondary,
                         fontSize: 15,
                       ),
                     ),
@@ -214,7 +216,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                   onRefresh: () async {
                     ref.invalidate(adminUsersProvider);
                   },
-                  color: AppColors.darkTeal,
+                  color: Nebula.teal,
                   child: ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     itemCount: filtered.length,
@@ -232,18 +234,18 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                   ),
                 );
               },
-              loading: () => const Center(child: CupertinoActivityIndicator(color: AppColors.darkTeal)),
+              loading: () => Center(child: CupertinoActivityIndicator(color: Nebula.teal)),
               error: (err, stack) => Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+                    const Icon(Icons.error_outline, size: 48, color: Nebula.rose),
                     const SizedBox(height: 12),
                     Text('${AppStrings.labelFailed} memuat data'),
                     const SizedBox(height: 8),
                     ElevatedButton(
                       onPressed: () => ref.invalidate(adminUsersProvider),
-                      child: const Text(AppStrings.buttonRetry),
+                      child: Text(AppStrings.buttonRetry),
                     ),
                   ],
                 ),
@@ -254,11 +256,14 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
       ),
       floatingActionButton: (_selectedRoleFilter != 'Semua' &&
               _selectedRoleFilter != 'Orang Tua')
-          ? FloatingActionButton.small(
-              backgroundColor: AppColors.darkTeal,
-              shape: const CircleBorder(),
-              child: const Icon(CupertinoIcons.add, color: AppColors.white),
-              onPressed: () => _showAddUserSheet(context, _selectedRoleFilter),
+          ? PressScale(
+              onTap: () => _showAddUserSheet(context, _selectedRoleFilter),
+              child: FloatingActionButton.small(
+                onPressed: () => _showAddUserSheet(context, _selectedRoleFilter),
+                backgroundColor: Nebula.teal,
+                shape: const CircleBorder(),
+                child: Icon(CupertinoIcons.add, color: context.cardBg),
+              ),
             )
           : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
@@ -289,4 +294,3 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
   }
 
 }
-

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 class MerchantProfileHeader extends StatelessWidget {
   final String fullName;
@@ -19,11 +20,11 @@ class MerchantProfileHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.04),
+            color: context.shadowColor,
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -33,8 +34,8 @@ class MerchantProfileHeader extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 36,
-            backgroundColor: AppColors.darkTeal.withValues(alpha: 0.1),
-            child: Icon(Icons.shopping_bag, color: AppColors.darkTeal, size: 36),
+            backgroundColor: Nebula.teal.withValues(alpha: 0.1),
+            child: Icon(Icons.shopping_bag, color: Nebula.teal, size: 36),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -46,19 +47,19 @@ class MerchantProfileHeader extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.nearBlack,
+                    color: context.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.storefront, size: 14, color: AppColors.textGray),
+                    Icon(Icons.storefront, size: 14, color: context.textSecondary),
                     const SizedBox(width: 4),
                     Text(
                       canteenName,
                       style: GoogleFonts.inter(
                         fontSize: 13,
-                        color: AppColors.textGray,
+                        color: context.textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -68,7 +69,7 @@ class MerchantProfileHeader extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                   decoration: BoxDecoration(
-                    color: AppColors.offWhite2,
+                    color: context.surfaceBg,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -76,7 +77,7 @@ class MerchantProfileHeader extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.mutedGray,
+                      color: context.textSecondary,
                     ),
                   ),
                 ),

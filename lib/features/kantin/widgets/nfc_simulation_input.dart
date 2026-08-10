@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/features/kantin/providers/nfc_payment_provider.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 class NfcSimulationInput extends ConsumerWidget {
   final TextEditingController controller;
@@ -18,9 +19,9 @@ class NfcSimulationInput extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.systemBackground,
+        color: context.surfaceBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderLight, width: 0.5),
+        border: Border.all(color: context.borderLight, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -30,14 +31,14 @@ class NfcSimulationInput extends ConsumerWidget {
             alignment: Alignment.centerLeft,
             child: Row(
               children: [
-                Icon(CupertinoIcons.device_phone_portrait, size: 16, color: AppColors.primary),
+                Icon(CupertinoIcons.device_phone_portrait, size: 16, color: Nebula.teal),
                 SizedBox(width: 6),
                 Text(
                   '🛠️ SIMULASI TAP KARTU SISWA',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.primary,
+                    color: Nebula.teal,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -51,12 +52,12 @@ class NfcSimulationInput extends ConsumerWidget {
                 child: CupertinoTextField(
                   controller: controller,
                   placeholder: 'Masukkan RFID UID (Contoh: RFID123)',
-                  placeholderStyle: const TextStyle(color: AppColors.textGray, fontSize: 13),
-                  style: const TextStyle(fontSize: 13, color: AppColors.textDark),
+                  placeholderStyle: TextStyle(color: context.textSecondary, fontSize: 13),
+                  style: TextStyle(fontSize: 13, color: context.textPrimary),
                   decoration: BoxDecoration(
-                    color: AppColors.cardBackground,
+                    color: context.cardBg,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.borderLight, width: 0.5),
+                    border: Border.all(color: context.borderLight, width: 0.5),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 ),
@@ -72,13 +73,13 @@ class NfcSimulationInput extends ConsumerWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    color: Nebula.teal,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Tap',
                     style: TextStyle(
-                      color: AppColors.white,
+                      color: context.cardBg,
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
                     ),
@@ -88,12 +89,12 @@ class NfcSimulationInput extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'Preset Kartu Terdaftar:',
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.bold,
-              color: AppColors.textGray,
+              color: context.textSecondary,
             ),
           ),
           const SizedBox(height: 6),
@@ -105,7 +106,7 @@ class NfcSimulationInput extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: Nebula.teal.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: FittedBox(
@@ -117,13 +118,13 @@ class NfcSimulationInput extends ConsumerWidget {
                     Icon(
                       CupertinoIcons.person_fill,
                       size: 14,
-                      color: AppColors.primary,
+                      color: Nebula.teal,
                     ),
                     SizedBox(width: 6),
                     Text(
                       'Ahmad Subarjo (04:A3:F8:12)',
                       style: TextStyle(
-                        color: AppColors.primary,
+                        color: Nebula.teal,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),

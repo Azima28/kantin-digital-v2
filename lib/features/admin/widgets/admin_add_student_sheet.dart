@@ -83,7 +83,7 @@ void showAddStudentSheet(BuildContext context, WidgetRef ref) {
               const SizedBox(height: 12),
               _buildFormField(passCtrl, 'Password Awal *',
                   suffix: IconButton(
-                    icon: const Icon(CupertinoIcons.refresh, size: 18, color: AppColors.darkTeal),
+                    icon: Icon(CupertinoIcons.refresh, size: 18, color: AppColors.darkTeal),
                     onPressed: () => setLocal(() => passCtrl.text = 'siswa${_randomSuffix()}'),
                   )),
               const SizedBox(height: 20),
@@ -271,7 +271,7 @@ Widget _buildDropdownRow({
           child: DropdownButton<String>(
             value: value,
             isExpanded: true,
-            icon: const Icon(CupertinoIcons.chevron_down, size: 14, color: AppColors.darkTeal),
+            icon: Icon(CupertinoIcons.chevron_down, size: 14, color: AppColors.darkTeal),
             style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.nearBlack),
             items: items
                 .map((item) => DropdownMenuItem(

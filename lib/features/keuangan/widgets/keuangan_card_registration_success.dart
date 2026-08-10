@@ -2,7 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 /// Success screen after a card has been successfully linked.
 class KeuanganCardRegistrationSuccess extends StatelessWidget {
@@ -22,7 +23,7 @@ class KeuanganCardRegistrationSuccess extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.offWhite,
+      backgroundColor: context.cardBg,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -34,25 +35,25 @@ class KeuanganCardRegistrationSuccess extends StatelessWidget {
               Container(
                 height: 80,
                 width: 80,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.successLight,
+                  color: Nebula.teal.withValues(alpha: 0.1),
                 ),
                 child: const Center(
                   child: Icon(
                     CupertinoIcons.checkmark_alt_circle_fill,
-                    color: AppColors.successGreen,
+                    color: Nebula.teal,
                     size: 56,
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               Text(
                 'Kartu Berhasil Diaktifkan!',
                 style: GoogleFonts.inter(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.darkTeal,
+                  color: Nebula.teal,
                 ),
               ),
               const SizedBox(height: 12),
@@ -60,7 +61,7 @@ class KeuanganCardRegistrationSuccess extends StatelessWidget {
                 'Kartu NFC berhasil ditautkan dan akun siswa aktif.',
                 style: GoogleFonts.inter(
                   fontSize: 14,
-                  color: AppColors.mutedGray,
+                  color: context.textSecondary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -71,34 +72,34 @@ class KeuanganCardRegistrationSuccess extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: context.cardBg,
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: AppColors.borderGray),
+                  border: Border.all(color: context.dividerCol),
                 ),
                 child: Column(
                   children: [
-                    _buildSuccessRow('Nama Siswa', fullName),
-                    const Divider(
+                    _buildSuccessRow(context, 'Nama Siswa', fullName),
+                    Divider(
                         height: 16,
                         thickness: 0.5,
-                        color: AppColors.borderGray),
+                        color: context.dividerCol),
                     _buildSuccessRow(
-                        'Kelas', 'Kelas $studentClass'),
-                    const Divider(
+                        context, 'Kelas', 'Kelas $studentClass'),
+                    Divider(
                         height: 16,
                         thickness: 0.5,
-                        color: AppColors.borderGray),
-                    _buildSuccessRow('UID Kartu', savedUid),
-                    const Divider(
+                        color: context.dividerCol),
+                    _buildSuccessRow(context, 'UID Kartu', savedUid),
+                    Divider(
                         height: 16,
                         thickness: 0.5,
-                        color: AppColors.borderGray),
-                    _buildSuccessRow('Waktu Tautan', successTime),
+                        color: context.dividerCol),
+                    _buildSuccessRow(context, 'Waktu Tautan', successTime),
                   ],
                 ),
               ),
 
-              const Spacer(),
+              Spacer(),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -106,7 +107,7 @@ class KeuanganCardRegistrationSuccess extends StatelessWidget {
                     context.pop();
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkTeal,
+                    backgroundColor: Nebula.teal,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16)),
@@ -117,7 +118,7 @@ class KeuanganCardRegistrationSuccess extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: AppColors.white,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -129,21 +130,21 @@ class KeuanganCardRegistrationSuccess extends StatelessWidget {
     );
   }
 
-  Widget _buildSuccessRow(String label, String value) {
+  Widget _buildSuccessRow(BuildContext context, String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
           style: GoogleFonts.inter(
-              color: AppColors.mutedGray, fontSize: 13),
+              color: context.textSecondary, fontSize: 13),
         ),
         Flexible(
           child: Text(
             value,
             style: GoogleFonts.inter(
               fontWeight: FontWeight.bold,
-              color: AppColors.nearBlack,
+              color: context.textPrimary,
               fontSize: 13,
             ),
             textAlign: TextAlign.right,

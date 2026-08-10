@@ -1,9 +1,9 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/features/admin/widgets/setting_section_widget.dart';
 import 'package:kantin_digital/features/admin/widgets/setting_tile_widget.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 /// Account & Security section used inside [AdminSettingsScreen].
 ///
@@ -29,13 +29,13 @@ class AdminSettingsAccountSection extends StatelessWidget {
         SettingTileWidget(
           leading: CircleAvatar(
             radius: 20,
-            backgroundColor: AppColors.darkTeal.withValues(alpha: 0.1),
+            backgroundColor: Nebula.teal.withValues(alpha: 0.1),
             child: Text(
               fullName.isNotEmpty ? fullName[0].toUpperCase() : 'S',
               style: GoogleFonts.inter(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.darkTeal,
+                color: Nebula.teal,
               ),
             ),
           ),
@@ -43,9 +43,9 @@ class AdminSettingsAccountSection extends StatelessWidget {
           subtitle: email,
           trailing: Container(
             padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.darkTeal.withValues(alpha: 0.1),
+              color: Nebula.teal.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(99),
             ),
             child: Text(
@@ -53,7 +53,7 @@ class AdminSettingsAccountSection extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 9,
                 fontWeight: FontWeight.bold,
-                color: AppColors.darkTeal,
+                color: Nebula.teal,
               ),
             ),
           ),
@@ -64,8 +64,8 @@ class AdminSettingsAccountSection extends StatelessWidget {
         ElevatedButton.icon(
           onPressed: onLogout,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.errorLightColor,
-            foregroundColor: AppColors.errorRed2,
+            backgroundColor: Nebula.rose.withValues(alpha: 0.1),
+            foregroundColor: Nebula.rose,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),

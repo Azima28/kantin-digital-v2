@@ -11,13 +11,15 @@ import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_topup_step_amount.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_topup_step_confirm.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_topup_step_search.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_topup_success_screen.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_step_indicator.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
+import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 
 class KeuanganTopupScreen extends ConsumerStatefulWidget {
   final StudentWithProfile? prefilledStudent;
@@ -104,7 +106,7 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
       final List<dynamic> res = await client
           .from('profiles')
           .select(
-            'id, full_name, nisn, is_active, students:students!students_id_fkey(class, balance, rfid_uid)',
+            'id, full_name, nisn, is_active, students:students!students_id_fkey(balance, rfid_uid, classes:classes(name))',
           )
           .eq('role', 'student')
           .or('nisn.ilike."%$query%",full_name.ilike."%$query%"')
@@ -127,7 +129,7 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
             content: Text(
               'Pencarian gagal: ${e.toString().replaceAll('Exception: ', '')}',
             ),
-            backgroundColor: AppColors.errorRed2,
+            backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -149,21 +151,19 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
     try {
       final client = ref.read(supabaseClientProvider);
       final sessionToken = ref.read(authNotifierProvider).sessionToken;
+      final callerId = ref.read(authNotifierProvider).profile?['id'] as String?;
 
       final studentId = _selectedStudent!.id;
       final int amount = _getAmount();
 
-      if (sessionToken == null || sessionToken.isEmpty) {
-        throw Exception('Sesi tidak valid. Silakan keluar dan masuk kembali.');
-      }
-
       // Call RPC process_topup (handles balance update, transaction, audit log, notification)
       await client.rpc('process_topup', params: {
         'p_student_id': studentId,
-        'p_amount': amount,
+        'p_amount': amount.toInt(),
         'p_session_token': sessionToken,
         'p_method': 'tunai',
         'p_notes': '',
+        'p_caller_id': callerId,
       });
 
       // Invalidate providers to trigger update
@@ -171,6 +171,7 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
       ref.invalidate(keuanganStudentsProvider);
       ref.invalidate(keuanganStudentDetailProvider(studentId));
       ref.invalidate(userNotificationsProvider);
+      ref.invalidate(keuanganHistoryProvider);
 
       final now = DateTime.now();
       setState(() {
@@ -184,7 +185,7 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Top-up gagal'),
-            backgroundColor: AppColors.errorRed2,
+            backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -221,15 +222,14 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
           'Top-Up Tunai',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
-            color: AppColors.darkTeal,
+            color: Nebula.teal,
             fontSize: 18,
           ),
         ),
         leading: _currentStep == 4
             ? const SizedBox() // Disable back button on success screen
-            : IconButton(
-                icon: const Icon(CupertinoIcons.back),
-                onPressed: () {
+            : PressScale(
+                onTap: () {
                   if (_currentStep == 1) {
                     context.pop();
                   } else if (_currentStep == 2) {
@@ -246,24 +246,35 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
                     });
                   }
                 },
+                child: IconButton(
+                  icon: const Icon(CupertinoIcons.back),
+                  onPressed: null,
+                ),
               ),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Progress indicators for steps
-            if (_currentStep < 4) _buildProgressIndicator(),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: Column(
+              children: [
+                // Progress indicators for steps
+                if (_currentStep < 4) _buildProgressIndicator(),
+                if (_currentStep < 4) const GradientLine(height: 1, margin: EdgeInsets.symmetric(vertical: 0)),
 
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                    child: _buildStepContent(fmt),
+                  ),
                 ),
-                child: _buildStepContent(fmt),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

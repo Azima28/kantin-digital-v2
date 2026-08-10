@@ -2,7 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
@@ -34,9 +35,9 @@ void showEditMerchantSheet(
           left: 20,
           right: 20,
         ),
-        decoration: const BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: context.cardBg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SingleChildScrollView(
           child: Column(
@@ -48,7 +49,7 @@ void showEditMerchantSheet(
                   width: 36,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: AppColors.borderGray,
+                    color: context.dividerCol,
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),
@@ -59,32 +60,32 @@ void showEditMerchantSheet(
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.nearBlack,
+                  color: context.textPrimary,
                 ),
               ),
               const SizedBox(height: 20),
-              _sectionLabel('INFORMASI PRIBADI'),
+              _sectionLabel(context, 'INFORMASI PRIBADI'),
               const SizedBox(height: 8),
-              _buildFormField(nameCtrl, '${AppStrings.labelFullName} *'),
+              _buildFormField(context, nameCtrl, '${AppStrings.labelFullName} *'),
               const SizedBox(height: 12),
-              _buildFormField(phoneCtrl, 'Nomor HP *', inputType: TextInputType.phone),
+              _buildFormField(context, phoneCtrl, 'Nomor HP *', inputType: TextInputType.phone),
               const SizedBox(height: 12),
-              _buildFormField(emailCtrl, 'Email *', inputType: TextInputType.emailAddress),
+              _buildFormField(context, emailCtrl, 'Email *', inputType: TextInputType.emailAddress),
               const SizedBox(height: 20),
-              _sectionLabel('AKUN SISTEM'),
+              _sectionLabel(context, 'AKUN SISTEM'),
               const SizedBox(height: 8),
-              _buildFormField(usernameCtrl, 'Username *'),
+              _buildFormField(context, usernameCtrl, 'Username *'),
               const SizedBox(height: 20),
-              _sectionLabel('INFORMASI STAN KANTIN'),
+              _sectionLabel(context, 'INFORMASI STAN KANTIN'),
               const SizedBox(height: 8),
-              _buildFormField(canteenCtrl, 'Nama Stan Kantin *'),
+              _buildFormField(context, canteenCtrl, 'Nama Stan Kantin *'),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkTeal,
+                    backgroundColor: Nebula.teal,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                   onPressed: isSaving
@@ -158,7 +159,7 @@ void showEditMerchantSheet(
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('Profil pedagang $name berhasil diperbarui'),
-                                  backgroundColor: AppColors.successGreen,
+                                  backgroundColor: Nebula.teal,
                                 ),
                               );
                             }
@@ -168,19 +169,19 @@ void showEditMerchantSheet(
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('${AppStrings.labelFailedSave}: ${e.toString()}'),
-                                  backgroundColor: AppColors.errorRed2,
+                                  backgroundColor: Nebula.rose,
                                 ),
                               );
                             }
                           }
                         },
                   child: isSaving
-                      ? const CupertinoActivityIndicator(color: AppColors.white)
+                      ? const CupertinoActivityIndicator(color: Colors.white)
                       : Text(
                           'SIMPAN PERUBAHAN',
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold,
-                            color: AppColors.white,
+                            color: Colors.white,
                           ),
                         ),
                 ),
@@ -193,17 +194,18 @@ void showEditMerchantSheet(
   );
 }
 
-Widget _sectionLabel(String label) => Text(
+Widget _sectionLabel(BuildContext context, String label) => Text(
       label,
       style: GoogleFonts.inter(
         fontSize: 11,
         fontWeight: FontWeight.w700,
-        color: AppColors.mutedGray,
+        color: context.textSecondary,
         letterSpacing: 1.2,
       ),
     );
 
 Widget _buildFormField(
+  BuildContext context,
   TextEditingController ctrl,
   String hint, {
   TextInputType inputType = TextInputType.text,
@@ -211,19 +213,28 @@ Widget _buildFormField(
     TextField(
       controller: ctrl,
       keyboardType: inputType,
-      style: GoogleFonts.inter(fontSize: 14),
+      style: GoogleFonts.inter(fontSize: 14, color: context.textPrimary),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: GoogleFonts.inter(
-          color: AppColors.mutedGray,
+          color: context.textSecondary,
           fontSize: 14,
         ),
         filled: true,
-        fillColor: AppColors.offWhite,
+        fillColor: context.surfaceBg,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: context.dividerCol),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: context.dividerCol),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Nebula.teal, width: 1.5),
         ),
       ),
     );
+

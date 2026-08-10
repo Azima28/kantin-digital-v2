@@ -1,7 +1,8 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
 
@@ -34,13 +35,13 @@ class AuditLogTile extends StatelessWidget {
       timeStr = '${diff.inMinutes} menit yang lalu';
     }
 
-    Color actionColor = AppColors.darkTeal;
+    Color actionColor = Nebula.teal;
     IconData actionIcon = CupertinoIcons.settings;
     if (actionType == 'KOREKSI_SALDO') {
-      actionColor = AppColors.errorRed2;
+      actionColor = Nebula.rose;
       actionIcon = CupertinoIcons.exclamationmark_triangle_fill;
     } else if (actionType == 'REGISTRASI_KARTU') {
-      actionColor = AppColors.darkGreen;
+      actionColor = Nebula.teal;
       actionIcon = CupertinoIcons.creditcard_fill;
     }
 
@@ -48,11 +49,11 @@ class AuditLogTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.04),
+            color: context.shadowColor,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -100,7 +101,7 @@ class AuditLogTile extends StatelessWidget {
                       timeStr,
                       style: GoogleFonts.inter(
                         fontSize: 11,
-                        color: AppColors.textGray,
+                        color: context.textSecondary,
                       ),
                     ),
                   ],
@@ -111,7 +112,7 @@ class AuditLogTile extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.nearBlack,
+                    color: context.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -119,10 +120,10 @@ class AuditLogTile extends StatelessWidget {
                   'Pelaksana: $actor',
                   style: GoogleFonts.inter(
                     fontSize: 12,
-                    color: AppColors.textGray,
+                    color: context.textSecondary,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 InkWell(
                   onTap: onDetailTap,
                   child: Row(
@@ -132,14 +133,14 @@ class AuditLogTile extends StatelessWidget {
                         style: GoogleFonts.inter(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.darkTeal,
+                          color: Nebula.teal,
                         ),
                       ),
                       const SizedBox(width: 4),
-                      const Icon(
+                      Icon(
                         CupertinoIcons.arrow_right,
                         size: 14,
-                        color: AppColors.darkTeal,
+                        color: Nebula.teal,
                       ),
                     ],
                   ),

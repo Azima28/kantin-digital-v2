@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 class RoleToggleButton extends ConsumerWidget {
   final int selectedLoginTab;
@@ -22,10 +22,10 @@ class RoleToggleButton extends ConsumerWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.05),
+            color: Nebula.teal.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.15),
+              color: Nebula.teal.withValues(alpha: 0.15),
               width: 1,
             ),
           ),
@@ -37,7 +37,7 @@ class RoleToggleButton extends ConsumerWidget {
                     ? CupertinoIcons.person_2
                     : CupertinoIcons.arrow_left_square,
                 size: 16,
-                color: AppColors.primary,
+                color: Nebula.teal,
               ),
               const SizedBox(width: 8),
               Text(
@@ -45,7 +45,7 @@ class RoleToggleButton extends ConsumerWidget {
                     ? 'Masuk sebagai Orang Tua'
                     : 'Kembali ke Login Siswa / Staff',
                 style: TextStyle(
-                  color: AppColors.primary,
+                  color: Nebula.teal,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                 ),

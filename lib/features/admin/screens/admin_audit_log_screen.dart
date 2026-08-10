@@ -1,9 +1,11 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/admin/widgets/audit_log_action_filter.dart';
 import 'package:kantin_digital/features/admin/widgets/audit_log_detail_sheet.dart';
@@ -88,13 +90,13 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
       children: [
         // ── HEADER STATIC (gak ikut scroll) ──
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+          padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
           child: Text(
             'Audit Log Explorer',
             style: GoogleFonts.inter(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: AppColors.darkTeal,
+              color: Nebula.teal,
             ),
           ),
         ),
@@ -107,7 +109,7 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
             'Pemantauan sistem dan riwayat aktivitas secara real-time.',
             style: GoogleFonts.inter(
               fontSize: 14,
-              color: AppColors.darkGray,
+              color: context.textSecondary,
             ),
           ),
         ),
@@ -126,6 +128,8 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
             },
           ),
         ),
+        const SizedBox(height: 8),
+        const GradientLine(),
         const SizedBox(height: 8),
 
         // ── LIST SCROLLABLE ──
@@ -146,13 +150,13 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.inbox_outlined,
-                          size: 64, color: AppColors.mutedGray),
+                      Icon(Icons.inbox_outlined,
+                          size: 64, color: context.textSecondary),
                       const SizedBox(height: 16),
                       Text(
                         'Tidak ada log audit ditemukan.',
                         style: GoogleFonts.inter(
-                          color: AppColors.textGray,
+                          color: context.textSecondary,
                           fontSize: 15,
                         ),
                       ),
@@ -165,7 +169,7 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                 onRefresh: () async {
                   ref.invalidate(adminAuditLogsProvider);
                 },
-                color: AppColors.darkTeal,
+                color: Nebula.teal,
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
@@ -180,7 +184,7 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                         showModalBottomSheet(
                           context: context,
                           isScrollControlled: true,
-                          backgroundColor: AppColors.white,
+                          backgroundColor: context.cardBg,
                           shape: const RoundedRectangleBorder(
                             borderRadius: BorderRadius.vertical(
                               top: Radius.circular(24),
@@ -195,9 +199,9 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                 ),
               );
             },
-            loading: () => const Center(
+            loading: () => Center(
               child: CupertinoActivityIndicator(
-                color: AppColors.darkTeal,
+                color: Nebula.teal,
               ),
             ),
             error: (err, stack) => Center(
@@ -205,7 +209,7 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(Icons.error_outline,
-                      size: 48, color: AppColors.errorRed),
+                      size: 48, color: Nebula.rose),
                   const SizedBox(height: 12),
                   Text('${AppStrings.labelFailed} memuat data'),
                   const SizedBox(height: 8),

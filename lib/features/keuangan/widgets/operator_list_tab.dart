@@ -7,7 +7,8 @@ import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 
 // ── Staff/Operator Tab ──────────────────────────────────────────────────────
@@ -27,7 +28,7 @@ class StaffTab extends ConsumerWidget {
 
     return RefreshIndicator(
       onRefresh: () async => ref.invalidate(keuanganStaffProvider),
-      color: AppColors.darkTeal,
+      color: Nebula.teal,
       child: staffAsync.when(
         data: (list) {
           final profiles = list
@@ -49,13 +50,13 @@ class StaffTab extends ConsumerWidget {
           }
 
           if (filtered.isEmpty) {
-            return _buildEmptyState();
+            return _buildEmptyState(context);
           }
 
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             children: [
-              _sectionHeader('PETUGAS AKTIF (${filtered.length})'),
+              _sectionHeader(context, 'PETUGAS AKTIF (${filtered.length})'),
               const SizedBox(height: 8),
               ...filtered.map((s) => _buildStaffCard(
                 context, ref, s, fmt,
@@ -66,14 +67,14 @@ class StaffTab extends ConsumerWidget {
           );
         },
         loading: () =>
-            const Center(child: CupertinoActivityIndicator(color: AppColors.darkTeal)),
+            Center(child: CupertinoActivityIndicator(color: Nebula.teal)),
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+                const Icon(Icons.error_outline, size: 48, color: Nebula.rose),
                 const SizedBox(height: 12),
                 Text('${AppStrings.labelFailed} memuat'),
                 const SizedBox(height: 8),
@@ -89,27 +90,27 @@ class StaffTab extends ConsumerWidget {
     );
   }
 
-  Widget _sectionHeader(String text) => Padding(
+  Widget _sectionHeader(BuildContext context, String text) => Padding(
     padding: const EdgeInsets.only(bottom: 4),
     child: Text(
       text,
       style: GoogleFonts.inter(
         fontSize: 11,
         fontWeight: FontWeight.w700,
-        color: AppColors.mutedGray,
+        color: context.textSecondary,
         letterSpacing: 1.1,
       ),
     ),
   );
 
-  Widget _buildEmptyState() => Center(
+  Widget _buildEmptyState(BuildContext context) => Center(
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(
+        Icon(
           CupertinoIcons.person_badge_plus_fill,
           size: 64,
-          color: AppColors.mutedGray,
+          color: context.textSecondary,
         ),
         const SizedBox(height: 16),
         Text(
@@ -117,7 +118,7 @@ class StaffTab extends ConsumerWidget {
           style: GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: AppColors.nearBlack,
+            color: context.textPrimary,
           ),
         ),
         const SizedBox(height: 6),
@@ -125,7 +126,7 @@ class StaffTab extends ConsumerWidget {
           'Tambahkan petugas dengan tombol [+] di atas.',
           style: GoogleFonts.inter(
             fontSize: 13,
-            color: AppColors.mutedGray,
+            color: context.textSecondary,
           ),
           textAlign: TextAlign.center,
         ),
@@ -157,31 +158,31 @@ class StaffTab extends ConsumerWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: AppColors.black.withValues(alpha: 0.04),
+              color: context.shadowColor,
               blurRadius: 12,
               offset: const Offset(0, 3),
             ),
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: EdgeInsets.all(14),
           child: Row(
             children: [
               Stack(
                 children: [
                   CircleAvatar(
                     radius: 22,
-                    backgroundColor: AppColors.darkTeal.withValues(alpha: 0.08),
+                    backgroundColor: Nebula.teal.withValues(alpha: 0.08),
                     child: Text(
                       initials,
                       style: GoogleFonts.inter(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
-                        color: AppColors.darkTeal,
+                        color: Nebula.teal,
                       ),
                     ),
                   ),
@@ -193,10 +194,10 @@ class StaffTab extends ConsumerWidget {
                       height: 12,
                       decoration: BoxDecoration(
                         color: isActive
-                            ? AppColors.successGreen
-                            : AppColors.borderGray,
+                            ? Nebula.teal
+                            : context.dividerCol,
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.white, width: 1.5),
+                        border: Border.all(color: Colors.white, width: 1.5),
                       ),
                     ),
                   ),
@@ -212,14 +213,14 @@ class StaffTab extends ConsumerWidget {
                       style: GoogleFonts.inter(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
-                        color: AppColors.nearBlack,
+                        color: context.textPrimary,
                       ),
                     ),
                     Text(
                       canteenName,
                       style: GoogleFonts.inter(
                         fontSize: 12,
-                        color: AppColors.mutedGray,
+                        color: context.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -227,7 +228,7 @@ class StaffTab extends ConsumerWidget {
                       'Omzet: ${fmt.format(omzet)}',
                       style: GoogleFonts.inter(
                         fontSize: 11,
-                        color: AppColors.mutedGray,
+                        color: context.textSecondary,
                       ),
                     ),
                   ],
@@ -243,8 +244,8 @@ class StaffTab extends ConsumerWidget {
                     ),
                     decoration: BoxDecoration(
                       color: isActive
-                          ? AppColors.successGreen.withValues(alpha: 0.1)
-                          : AppColors.borderGray,
+                          ? Nebula.teal.withValues(alpha: 0.1)
+                          : context.dividerCol,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -253,8 +254,8 @@ class StaffTab extends ConsumerWidget {
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                         color: isActive
-                            ? AppColors.successGreen
-                            : AppColors.mutedGray,
+                            ? Nebula.teal
+                            : context.textSecondary,
                       ),
                     ),
                   ),
@@ -266,7 +267,7 @@ class StaffTab extends ConsumerWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.errorRed2.withValues(alpha: 0.1),
+                        color: Nebula.rose.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -274,7 +275,7 @@ class StaffTab extends ConsumerWidget {
                         style: GoogleFonts.inter(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.errorRed2,
+                          color: Nebula.rose,
                         ),
                       ),
                     ),

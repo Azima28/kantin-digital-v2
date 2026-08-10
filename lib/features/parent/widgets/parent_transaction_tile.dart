@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 /// A tile widget showing a single transaction entry with icon, description,
 /// and amount.
@@ -19,8 +20,8 @@ class ParentTransactionTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    const Color primaryTeal = AppColors.teal;
-    const Color orangeAccent = AppColors.darkOrange;
+    Color primaryTeal = Nebula.teal;
+    const Color orangeAccent = Nebula.amber;
 
     final int amount = transaction.totalAmount;
     final String type = transaction.type ?? 'purchase';
@@ -31,8 +32,8 @@ class ParentTransactionTile extends ConsumerWidget {
       onTap: onTap,
       leading: CircleAvatar(
         backgroundColor: isTopup
-            ? AppColors.softOrange
-            : AppColors.softTeal.withValues(alpha: 0.3),
+            ? Nebula.amber.withValues(alpha: 0.3)
+            : Nebula.teal.withValues(alpha: 0.2).withValues(alpha: 0.3),
         child: Icon(
           isTopup ? Icons.account_balance : Icons.restaurant,
           color: isTopup ? orangeAccent : primaryTeal,
@@ -44,7 +45,7 @@ class ParentTransactionTile extends ConsumerWidget {
         style: GoogleFonts.inter(
           fontSize: 14,
           fontWeight: FontWeight.w700,
-          color: AppColors.textDark,
+          color: context.textPrimary,
         ),
       ),
       subtitle: Text(
@@ -53,7 +54,7 @@ class ParentTransactionTile extends ConsumerWidget {
         overflow: TextOverflow.ellipsis,
         style: GoogleFonts.inter(
           fontSize: 12,
-          color: AppColors.textGray,
+          color: context.textSecondary,
         ),
       ),
       trailing: Text(
@@ -61,7 +62,7 @@ class ParentTransactionTile extends ConsumerWidget {
         style: GoogleFonts.inter(
           fontSize: 14,
           fontWeight: FontWeight.w700,
-          color: isTopup ? AppColors.successGreen : AppColors.errorRed2,
+          color: isTopup ? Nebula.teal : Nebula.rose,
         ),
       ),
     );

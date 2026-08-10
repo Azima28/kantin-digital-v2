@@ -1,18 +1,18 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/widgets/notification_bell.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_dashboard_header.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_global_metrics_card.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_transaction_trend_card.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_contribution_card.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_system_health_card.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 class AdminDashboardScreen extends ConsumerWidget {
   const AdminDashboardScreen({super.key});
@@ -27,39 +27,32 @@ class AdminDashboardScreen extends ConsumerWidget {
         preferredSize: const Size.fromHeight(64),
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.offWhite,
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.black.withValues(alpha: 0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            color: context.cardBg,
+            border: Border(
+              bottom: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+            ),
           ),
           child: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
             title: Row(
               children: [
-                SizedBox(
+                Container(
                   width: 32,
                   height: 32,
-                  child: AspectRatio(
-                    aspectRatio: 1.0,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.darkTeal2,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'SA',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.white,
-                          ),
-                        ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Nebula.blue, Nebula.purple],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'SA',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -70,13 +63,13 @@ class AdminDashboardScreen extends ConsumerWidget {
                   style: GoogleFonts.inter(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.darkTeal,
+                    color: context.textPrimary,
                   ),
                 ),
               ],
             ),
-            actions: const [
-              NotificationBell(color: AppColors.darkTeal),
+            actions: [
+              NotificationBell(color: Nebula.teal),
               SizedBox(width: 8),
             ],
           ),
@@ -84,12 +77,12 @@ class AdminDashboardScreen extends ConsumerWidget {
       ),
       body: metricsAsync.when(
         data: (data) => _buildBody(context, ref, data),
-        loading: () => const Center(child: CupertinoActivityIndicator(color: AppColors.darkTeal)),
+        loading: () => const Center(child: CircularProgressIndicator(color: Nebula.teal)),
         error: (err, stack) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+              const Icon(Icons.error_outline, size: 48, color: Nebula.rose),
               const SizedBox(height: 12),
               Text('${AppStrings.labelFailed} memuat data dashboard'),
               const SizedBox(height: 8),
@@ -117,7 +110,7 @@ class AdminDashboardScreen extends ConsumerWidget {
       onRefresh: () async {
         ref.invalidate(adminDashboardProvider);
       },
-      color: AppColors.darkTeal,
+      color: Nebula.teal,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(20),
@@ -125,8 +118,8 @@ class AdminDashboardScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Greeting Header
-            const AdminDashboardHeader(),
-            const SizedBox(height: 24),
+            AdminDashboardHeader(),
+            SizedBox(height: 24),
 
             // Bento Grid Cards
             Column(
@@ -148,8 +141,8 @@ class AdminDashboardScreen extends ConsumerWidget {
                 // Two widgets row: Contribution & Server Health
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    final contributionCard = const AdminContributionCard();
-                    final healthCard = const AdminSystemHealthCard();
+                    final contributionCard = AdminContributionCard();
+                    final healthCard = AdminSystemHealthCard();
 
                     if (constraints.maxWidth < 430) {
                       return Column(

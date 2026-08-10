@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_bento_card.dart';
 
@@ -30,7 +31,7 @@ class AdminGlobalMetricsCard extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: AppColors.darkTeal,
+              color: Nebula.teal,
             ),
           ),
           const SizedBox(height: 16),
@@ -38,6 +39,7 @@ class AdminGlobalMetricsCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildMetricBox(
+                  context,
                   label: 'TOTAL PENGGUNA',
                   value: userCount > 0 ? userCount.toString() : '0',
                 ),
@@ -45,6 +47,7 @@ class AdminGlobalMetricsCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildMetricBox(
+                  context,
                   label: 'VOLUME HARIAN',
                   value: dailyVolume > 0
                       ? '${(dailyVolume / 1000).toStringAsFixed(1)}K'
@@ -60,11 +63,11 @@ class AdminGlobalMetricsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildMetricBox({required String label, required String value}) {
+  Widget _buildMetricBox(BuildContext context, {required String label, required String value}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.offWhite2,
+        color: context.surfaceBg,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -75,7 +78,7 @@ class AdminGlobalMetricsCard extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: AppColors.darkGray,
+              color: context.textSecondary,
               letterSpacing: 0.05,
             ),
           ),
@@ -85,7 +88,7 @@ class AdminGlobalMetricsCard extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 24,
               fontWeight: FontWeight.w600,
-              color: AppColors.nearBlack,
+              color: context.textPrimary,
             ),
           ),
         ],
@@ -98,9 +101,9 @@ class AdminGlobalMetricsCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       decoration: BoxDecoration(
-        color: AppColors.accentOrange2.withValues(alpha: 0.1),
+        color: Nebula.amber.withValues(alpha: 0.1),
         border: Border.all(
-          color: AppColors.accentOrange2.withValues(alpha: 0.2),
+          color: Nebula.amber.withValues(alpha: 0.2),
           width: 1,
         ),
         borderRadius: BorderRadius.circular(16),
@@ -112,7 +115,7 @@ class AdminGlobalMetricsCard extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: AppColors.darkOrange,
+              color: Nebula.amber,
               letterSpacing: 0.08,
             ),
           ),
@@ -129,7 +132,7 @@ class AdminGlobalMetricsCard extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 20,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.darkOrange,
+                    color: Nebula.amber,
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -138,7 +141,7 @@ class AdminGlobalMetricsCard extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 34,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.darkOrange,
+                    color: Nebula.amber,
                   ),
                 ),
               ],

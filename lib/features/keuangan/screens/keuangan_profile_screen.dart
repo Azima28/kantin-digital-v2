@@ -1,12 +1,15 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kantin_digital/core/widgets/change_password_panel.dart';
+import 'package:kantin_digital/core/widgets/theme_toggle_tile.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 class KeuanganProfileScreen extends ConsumerStatefulWidget {
   const KeuanganProfileScreen({super.key});
@@ -17,116 +20,42 @@ class KeuanganProfileScreen extends ConsumerStatefulWidget {
 
 class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
 
-  final _passwordController = TextEditingController();
-  bool _isChangingPassword = false;
-
-  @override
-  void dispose() {
-    _passwordController.dispose();
-    super.dispose();
-  }
-
   void _showChangePasswordDialog() {
-    showCupertinoDialog(
+    showGeneralDialog(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return CupertinoAlertDialog(
-              title: const Text(AppStrings.adminChangePassword),
-              content: Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Column(
-                  children: [
-                    const Text('Masukkan kata sandi baru untuk akun Anda.'),
-                    const SizedBox(height: 12),
-                    CupertinoTextField(
-                      controller: _passwordController,
-                      placeholder: 'Kata sandi baru',
-                      obscureText: true,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: CupertinoColors.inactiveGray),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ],
-                ),
+      barrierDismissible: true,
+      barrierLabel: 'Tutup',
+      barrierColor: Colors.white.withValues(alpha: 0.5),
+      transitionDuration: const Duration(milliseconds: 300),
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack,
+          reverseCurve: Curves.easeInBack,
+        );
+        return ScaleTransition(
+          scale: Tween<double>(begin: 0.7, end: 1.0).animate(curved),
+          child: FadeTransition(
+            opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
+              CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOut,
+                reverseCurve: Curves.easeIn,
               ),
-              actions: [
-                CupertinoDialogAction(
-                  child: const Text(AppStrings.buttonCancel),
-                  onPressed: () {
-                    _passwordController.clear();
-                    Navigator.pop(context);
-                  },
-                ),
-                CupertinoDialogAction(
-                  isDefaultAction: true,
-                  onPressed: _isChangingPassword
-                      ? null
-                      : () async {
-                          final password = _passwordController.text.trim();
-                          if (password.isEmpty) return;
-
-                          setDialogState(() {
-                            _isChangingPassword = true;
-                          });
-
-                          final navigator = Navigator.of(context);
-                          final messenger = ScaffoldMessenger.of(this.context);
-
-                          try {
-                            final client = ref.read(supabaseClientProvider);
-                            final profile = ref.read(authNotifierProvider).profile;
-                            final profileId = profile?['id'];
-
-                            // Client-side role check before RPC call
-                            final currentUserRole = profile?['role'];
-                            if (currentUserRole != 'super_admin' && currentUserRole != 'admin' && currentUserRole != 'petugas_keuangan') {
-                              throw Exception('Tidak memiliki izin untuk mengubah password');
-                            }
-
-                            // Update password via RPC
-                            final response = await client.rpc('update_auth_user_password', params: {
-                              'p_user_id': profileId,
-                              'p_new_password': password,
-                              'p_caller_id': profileId,
-                            });
-                            if (response is Map && response['success'] == false) {
-                              throw Exception(response['error'] ?? 'Gagal mengubah kata sandi');
-                            }
-
-                            _passwordController.clear();
-                            navigator.pop();
-                            messenger.showSnackBar(
-                              const SnackBar(
-                                content: Text(AppStrings.successPasswordChanged),
-                                backgroundColor: AppColors.successGreen,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          } catch (e) {
-                            messenger.showSnackBar(
-                              SnackBar(
-                                content: Text('${AppStrings.labelFailed} mengubah kata sandi'),
-                                backgroundColor: AppColors.errorRed2,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          } finally {
-                            setDialogState(() {
-                              _isChangingPassword = false;
-                            });
-                          }
-                        },
-                  child: _isChangingPassword
-                      ? const CupertinoActivityIndicator()
-                      : const Text(AppStrings.buttonSave),
-                ),
-              ],
-            );
-          },
+            ),
+            child: child,
+          ),
+        );
+      },
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: ChangePasswordPanel(parentContext: context),
+            ),
+          ),
         );
       },
     );
@@ -174,7 +103,7 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
         scrolledUnderElevation: 0,
         title: Text(
           'Profil Saya',
-          style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.darkTeal, fontSize: 18),
+          style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Nebula.teal, fontSize: 18),
         ),
       ),
       body: SafeArea(
@@ -188,11 +117,15 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: context.cardBg,
                   borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: context.cardBorder,
+                    width: 1.0,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.black.withValues(alpha: 0.04),
+                      color: context.cardBg.withValues(alpha: 0.04),
                       blurRadius: 15,
                       offset: const Offset(0, 4),
                     ),
@@ -202,13 +135,13 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
                   children: [
                     CircleAvatar(
                       radius: 36,
-                      backgroundColor: AppColors.darkTeal.withValues(alpha: 0.08),
+                      backgroundColor: Nebula.teal.withValues(alpha: 0.08),
                       child: Text(
                         fullName.isNotEmpty ? fullName[0].toUpperCase() : 'A',
                         style: GoogleFonts.inter(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.darkTeal,
+                          color: Nebula.teal,
                         ),
                       ),
                     ),
@@ -218,7 +151,7 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
                       style: GoogleFonts.inter(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.nearBlack,
+                        color: context.textPrimary,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -227,7 +160,7 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
                       'Admin Keuangan · $school',
                       style: GoogleFonts.inter(
                         fontSize: 13,
-                        color: AppColors.mutedGray,
+                        color: context.textSecondary,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -241,11 +174,15 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: context.cardBg,
                   borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: context.cardBorder,
+                    width: 1.0,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.black.withValues(alpha: 0.04),
+                      color: context.cardBg.withValues(alpha: 0.04),
                       blurRadius: 15,
                       offset: const Offset(0, 4),
                     ),
@@ -259,16 +196,16 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
                       style: GoogleFonts.inter(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
-                        color: AppColors.nearBlack,
+                        color: context.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 16),
                     _buildInfoRow('Email', email),
-                    const Divider(height: 16, thickness: 0.5, color: AppColors.borderGray),
+                    Divider(height: 16, thickness: 0.5, color: context.dividerCol),
                     _buildInfoRow('Username', username),
-                    const Divider(height: 16, thickness: 0.5, color: AppColors.borderGray),
+                    Divider(height: 16, thickness: 0.5, color: context.dividerCol),
                     _buildInfoRow('Level Otoritas', 'L1 (Operator)'),
-                    const Divider(height: 16, thickness: 0.5, color: AppColors.borderGray),
+                    Divider(height: 16, thickness: 0.5, color: context.dividerCol),
                     _buildInfoRow('Sekolah Asal', school),
                   ],
                 ),
@@ -279,11 +216,15 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: context.cardBg,
                   borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: context.cardBorder,
+                    width: 1.0,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.black.withValues(alpha: 0.04),
+                      color: context.cardBg.withValues(alpha: 0.04),
                       blurRadius: 15,
                       offset: const Offset(0, 4),
                     ),
@@ -299,25 +240,26 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
                         style: GoogleFonts.inter(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
-                          color: AppColors.nearBlack,
+                          color: context.textPrimary,
                         ),
                       ),
                     ),
+                    ThemeToggleTile(showDivider: true),
                     ListTile(
                       leading: CircleAvatar(
                         radius: 18,
-                        backgroundColor: AppColors.darkTeal.withValues(alpha: 0.08),
-                        child: const Icon(CupertinoIcons.lock_shield, color: AppColors.darkTeal, size: 20),
+                        backgroundColor: Nebula.teal.withValues(alpha: 0.08),
+                        child: Icon(CupertinoIcons.lock_shield, color: Nebula.teal, size: 20),
                       ),
                       title: Text(
                         AppStrings.adminChangePassword,
                         style: GoogleFonts.inter(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
-                          color: AppColors.nearBlack,
+                          color: context.textPrimary,
                         ),
                       ),
-                      trailing: const Icon(CupertinoIcons.chevron_forward, size: 16, color: AppColors.mutedGray),
+                      trailing: Icon(CupertinoIcons.chevron_forward, size: 16, color: context.textSecondary),
                       onTap: _showChangePasswordDialog,
                     ),
                   ],
@@ -332,11 +274,11 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
                   onPressed: _handleLogout,
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: AppColors.errorRed2.withValues(alpha: 0.08),
+                    backgroundColor: Nebula.rose.withValues(alpha: 0.08),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                       side: BorderSide(
-                        color: AppColors.errorRed2.withValues(alpha: 0.2),
+                        color: Nebula.rose.withValues(alpha: 0.2),
                       ),
                     ),
                   ),
@@ -345,7 +287,7 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
-                      color: AppColors.errorRed2,
+                      color: Nebula.rose,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -365,13 +307,13 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
       children: [
         Text(
           label,
-          style: GoogleFonts.inter(color: AppColors.mutedGray, fontSize: 13),
+          style: GoogleFonts.inter(color: context.textSecondary, fontSize: 13),
         ),
         Text(
           value,
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
-            color: AppColors.nearBlack,
+            color: context.textPrimary,
             fontSize: 13,
           ),
         ),

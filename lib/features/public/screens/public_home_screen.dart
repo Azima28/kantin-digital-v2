@@ -1,8 +1,8 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 /// Halaman landing publik yang bisa diakses tanpa login.
 /// Menampilkan info singkat sistem kantin, CTA ke menu, dan tombol login.
@@ -22,10 +22,10 @@ class PublicHomeScreen extends StatelessWidget {
               Container(
                 width: double.infinity,
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
-                decoration: const BoxDecoration(
+                    EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppColors.darkTeal, AppColors.teal],
+                    colors: [Nebula.teal, Nebula.teal],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -37,7 +37,7 @@ class PublicHomeScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.white.withValues(alpha: 0.15),
+                        color: Starlight.bright.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -45,7 +45,7 @@ class PublicHomeScreen extends StatelessWidget {
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.white,
+                          color: Starlight.bright,
                         ),
                       ),
                     ),
@@ -55,7 +55,7 @@ class PublicHomeScreen extends StatelessWidget {
                       style: GoogleFonts.inter(
                         fontSize: 32,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.white,
+                        color: Starlight.bright,
                         height: 1.15,
                       ),
                     ),
@@ -65,7 +65,7 @@ class PublicHomeScreen extends StatelessWidget {
                       'Cukup tap kartu RFID di kasir kantin.',
                       style: GoogleFonts.inter(
                         fontSize: 14,
-                        color: AppColors.white.withValues(alpha: 0.85),
+                        color: Starlight.bright.withValues(alpha: 0.85),
                         height: 1.5,
                       ),
                     ),
@@ -77,7 +77,7 @@ class PublicHomeScreen extends StatelessWidget {
                         Expanded(
                           child: ElevatedButton.icon(
                             onPressed: () => context.go('/public/menu'),
-                            icon: const Icon(CupertinoIcons.list_bullet,
+                            icon: Icon(CupertinoIcons.list_bullet,
                                 size: 16),
                             label: Text(
                               'Lihat Menu',
@@ -86,7 +86,7 @@ class PublicHomeScreen extends StatelessWidget {
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.transparent,
-                              foregroundColor: AppColors.darkTeal,
+                              foregroundColor: Nebula.teal,
                               padding:
                                   const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
@@ -100,16 +100,16 @@ class PublicHomeScreen extends StatelessWidget {
                           child: OutlinedButton.icon(
                             onPressed: () => context.go('/login?from=/public'),
                             icon: const Icon(CupertinoIcons.person,
-                                size: 16, color: AppColors.white),
+                                size: 16, color: Starlight.bright),
                             label: Text(
                               'Masuk',
                               style: GoogleFonts.inter(
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.white),
+                                  color: Starlight.bright),
                             ),
                             style: OutlinedButton.styleFrom(
-                              side: const BorderSide(
-                                  color: AppColors.white, width: 1.5),
+                              side: BorderSide(
+                                  color: Starlight.bright, width: 1.5),
                               padding:
                                   const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
@@ -134,13 +134,13 @@ class PublicHomeScreen extends StatelessWidget {
                       style: GoogleFonts.inter(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textDark,
+                        color: Starlight.bright,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     _buildFeatureCard(
                       icon: CupertinoIcons.creditcard,
-                      color: AppColors.teal,
+                      color: Nebula.teal,
                       title: 'Tap & Bayar',
                       desc:
                           'Cukup tempelkan kartu RFID di kasir. Transaksi selesai dalam 1 detik.',
@@ -148,7 +148,7 @@ class PublicHomeScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     _buildFeatureCard(
                       icon: CupertinoIcons.lock_shield,
-                      color: AppColors.darkOrange,
+                      color: Nebula.amber,
                       title: 'Aman & Terkontrol',
                       desc:
                           'Orang tua dapat memantau dan mengatur batas belanja harian anak.',
@@ -156,7 +156,7 @@ class PublicHomeScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     _buildFeatureCard(
                       icon: CupertinoIcons.chart_bar,
-                      color: AppColors.successGreen,
+                      color: Nebula.teal,
                       title: 'Laporan Real-time',
                       desc:
                           'Riwayat transaksi tersedia kapanpun. Tidak ada lagi uang hilang.',
@@ -169,7 +169,7 @@ class PublicHomeScreen extends StatelessWidget {
                       style: GoogleFonts.inter(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textDark,
+                        color: Starlight.bright,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -215,7 +215,7 @@ class PublicHomeScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: Starlight.bright,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -245,7 +245,7 @@ class PublicHomeScreen extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textDark,
+                    color: Starlight.bright,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -253,7 +253,7 @@ class PublicHomeScreen extends StatelessWidget {
                   desc,
                   style: GoogleFonts.inter(
                     fontSize: 12,
-                    color: AppColors.mutedGray,
+                    color: Starlight.dim,
                     height: 1.4,
                   ),
                 ),
@@ -276,16 +276,16 @@ class PublicHomeScreen extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        margin: EdgeInsets.only(bottom: 10),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: isHighlighted
-              ? AppColors.teal.withValues(alpha: 0.07)
-              : AppColors.white,
+              ? Nebula.teal.withValues(alpha: 0.07)
+              : Starlight.bright,
           borderRadius: BorderRadius.circular(14),
           border: isHighlighted
               ? Border.all(
-                  color: AppColors.teal.withValues(alpha: 0.3))
+                  color: Nebula.teal.withValues(alpha: 0.3))
               : null,
           boxShadow: [
             BoxShadow(
@@ -300,9 +300,9 @@ class PublicHomeScreen extends StatelessWidget {
             Icon(icon,
                 size: 20,
                 color: isHighlighted
-                    ? AppColors.teal
-                    : AppColors.mutedGray),
-            const SizedBox(width: 14),
+                    ? Nebula.teal
+                    : Starlight.dim),
+            SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -313,15 +313,15 @@ class PublicHomeScreen extends StatelessWidget {
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: isHighlighted
-                          ? AppColors.teal
-                          : AppColors.textDark,
+                          ? Nebula.teal
+                          : Starlight.bright,
                     ),
                   ),
                   Text(
                     subtitle,
                     style: GoogleFonts.inter(
                       fontSize: 11,
-                      color: AppColors.mutedGray,
+                      color: Starlight.dim,
                     ),
                   ),
                 ],
@@ -331,8 +331,8 @@ class PublicHomeScreen extends StatelessWidget {
               CupertinoIcons.chevron_right,
               size: 14,
               color: isHighlighted
-                  ? AppColors.teal
-                  : AppColors.textGray,
+                  ? Nebula.teal
+                  : Starlight.dim,
             ),
           ],
         ),

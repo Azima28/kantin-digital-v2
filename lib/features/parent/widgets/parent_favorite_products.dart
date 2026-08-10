@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 /// List of top favorite products for the Analisis tab.
 class ParentFavoriteProducts extends StatelessWidget {
@@ -15,9 +16,9 @@ class ParentFavoriteProducts extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderGray, width: 1),
+        border: Border.all(color: context.dividerCol, width: 1),
       ),
       child: favorites.isEmpty
           ? Padding(
@@ -27,7 +28,7 @@ class ParentFavoriteProducts extends StatelessWidget {
                   'Belum ada produk favorit pada periode ini.',
                   style: GoogleFonts.inter(
                     fontSize: 13,
-                    color: AppColors.textGray,
+                    color: context.textSecondary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -38,18 +39,18 @@ class ParentFavoriteProducts extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: favorites.length,
               separatorBuilder: (context, i) =>
-                  const Divider(height: 1, color: AppColors.borderGray),
+                  Divider(height: 1, color: context.dividerCol),
               itemBuilder: (context, i) {
                 final item = favorites[i];
                 return ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: AppColors.offWhite2,
+                    backgroundColor: context.surfaceBg,
                     child: Text(
                       '${i + 1}',
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
+                        color: Nebula.teal,
                       ),
                     ),
                   ),
@@ -58,7 +59,7 @@ class ParentFavoriteProducts extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textDark,
+                      color: context.textPrimary,
                     ),
                   ),
                   trailing: Text(
@@ -66,7 +67,7 @@ class ParentFavoriteProducts extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textGray,
+                      color: context.textSecondary,
                     ),
                   ),
                 );

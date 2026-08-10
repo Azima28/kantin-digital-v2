@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 /// Category breakdown bars showing spending by category.
 class ParentCategoryBreakdown extends StatelessWidget {
@@ -27,23 +28,23 @@ class ParentCategoryBreakdown extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderGray, width: 1),
+        border: Border.all(color: context.borderLight, width: 0.5),
       ),
       child: Column(
         children: [
-          _buildRow('Makanan', foodPct, foodNominal, AppColors.primary),
+          _buildRow(context, 'Makanan', foodPct, foodNominal, Nebula.teal),
           const SizedBox(height: 16),
-          _buildRow('Minuman', drinkPct, drinkNominal, AppColors.darkOrange),
+          _buildRow(context, 'Minuman', drinkPct, drinkNominal, Nebula.amber),
           const SizedBox(height: 16),
-          _buildRow('Camilan', snackPct, snackNominal, AppColors.darkOrange),
+          _buildRow(context, 'Camilan', snackPct, snackNominal, Nebula.amber),
         ],
       ),
     );
   }
 
-  Widget _buildRow(String title, double percentage, double nominal, Color barColor) {
+  Widget _buildRow(BuildContext context, String title, double percentage, double nominal, Color barColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -55,7 +56,7 @@ class ParentCategoryBreakdown extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textDark,
+                color: context.textPrimary,
               ),
             ),
             Text(
@@ -63,7 +64,7 @@ class ParentCategoryBreakdown extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: AppColors.textGray,
+                color: context.textSecondary,
               ),
             ),
           ],
@@ -74,7 +75,7 @@ class ParentCategoryBreakdown extends StatelessWidget {
           child: LinearProgressIndicator(
             value: (percentage / 100).clamp(0.0, 1.0),
             minHeight: 8,
-            backgroundColor: AppColors.lightGray,
+            backgroundColor: context.surfaceBg,
             valueColor: AlwaysStoppedAnimation<Color>(barColor),
           ),
         ),

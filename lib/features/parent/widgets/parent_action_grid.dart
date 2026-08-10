@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 class ParentActionGrid extends StatelessWidget {
   final double totalSpending;
@@ -15,15 +16,15 @@ class ParentActionGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryTeal = AppColors.teal;
-    const Color orangeAccent = AppColors.darkOrange;
+    Color primaryTeal = Nebula.teal;
+    const Color orangeAccent = Nebula.amber;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderGray, width: 1),
+        border: Border.all(color: context.dividerCol, width: 1),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -37,7 +38,7 @@ class ParentActionGrid extends StatelessWidget {
                     Text('Total Belanja',
                         style: GoogleFonts.inter(
                             fontSize: 12,
-                            color: AppColors.textGray,
+                            color: context.textSecondary,
                             fontWeight: FontWeight.w500)),
                     const SizedBox(height: 4),
                     Text(
@@ -49,9 +50,9 @@ class ParentActionGrid extends StatelessWidget {
                     ),
                   ],
                 ),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(vertical: 12.0),
-                  child: Divider(height: 1, color: AppColors.borderGray),
+                  child: Divider(height: 1, color: context.dividerCol),
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,7 +60,7 @@ class ParentActionGrid extends StatelessWidget {
                     Text('Rata-rata Harian',
                         style: GoogleFonts.inter(
                             fontSize: 12,
-                            color: AppColors.textGray,
+                            color: context.textSecondary,
                             fontWeight: FontWeight.w500)),
                     const SizedBox(height: 4),
                     Text(
@@ -90,7 +91,7 @@ class ParentActionGrid extends StatelessWidget {
                     Text('Total Belanja',
                         style: GoogleFonts.inter(
                             fontSize: 12,
-                            color: AppColors.textGray,
+                            color: context.textSecondary,
                             fontWeight: FontWeight.w500)),
                     const SizedBox(height: 4),
                     Text(
@@ -106,7 +107,7 @@ class ParentActionGrid extends StatelessWidget {
               Container(
                 width: 1,
                 height: 40,
-                color: AppColors.borderGray,
+                color: context.dividerCol,
                 margin: const EdgeInsets.symmetric(horizontal: 16),
               ),
               Expanded(
@@ -116,7 +117,7 @@ class ParentActionGrid extends StatelessWidget {
                     Text('Rata-rata Harian',
                         style: GoogleFonts.inter(
                             fontSize: 12,
-                            color: AppColors.textGray,
+                            color: context.textSecondary,
                             fontWeight: FontWeight.w500)),
                     const SizedBox(height: 4),
                     Text(
@@ -172,7 +173,7 @@ class ParentCategoryProgressRow extends StatelessWidget {
                 style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textDark),
+                    color: context.textPrimary),
               ),
             ),
             const SizedBox(width: 8),
@@ -181,7 +182,7 @@ class ParentCategoryProgressRow extends StatelessWidget {
               style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.textGray),
+                  color: context.textSecondary),
             ),
           ],
         ),
@@ -191,7 +192,7 @@ class ParentCategoryProgressRow extends StatelessWidget {
           child: LinearProgressIndicator(
             value: (percentage / 100).clamp(0.0, 1.0),
             minHeight: 8,
-            backgroundColor: AppColors.lightGray,
+            backgroundColor: context.surfaceBg,
             valueColor: AlwaysStoppedAnimation<Color>(barColor),
           ),
         ),
@@ -212,15 +213,15 @@ class ParentDailyLimitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryTeal = AppColors.teal;
+    Color primaryTeal = Nebula.teal;
 
     if (dailyLimit == null || dailyLimit! <= 0) {
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: context.cardBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.borderGray, width: 1),
+          border: Border.all(color: context.dividerCol, width: 1),
         ),
         child: Center(
           child: Padding(
@@ -229,7 +230,7 @@ class ParentDailyLimitCard extends StatelessWidget {
               'Batas saku harian tidak diaktifkan.',
               style: GoogleFonts.inter(
                   fontSize: 13,
-                  color: AppColors.textGray,
+                  color: context.textSecondary,
                   fontWeight: FontWeight.w500),
             ),
           ),
@@ -242,9 +243,9 @@ class ParentDailyLimitCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderGray, width: 1),
+        border: Border.all(color: context.dividerCol, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -259,7 +260,7 @@ class ParentDailyLimitCard extends StatelessWidget {
                       'Batas Pengeluaran',
                       style: GoogleFonts.inter(
                           fontSize: 13,
-                          color: AppColors.textGray,
+                          color: context.textSecondary,
                           fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 4),
@@ -268,7 +269,7 @@ class ParentDailyLimitCard extends StatelessWidget {
                       style: GoogleFonts.inter(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textDark),
+                          color: context.textPrimary),
                     ),
                   ],
                 );
@@ -281,7 +282,7 @@ class ParentDailyLimitCard extends StatelessWidget {
                     'Batas Pengeluaran',
                     style: GoogleFonts.inter(
                         fontSize: 13,
-                        color: AppColors.textGray,
+                        color: context.textSecondary,
                         fontWeight: FontWeight.w500),
                   ),
                   Text(
@@ -289,7 +290,7 @@ class ParentDailyLimitCard extends StatelessWidget {
                     style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textDark),
+                        color: context.textPrimary),
                   ),
                 ],
               );
@@ -301,10 +302,10 @@ class ParentDailyLimitCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: (todaySpending / limit).clamp(0.0, 1.0),
               minHeight: 12,
-              backgroundColor: AppColors.lightGray,
+              backgroundColor: context.surfaceBg,
               valueColor: AlwaysStoppedAnimation<Color>(
                 (todaySpending / limit) > 0.9
-                    ? AppColors.errorRed2
+                    ? Nebula.rose
                     : primaryTeal,
               ),
             ),
@@ -314,7 +315,7 @@ class ParentDailyLimitCard extends StatelessWidget {
             'Terpakai ${((todaySpending / limit) * 100).toStringAsFixed(0)}% hari ini.',
             style: GoogleFonts.inter(
                 fontSize: 11,
-                color: AppColors.textGray,
+                color: context.textSecondary,
                 fontWeight: FontWeight.w500),
           ),
         ],

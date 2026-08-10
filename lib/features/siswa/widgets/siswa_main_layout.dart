@@ -1,14 +1,15 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
-import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/utils/responsive.dart';
 import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 
 import 'package:kantin_digital/core/widgets/premium_panel.dart';
+import 'package:kantin_digital/core/widgets/premium_bottom_nav_bar.dart';
+import 'package:kantin_digital/core/widgets/nebula_sidebar.dart';
 
 class SiswaMainLayout extends ConsumerStatefulWidget {
   final Widget child;
@@ -25,10 +26,12 @@ class _SiswaMainLayoutState extends ConsumerState<SiswaMainLayout> {
     final String location = GoRouterState.of(context).uri.toString();
     if (location.startsWith('/public/menu')) {
       return 1;
-    } else if (location.startsWith('/student/history')) {
+    } else if (location.startsWith('/student/active-orders')) {
       return 2;
-    } else if (location.startsWith('/student/profile')) {
+    } else if (location.startsWith('/student/history')) {
       return 3;
+    } else if (location.startsWith('/student/profile')) {
+      return 4;
     }
     return 0; // default to /student
   }
@@ -54,9 +57,12 @@ class _SiswaMainLayoutState extends ConsumerState<SiswaMainLayout> {
         context.go('/public/menu');
         break;
       case 2:
-        context.go('/student/history');
+        context.go('/student/active-orders');
         break;
       case 3:
+        context.go('/student/history');
+        break;
+      case 4:
         context.go('/student/profile');
         break;
     }
@@ -81,7 +87,7 @@ class _SiswaMainLayoutState extends ConsumerState<SiswaMainLayout> {
           children: [
             // Left sidebar
             _buildSidebar(context, ref, selectedIndex, sidebarW),
-            const VerticalDivider(width: 0.5, thickness: 0.5, color: AppColors.borderLight),
+            VerticalDivider(width: 0.5, thickness: 0.5, color: context.borderLight),
             // Right content
             Expanded(
               child: PremiumPanel(
@@ -98,270 +104,116 @@ class _SiswaMainLayoutState extends ConsumerState<SiswaMainLayout> {
           isDesktop: false,
           child: widget.child,
         ),
-        bottomNavigationBar: Container(
-          decoration: const BoxDecoration(
-            color: AppColors.cardBackground,
-            border: Border(
-              top: BorderSide(color: AppColors.borderLight, width: 0.5),
-            ),
-          ),
-          child: BottomNavigationBar(
-            currentIndex: selectedIndex,
-            onTap: (int index) => _onItemTapped(index, context),
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: AppColors.cardBackground,
-            selectedItemColor: AppColors.primary,
-            unselectedItemColor: AppColors.textGray,
-            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
-            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
-            elevation: 0,
-            items: const <BottomNavigationBarItem>[
-              BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.house, size: 22),
-                activeIcon: Icon(CupertinoIcons.house_fill, size: 22),
-                label: 'Beranda',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.square_grid_2x2, size: 22),
-                activeIcon: Icon(CupertinoIcons.square_grid_2x2_fill, size: 22),
-                label: 'Menu',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.clock, size: 22),
-                activeIcon: Icon(CupertinoIcons.clock_fill, size: 22),
-                label: 'Riwayat',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.person, size: 22),
-                activeIcon: Icon(CupertinoIcons.person_fill, size: 22),
-                label: 'Akun',
-              ),
-            ],
-          ),
+        bottomNavigationBar: Consumer(
+          builder: (context, ref, child) {
+            final activeOrdersAsync = ref.watch(siswaActiveOrdersProvider);
+            final int activeOrdersCount = activeOrdersAsync.maybeWhen(
+              data: (orders) => orders.length,
+              orElse: () => 0,
+            );
+
+            return PremiumBottomNavBar(
+              currentIndex: selectedIndex,
+              onTap: (int index) => _onItemTapped(index, context),
+              items: [
+                const PremiumBottomNavBarItem(
+                  icon: Icons.home_outlined,
+                  activeIcon: Icons.home_rounded,
+                  label: 'Beranda',
+                ),
+                const PremiumBottomNavBarItem(
+                  icon: Icons.grid_view_outlined,
+                  activeIcon: Icons.grid_view_rounded,
+                  label: 'Menu',
+                ),
+                PremiumBottomNavBarItem(
+                  icon: Icons.receipt_long_outlined,
+                  activeIcon: Icons.receipt_long_rounded,
+                  label: 'Pesanan',
+                  badgeCount: activeOrdersCount,
+                ),
+                const PremiumBottomNavBarItem(
+                  icon: Icons.history_outlined,
+                  activeIcon: Icons.history_rounded,
+                  label: 'Riwayat',
+                ),
+                const PremiumBottomNavBarItem(
+                  icon: Icons.person_outline_rounded,
+                  activeIcon: Icons.person_rounded,
+                  label: 'Akun',
+                ),
+              ],
+            );
+          },
         ),
       );
     }
 
-    return PopScope(
-      canPop: _tabHistory.length <= 1,
-      onPopInvokedWithResult: (bool didPop, Object? result) {
-        if (didPop) return;
-        if (_tabHistory.length > 1) {
-          setState(() {
-            _tabHistory.removeLast(); // Remove current tab
-            final prevTab = _tabHistory.last;
-            _navigateToTab(prevTab, context);
-          });
-        }
-      },
-      child: mainWidget,
+    return Stack(
+      children: [
+        PopScope(
+          canPop: _tabHistory.length <= 1,
+          onPopInvokedWithResult: (bool didPop, Object? result) {
+            if (didPop) return;
+            if (_tabHistory.length > 1) {
+              setState(() {
+                _tabHistory.removeLast(); // Remove current tab
+                final prevTab = _tabHistory.last;
+                _navigateToTab(prevTab, context);
+              });
+            }
+          },
+          child: mainWidget,
+        ),
+      ],
     );
   }
 
 
   Widget _buildSidebar(BuildContext context, WidgetRef ref, int selectedIndex, double sidebarWidth) {
-    final authState = ref.watch(authNotifierProvider);
-    final String fullName = authState.profile?['full_name'] ?? AppStrings.adminStudents;
-    final String email = authState.profile?['email'] ?? '';
-
-    return Container(
-      width: sidebarWidth,
-      color: AppColors.white,
-      child: Column(
-        children: [
-          // Sidebar Header (Logo & Title)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    CupertinoIcons.square_grid_2x2_fill,
-                    color: AppColors.primary,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        'KANTIN',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.primary,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                      Text(
-                        'DIGITAL',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.textDark,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1, thickness: 0.5, color: AppColors.borderLight),
-          const SizedBox(height: 16),
-
-          // Sidebar Navigation Items
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                _buildSidebarItem(
-                  context: context,
-                  icon: CupertinoIcons.house,
-                  activeIcon: CupertinoIcons.house_fill,
-                  label: 'Beranda',
-                  isSelected: selectedIndex == 0,
-                  onTap: () => _onItemTapped(0, context),
-                ),
-                const SizedBox(height: 8),
-                _buildSidebarItem(
-                  context: context,
-                  icon: CupertinoIcons.square_grid_2x2,
-                  activeIcon: CupertinoIcons.square_grid_2x2_fill,
-                  label: 'Menu Kantin',
-                  isSelected: selectedIndex == 1,
-                  onTap: () => _onItemTapped(1, context),
-                ),
-                const SizedBox(height: 8),
-                _buildSidebarItem(
-                  context: context,
-                  icon: CupertinoIcons.clock,
-                  activeIcon: CupertinoIcons.clock_fill,
-                  label: 'Riwayat',
-                  isSelected: selectedIndex == 2,
-                  onTap: () => _onItemTapped(2, context),
-                ),
-                const SizedBox(height: 8),
-                _buildSidebarItem(
-                  context: context,
-                  icon: CupertinoIcons.person,
-                  activeIcon: CupertinoIcons.person_fill,
-                  label: 'Akun Saya',
-                  isSelected: selectedIndex == 3,
-                  onTap: () => _onItemTapped(3, context),
-                ),
-              ],
-            ),
-          ),
-
-          // User Profile Card & Logout at bottom
-          const Divider(height: 1, thickness: 0.5, color: AppColors.borderLight),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                const CircleAvatar(
-                  radius: 18,
-                  backgroundColor: AppColors.primaryLight,
-                  child: Icon(CupertinoIcons.person, color: AppColors.primary, size: 18),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        fullName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textDark,
-                        ),
-                      ),
-                      Text(
-                        email,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: AppColors.textGray,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(CupertinoIcons.square_arrow_right, color: AppColors.error, size: 20),
-                  onPressed: () async {
-                    final confirmed = await showLogoutConfirmationDialog(context);
-                    if (confirmed) {
-                      await ref.read(authNotifierProvider.notifier).logout();
-                      if (context.mounted) {
-                        context.go('/welcome');
-                      }
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSidebarItem({
-    required BuildContext context,
-    required IconData icon,
-    required IconData activeIcon,
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected ? AppColors.primaryLight : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                isSelected ? activeIcon : icon,
-                color: isSelected ? AppColors.primary : AppColors.textGray,
-                size: 20,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? AppColors.primary : AppColors.textDark,
-                  ),
-                ),
-              ),
-            ],
-          ),
+    return NebulaSidebar(
+      headerIcon: Icons.school_rounded,
+      items: const [
+        NebulaSidebarItemData(
+          icon: Icons.home_outlined,
+          activeIcon: Icons.home_rounded,
+          label: 'Beranda',
         ),
-      ),
+        NebulaSidebarItemData(
+          icon: Icons.grid_view_outlined,
+          activeIcon: Icons.grid_view_rounded,
+          label: 'Menu Kantin',
+        ),
+        NebulaSidebarItemData(
+          icon: Icons.receipt_long_outlined,
+          activeIcon: Icons.receipt_long_rounded,
+          label: 'Pesanan',
+        ),
+        NebulaSidebarItemData(
+          icon: Icons.history_outlined,
+          activeIcon: Icons.history_rounded,
+          label: 'Riwayat',
+        ),
+        NebulaSidebarItemData(
+          icon: Icons.person_outline_rounded,
+          activeIcon: Icons.person_rounded,
+          label: 'Akun Saya',
+        ),
+      ],
+      selectedIndex: selectedIndex,
+      onItemTapped: (index) => _onItemTapped(index, context),
+      footerLabel: 'Siswa',
+      footerIcon: Icons.school_rounded,
+      onLogout: () async {
+        final confirmed = await showLogoutConfirmationDialog(context);
+        if (confirmed) {
+          await ref.read(authNotifierProvider.notifier).logout();
+          if (context.mounted) {
+            context.go('/welcome');
+          }
+        }
+      },
     );
   }
 }
+

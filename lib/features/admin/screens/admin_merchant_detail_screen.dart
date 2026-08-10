@@ -1,10 +1,14 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
+import 'package:kantin_digital/core/widgets/nebula_components.dart';
+import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
@@ -56,7 +60,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(AppStrings.successPasswordUpdated),
-            backgroundColor: AppColors.successGreen,
+            backgroundColor: Nebula.teal,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -66,7 +70,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${AppStrings.labelFailed} mengubah kata sandi'),
-            backgroundColor: AppColors.errorRed2,
+            backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -117,7 +121,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.left_chevron, color: AppColors.darkTeal),
+          icon: Icon(CupertinoIcons.left_chevron, color: Nebula.teal),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -125,13 +129,13 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
           style: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: AppColors.darkTeal,
+            color: Nebula.teal,
           ),
         ),
         actions: [
           detailAsync.maybeWhen(
             data: (data) => IconButton(
-              icon: const Icon(CupertinoIcons.pencil, color: AppColors.darkTeal),
+              icon: Icon(CupertinoIcons.pencil, color: Nebula.teal),
               onPressed: () => showEditMerchantSheet(
                 context,
                 ref,
@@ -167,23 +171,27 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                   canteenName: canteenName,
                   username: username,
                 ),
-                const SizedBox(height: 12),
-                ElevatedButton.icon(
-                  onPressed: () => _showChangePasswordDialog(profile.id),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkTeal,
-                    foregroundColor: AppColors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                SizedBox(height: 12),
+                PressScale(
+                  onTap: () => _showChangePasswordDialog(profile.id),
+                  child: ElevatedButton.icon(
+                    onPressed: null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Nebula.teal,
+                      foregroundColor: context.cardBg,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  icon: const Icon(CupertinoIcons.lock_shield),
-                  label: const Text(
-                    AppStrings.adminChangePassword,
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    icon: const Icon(CupertinoIcons.lock_shield),
+                    label: const Text(
+                      AppStrings.adminChangePassword,
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
+                const GradientLine(),
                 const SizedBox(height: 16),
                 Row(
                   children: [
@@ -209,12 +217,12 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
             ),
           );
         },
-        loading: () => const Center(child: CupertinoActivityIndicator(color: AppColors.darkTeal)),
+        loading: () => Center(child: CupertinoActivityIndicator(color: Nebula.teal)),
         error: (err, stack) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+              const Icon(Icons.error_outline, size: 48, color: Nebula.rose),
               const SizedBox(height: 12),
               Text('${AppStrings.labelFailed} memuat data'),
               const SizedBox(height: 8),
@@ -230,19 +238,8 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
   }
 
   Widget _buildProductCatalog(List<Product> products) {
-    return Container(
+    return NebulaCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -255,7 +252,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                   style: GoogleFonts.inter(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.darkTeal,
+                    color: Nebula.teal,
                   ),
                   overflow: TextOverflow.ellipsis,
                   softWrap: false,
@@ -265,10 +262,10 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.lightGray,
+                  color: context.cardBg,
                   borderRadius: BorderRadius.circular(99),
                 ),
-                child: const Text(
+                child: Text(
                   'Read-Only',
                   style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700),
                 ),
@@ -286,7 +283,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: products.length,
-              separatorBuilder: (context, i) => const Divider(height: 16, color: AppColors.borderGray),
+              separatorBuilder: (context, i) => Divider(height: 16, color: context.dividerCol),
               itemBuilder: (context, i) {
                 final p = products[i];
                 return MerchantProductListItem(
@@ -302,19 +299,8 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
   }
 
   Widget _buildRecentSales(List<OperatorTransaction> txs) {
-    return Container(
+    return NebulaCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -323,7 +309,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
             style: GoogleFonts.inter(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: AppColors.darkTeal,
+              color: Nebula.teal,
             ),
           ),
           const SizedBox(height: 16),
@@ -337,7 +323,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: txs.length,
-              separatorBuilder: (context, i) => const Divider(height: 16, color: AppColors.borderGray),
+              separatorBuilder: (context, i) => Divider(height: 16, color: context.dividerCol),
               itemBuilder: (context, i) {
                 final tx = txs[i];
                 return MerchantTransactionListItem(

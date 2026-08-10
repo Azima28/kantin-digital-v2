@@ -1,11 +1,13 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 class OfficerActivitiesScreen extends ConsumerStatefulWidget {
@@ -20,8 +22,8 @@ class OfficerActivitiesScreen extends ConsumerStatefulWidget {
     required this.officerId,
     required this.actorName,
     this.title = 'Semua Aktivitas',
-    this.primaryColor = AppColors.darkTeal,
-    this.accentColor = AppColors.darkOrange,
+    this.primaryColor = Nebula.teal,
+    this.accentColor = Nebula.amber,
   });
 
   @override
@@ -172,7 +174,7 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
                 child: Text(
                   '${AppStrings.labelFailed} memuat aktivitas: ${snapshot.error}',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(color: AppColors.errorRed2),
+                  style: GoogleFonts.inter(color: Nebula.rose),
                 ),
               ),
             );
@@ -196,7 +198,7 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
                           '${filtered.length} dari ${logs.length} aktivitas',
                           style: GoogleFonts.inter(
                             fontSize: 12,
-                            color: AppColors.textGray,
+                            color: context.textSecondary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -322,7 +324,7 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
     required VoidCallback onTap,
   }) {
     return Material(
-      color: AppColors.white,
+      color: context.cardBg,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
@@ -332,7 +334,7 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.borderGray),
+            border: Border.all(color: context.dividerCol),
           ),
           child: Row(
             children: [
@@ -346,7 +348,7 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.nearBlack,
+                    color: context.textPrimary,
                   ),
                 ),
               ),
@@ -368,9 +370,9 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
       height: 48,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderGray),
+        border: Border.all(color: context.dividerCol),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
@@ -385,7 +387,7 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
           style: GoogleFonts.inter(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: AppColors.nearBlack,
+            color: context.textPrimary,
           ),
           items: items
               .map(
@@ -419,13 +421,13 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
       logColor = widget.accentColor;
     } else if (actionType.contains('REGISTRASI')) {
       logIcon = CupertinoIcons.creditcard;
-      logColor = AppColors.successGreen;
+      logColor = Nebula.teal;
     }
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -463,7 +465,7 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
                       DateFormat('HH:mm', 'id_ID').format(date),
                       style: GoogleFonts.inter(
                         fontSize: 11,
-                        color: AppColors.textGray,
+                        color: context.textSecondary,
                       ),
                     ),
                   ],
@@ -474,7 +476,7 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.nearBlack,
+                    color: context.textPrimary,
                   ),
                 ),
               ],

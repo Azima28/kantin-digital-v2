@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 class SiswaQuickAmountItem extends StatelessWidget {
   final int amount;
@@ -22,12 +23,12 @@ class SiswaQuickAmountItem extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryLight : AppColors.cardBackground,
+          color: isSelected ? Nebula.teal.withValues(alpha: 0.08) : context.cardBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.borderLight,
+            color: isSelected ? Nebula.teal : context.dividerCol,
             width: isSelected ? 1.5 : 1.0,
           ),
         ),
@@ -41,16 +42,16 @@ class SiswaQuickAmountItem extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: isSelected ? AppColors.primary : AppColors.textDark,
+                     fontSize: 16,
+                     fontWeight: FontWeight.bold,
+                     color: isSelected ? Nebula.teal : context.textPrimary,
                   ),
                 ),
                 Text(
                   description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
-                    color: AppColors.textGray,
+                    color: context.textSecondary,
                   ),
                 ),
               ],
@@ -58,7 +59,7 @@ class SiswaQuickAmountItem extends StatelessWidget {
             if (isSelected)
               const Icon(
                 CupertinoIcons.checkmark_circle_fill,
-                color: AppColors.primary,
+                color: Nebula.teal,
                 size: 16,
               ),
           ],

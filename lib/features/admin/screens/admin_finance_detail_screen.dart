@@ -1,11 +1,15 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
+import 'package:kantin_digital/core/widgets/nebula_components.dart';
+import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
@@ -56,7 +60,7 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(AppStrings.successPasswordUpdated),
-            backgroundColor: AppColors.successGreen,
+            backgroundColor: Nebula.teal,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -66,7 +70,7 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppStrings.labelFailedChangePassword),
-            backgroundColor: AppColors.errorRed2,
+            backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -118,7 +122,7 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.left_chevron, color: AppColors.darkTeal),
+          icon: Icon(CupertinoIcons.left_chevron, color: Nebula.teal),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -126,13 +130,13 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
           style: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: AppColors.darkTeal,
+            color: Nebula.teal,
           ),
         ),
         actions: [
           detailAsync.maybeWhen(
             data: (data) => IconButton(
-              icon: const Icon(CupertinoIcons.pencil, color: AppColors.darkTeal),
+              icon: Icon(CupertinoIcons.pencil, color: Nebula.teal),
               onPressed: () => showEditFinanceSheet(
                 context,
                 ref,
@@ -161,25 +165,14 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Profile Header Card
-                Container(
+                NebulaCard(
                   padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.black.withValues(alpha: 0.04),
-                        blurRadius: 20,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
                   child: Row(
                     children: [
                       CircleAvatar(
                         radius: 36,
-                        backgroundColor: AppColors.darkTeal.withValues(alpha: 0.1),
-                        child: const Icon(CupertinoIcons.person_solid, color: AppColors.darkTeal, size: 36),
+                        backgroundColor: Nebula.teal.withValues(alpha: 0.1),
+                        child: Icon(CupertinoIcons.person_solid, color: Nebula.teal, size: 36),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -191,7 +184,7 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                               style: GoogleFonts.inter(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.nearBlack,
+                                color: context.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -199,7 +192,7 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                               'Staf Tata Usaha',
                               style: GoogleFonts.inter(
                                 fontSize: 13,
-                                color: AppColors.textGray,
+                                color: context.textSecondary,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -207,7 +200,7 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                               decoration: BoxDecoration(
-                                color: AppColors.offWhite2,
+                                color: context.surfaceBg,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Text(
@@ -215,7 +208,7 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                                 style: GoogleFonts.inter(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.mutedGray,
+                                  color: context.textSecondary,
                                 ),
                               ),
                             ),
@@ -225,51 +218,44 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                     ],
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
 
                 // Change Password Button
-                ElevatedButton.icon(
-                  onPressed: () => _showChangePasswordDialog(profile.id),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkTeal,
-                    foregroundColor: AppColors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                PressScale(
+                  onTap: () => _showChangePasswordDialog(profile.id),
+                  child: ElevatedButton.icon(
+                    onPressed: null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Nebula.teal,
+                      foregroundColor: context.cardBg,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  icon: const Icon(CupertinoIcons.lock_shield),
-                  label: const Text(
-                    AppStrings.adminChangePassword,
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    icon: const Icon(CupertinoIcons.lock_shield),
+                    label: Text(
+                      AppStrings.adminChangePassword,
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
+                const GradientLine(),
                 const SizedBox(height: 16),
 
                 // Access Card
-                Container(
+                NebulaCard(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.black.withValues(alpha: 0.04),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        children: const [
-                          Icon(Icons.verified_user, size: 16, color: AppColors.textGray),
+                        children: [
+                          Icon(Icons.verified_user, size: 16, color: context.textSecondary),
                           SizedBox(width: 6),
                           Text(
                             'TINGKAT AKSES',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textGray),
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: context.textSecondary),
                           ),
                         ],
                       ),
@@ -279,7 +265,7 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                         style: GoogleFonts.inter(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.nearBlack,
+                          color: context.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -288,14 +274,14 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                         runSpacing: 4,
                         children: features.map((f) {
                           return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: AppColors.darkTeal.withValues(alpha: 0.1),
+                              color: Nebula.teal.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               f.toString(),
-                              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.darkTeal),
+                              style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Nebula.teal),
                             ),
                           );
                         }).toList(),
@@ -303,7 +289,7 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
 
                 // Audit Logs Section
                 Row(
@@ -314,28 +300,31 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                       style: GoogleFonts.inter(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.nearBlack,
+                        color: context.textPrimary,
                       ),
                     ),
-                    TextButton(
-                      onPressed: () {
+                    PressScale(
+                      onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (_) => OfficerActivitiesScreen(
                               officerId: widget.officerId,
                               actorName: fullName,
-                              primaryColor: AppColors.darkTeal,
-                              accentColor: AppColors.darkOrange,
+                              primaryColor: Nebula.teal,
+                              accentColor: Nebula.amber,
                             ),
                           ),
                         );
                       },
-                      child: Text(
-                        'Lihat Semua',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.darkTeal,
+                      child: TextButton(
+                        onPressed: null,
+                        child: Text(
+                          'Lihat Semua',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Nebula.teal,
+                          ),
                         ),
                       ),
                     ),
@@ -344,12 +333,8 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                 const SizedBox(height: 8),
 
                 if (logs.isEmpty)
-                  Container(
+                  NebulaCard(
                     padding: const EdgeInsets.symmetric(vertical: 32),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(24),
-                    ),
                     child: EmptyStateWidget(
                       message: 'Belum ada aktivitas transaksi manual.',
                     )
@@ -363,29 +348,18 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
 
                       // Set specific icon & color for action types
                       IconData logIcon = CupertinoIcons.doc_text;
-                      Color logColor = AppColors.darkTeal;
+                      Color logColor = Nebula.teal;
                       if (actionType.contains('KOREKSI')) {
                         logIcon = CupertinoIcons.refresh;
-                        logColor = AppColors.darkOrange;
+                        logColor = Nebula.amber;
                       } else if (actionType.contains('REGISTRASI')) {
                         logIcon = CupertinoIcons.creditcard;
-                        logColor = AppColors.successGreen;
+                        logColor = Nebula.teal;
                       }
 
-                      return Container(
+                      return NebulaCard(
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(24),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.black.withValues(alpha: 0.04),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -414,7 +388,7 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                                         DateFormat('HH:mm', 'id_ID').format(date),
                                         style: GoogleFonts.inter(
                                           fontSize: 11,
-                                          color: AppColors.textGray,
+                                          color: context.textSecondary,
                                         ),
                                       ),
                                     ],
@@ -425,7 +399,7 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                                     style: GoogleFonts.inter(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,
-                                      color: AppColors.nearBlack,
+                                      color: context.textPrimary,
                                     ),
                                   ),
                                 ],
@@ -440,12 +414,12 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
             ),
           );
         },
-        loading: () => const Center(child: CupertinoActivityIndicator(color: AppColors.darkTeal)),
+        loading: () => Center(child: CupertinoActivityIndicator(color: Nebula.teal)),
         error: (err, stack) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+              const Icon(Icons.error_outline, size: 48, color: Nebula.rose),
               const SizedBox(height: 12),
               Text('${AppStrings.labelFailed} memuat data'),
               const SizedBox(height: 8),

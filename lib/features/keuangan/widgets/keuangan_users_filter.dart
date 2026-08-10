@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 
 class KeuanganStatusFilter extends StatelessWidget {
@@ -20,16 +20,16 @@ class KeuanganStatusFilter extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderGray),
+        border: Border.all(color: context.dividerCol),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: selectedStatus,
           isExpanded: true,
           style: GoogleFonts.inter(
-            color: AppColors.nearBlack,
+            color: context.textPrimary,
             fontSize: 13,
           ),
           onChanged: (val) {

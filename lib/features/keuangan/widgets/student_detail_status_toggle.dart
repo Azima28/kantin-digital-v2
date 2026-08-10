@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
@@ -95,8 +95,8 @@ class _StudentDetailStatusToggleState
                         'Akun siswa berhasil ${newStatus ? "diaktifkan" : "diblokir"}.',
                       ),
                       backgroundColor: newStatus
-                          ? AppColors.successGreen
-                          : AppColors.errorRed2,
+                          ? Nebula.teal
+                          : Nebula.rose,
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -107,7 +107,7 @@ class _StudentDetailStatusToggleState
                     SnackBar(
                       content:
                           Text('${AppStrings.labelFailed} memperbarui status'),
-                      backgroundColor: AppColors.errorRed2,
+                      backgroundColor: Nebula.rose,
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -136,14 +136,14 @@ class _StudentDetailStatusToggleState
         style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
           backgroundColor: widget.isAccountActive
-              ? AppColors.errorRed2.withValues(alpha: 0.08)
-              : AppColors.successGreen.withValues(alpha: 0.08),
+              ? Nebula.rose.withValues(alpha: 0.08)
+              : Nebula.teal.withValues(alpha: 0.08),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
               color: widget.isAccountActive
-                  ? AppColors.errorRed2.withValues(alpha: 0.2)
-                  : AppColors.successGreen.withValues(alpha: 0.2),
+                  ? Nebula.rose.withValues(alpha: 0.2)
+                  : Nebula.teal.withValues(alpha: 0.2),
             ),
           ),
         ),
@@ -157,8 +157,8 @@ class _StudentDetailStatusToggleState
                   fontWeight: FontWeight.bold,
                   fontSize: 13,
                   color: widget.isAccountActive
-                      ? AppColors.errorRed2
-                      : AppColors.successGreen,
+                      ? Nebula.rose
+                      : Nebula.teal,
                   letterSpacing: 0.5,
                 ),
               ),

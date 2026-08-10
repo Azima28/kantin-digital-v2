@@ -1,12 +1,14 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/keuangan/widgets/students_filter_panel.dart';
 import 'package:kantin_digital/features/keuangan/widgets/students_list_view.dart';
 import 'package:kantin_digital/features/keuangan/widgets/students_add_sheet.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
+import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 
 class KeuanganStudentsScreen extends ConsumerStatefulWidget {
   const KeuanganStudentsScreen({super.key});
@@ -39,16 +41,19 @@ class _KeuanganStudentsScreenState extends ConsumerState<KeuanganStudentsScreen>
           'Manajemen Siswa',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
-            color: AppColors.darkTeal,
+            color: Nebula.teal,
             fontSize: 20,
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(CupertinoIcons.add_circled_solid,
-                color: AppColors.darkTeal, size: 26),
-            tooltip: '${AppStrings.buttonAdd} Siswa',
-            onPressed: () => showAddStudentSheet(context, ref),
+          PressScale(
+            onTap: () => showAddStudentSheet(context, ref),
+            child: IconButton(
+              icon: Icon(CupertinoIcons.add_circled_solid,
+                  color: Nebula.teal, size: 26),
+              tooltip: '${AppStrings.buttonAdd} Siswa',
+              onPressed: () => showAddStudentSheet(context, ref),
+            ),
           ),
         ],
       ),
@@ -78,6 +83,7 @@ class _KeuanganStudentsScreenState extends ConsumerState<KeuanganStudentsScreen>
               },
             ),
 
+            GradientLine(height: 1, margin: EdgeInsets.symmetric(vertical: 4)),
             // Students List
             Expanded(
               child: StudentsListView(

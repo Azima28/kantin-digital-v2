@@ -11,8 +11,8 @@ import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/features/keuangan/widgets/correction_form.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_correction_step_confirm.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_correction_step_search.dart';
@@ -97,7 +97,7 @@ class _KeuanganCorrectionScreenState
       final List<dynamic> res = await client
           .from('profiles')
           .select(
-            'id, full_name, nisn, is_active, students:students!students_id_fkey(class, balance, rfid_uid)',
+            'id, full_name, nisn, is_active, students:students!students_id_fkey(balance, rfid_uid, classes:classes(name))',
           )
           .eq('role', 'student')
           .or('nisn.ilike."%$query%",full_name.ilike."%$query%"')
@@ -119,7 +119,7 @@ class _KeuanganCorrectionScreenState
             content: Text(
               'Pencarian gagal: ${e.toString().replaceAll('Exception: ', '')}',
             ),
-            backgroundColor: AppColors.errorRed2,
+            backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -194,6 +194,7 @@ class _KeuanganCorrectionScreenState
       ref.invalidate(keuanganStudentsProvider);
       ref.invalidate(keuanganStudentDetailProvider(studentId));
       ref.invalidate(userNotificationsProvider);
+      ref.invalidate(keuanganHistoryProvider);
 
       final now = DateTime.now();
       setState(() {
@@ -207,7 +208,7 @@ class _KeuanganCorrectionScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Koreksi gagal'),
-            backgroundColor: AppColors.errorRed2,
+            backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -241,7 +242,7 @@ class _KeuanganCorrectionScreenState
           AppStrings.keuanganKoreksiSaldo,
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
-            color: AppColors.darkTeal,
+            color: Nebula.teal,
             fontSize: 18,
           ),
         ),
@@ -269,21 +270,27 @@ class _KeuanganCorrectionScreenState
               ),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Progress indicators for steps
-            if (_currentStep < 4) _buildProgressIndicator(),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: Column(
+              children: [
+                // Progress indicators for steps
+                if (_currentStep < 4) _buildProgressIndicator(),
 
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                    child: _buildStepContent(fmt),
+                  ),
                 ),
-                child: _buildStepContent(fmt),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

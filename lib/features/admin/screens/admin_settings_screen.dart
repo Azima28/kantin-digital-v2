@@ -1,9 +1,12 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
+import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 import 'package:kantin_digital/core/utils/responsive.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/admin/widgets/setting_section_widget.dart';
@@ -81,7 +84,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(AppStrings.successPushSent),
-            backgroundColor: AppColors.successGreen,
+            backgroundColor: Nebula.teal,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -91,7 +94,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${AppStrings.labelFailed} mengirim broadcast'),
-            backgroundColor: AppColors.errorRed2,
+            backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -152,7 +155,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(AppStrings.successSettingsSaved),
-            backgroundColor: AppColors.successGreen,
+            backgroundColor: Nebula.teal,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -162,7 +165,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppStrings.labelFailedSaveSettings),
-            backgroundColor: AppColors.errorRed2,
+            backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -194,7 +197,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
           style: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: AppColors.darkTeal,
+            color: Nebula.teal,
           ),
         ),
       ),
@@ -208,24 +211,24 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
             horizontalPadding: 16,
             verticalPadding: 16,
             iconRadius: 16,
-            iconBackgroundColor: AppColors.softOrange.withValues(alpha: 0.3),
-            iconColor: AppColors.darkOrange,
+            iconBackgroundColor: Nebula.amber.withValues(alpha: 0.3),
+            iconColor: Nebula.amber,
             shadowBlurRadius: 15,
             children: [
               // Logo & Status
               Row(
                 children: [
-                  const Text('Midtrans', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  Text('Midtrans', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: AppColors.successLight,
+                      color: Nebula.teal.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(99),
                     ),
                     child: const Text(
                       'Active',
-                      style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: AppColors.successGreen),
+                      style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Nebula.teal),
                     ),
                   ),
                 ],
@@ -236,18 +239,18 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Env', style: TextStyle(fontSize: 11, color: AppColors.textGray)),
+                  Text('Env', style: TextStyle(fontSize: 11, color: context.textSecondary)),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 4,
                     runSpacing: 4,
                     children: [
-                      GestureDetector(
+                      PressScale(
                         onTap: () => setState(() => _isSandbox = true),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: _isSandbox ? AppColors.darkTeal : AppColors.offWhite2,
+                            color: _isSandbox ? Nebula.teal : context.surfaceBg,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -255,17 +258,17 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.bold,
-                              color: _isSandbox ? AppColors.white : AppColors.textDark,
+                              color: _isSandbox ? context.textPrimary : context.textPrimary,
                             ),
                           ),
                         ),
                       ),
-                      GestureDetector(
+                      PressScale(
                         onTap: () => setState(() => _isSandbox = false),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: !_isSandbox ? AppColors.darkTeal : AppColors.offWhite2,
+                            color: !_isSandbox ? Nebula.teal : context.surfaceBg,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -273,7 +276,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.bold,
-                              color: !_isSandbox ? AppColors.white : AppColors.textDark,
+                              color: !_isSandbox ? context.textPrimary : context.textPrimary,
                             ),
                           ),
                         ),
@@ -285,12 +288,12 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
               const SizedBox(height: 12),
 
               // Key field
-              const Text('Client Key', style: TextStyle(fontSize: 10, color: AppColors.textGray)),
+              Text('Client Key', style: TextStyle(fontSize: 10, color: context.textSecondary)),
               const SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.offWhite2,
+                  color: context.surfaceBg,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -305,12 +308,12 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                         style: const TextStyle(fontFamily: 'Courier', fontSize: 10),
                       ),
                     ),
-                    GestureDetector(
+                    PressScale(
                       onTap: () => setState(() => _obscureKey = !_obscureKey),
                       child: Icon(
                         _obscureKey ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
                         size: 14,
-                        color: AppColors.darkTeal,
+                        color: Nebula.teal,
                       ),
                     ),
                   ],
@@ -325,19 +328,19 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
             horizontalPadding: 16,
             verticalPadding: 16,
             iconRadius: 16,
-            iconBackgroundColor: AppColors.errorLightColor,
-            iconColor: AppColors.errorRed2,
-            titleColor: AppColors.errorRed2,
+            iconBackgroundColor: Nebula.rose.withValues(alpha: 0.1),
+            iconColor: Nebula.rose,
+            titleColor: Nebula.rose,
             shadowBlurRadius: 15,
             children: [
               Text(
                 'Mode pemeliharaan memblokir semua akses login non-admin.',
                 style: GoogleFonts.inter(
                   fontSize: 10,
-                  color: AppColors.textGray,
+                  color: context.textSecondary,
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               SettingTileWidget(
                 title: 'Maintenance',
                 trailing: SizedBox(
@@ -347,7 +350,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                     fit: BoxFit.contain,
                     child: CupertinoSwitch(
                       value: _isMaintenanceMode,
-                      activeTrackColor: AppColors.darkTeal,
+                      activeTrackColor: Nebula.teal,
                       onChanged: (val) {
                         setState(() {
                           _isMaintenanceMode = val;
@@ -370,7 +373,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                   'Kontrol dan konfigurasi platform global.',
                   style: GoogleFonts.inter(
                     fontSize: 15,
-                    color: AppColors.darkGray,
+                    color: context.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -387,7 +390,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                   },
                   onSend: _sendBroadcast,
                 ),
-                const SizedBox(height: 12),
+                const GradientLine(),
 
                 // ── Responsive Grid for API and Access ────────────────────
                 Responsive.isMobile(context)
@@ -413,15 +416,15 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                 ElevatedButton.icon(
                   onPressed: _isSaving ? null : () => _saveGlobalSettings(settings),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkOrange,
-                    foregroundColor: AppColors.white,
+                    backgroundColor: Nebula.amber,
+                    foregroundColor: context.cardBg,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   icon: _isSaving
-                      ? const CupertinoActivityIndicator(color: AppColors.white)
+                      ? CupertinoActivityIndicator(color: context.cardBg)
                       : const Icon(CupertinoIcons.floppy_disk),
                   label: const Text(
                     'SIMPAN SETELAN GLOBAL',
@@ -433,12 +436,12 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
             ),
           );
         },
-        loading: () => const Center(child: CupertinoActivityIndicator(color: AppColors.darkTeal)),
+        loading: () => Center(child: CupertinoActivityIndicator(color: Nebula.teal)),
         error: (err, stack) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+              const Icon(Icons.error_outline, size: 48, color: Nebula.rose),
               const SizedBox(height: 12),
               Text('${AppStrings.labelFailed} memuat data'),
               const SizedBox(height: 12),

@@ -1,9 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 class TopupQrisCheckoutSheet extends ConsumerWidget {
   final double amount;
@@ -41,7 +42,7 @@ class TopupQrisCheckoutSheet extends ConsumerWidget {
                 style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
+                  color: context.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -50,7 +51,7 @@ class TopupQrisCheckoutSheet extends ConsumerWidget {
                 style: GoogleFonts.inter(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
+                  color: Nebula.teal,
                 ),
               ),
               const SizedBox(height: 20),
@@ -59,31 +60,31 @@ class TopupQrisCheckoutSheet extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: context.cardBg,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.borderLight, width: 1),
+                  border: Border.all(color: context.borderLight, width: 1),
                 ),
                 child: Column(
                   children: [
                     Container(
                       width: 180,
                       height: 180,
-                      color: AppColors.systemBackground,
+                      color: context.surfaceBg,
                       child: Center(
                         child: Icon(
                           Icons.qr_code_2,
                           size: 130,
-                          color: AppColors.textDark.withValues(alpha: 0.8),
+                          color: context.textPrimary.withValues(alpha: 0.8),
                         ),
                       ),
                     ),
                     const SizedBox(height: 12),
-                    const Text(
+                    Text(
                       'KANTIN DIGITAL COOPERATIVE',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textDark,
+                        color: context.textPrimary,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -91,12 +92,12 @@ class TopupQrisCheckoutSheet extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Pindai QRIS di atas menggunakan e-wallet atau Mobile Banking Anda.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppColors.textGray,
+                  color: context.textSecondary,
                   height: 1.4,
                 ),
               ),
@@ -107,7 +108,7 @@ class TopupQrisCheckoutSheet extends ConsumerWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: Nebula.teal,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
@@ -118,10 +119,10 @@ class TopupQrisCheckoutSheet extends ConsumerWidget {
                           await onConfirmPayment(amount);
                         },
                   child: isLoading
-                      ? const CupertinoActivityIndicator(color: AppColors.white)
+                      ? const CupertinoActivityIndicator(color: Colors.white)
                       : const Text(
                           'Simulasikan Pembayaran Berhasil',
-                          style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                 ),
               ),
@@ -132,7 +133,7 @@ class TopupQrisCheckoutSheet extends ConsumerWidget {
                   onPressed: () => Navigator.pop(context),
                   child: const Text(
                     'Batalkan',
-                    style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w600),
+                    style: TextStyle(color: Nebula.rose, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),

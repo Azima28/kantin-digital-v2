@@ -1,11 +1,15 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
+import 'package:kantin_digital/core/widgets/nebula_components.dart';
+import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_student_password_change.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_student_rfid_section.dart';
@@ -41,8 +45,8 @@ class _AdminStudentDetailScreenState
       MaterialPageRoute(
         builder: (_) => StudentTransactionsScreen(
           studentId: studentId,
-          primaryColor: AppColors.darkTeal,
-          accentColor: AppColors.darkOrange,
+          primaryColor: Nebula.teal,
+          accentColor: Nebula.amber,
         ),
       ),
     );
@@ -61,7 +65,7 @@ class _AdminStudentDetailScreenState
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.left_chevron, color: AppColors.darkTeal),
+          icon: Icon(CupertinoIcons.left_chevron, color: Nebula.teal),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -69,13 +73,13 @@ class _AdminStudentDetailScreenState
           style: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: AppColors.darkTeal,
+            color: Nebula.teal,
           ),
         ),
         actions: [
           studentAsync.maybeWhen(
             data: (data) => IconButton(
-              icon: const Icon(CupertinoIcons.pencil, color: AppColors.darkTeal),
+              icon: Icon(CupertinoIcons.pencil, color: Nebula.teal),
               onPressed: () => showEditStudentSheet(
                 context,
                 ref,
@@ -109,27 +113,16 @@ class _AdminStudentDetailScreenState
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Profile Header Card
-                Container(
+                NebulaCard(
                   padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.black.withValues(alpha: 0.04),
-                        blurRadius: 20,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
                   child: Column(
                     children: [
                       CircleAvatar(
                         radius: 36,
-                        backgroundColor: AppColors.darkTeal.withValues(alpha: 0.1),
-                        child: const Icon(
+                        backgroundColor: Nebula.teal.withValues(alpha: 0.1),
+                        child: Icon(
                           CupertinoIcons.person,
-                          color: AppColors.darkTeal,
+                          color: Nebula.teal,
                           size: 36,
                         ),
                       ),
@@ -139,7 +132,7 @@ class _AdminStudentDetailScreenState
                         style: GoogleFonts.inter(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.nearBlack,
+                          color: context.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -147,13 +140,15 @@ class _AdminStudentDetailScreenState
                         'Kelas $className • NISN: ${nisn.isNotEmpty ? nisn : "-"}',
                         style: GoogleFonts.inter(
                           fontSize: 13,
-                          color: AppColors.textGray,
+                          color: context.textSecondary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(height: 12),
+                const GradientLine(),
                 const SizedBox(height: 12),
 
                 // Info Bento Card (extracted)
@@ -171,19 +166,19 @@ class _AdminStudentDetailScreenState
                 Row(
                   children: [
                     Expanded(
-                      child: GestureDetector(
+                      child: PressScale(
                         onTap: () => AdminStudentPasswordChange.show(
                           context, ref, profile.id,
                         ),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          padding: EdgeInsets.symmetric(vertical: 16),
                           decoration: BoxDecoration(
-                            color: AppColors.offWhite2,
+                            color: context.surfaceBg,
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Column(
                             children: [
-                              Icon(Icons.key, color: AppColors.darkTeal),
+                              Icon(Icons.key, color: Nebula.teal),
                               const SizedBox(height: 8),
                               Text(
                                 'Ubah\nKata Sandi',
@@ -191,7 +186,7 @@ class _AdminStudentDetailScreenState
                                 style: GoogleFonts.inter(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.nearBlack,
+                                  color: context.textPrimary,
                                 ),
                               ),
                             ],
@@ -209,6 +204,8 @@ class _AdminStudentDetailScreenState
                     ),
                   ],
                 ),
+                SizedBox(height: 24),
+                const GradientLine(),
                 const SizedBox(height: 24),
 
                 // Transaction History
@@ -220,21 +217,24 @@ class _AdminStudentDetailScreenState
                       style: GoogleFonts.inter(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.nearBlack,
+                        color: context.textPrimary,
                       ),
                     ),
-                    TextButton(
-                      onPressed: () => _openAllTransactionsScreen(
+                    PressScale(
+                      onTap: () => _openAllTransactionsScreen(
                         studentId: widget.studentId,
-                        primaryColor: AppColors.darkTeal,
-                        accentColor: AppColors.darkOrange,
+                        primaryColor: Nebula.teal,
+                        accentColor: Nebula.amber,
                       ),
-                      child: Text(
-                        'Lihat Semua',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.darkTeal,
+                      child: TextButton(
+                        onPressed: null,
+                        child: Text(
+                          'Lihat Semua',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Nebula.teal,
+                          ),
                         ),
                       ),
                     ),
@@ -243,17 +243,13 @@ class _AdminStudentDetailScreenState
                 const SizedBox(height: 8),
 
                 if (txs.isEmpty)
-                  Container(
+                  NebulaCard(
                     padding: const EdgeInsets.symmetric(vertical: 32),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(24),
-                    ),
                     child: Center(
                       child: Text(
                         AppStrings.noTransactions,
                         style: GoogleFonts.inter(
-                          color: AppColors.textGray,
+                          color: context.textSecondary,
                         ),
                       ),
                     ),
@@ -266,32 +262,21 @@ class _AdminStudentDetailScreenState
                       final String canteen = tx.canteenName ?? 'Stan Kantin';
                       final date = tx.createdAt?.toLocal() ?? DateTime.now();
 
-                      return Container(
+                      return NebulaCard(
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(24),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.black.withValues(alpha: 0.04),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
                         child: Row(
                           children: [
                             CircleAvatar(
                               radius: 18,
                               backgroundColor: isTopup
-                                  ? AppColors.softOrange
-                                  : AppColors.darkTeal.withValues(alpha: 0.1),
+                                  ? Nebula.amber
+                                  : Nebula.teal.withValues(alpha: 0.1),
                               child: Icon(
                                 isTopup
                                     ? CupertinoIcons.creditcard
                                     : Icons.shopping_bag,
-                                color: isTopup ? AppColors.darkOrange : AppColors.darkTeal,
+                                color: isTopup ? Nebula.amber : Nebula.teal,
                                 size: 18,
                               ),
                             ),
@@ -305,7 +290,7 @@ class _AdminStudentDetailScreenState
                                     style: GoogleFonts.inter(
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
-                                      color: AppColors.nearBlack,
+                                      color: context.textPrimary,
                                     ),
                                   ),
                                   Text(
@@ -314,7 +299,7 @@ class _AdminStudentDetailScreenState
                                     ).format(date),
                                     style: GoogleFonts.inter(
                                       fontSize: 11,
-                                      color: AppColors.textGray,
+                                      color: context.textSecondary,
                                     ),
                                   ),
                                 ],
@@ -326,8 +311,8 @@ class _AdminStudentDetailScreenState
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: isTopup
-                                    ? AppColors.successGreen
-                                    : AppColors.errorRed2,
+                                    ? Nebula.teal
+                                    : Nebula.rose,
                               ),
                             ),
                           ],
@@ -340,12 +325,12 @@ class _AdminStudentDetailScreenState
           );
         },
         loading: () =>
-            const Center(child: CupertinoActivityIndicator(color: AppColors.darkTeal)),
+            Center(child: CupertinoActivityIndicator(color: Nebula.teal)),
         error: (err, stack) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+              const Icon(Icons.error_outline, size: 48, color: Nebula.rose),
               const SizedBox(height: 12),
               Text('${AppStrings.labelFailed} memuat data'),
               const SizedBox(height: 8),

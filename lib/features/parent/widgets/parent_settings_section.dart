@@ -1,9 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/providers/theme_provider.dart';
 
-/// Settings section for parent dashboard — daily limit, card freeze, WA alerts.
+/// Settings section for parent dashboard â€” daily limit, card freeze, WA alerts.
 class ParentSettingsSection extends StatefulWidget {
   final bool dailyLimitActive;
   final TextEditingController limitController;
@@ -40,13 +43,64 @@ class _ParentSettingsSectionState extends State<ParentSettingsSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Dark Mode Toggle Card
+        Consumer(
+          builder: (context, ref, child) {
+            final isDark = ref.watch(themeProvider) == ThemeMode.dark;
+            return Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: context.cardBg,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: context.dividerCol, width: 1),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Mode Gelap',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: context.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Aktifkan mode malam untuk tampilan yang nyaman bagi mata.',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: context.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  CupertinoSwitch(
+                    value: isDark,
+                    activeTrackColor: Nebula.teal,
+                    onChanged: (val) {
+                      ref.read(themeProvider.notifier).toggle();
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+
         // Daily limit toggle
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.borderGray, width: 1),
+            border: Border.all(color: context.dividerCol, width: 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -63,7 +117,7 @@ class _ParentSettingsSectionState extends State<ParentSettingsSection> {
                           style: GoogleFonts.inter(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textDark,
+                            color: context.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -71,7 +125,7 @@ class _ParentSettingsSectionState extends State<ParentSettingsSection> {
                           'Batasi pengeluaran saku maksimal anak per hari.',
                           style: GoogleFonts.inter(
                             fontSize: 11,
-                            color: AppColors.textGray,
+                            color: context.textSecondary,
                           ),
                         ),
                       ],
@@ -79,30 +133,30 @@ class _ParentSettingsSectionState extends State<ParentSettingsSection> {
                   ),
                   CupertinoSwitch(
                     value: widget.dailyLimitActive,
-                    activeTrackColor: AppColors.primary,
+                    activeTrackColor: Nebula.teal,
                     onChanged: widget.onDailyLimitChanged,
                   ),
                 ],
               ),
               if (widget.dailyLimitActive) ...[
                 const SizedBox(height: 16),
-                const Divider(color: AppColors.borderGray, height: 1),
+                Divider(color: context.dividerCol, height: 1),
                 const SizedBox(height: 16),
                 Text(
                   'Batas Maksimal Per Hari (Rupiah)',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textDark,
+                    color: context.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: AppColors.offWhite,
+                    color: context.cardBg,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.borderGray, width: 1),
+                    border: Border.all(color: context.dividerCol, width: 1),
                   ),
                   child: Row(
                     children: [
@@ -111,7 +165,7 @@ class _ParentSettingsSectionState extends State<ParentSettingsSection> {
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textDark,
+                          color: context.textPrimary,
                         ),
                       ),
                       Expanded(
@@ -121,7 +175,7 @@ class _ParentSettingsSectionState extends State<ParentSettingsSection> {
                           style: GoogleFonts.inter(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textDark,
+                            color: context.textPrimary,
                           ),
                           decoration: const InputDecoration(
                             hintText: 'Masukkan nominal limit...',
@@ -142,9 +196,9 @@ class _ParentSettingsSectionState extends State<ParentSettingsSection> {
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.borderGray, width: 1),
+            border: Border.all(color: context.dividerCol, width: 1),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -158,7 +212,7 @@ class _ParentSettingsSectionState extends State<ParentSettingsSection> {
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textDark,
+                        color: context.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -166,7 +220,7 @@ class _ParentSettingsSectionState extends State<ParentSettingsSection> {
                       'Nonaktifkan seketika jika kartu anak hilang/terjatuh.',
                       style: GoogleFonts.inter(
                         fontSize: 11,
-                        color: AppColors.textGray,
+                        color: context.textSecondary,
                       ),
                     ),
                   ],
@@ -174,7 +228,7 @@ class _ParentSettingsSectionState extends State<ParentSettingsSection> {
               ),
               CupertinoSwitch(
                 value: widget.cardFrozen,
-                activeTrackColor: AppColors.errorRed2,
+                activeTrackColor: Nebula.rose,
                 onChanged: widget.onCardFrozenChanged,
               ),
             ],
@@ -186,9 +240,9 @@ class _ParentSettingsSectionState extends State<ParentSettingsSection> {
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.borderGray, width: 1),
+            border: Border.all(color: context.dividerCol, width: 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -205,7 +259,7 @@ class _ParentSettingsSectionState extends State<ParentSettingsSection> {
                           style: GoogleFonts.inter(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textDark,
+                            color: context.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -213,7 +267,7 @@ class _ParentSettingsSectionState extends State<ParentSettingsSection> {
                           'Kirim WhatsApp peringatan setiap anak tap jajan di kantin.',
                           style: GoogleFonts.inter(
                             fontSize: 11,
-                            color: AppColors.textGray,
+                            color: context.textSecondary,
                           ),
                         ),
                       ],
@@ -221,30 +275,30 @@ class _ParentSettingsSectionState extends State<ParentSettingsSection> {
                   ),
                   CupertinoSwitch(
                     value: widget.waAlertsActive,
-                    activeTrackColor: AppColors.primary,
+                    activeTrackColor: Nebula.teal,
                     onChanged: widget.onWaAlertsChanged,
                   ),
                 ],
               ),
               if (widget.waAlertsActive) ...[
                 const SizedBox(height: 16),
-                const Divider(color: AppColors.borderGray, height: 1),
+                Divider(color: context.dividerCol, height: 1),
                 const SizedBox(height: 16),
                 Text(
                   'Nomor WhatsApp Penerima Notifikasi',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textDark,
+                    color: context.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: AppColors.offWhite,
+                    color: context.cardBg,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.borderGray, width: 1),
+                    border: Border.all(color: context.dividerCol, width: 1),
                   ),
                   child: TextField(
                     controller: widget.phoneController,
@@ -252,7 +306,7 @@ class _ParentSettingsSectionState extends State<ParentSettingsSection> {
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textDark,
+                      color: context.textPrimary,
                     ),
                     decoration: const InputDecoration(
                       hintText: 'Contoh: 081234567890',
@@ -269,7 +323,7 @@ class _ParentSettingsSectionState extends State<ParentSettingsSection> {
         // Save Button
         ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
+            backgroundColor: Nebula.teal,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -277,11 +331,11 @@ class _ParentSettingsSectionState extends State<ParentSettingsSection> {
           ),
           onPressed: widget.isSaving ? null : widget.onSave,
           child: widget.isSaving
-              ? const CupertinoActivityIndicator(color: AppColors.white)
+              ? CupertinoActivityIndicator(color: context.cardBg)
               : Text(
                   'SIMPAN PENGATURAN SAKU',
                   style: GoogleFonts.inter(
-                    color: AppColors.white,
+                    color: context.cardBg,
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
                     letterSpacing: 0.5,

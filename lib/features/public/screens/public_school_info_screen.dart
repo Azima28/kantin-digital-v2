@@ -1,10 +1,13 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
+import 'package:kantin_digital/core/widgets/nebula_components.dart';
+import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 
 /// Halaman publik informasi sekolah dan kantin.
 class PublicSchoolInfoScreen extends StatelessWidget {
@@ -23,7 +26,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back, color: AppColors.darkTeal),
+          icon: Icon(CupertinoIcons.back, color: Nebula.teal),
           onPressed: () => context.go('/public'),
         ),
         title: Text(
@@ -31,7 +34,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
           style: GoogleFonts.inter(
             fontSize: 17,
             fontWeight: FontWeight.w700,
-            color: AppColors.darkTeal,
+            color: Nebula.teal,
           ),
         ),
         centerTitle: true,
@@ -39,14 +42,14 @@ class PublicSchoolInfoScreen extends StatelessWidget {
         elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // ─── Sekolah Info Card ───
             _buildSection(
               icon: CupertinoIcons.building_2_fill,
-              iconColor: AppColors.darkTeal,
+              iconColor: Nebula.teal,
               title: 'Profil Sekolah',
               children: [
                 _buildInfoRow(
@@ -65,7 +68,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
             // ─── Jam Operasional ───
             _buildSection(
               icon: CupertinoIcons.clock_fill,
-              iconColor: AppColors.darkOrange,
+              iconColor: Nebula.amber,
               title: 'Jam Operasional Kantin',
               children: [
                 _buildScheduleRow('Senin – Kamis', '06:30 – 14:00'),
@@ -79,7 +82,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
             // ─── Cara Penggunaan ───
             _buildSection(
               icon: CupertinoIcons.info_circle_fill,
-              iconColor: AppColors.successGreen,
+              iconColor: Nebula.teal,
               title: 'Cara Menggunakan Kantin Digital',
               children: [
                 _buildStepRow('1', 'Pastikan kartu RFID kamu aktif dan memiliki saldo cukup.'),
@@ -94,7 +97,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
             // ─── Top-Up Saldo ───
             _buildSection(
               icon: CupertinoIcons.arrow_up_circle_fill,
-              iconColor: AppColors.primary,
+              iconColor: Nebula.teal,
               title: 'Cara Top-Up Saldo',
               children: [
                 _buildInfoRow(CupertinoIcons.person_fill, 'Via Petugas Keuangan',
@@ -108,7 +111,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
             // ─── Kontak Bantuan ───
             _buildSection(
               icon: CupertinoIcons.chat_bubble_2_fill,
-              iconColor: AppColors.primary, // purple-ish
+              iconColor: Nebula.teal, // purple-ish
               title: 'Butuh Bantuan?',
               children: [
                 _buildContactButton(
@@ -128,20 +131,25 @@ class PublicSchoolInfoScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // ─── Login CTA ───
-            ElevatedButton.icon(
-              onPressed: () => context.go('/login?from=/public/info'),
-              icon: const Icon(CupertinoIcons.person, size: 16),
-              label: Text(
-                'Login ke Aplikasi',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w700),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.darkTeal,
-                foregroundColor: AppColors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
-                elevation: 0,
+            GradientLine(),
+            const SizedBox(height: 8),
+            PressScale(
+              onTap: () => context.go('/login?from=/public/info'),
+              child: ElevatedButton.icon(
+                onPressed: () {},
+                icon: const Icon(CupertinoIcons.person, size: 16),
+                label: Text(
+                  'Login ke Aplikasi',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Nebula.teal,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
+                  elevation: 0,
+                ),
               ),
             ),
             const SizedBox(height: 32),
@@ -157,19 +165,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
     required String title,
     required List<Widget> children,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return NebulaCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -189,7 +185,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
                 style: GoogleFonts.inter(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textDark,
+                  color: Starlight.bright,
                 ),
               ),
             ],
@@ -207,7 +203,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: AppColors.mutedGray),
+          Icon(icon, size: 16, color: Starlight.dim),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -217,7 +213,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
                   label,
                   style: GoogleFonts.inter(
                     fontSize: 11,
-                    color: AppColors.mutedGray,
+                    color: Starlight.dim,
                   ),
                 ),
                 Text(
@@ -225,7 +221,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.textDark,
+                    color: Starlight.bright,
                   ),
                 ),
               ],
@@ -247,7 +243,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
             day,
             style: GoogleFonts.inter(
               fontSize: 13,
-              color: AppColors.textDark,
+              color: Starlight.bright,
             ),
           ),
           Text(
@@ -256,8 +252,8 @@ class PublicSchoolInfoScreen extends StatelessWidget {
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: isClosed
-                  ? AppColors.errorRed2
-                  : AppColors.successGreen,
+                  ? Nebula.rose
+                  : Nebula.teal,
             ),
           ),
         ],
@@ -275,7 +271,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
             width: 22,
             height: 22,
             decoration: const BoxDecoration(
-              color: AppColors.successGreen,
+              color: Nebula.teal,
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -284,7 +280,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.white,
+                  color: Starlight.bright,
                 ),
               ),
             ),
@@ -295,7 +291,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
               text,
               style: GoogleFonts.inter(
                 fontSize: 13,
-                color: AppColors.textDark,
+                color: Starlight.bright,
                 height: 1.4,
               ),
             ),
@@ -311,18 +307,18 @@ class PublicSchoolInfoScreen extends StatelessWidget {
     required String subtitle,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
+    return PressScale(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.systemBackground,
+          color: Cosmic.base,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: AppColors.primary), // purple-ish
+            Icon(icon, size: 18, color: Nebula.teal), // purple-ish
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -333,21 +329,21 @@ class PublicSchoolInfoScreen extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textDark,
+                      color: Starlight.bright,
                     ),
                   ),
                   Text(
                     subtitle,
                     style: GoogleFonts.inter(
                       fontSize: 11,
-                      color: AppColors.mutedGray,
+                      color: Starlight.dim,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(CupertinoIcons.chevron_right,
-                size: 14, color: AppColors.textGray),
+            Icon(CupertinoIcons.chevron_right,
+                size: 14, color: Starlight.dim),
           ],
         ),
       ),

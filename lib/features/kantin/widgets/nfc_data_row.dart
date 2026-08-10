@@ -1,29 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 class NfcDataRow extends StatelessWidget {
   final String label;
   final String value;
-  final Color valueColor;
+  final Color? valueColor;
 
   const NfcDataRow(
     this.label,
     this.value, {
     super.key,
-    this.valueColor = AppColors.textDark,
+    this.valueColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveValueColor = valueColor ?? context.textPrimary;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: AppColors.textGray,
+            color: context.textSecondary,
           ),
         ),
         Text(
@@ -31,7 +32,7 @@ class NfcDataRow extends StatelessWidget {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w700,
-            color: valueColor,
+            color: effectiveValueColor,
           ),
         ),
       ],

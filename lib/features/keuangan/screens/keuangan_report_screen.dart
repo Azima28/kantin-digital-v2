@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,8 +6,9 @@ import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 class KeuanganReportScreen extends ConsumerStatefulWidget {
   const KeuanganReportScreen({super.key});
@@ -32,11 +33,11 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              backgroundColor: AppColors.white,
+              backgroundColor: context.cardBg,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
               title: Text(
                 'Export Laporan',
-                style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.darkTeal, fontSize: 18),
+                style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Nebula.teal, fontSize: 18),
               ),
               content: SingleChildScrollView(
                 child: Column(
@@ -45,59 +46,59 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                   children: [
                     Text(
                       'Format Laporan:',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.nearBlack),
+                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: context.textPrimary),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Row(
                       children: [
                         Expanded(
                           child: ChoiceChip(
-                            label: const Center(child: Text('Excel (.xlsx)')),
+                            label: Center(child: Text('Excel (.xlsx)')),
                             selected: excelChecked,
                             onSelected: (val) {
                               setDialogState(() {
                                 excelChecked = true;
                               });
                             },
-                            selectedColor: AppColors.darkTeal.withValues(alpha: 0.1),
-                            backgroundColor: AppColors.white,
-                            checkmarkColor: AppColors.darkTeal,
+                            selectedColor: Nebula.teal.withValues(alpha: 0.1),
+                            backgroundColor: context.cardBg,
+                            checkmarkColor: Nebula.teal,
                             labelStyle: GoogleFonts.inter(
-                              color: excelChecked ? AppColors.darkTeal : AppColors.mutedGray,
+                              color: excelChecked ? Nebula.teal : context.textSecondary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Expanded(
                           child: ChoiceChip(
-                            label: const Center(child: Text('PDF')),
+                            label: Center(child: Text('PDF')),
                             selected: !excelChecked,
                             onSelected: (val) {
                               setDialogState(() {
                                 excelChecked = false;
                               });
                             },
-                            selectedColor: AppColors.darkTeal.withValues(alpha: 0.1),
-                            backgroundColor: AppColors.white,
-                            checkmarkColor: AppColors.darkTeal,
+                            selectedColor: Nebula.teal.withValues(alpha: 0.1),
+                            backgroundColor: context.cardBg,
+                            checkmarkColor: Nebula.teal,
                             labelStyle: GoogleFonts.inter(
-                              color: !excelChecked ? AppColors.darkTeal : AppColors.mutedGray,
+                              color: !excelChecked ? Nebula.teal : context.textSecondary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     Text(
                       '${AppStrings.buttonSelect} Data Yang Disertakan:',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.nearBlack),
+                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: context.textPrimary),
                     ),
                     CheckboxListTile(
                       title: Text('Rekap Riwayat Audit Log', style: GoogleFonts.inter(fontSize: 12)),
                       value: includeAudit,
-                      activeColor: AppColors.darkTeal,
+                      activeColor: Nebula.teal,
                       contentPadding: EdgeInsets.zero,
                       onChanged: (val) {
                         setDialogState(() {
@@ -108,7 +109,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                     CheckboxListTile(
                       title: Text('${AppStrings.titleDetail} Per-Siswa (Data Sensitif)', style: GoogleFonts.inter(fontSize: 12)),
                       value: includeStudents,
-                      activeColor: AppColors.darkTeal,
+                      activeColor: Nebula.teal,
                       contentPadding: EdgeInsets.zero,
                       onChanged: (val) {
                         setDialogState(() {
@@ -119,7 +120,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                     const SizedBox(height: 8),
                     Text(
                       'Kirim Ke Email:',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.nearBlack),
+                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: context.textPrimary),
                     ),
                     const SizedBox(height: 6),
                     TextField(
@@ -137,7 +138,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text(AppStrings.buttonCancel, style: GoogleFonts.inter(color: AppColors.mutedGray)),
+                  child: Text(AppStrings.buttonCancel, style: GoogleFonts.inter(color: context.textSecondary)),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -145,13 +146,13 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                     ScaffoldMessenger.of(this.context).showSnackBar(
                       SnackBar(
                         content: Text('Laporan berhasil diexport dan dikirim ke ${emailController.text}'),
-                        backgroundColor: AppColors.successGreen,
+                        backgroundColor: Nebula.teal,
                         behavior: SnackBarBehavior.floating,
                       ),
                     );
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.darkTeal),
-                  child: Text('Generate & Kirim', style: GoogleFonts.inter(color: AppColors.white)),
+                  style: ElevatedButton.styleFrom(backgroundColor: Nebula.teal),
+                  child: Text('Generate & Kirim', style: GoogleFonts.inter(color: context.cardBg)),
                 ),
               ],
             );
@@ -164,7 +165,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
   void _showTrendsBottomSheet() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.white,
+      backgroundColor: context.cardBg,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) {
         return Padding(
@@ -177,18 +178,18 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                 child: Container(
                   width: 36,
                   height: 5,
-                  decoration: BoxDecoration(color: AppColors.borderGray, borderRadius: BorderRadius.circular(2.5)),
+                  decoration: BoxDecoration(color: context.dividerCol, borderRadius: BorderRadius.circular(2.5)),
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               Text(
                 'Tren Transaksi Harian',
-                style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkTeal),
+                style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold, color: Nebula.teal),
               ),
               const SizedBox(height: 8),
               Text(
                 'Visualisasi tren pengisian saldo tunai sekolah.',
-                style: GoogleFonts.inter(fontSize: 12, color: AppColors.mutedGray),
+                style: GoogleFonts.inter(fontSize: 12, color: context.textSecondary),
               ),
               const SizedBox(height: 24),
               // Simulated bar chart
@@ -210,7 +211,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
               const SizedBox(height: 24),
               Text(
                 '* Tren meningkat 15% dari rata-rata minggu lalu.',
-                style: GoogleFonts.inter(fontSize: 11, fontStyle: FontStyle.italic, color: AppColors.successGreen),
+                style: GoogleFonts.inter(fontSize: 11, fontStyle: FontStyle.italic, color: Nebula.teal),
               ),
             ],
           ),
@@ -227,12 +228,12 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
           width: 24,
           height: heightPercentage,
           decoration: BoxDecoration(
-            color: AppColors.darkTeal,
+            color: Nebula.teal,
             borderRadius: BorderRadius.circular(6),
           ),
         ),
         const SizedBox(height: 8),
-        Text(label, style: GoogleFonts.inter(fontSize: 10, color: AppColors.mutedGray)),
+        Text(label, style: GoogleFonts.inter(fontSize: 10, color: context.textSecondary)),
       ],
     );
   }
@@ -252,7 +253,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
           'Laporan Keuangan',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
-            color: AppColors.darkTeal,
+            color: Nebula.teal,
             fontSize: 20,
           ),
         ),
@@ -260,7 +261,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async => ref.invalidate(keuanganReportProvider),
-          color: AppColors.darkTeal,
+          color: Nebula.teal,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -273,19 +274,19 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                   children: [
                     Text(
                       '${AppStrings.buttonSelect} Periode:',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.nearBlack, fontSize: 13),
+                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.textPrimary, fontSize: 13),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        color: AppColors.white,
+                        color: context.cardBg,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.borderGray),
+                        border: Border.all(color: context.dividerCol),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           value: _selectedPeriod,
-                          style: GoogleFonts.inter(color: AppColors.nearBlack, fontSize: 13, fontWeight: FontWeight.bold),
+                          style: GoogleFonts.inter(color: context.textPrimary, fontSize: 13, fontWeight: FontWeight.bold),
                           onChanged: (val) {
                             if (val != null) {
                               setState(() {
@@ -329,11 +330,11 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: AppColors.white,
+                            color: context.cardBg,
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.black.withValues(alpha: 0.04),
+                                color: context.cardBg.withValues(alpha: 0.04),
                                 blurRadius: 15,
                                 offset: const Offset(0, 4),
                               ),
@@ -344,30 +345,30 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(CupertinoIcons.graph_square_fill, color: AppColors.darkTeal, size: 18),
-                                  const SizedBox(width: 8),
+                                  Icon(CupertinoIcons.graph_square_fill, color: Nebula.teal, size: 18),
+                                  SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       'Ringkasan Periode ($_selectedPeriod)',
-                                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.darkTeal),
+                                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: Nebula.teal),
                                       overflow: TextOverflow.ellipsis,
                                       maxLines: 1,
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 16),
+                              SizedBox(height: 16),
                               _buildReportRow('Total Top-Up Tunai', fmt.format(totalTopup), detail: '$topupCount transaksi'),
-                              const Divider(height: 16, thickness: 0.5, color: AppColors.borderGray),
-                              _buildReportRow('Total Pembayaran Belanja', fmt.format(totalPurchase), detail: '$purchaseCount transaksi', valueColor: AppColors.darkOrange),
-                              const Divider(height: 16, thickness: 0.5, color: AppColors.borderGray),
-                              _buildReportRow('Total Koreksi Saldo', '${totalCorrection >= 0 ? "+" : ""}${fmt.format(totalCorrection)}', valueColor: totalCorrection >= 0 ? AppColors.successGreen : AppColors.errorRed2),
-                              const Divider(height: 16, thickness: 0.5, color: AppColors.borderGray),
+                              Divider(height: 16, thickness: 0.5, color: context.dividerCol),
+                              _buildReportRow('Total Pembayaran Belanja', fmt.format(totalPurchase), detail: '$purchaseCount transaksi', valueColor: Nebula.amber),
+                              Divider(height: 16, thickness: 0.5, color: context.dividerCol),
+                              _buildReportRow('Total Koreksi Saldo', '${totalCorrection >= 0 ? "+" : ""}${fmt.format(totalCorrection)}', valueColor: totalCorrection >= 0 ? Nebula.teal : Nebula.rose),
+                              Divider(height: 16, thickness: 0.5, color: context.dividerCol),
                               _buildReportRow(
                                 'Net Aliran Masuk',
                                 fmt.format(netInflow),
                                 isBold: true,
-                                valueColor: AppColors.darkTeal,
+                                valueColor: Nebula.teal,
                               ),
                             ],
                           ),
@@ -377,7 +378,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                         // Canteen operators revenue header
                         Text(
                           'Pendapatan per Stan Kantin:',
-                          style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.nearBlack),
+                          style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 15, color: context.textPrimary),
                         ),
                         const SizedBox(height: 12),
 
@@ -385,11 +386,11 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                         Container(
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: AppColors.white,
+                            color: context.cardBg,
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.black.withValues(alpha: 0.04),
+                                color: context.cardBg.withValues(alpha: 0.04),
                                 blurRadius: 15,
                                 offset: const Offset(0, 4),
                               ),
@@ -401,7 +402,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                   child: Center(
                                     child: Text(
                                       'Belum ada pendapatan terekam untuk stan kantin.',
-                                      style: GoogleFonts.inter(color: AppColors.mutedGray, fontSize: 13),
+                                      style: GoogleFonts.inter(color: context.textSecondary, fontSize: 13),
                                     ),
                                   ),
                                 )
@@ -416,20 +417,20 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                       children: [
                                         ListTile(
                                           leading: CircleAvatar(
-                                            backgroundColor: AppColors.darkTeal.withValues(alpha: 0.08),
-                                            child: const Icon(CupertinoIcons.house_alt_fill, color: AppColors.darkTeal, size: 18),
+                                            backgroundColor: Nebula.teal.withValues(alpha: 0.08),
+                                            child: Icon(CupertinoIcons.house_alt_fill, color: Nebula.teal, size: 18),
                                           ),
                                           title: Text(
                                             name,
-                                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.nearBlack),
+                                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: context.textPrimary),
                                           ),
                                           trailing: Text(
                                             fmt.format(earned),
-                                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.darkTeal),
+                                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: Nebula.teal),
                                           ),
                                         ),
                                         if (i < canteens.length - 1)
-                                          const Divider(height: 1, thickness: 0.5, color: AppColors.borderGray, indent: 72),
+                                          Divider(height: 1, thickness: 0.5, color: context.dividerCol, indent: 72),
                                       ],
                                     );
                                   }).toList(),
@@ -443,14 +444,14 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                             Expanded(
                               child: OutlinedButton.icon(
                                 onPressed: _showTrendsBottomSheet,
-                                icon: const Icon(CupertinoIcons.chart_bar, size: 18),
+                                icon: Icon(CupertinoIcons.chart_bar, size: 18),
                                 label: Text(
                                   'Grafik Tren',
                                   style: GoogleFonts.inter(fontWeight: FontWeight.bold),
                                 ),
                                 style: OutlinedButton.styleFrom(
-                                  foregroundColor: AppColors.darkTeal,
-                                  side: const BorderSide(color: AppColors.darkTeal),
+                                  foregroundColor: Nebula.teal,
+                                  side: BorderSide(color: Nebula.teal),
                                   padding: const EdgeInsets.symmetric(vertical: 16),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                 ),
@@ -460,13 +461,13 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                             Expanded(
                               child: ElevatedButton.icon(
                                 onPressed: _showExportDialog,
-                                icon: const Icon(CupertinoIcons.share_up, size: 18),
+                                icon: Icon(CupertinoIcons.share_up, size: 18),
                                 label: Text(
                                   'Export Laporan',
-                                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.white),
+                                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.cardBg),
                                 ),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.darkTeal,
+                                  backgroundColor: Nebula.teal,
                                   padding: const EdgeInsets.symmetric(vertical: 16),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                   elevation: 0,
@@ -479,10 +480,10 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                       ],
                     );
                   },
-                  loading: () => const Center(
+                  loading: () => Center(
                     child: Padding(
                       padding: EdgeInsets.all(40),
-                      child: CupertinoActivityIndicator(color: AppColors.darkTeal),
+                      child: CupertinoActivityIndicator(color: Nebula.teal),
                     ),
                   ),
                   error: (e, _) => Center(
@@ -491,7 +492,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+                          const Icon(Icons.error_outline, size: 48, color: Nebula.rose),
                           const SizedBox(height: 12),
                           Text('${AppStrings.labelFailed} memuat laporan'),
                           const SizedBox(height: 8),
@@ -521,12 +522,12 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
           children: [
             Text(
               label,
-              style: GoogleFonts.inter(color: AppColors.mutedGray, fontSize: 13),
+              style: GoogleFonts.inter(color: context.textSecondary, fontSize: 13),
             ),
             if (detail != null)
               Text(
                 detail,
-                style: GoogleFonts.inter(color: AppColors.mutedGray, fontSize: 11),
+                style: GoogleFonts.inter(color: context.textSecondary, fontSize: 11),
               ),
           ],
         ),
@@ -534,7 +535,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
           value,
           style: GoogleFonts.inter(
             fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-            color: valueColor ?? AppColors.nearBlack,
+            color: valueColor ?? context.textPrimary,
             fontSize: 13,
           ),
         ),

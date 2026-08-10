@@ -2,7 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 
 /// Step 2 of the keuangan top-up flow — amount entry.
@@ -48,11 +49,11 @@ class KeuanganTopupStepAmount extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: AppColors.black.withValues(alpha: 0.04),
+                color: context.shadowColor,
                 blurRadius: 15,
                 offset: const Offset(0, 4),
               ),
@@ -64,7 +65,7 @@ class KeuanganTopupStepAmount extends StatelessWidget {
                 children: [
                   const Icon(
                     CupertinoIcons.checkmark_circle_fill,
-                    color: AppColors.successGreen,
+                    color: Nebula.teal,
                     size: 18,
                   ),
                   const SizedBox(width: 6),
@@ -72,32 +73,32 @@ class KeuanganTopupStepAmount extends StatelessWidget {
                     'Siswa Ditemukan',
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.successGreen,
+                      color: Nebula.teal,
                       fontSize: 13,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-              _buildInfoRow('Nama', studentName),
-              const Divider(
+              _buildInfoRow(context, 'Nama', studentName),
+              Divider(
                 height: 16,
                 thickness: 0.5,
-                color: AppColors.borderGray,
+                color: context.dividerCol,
               ),
-              _buildInfoRow('NISN', studentNisn),
-              const Divider(
+              _buildInfoRow(context, 'NISN', studentNisn),
+              Divider(
                 height: 16,
                 thickness: 0.5,
-                color: AppColors.borderGray,
+                color: context.dividerCol,
               ),
-              _buildInfoRow('Kelas', 'Kelas $studentClass'),
-              const Divider(
+              _buildInfoRow(context, 'Kelas', 'Kelas $studentClass'),
+              Divider(
                 height: 16,
                 thickness: 0.5,
-                color: AppColors.borderGray,
+                color: context.dividerCol,
               ),
-              _buildInfoRow('Saldo Saat Ini', fmt.format(studentBalance)),
+              _buildInfoRow(context, 'Saldo Saat Ini', fmt.format(studentBalance)),
             ],
           ),
         ),
@@ -107,7 +108,7 @@ class KeuanganTopupStepAmount extends StatelessWidget {
           'Nominal Top-Up (Uang Tunai Diterima)',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
-            color: AppColors.nearBlack,
+            color: context.textPrimary,
             fontSize: 13,
           ),
         ),
@@ -122,44 +123,44 @@ class KeuanganTopupStepAmount extends StatelessWidget {
             prefixText: 'Rp ',
             prefixStyle: GoogleFonts.inter(
               fontWeight: FontWeight.bold,
-              color: AppColors.nearBlack,
+              color: context.textPrimary,
             ),
             hintText: '0',
             hintStyle: GoogleFonts.inter(
-              color: AppColors.mutedGray,
+              color: context.textSecondary,
               fontSize: 14,
             ),
             filled: true,
-            fillColor: AppColors.white,
+            fillColor: context.cardBg,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 14,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.borderGray),
+              borderSide: BorderSide(color: context.dividerCol),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.borderGray),
+              borderSide: BorderSide(color: context.dividerCol),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.darkTeal, width: 1.5),
+              borderSide: BorderSide(color: Nebula.teal, width: 1.5),
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
 
         // Quick select chips
         Text(
           '${AppStrings.buttonSelect} Cepat:',
           style: GoogleFonts.inter(
             fontSize: 12,
-            color: AppColors.mutedGray,
+            color: context.textSecondary,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -170,7 +171,7 @@ class KeuanganTopupStepAmount extends StatelessWidget {
                 fmt.format(val).replaceAll('Rp ', ''),
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
-                  color: isSelected ? AppColors.white : AppColors.darkTeal,
+                  color: isSelected ? Colors.white : Nebula.teal,
                   fontSize: 12,
                 ),
               ),
@@ -178,25 +179,25 @@ class KeuanganTopupStepAmount extends StatelessWidget {
               onSelected: (selected) {
                 if (selected) onQuickAmountSelected(val);
               },
-              selectedColor: AppColors.darkTeal,
-              backgroundColor: AppColors.white,
+              selectedColor: Nebula.teal,
+              backgroundColor: context.cardBg,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
-                side: BorderSide(color: AppColors.darkTeal.withValues(alpha: 0.15)),
+                side: BorderSide(color: Nebula.teal.withValues(alpha: 0.15)),
               ),
             );
           }).toList(),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
         Text(
           'Saldo Baru (Preview): ${fmt.format(newBalance)}',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
             fontSize: 14,
-            color: AppColors.darkTeal,
+            color: Nebula.teal,
           ),
         ),
-        const SizedBox(height: 32),
+        SizedBox(height: 32),
 
         SizedBox(
           width: double.infinity,
@@ -205,7 +206,7 @@ class KeuanganTopupStepAmount extends StatelessWidget {
                 ? null
                 : onContinue,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.darkTeal,
+              backgroundColor: Nebula.teal,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -217,7 +218,7 @@ class KeuanganTopupStepAmount extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
-                color: AppColors.white,
+                color: Colors.white,
               ),
             ),
           ),
@@ -226,14 +227,14 @@ class KeuanganTopupStepAmount extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(BuildContext context, String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
           style: GoogleFonts.inter(
-            color: AppColors.mutedGray,
+            color: context.textSecondary,
             fontSize: 13,
           ),
         ),
@@ -242,7 +243,7 @@ class KeuanganTopupStepAmount extends StatelessWidget {
             value,
             style: GoogleFonts.inter(
               fontWeight: FontWeight.w600,
-              color: AppColors.nearBlack,
+              color: context.textPrimary,
               fontSize: 13,
             ),
             textAlign: TextAlign.right,

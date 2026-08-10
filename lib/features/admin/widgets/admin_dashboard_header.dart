@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 /// Greeting header section of the admin dashboard.
 class AdminDashboardHeader extends StatelessWidget {
@@ -16,7 +17,7 @@ class AdminDashboardHeader extends StatelessWidget {
           style: GoogleFonts.inter(
             fontSize: 34,
             fontWeight: FontWeight.w700,
-            color: AppColors.darkTeal,
+            color: Nebula.teal,
             letterSpacing: -0.02,
           ),
         ),
@@ -25,7 +26,7 @@ class AdminDashboardHeader extends StatelessWidget {
           style: GoogleFonts.inter(
             fontSize: 15,
             fontWeight: FontWeight.w400,
-            color: AppColors.darkGray,
+            color: context.textSecondary,
           ),
         ),
       ],

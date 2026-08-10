@@ -7,7 +7,44 @@ class AppStrings {
   static const String subtitleSplash = 'Mulai Jajan Praktis,\nTanpa Uang Tunai Lagi';
   static const String buttonGetStarted = 'Mulai Sekarang';
 
-  // Authentication
+  // Welcome Screen (Redesign from login.html template)
+  static const String welcomeBadge = 'Kantin Digital v2.0';
+  static const String welcomeTagline = 'PESAN • BAYAR • AMBIL';
+  static const String welcomeHeroTitlePart1 = 'Jajan jadi\n';
+  static const String welcomeHeroTitlePart2 = 'sederhana.';
+  static const String welcomeHeroTitle = 'Jajan jadi\nsederhana.';
+  static const String welcomeHeroDesc =
+      'Pesan, bayar, dan ambil makanan tanpa antre panjang. Semua kebutuhan istirahatmu dalam satu aplikasi modern.';
+  static const String welcomeCardMenuHeader = 'Sorotan Hari Ini';
+  static const String welcomeCardMenuHours = '08.00 — 14.00';
+  static const String welcomeCardStatus = 'Kantin siap melayani';
+  static const String welcomeFeature1Title = 'Tanpa Antre';
+  static const String welcomeFeature1Desc = 'Pesan dari kelas atau rumah. Notifikasi langsung saat makanan siap diambil.';
+  static const String welcomeFeature2Title = 'Cashless Digital';
+  static const String welcomeFeature2Desc = 'Top up saldo kapan saja. Bayar praktis cukup dengan scan QR.';
+  static const String welcomeFeature3Title = 'Tepat Waktu';
+  static const String welcomeFeature3Desc = 'Sistem estimasi waktu masak otomatis agar makananmu tidak dingin.';
+  static const String welcomeBtnEnter = 'Mulai Sekarang';
+  static const String welcomeBtnGuest = 'Lihat Menu';
+
+
+  // Authentication (Redesigned Login Screen)
+  static const String loginSubHeader = 'Akses layanan sekolah';
+  static const String loginAreaSecure = 'AREA AMAN';
+  static const String loginHeroTitle = 'Selamat datang\nkembali.';
+  static const String loginHeroDesc =
+      'Masuk untuk memantau saldo, jajan, atau mengelola layanan kantin sekolah.';
+  static const String loginFieldUsernameLabel = 'Username / NISN / Email';
+  static const String loginFieldUsernameHint = 'Username, NISN, atau Email';
+  static const String loginFieldPasswordLabel = 'Kata Sandi';
+  static const String loginFieldPasswordHint = 'Masukkan kata sandi';
+  static const String loginBtnSubmit = 'MASUK';
+  static const String loginBtnParent = 'Masuk sebagai Orang Tua';
+  static const String loginBtnParentBack = 'Kembali ke Login Utama';
+  static const String loginFooterSecure = 'Data Anda tersimpan dengan aman';
+  static const String loginDemoBadge = 'AKSES DEMO';
+  static const String loginDemoPreviewTitle = 'PREVIEW AKUN UJI COBA';
+
   static const String welcomeAuth = 'Yuk, Masuk!';
   static const String welcomeAuthDesc = 'Silakan masuk ke akun kantin sekolahmu.';
   static const String labelEmailOrNis = 'Nomor Induk Siswa (NIS) / Email';
@@ -89,6 +126,7 @@ class AppStrings {
   static const String labelError = 'Terjadi kesalahan';
   static const String labelSuccess = 'Berhasil';
   static const String labelFailed = 'Gagal';
+  static const String labelTopUp = 'Top-Up';
   static const String labelFailedPickImage = 'Gagal memilih gambar';
   static const String labelFailedDeleteNotification = 'Gagal menghapus notifikasi';
   static const String labelFailedSave = 'Gagal menyimpan';
@@ -144,7 +182,9 @@ class AppStrings {
   static const String adminClose = 'Tutup';
   static const String adminRefund = 'Refund';
   static const String adminReject = 'Tolak';
+  static const String adminApprove = 'Setujui';
   static const String adminProcess = 'Proses';
+  static const String labelSiswaMintaBatal = 'Siswa Minta Batal';
   static const String adminSessionActiveLabel = 'Sesi Aktif';
   static const String adminNoProductsLabel = 'Tidak ada produk.';
   static const String adminNoSalesLabel = 'Belum ada penjualan.';
@@ -257,4 +297,15 @@ class AppStrings {
   static const String successProfilePhotoUpdated = 'Foto profil berhasil diperbarui!';
   static const String successOldPasswordWrong = 'Sandi lama yang dimasukkan salah.';
   static const String successTopupDetail = 'Selamat, saldo saku Anda telah bertambah sebesar ';
+  static const String labelDibatalkan = 'Dibatalkan';
+  static const String labelGagal = 'Gagal';
+  static const String labelJajan = 'Jajan';
+  static const String labelTopUpSaldo = 'Top-Up Saldo';
+  static const String labelJajanAplikasi = 'Jajan (Aplikasi)';
+  static const String labelJajanKasir = 'Jajan (Kasir)';
+  static const String labelOnline = 'Online';
+  static const String labelRfidNfc = 'RFID/NFC';
+  static const String labelKoperasi = 'Koperasi';
+  static const String labelTotalAmount = 'Total';
+  static const String labelTotalDibatalkan = 'Total (Dibatalkan)';
 }

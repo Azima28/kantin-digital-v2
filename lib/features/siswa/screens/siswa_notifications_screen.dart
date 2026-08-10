@@ -2,8 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
+import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
@@ -55,7 +58,7 @@ class SiswaNotificationsScreen extends ConsumerWidget {
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(AppStrings.labelFailedDeleteNotification), backgroundColor: AppColors.error),
+                    SnackBar(content: Text(AppStrings.labelFailedDeleteNotification), backgroundColor: Nebula.rose),
                   );
                 }
               }
@@ -74,7 +77,7 @@ class SiswaNotificationsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Notifikasi',
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
         ),
@@ -82,15 +85,15 @@ class SiswaNotificationsScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        shape: const Border(
-          bottom: BorderSide(color: AppColors.borderLight, width: 0.5),
+        shape: Border(
+          bottom: BorderSide(color: context.borderLight, width: 0.5),
         ),
         actions: [
           IconButton(
-            icon: const Icon(CupertinoIcons.trash, color: AppColors.error, size: 20),
+            icon: const Icon(CupertinoIcons.trash, color: Nebula.rose, size: 20),
             onPressed: () => _clearAllNotifications(context, ref),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
         ],
       ),
       body: RefreshIndicator(
@@ -100,24 +103,24 @@ class SiswaNotificationsScreen extends ConsumerWidget {
         child: Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
+            constraints: BoxConstraints(maxWidth: 800),
             child: notificationsAsync.when(
               data: (List<AppNotification> notifs) {
                 if (notifs.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(CupertinoIcons.bell_slash, size: 48, color: AppColors.textGray),
+                      children: [
+                        Icon(CupertinoIcons.bell_slash, size: 48, color: context.textSecondary),
                         SizedBox(height: 12),
                         Text(
                           'Kotak masuk kosong',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: context.textPrimary),
                         ),
                         SizedBox(height: 4),
                         Text(
                           'Pemberitahuan transaksi akan muncul di sini.',
-                          style: TextStyle(color: AppColors.textGray, fontSize: 12),
+                          style: TextStyle(color: context.textSecondary, fontSize: 12),
                         ),
                       ],
                     ),
@@ -144,19 +147,19 @@ class SiswaNotificationsScreen extends ConsumerWidget {
 
                     if (type == 'purchase') {
                       iconData = CupertinoIcons.cart;
-                      iconColor = AppColors.primary;
-                      bgColor = AppColors.primaryLight;
+                      iconColor = Nebula.teal;
+                      bgColor = Nebula.teal.withValues(alpha: 0.08);
                     } else if (type == 'topup') {
                       iconData = CupertinoIcons.square_arrow_down;
-                      iconColor = AppColors.primary;
-                      bgColor = AppColors.primaryLight;
+                      iconColor = Nebula.teal;
+                      bgColor = Nebula.teal.withValues(alpha: 0.08);
                     } else {
                       iconData = CupertinoIcons.bell;
-                      iconColor = AppColors.accentOrange;
-                      bgColor = AppColors.accentOrangeLight;
+                      iconColor = Nebula.amber;
+                      bgColor = Nebula.amberLight;
                     }
 
-                    return GestureDetector(
+                    return PressScale(
                       onTap: () {
                         if (!isRead) {
                           _markAsRead(context, ref, id);
@@ -166,10 +169,10 @@ class SiswaNotificationsScreen extends ConsumerWidget {
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: isRead ? AppColors.cardBackground : AppColors.systemBackground,
+                          color: isRead ? context.cardBg : context.surfaceBg,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: isRead ? AppColors.borderLight : AppColors.primary.withValues(alpha: 0.3),
+                            color: isRead ? context.dividerCol : Nebula.teal.withValues(alpha: 0.3),
                             width: isRead ? 0.5 : 1.0,
                           ),
                         ),
@@ -206,7 +209,7 @@ class SiswaNotificationsScreen extends ConsumerWidget {
                                           style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: isRead ? FontWeight.w600 : FontWeight.w800,
-                                            color: AppColors.textDark,
+                                            color: context.textPrimary,
                                           ),
                                         ),
                                       ),
@@ -214,8 +217,8 @@ class SiswaNotificationsScreen extends ConsumerWidget {
                                         Container(
                                           width: 8,
                                           height: 8,
-                                          decoration: const BoxDecoration(
-                                            color: AppColors.primary,
+                                          decoration: BoxDecoration(
+                                            color: Nebula.teal,
                                             shape: BoxShape.circle,
                                           ),
                                         ),
@@ -226,16 +229,16 @@ class SiswaNotificationsScreen extends ConsumerWidget {
                                     message,
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: isRead ? AppColors.textGray : AppColors.textDark.withValues(alpha: 0.8),
+                                      color: isRead ? context.textSecondary : context.textPrimary.withValues(alpha: 0.8),
                                       height: 1.3,
                                     ),
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
                                     timeStr,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 10,
-                                      color: AppColors.textGray,
+                                      color: context.textSecondary,
                                     ),
                                   ),
                                 ],
@@ -253,13 +256,18 @@ class SiswaNotificationsScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline, size: 48, color: AppColors.error),
-                    const SizedBox(height: 12),
+                    const Icon(Icons.error_outline, size: 48, color: Nebula.rose),
+                    const                     SizedBox(height: 12),
                     Text('${AppStrings.labelFailed} memuat notifikasi'),
                     const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: () => ref.invalidate(siswaNotificationsProvider),
-                      child: const Text(AppStrings.buttonRetry),
+                    const GradientLine(),
+                    const SizedBox(height: 8),
+                    PressScale(
+                      onTap: () => ref.invalidate(siswaNotificationsProvider),
+                      child: ElevatedButton(
+                        onPressed: () => ref.invalidate(siswaNotificationsProvider),
+                        child: const Text(AppStrings.buttonRetry),
+                      ),
                     ),
                   ],
                 ),

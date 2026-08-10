@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 /// QRIS payment instruction display with placeholder QR code.
 class MidtransQrisDetailForm extends StatelessWidget {
@@ -14,14 +14,14 @@ class MidtransQrisDetailForm extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.borderGray),
+              border: Border.all(color: context.dividerCol),
               borderRadius: BorderRadius.circular(16),
-              color: AppColors.white,
+              color: context.cardBg,
             ),
-            child: const Icon(
+            child: Icon(
               CupertinoIcons.qrcode,
               size: 160,
-              color: AppColors.nearBlack,
+              color: context.textPrimary,
             ),
           ),
         ),
@@ -31,7 +31,7 @@ class MidtransQrisDetailForm extends StatelessWidget {
           textAlign: TextAlign.center,
           style: GoogleFonts.inter(
             fontSize: 12,
-            color: AppColors.textGray,
+            color: context.textSecondary,
           ),
         ),
       ],

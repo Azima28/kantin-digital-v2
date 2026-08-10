@@ -2,7 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
@@ -47,9 +48,9 @@ void showEditStudentSheet(
           left: 20,
           right: 20,
         ),
-        decoration: const BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: context.cardBg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SingleChildScrollView(
           child: Column(
@@ -61,7 +62,7 @@ void showEditStudentSheet(
                   width: 36,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: AppColors.borderGray,
+                    color: context.dividerCol,
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),
@@ -72,43 +73,44 @@ void showEditStudentSheet(
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.nearBlack,
+                  color: context.textPrimary,
                 ),
               ),
               const SizedBox(height: 20),
-              _sectionLabel('INFORMASI PRIBADI'),
+              _sectionLabel(context, 'INFORMASI PRIBADI'),
               const SizedBox(height: 8),
-              _buildFormField(nameCtrl, '${AppStrings.labelFullName} *'),
+              _buildFormField(context, nameCtrl, '${AppStrings.labelFullName} *'),
               const SizedBox(height: 12),
-              _buildFormField(nisnCtrl, 'NISN *', inputType: TextInputType.number),
+              _buildFormField(context, nisnCtrl, 'NISN *', inputType: TextInputType.number),
               const SizedBox(height: 12),
               _buildDropdownRow(
+                context: context,
                 label: 'Kelas *',
                 value: selectedClass,
                 items: availableClasses,
                 onChanged: (v) => setLocal(() => selectedClass = v ?? selectedClass),
               ),
               const SizedBox(height: 12),
-              _buildFormField(parentPhoneCtrl, 'Nomor HP Orang Tua (WhatsApp)', inputType: TextInputType.phone),
+              _buildFormField(context, parentPhoneCtrl, 'Nomor HP Orang Tua (WhatsApp)', inputType: TextInputType.phone),
               const SizedBox(height: 12),
-              _buildFormField(emailCtrl, 'Email *', inputType: TextInputType.emailAddress),
+              _buildFormField(context, emailCtrl, 'Email *', inputType: TextInputType.emailAddress),
               const SizedBox(height: 20),
-              _sectionLabel('AKUN SISTEM'),
+              _sectionLabel(context, 'AKUN SISTEM'),
               const SizedBox(height: 8),
-              _buildFormField(usernameCtrl, 'Username *'),
+              _buildFormField(context, usernameCtrl, 'Username *'),
               const SizedBox(height: 20),
-              _sectionLabel('PENGATURAN KARTU & LIMIT'),
+              _sectionLabel(context, 'PENGATURAN SALDO & KARTU'),
               const SizedBox(height: 8),
-              _buildFormField(rfidCtrl, 'RFID UID / Nomor Kartu (Kosongkan jika tidak ada)'),
+              _buildFormField(context, limitCtrl, 'Batas Belanja Harian (0 = Tanpa Batas)', inputType: TextInputType.number),
               const SizedBox(height: 12),
-              _buildFormField(limitCtrl, 'Batas Jajan Harian (0 = Tanpa Batas) *', inputType: TextInputType.number),
+              _buildFormField(context, rfidCtrl, 'RFID UID / Nomor Kartu *'),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkTeal,
+                    backgroundColor: Nebula.teal,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                   onPressed: isSaving
@@ -118,12 +120,13 @@ void showEditStudentSheet(
                           final nisn = nisnCtrl.text.trim();
                           final email = emailCtrl.text.trim();
                           final username = usernameCtrl.text.trim();
+                          final phone = parentPhoneCtrl.text.trim();
+                          final limitText = limitCtrl.text.trim();
                           final rfid = rfidCtrl.text.trim();
-                          final limitVal = double.tryParse(limitCtrl.text.trim()) ?? 0;
 
-                          if (name.isEmpty || nisn.isEmpty || email.isEmpty || username.isEmpty) {
+                          if (name.isEmpty || nisn.isEmpty || email.isEmpty || username.isEmpty || rfid.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text(AppStrings.adminFieldRequired)),
+                              const SnackBar(content: Text(AppStrings.adminFieldRequiredRfid)),
                             );
                             return;
                           }
@@ -131,9 +134,7 @@ void showEditStudentSheet(
                           setLocal(() => isSaving = true);
                           try {
                             final client = ref.read(supabaseClientProvider);
-                            final parentPhone = parentPhoneCtrl.text.trim().isNotEmpty
-                                ? parentPhoneCtrl.text.trim()
-                                : null;
+                            final int parsedLimit = int.tryParse(limitText) ?? 0;
                             final rfidVal = rfid.isNotEmpty ? rfid : null;
 
                             // 1. Update profiles table
@@ -141,15 +142,15 @@ void showEditStudentSheet(
                               'full_name': name,
                               'email': email,
                               'username': username,
-                              'nisn': nisn,
-                              'phone_number': parentPhone,
+                              'phone_number': phone.isEmpty ? null : phone,
                             }).eq('id', profile.id);
 
                             // 2. Update students table
                             await client.from('students').update({
+                              'nisn': nisn,
                               'class': selectedClass,
+                              'daily_limit': parsedLimit,
                               'rfid_uid': rfidVal,
-                              'daily_limit': limitVal,
                             }).eq('id', profile.id);
 
                             // 3. Write audit log
@@ -167,20 +168,22 @@ void showEditStudentSheet(
                                 'old_value': {
                                   'full_name': profile.fullName,
                                   'email': profile.email,
+                                  'username': profile.username,
+                                  'phone_number': profile.phoneNumber,
                                   'nisn': profile.nisn,
                                   'class': student.class_,
-                                  'rfid_uid': student.rfidUid,
                                   'daily_limit': student.dailyLimit,
-                                  'phone_number': profile.phoneNumber,
+                                  'rfid_uid': student.rfidUid,
                                 },
                                 'new_value': {
                                   'full_name': name,
                                   'email': email,
+                                  'username': username,
+                                  'phone_number': phone,
                                   'nisn': nisn,
                                   'class': selectedClass,
+                                  'daily_limit': parsedLimit,
                                   'rfid_uid': rfidVal,
-                                  'daily_limit': limitVal,
-                                  'phone_number': parentPhone,
                                 },
                               });
                             } catch (_) {}
@@ -194,7 +197,7 @@ void showEditStudentSheet(
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('Profil siswa $name berhasil diperbarui'),
-                                  backgroundColor: AppColors.successGreen,
+                                  backgroundColor: Nebula.teal,
                                 ),
                               );
                             }
@@ -204,19 +207,19 @@ void showEditStudentSheet(
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('${AppStrings.labelFailedSave}: ${e.toString()}'),
-                                  backgroundColor: AppColors.errorRed2,
+                                  backgroundColor: Nebula.rose,
                                 ),
                               );
                             }
                           }
                         },
                   child: isSaving
-                      ? const CupertinoActivityIndicator(color: AppColors.white)
+                      ? const CupertinoActivityIndicator(color: Colors.white)
                       : Text(
                           'SIMPAN PERUBAHAN',
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold,
-                            color: AppColors.white,
+                            color: Colors.white,
                           ),
                         ),
                 ),
@@ -229,17 +232,18 @@ void showEditStudentSheet(
   );
 }
 
-Widget _sectionLabel(String label) => Text(
+Widget _sectionLabel(BuildContext context, String label) => Text(
       label,
       style: GoogleFonts.inter(
         fontSize: 11,
         fontWeight: FontWeight.w700,
-        color: AppColors.mutedGray,
+        color: context.textSecondary,
         letterSpacing: 1.2,
       ),
     );
 
 Widget _buildFormField(
+  BuildContext context,
   TextEditingController ctrl,
   String hint, {
   TextInputType inputType = TextInputType.text,
@@ -247,24 +251,33 @@ Widget _buildFormField(
     TextField(
       controller: ctrl,
       keyboardType: inputType,
-      style: GoogleFonts.inter(fontSize: 14),
+      style: GoogleFonts.inter(fontSize: 14, color: context.textPrimary),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: GoogleFonts.inter(
-          color: AppColors.mutedGray,
+          color: context.textSecondary,
           fontSize: 14,
         ),
         filled: true,
-        fillColor: AppColors.offWhite,
+        fillColor: context.surfaceBg,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: context.dividerCol),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: context.dividerCol),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Nebula.teal, width: 1.5),
         ),
       ),
     );
 
 Widget _buildDropdownRow({
+  required BuildContext context,
   required String label,
   required String value,
   required List<String> items,
@@ -275,25 +288,27 @@ Widget _buildDropdownRow({
     children: [
       Text(
         label,
-        style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.mutedGray, letterSpacing: 1.2),
+        style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: context.textSecondary, letterSpacing: 1.2),
       ),
       const SizedBox(height: 6),
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: AppColors.offWhite,
+          color: context.surfaceBg,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: context.dividerCol),
         ),
         child: DropdownButtonHideUnderline(
           child: DropdownButton<String>(
             value: value,
             isExpanded: true,
-            icon: const Icon(CupertinoIcons.chevron_down, size: 14, color: AppColors.darkTeal),
-            style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.nearBlack),
+            icon: const Icon(CupertinoIcons.chevron_down, size: 14, color: Nebula.teal),
+            style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: context.textPrimary),
+            dropdownColor: context.cardBg,
             items: items
                 .map((item) => DropdownMenuItem(
                       value: item,
-                      child: Text(item, style: GoogleFonts.inter(fontSize: 13)),
+                      child: Text(item, style: GoogleFonts.inter(fontSize: 13, color: context.textPrimary)),
                     ))
                 .toList(),
             onChanged: onChanged,

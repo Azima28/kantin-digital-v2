@@ -5,7 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 
 /// Shows add bottom sheet based on the tab index:
@@ -48,9 +49,9 @@ void _showAddParentSheet(BuildContext context, WidgetRef ref) {
           left: 20,
           right: 20,
         ),
-        decoration: const BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: context.cardBg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SingleChildScrollView(
           child: Column(
@@ -62,7 +63,7 @@ void _showAddParentSheet(BuildContext context, WidgetRef ref) {
                   width: 36,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: AppColors.borderGray,
+                    color: context.dividerCol,
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),
@@ -73,15 +74,16 @@ void _showAddParentSheet(BuildContext context, WidgetRef ref) {
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.nearBlack,
+                  color: context.textPrimary,
                 ),
               ),
               const SizedBox(height: 20),
-              _sectionLabel('INFORMASI PRIBADI'),
+              _sectionLabel(context, 'INFORMASI PRIBADI'),
               const SizedBox(height: 8),
-              _buildFormField(nameCtrl, '${AppStrings.labelFullName} *'),
+              _buildFormField(context, nameCtrl, '${AppStrings.labelFullName} *'),
               const SizedBox(height: 12),
               _buildDropdownRow(
+                context: context,
                 label: 'Hubungan *',
                 value: relation,
                 items: ['Ayah', 'Ibu', 'Wali'],
@@ -89,27 +91,30 @@ void _showAddParentSheet(BuildContext context, WidgetRef ref) {
               ),
               const SizedBox(height: 12),
               _buildFormField(
+                context,
                 phoneCtrl,
                 'Nomor HP / WhatsApp *',
                 inputType: TextInputType.phone,
               ),
               const SizedBox(height: 12),
               _buildFormField(
+                context,
                 emailCtrl,
                 'Email *',
                 inputType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 20),
-              _sectionLabel('AKUN SISTEM'),
+              _sectionLabel(context, 'AKUN SISTEM'),
               const SizedBox(height: 8),
               _buildFormField(
+                context,
                 passCtrl,
                 'Password Awal *',
                 suffix: IconButton(
                   icon: const Icon(
                     CupertinoIcons.refresh,
                     size: 18,
-                    color: AppColors.darkTeal,
+                    color: Nebula.teal,
                   ),
                   onPressed: () => setLocal(
                     () => passCtrl.text = 'ortu${_randomSuffix()}',
@@ -117,11 +122,12 @@ void _showAddParentSheet(BuildContext context, WidgetRef ref) {
                 ),
               ),
               const SizedBox(height: 20),
-              _sectionLabel('HUBUNGKAN KE SISWA (NISN)'),
+              _sectionLabel(context, 'PENGHUBUNG DATA ANAK'),
               const SizedBox(height: 8),
               _buildFormField(
+                context,
                 childNisnCtrl,
-                'NISN Anak (opsional)',
+                'NISN Anak yang akan dihubungkan *',
                 inputType: TextInputType.number,
               ),
               const SizedBox(height: 24),
@@ -130,7 +136,7 @@ void _showAddParentSheet(BuildContext context, WidgetRef ref) {
                 height: 50,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkTeal,
+                    backgroundColor: Nebula.teal,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -138,81 +144,74 @@ void _showAddParentSheet(BuildContext context, WidgetRef ref) {
                   onPressed: isSaving
                       ? null
                       : () async {
-                          if (nameCtrl.text.trim().isEmpty ||
-                              emailCtrl.text.trim().isEmpty) {
+                          final name = nameCtrl.text.trim();
+                          final email = emailCtrl.text.trim();
+                          final phone = phoneCtrl.text.trim();
+                          final password = passCtrl.text.trim();
+                          final childNisn = childNisnCtrl.text.trim();
+
+                          if (name.isEmpty ||
+                              email.isEmpty ||
+                              phone.isEmpty ||
+                              password.isEmpty ||
+                              childNisn.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Nama dan email wajib diisi'),
+                                content: Text(AppStrings.adminFieldRequired),
                               ),
                             );
                             return;
                           }
+
                           setLocal(() => isSaving = true);
                           try {
                             final client = ref.read(supabaseClientProvider);
-                            final newProfile = await client.rpc('create_user_account', params: {
-                              'p_email': emailCtrl.text.trim(),
-                              'p_password': passCtrl.text.trim(),
-                              'p_full_name': nameCtrl.text.trim(),
-                              'p_role': 'parent',
-                              'p_phone_number': phoneCtrl.text.trim(),
+
+                            // 1. Call RPC function to create parent account and associate with student
+                            final result = await client
+                                .rpc('create_parent_with_student', params: {
+                              'p_email': email,
+                              'p_password': password,
+                              'p_full_name': name,
+                              'p_phone_number': phone,
                               'p_relation': relation,
-                              'p_is_active': true,
+                              'p_student_nisn': childNisn,
                             });
 
-                            // Write to audit logs
-                            try {
-                              final parentId = newProfile['id'];
-                              final authProfile = ref.read(authNotifierProvider).profile;
-                              final actorName = authProfile?['full_name'] ?? 'Admin Keuangan';
-                              final actorId = authProfile?['id'];
-
-                              await client.from('audit_logs').insert({
-                                'actor_id': actorId,
-                                'actor_name': actorName,
-                                'action_type': 'TAMBAH_PENGGUNA',
-                                'description': 'Menambahkan orang tua baru secara manual: ${nameCtrl.text.trim()}',
-                                'target_id': parentId,
-                                'new_value': {
-                                  'full_name': nameCtrl.text.trim(),
-                                  'email': emailCtrl.text.trim(),
-                                  'phone_number': phoneCtrl.text.trim(),
-                                  'role': 'parent',
-                                },
-                              });
-                            } catch (_) {}
+                            if (result == null) {
+                              throw Exception(
+                                  'Gagal mendaftarkan orang tua. Hubungan/NISN salah.');
+                            }
 
                             ref.invalidate(keuanganParentsProvider);
-                            if (ctx.mounted) Navigator.pop(ctx);
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
+                                const SnackBar(
                                   content: Text(
-                                    '${nameCtrl.text.trim()} berhasil didaftarkan sebagai orang tua',
-                                  ),
-                                  backgroundColor: AppColors.successGreen,
+                                      'Orang tua berhasil didaftarkan & dihubungkan.'),
                                 ),
                               );
+                              Navigator.pop(context);
                             }
                           } catch (e) {
                             setLocal(() => isSaving = false);
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('${AppStrings.labelFailed} menyimpan'),
-                                  backgroundColor: AppColors.errorRed2,
+                                  content:
+                                      Text('Gagal mendaftarkan orang tua: $e'),
                                 ),
                               );
                             }
                           }
                         },
                   child: isSaving
-                      ? const CupertinoActivityIndicator(color: AppColors.white)
+                      ? const CupertinoActivityIndicator(color: Colors.white)
                       : Text(
-                          'SIMPAN & DAFTARKAN ORTU',
+                          'DAFTARKAN ORANG TUA',
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold,
-                            color: AppColors.white,
+                            color: Colors.white,
                           ),
                         ),
                 ),
@@ -227,11 +226,10 @@ void _showAddParentSheet(BuildContext context, WidgetRef ref) {
 
 void _showAddStaffSheet(BuildContext context, WidgetRef ref) {
   final nameCtrl = TextEditingController();
-  final phoneCtrl = TextEditingController();
   final emailCtrl = TextEditingController();
+  final phoneCtrl = TextEditingController();
   final usernameCtrl = TextEditingController();
-  final passCtrl = TextEditingController(text: 'kantin${_randomSuffix()}');
-  final canteenCtrl = TextEditingController();
+  final passCtrl = TextEditingController(text: 'staff${_randomSuffix()}');
   bool isSaving = false;
 
   showModalBottomSheet(
@@ -246,9 +244,9 @@ void _showAddStaffSheet(BuildContext context, WidgetRef ref) {
           left: 20,
           right: 20,
         ),
-        decoration: const BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: context.cardBg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SingleChildScrollView(
           child: Column(
@@ -260,7 +258,7 @@ void _showAddStaffSheet(BuildContext context, WidgetRef ref) {
                   width: 36,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: AppColors.borderGray,
+                    color: context.dividerCol,
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),
@@ -271,55 +269,54 @@ void _showAddStaffSheet(BuildContext context, WidgetRef ref) {
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.nearBlack,
+                  color: context.textPrimary,
                 ),
               ),
               const SizedBox(height: 20),
-              _sectionLabel('INFORMASI PRIBADI'),
+              _sectionLabel(context, 'INFORMASI PRIBADI'),
               const SizedBox(height: 8),
-              _buildFormField(nameCtrl, '${AppStrings.labelFullName} *'),
+              _buildFormField(context, nameCtrl, '${AppStrings.labelFullName} *'),
               const SizedBox(height: 12),
               _buildFormField(
+                context,
                 phoneCtrl,
                 'Nomor HP *',
                 inputType: TextInputType.phone,
               ),
               const SizedBox(height: 12),
               _buildFormField(
+                context,
                 emailCtrl,
                 'Email (Opsional)',
                 inputType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 20),
-              _sectionLabel('AKUN SISTEM'),
+              _sectionLabel(context, 'AKUN SISTEM'),
               const SizedBox(height: 8),
-              _buildFormField(usernameCtrl, 'Username *'),
+              _buildFormField(context, usernameCtrl, 'Username *'),
               const SizedBox(height: 12),
               _buildFormField(
+                context,
                 passCtrl,
                 'Password Awal *',
                 suffix: IconButton(
                   icon: const Icon(
                     CupertinoIcons.refresh,
                     size: 18,
-                    color: AppColors.darkTeal,
+                    color: Nebula.teal,
                   ),
                   onPressed: () => setLocal(
-                    () => passCtrl.text = 'kantin${_randomSuffix()}',
+                    () => passCtrl.text = 'staff${_randomSuffix()}',
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              _sectionLabel('PENUGASAN STAN KANTIN'),
-              const SizedBox(height: 8),
-              _buildFormField(canteenCtrl, 'Nama Stan Kantin *'),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkTeal,
+                    backgroundColor: Nebula.teal,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -327,86 +324,74 @@ void _showAddStaffSheet(BuildContext context, WidgetRef ref) {
                   onPressed: isSaving
                       ? null
                       : () async {
-                          if (nameCtrl.text.trim().isEmpty ||
-                              usernameCtrl.text.trim().isEmpty ||
-                              canteenCtrl.text.trim().isEmpty) {
+                          final name = nameCtrl.text.trim();
+                          final phone = phoneCtrl.text.trim();
+                          final username = usernameCtrl.text.trim();
+                          final password = passCtrl.text.trim();
+
+                          if (name.isEmpty ||
+                              phone.isEmpty ||
+                              username.isEmpty ||
+                              password.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Nama, username, dan nama stan wajib diisi'),
+                                content: Text(AppStrings.adminFieldRequired),
                               ),
                             );
                             return;
                           }
+
                           setLocal(() => isSaving = true);
                           try {
                             final client = ref.read(supabaseClientProvider);
-                            final email = emailCtrl.text.trim().isEmpty
-                                ? '${usernameCtrl.text.trim()}@sekolah.sch.id'
-                                : emailCtrl.text.trim();
 
-                            final newProfile = await client.rpc('create_user_account', params: {
+                            final email = emailCtrl.text.trim().isNotEmpty
+                                ? emailCtrl.text.trim()
+                                : 'staff_${username}_${_randomSuffix()}@kantin.sch.id';
+
+                            // Call RPC function to create operator account
+                            final newProfile = await client
+                                .rpc('create_user_account', params: {
                               'p_email': email,
-                              'p_password': passCtrl.text.trim(),
-                              'p_full_name': nameCtrl.text.trim(),
-                              'p_role': 'petugas_kantin',
-                              'p_phone_number': phoneCtrl.text.trim(),
-                              'p_username': usernameCtrl.text.trim(),
-                              'p_canteen_name': canteenCtrl.text.trim(),
-                              'p_is_active': true,
+                              'p_password': password,
+                              'p_full_name': name,
+                              'p_role': 'operator',
+                              'p_phone_number': phone,
+                              'p_username': username,
                             });
 
-                            // Write to audit logs
-                            try {
-                              final staffId = newProfile['id'];
-                              final authProfile = ref.read(authNotifierProvider).profile;
-                              final actorName = authProfile?['full_name'] ?? 'Admin Keuangan';
-                              final actorId = authProfile?['id'];
-
-                              await client.from('audit_logs').insert({
-                                'actor_id': actorId,
-                                'actor_name': actorName,
-                                'action_type': 'TAMBAH_PENGGUNA',
-                                'description': 'Menambahkan petugas kantin baru secara manual: ${nameCtrl.text.trim()}',
-                                'target_id': staffId,
-                                'new_value': {
-                                  'full_name': nameCtrl.text.trim(),
-                                  'username': usernameCtrl.text.trim(),
-                                  'role': 'petugas_kantin',
-                                },
-                              });
-                            } catch (_) {}
+                            if (newProfile == null) {
+                              throw Exception('Gagal membuat profil petugas.');
+                            }
 
                             ref.invalidate(keuanganStaffProvider);
-                            if (ctx.mounted) Navigator.pop(ctx);
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    '${nameCtrl.text.trim()} berhasil ditambahkan',
-                                  ),
-                                  backgroundColor: AppColors.successGreen,
+                                const SnackBar(
+                                  content:
+                                      Text('Petugas baru berhasil terdaftar.'),
                                 ),
                               );
+                              Navigator.pop(context);
                             }
                           } catch (e) {
                             setLocal(() => isSaving = false);
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('${AppStrings.labelFailed} menyimpan'),
-                                  backgroundColor: AppColors.errorRed2,
+                                  content: Text('Gagal mendaftarkan: $e'),
                                 ),
                               );
                             }
                           }
                         },
                   child: isSaving
-                      ? const CupertinoActivityIndicator(color: AppColors.white)
+                      ? const CupertinoActivityIndicator(color: Colors.white)
                       : Text(
-                          'SIMPAN & AKTIFKAN PETUGAS',
+                          'DAFTARKAN PETUGAS KANTIN',
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold,
-                            color: AppColors.white,
+                            color: Colors.white,
                           ),
                         ),
                 ),
@@ -419,87 +404,99 @@ void _showAddStaffSheet(BuildContext context, WidgetRef ref) {
   );
 }
 
-Widget _sectionLabel(String label) => Text(
-  label,
-  style: GoogleFonts.inter(
-    fontSize: 11,
-    fontWeight: FontWeight.w700,
-    color: AppColors.mutedGray,
-    letterSpacing: 1.2,
-  ),
-);
+Widget _sectionLabel(BuildContext context, String label) => Text(
+      label,
+      style: GoogleFonts.inter(
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        color: context.textSecondary,
+        letterSpacing: 1.2,
+      ),
+    );
 
 Widget _buildFormField(
+  BuildContext context,
   TextEditingController ctrl,
   String hint, {
   TextInputType inputType = TextInputType.text,
   Widget? suffix,
-}) => TextField(
-  controller: ctrl,
-  keyboardType: inputType,
-  style: GoogleFonts.inter(fontSize: 14),
-  decoration: InputDecoration(
-    hintText: hint,
-    hintStyle: GoogleFonts.inter(
-      color: AppColors.mutedGray,
-      fontSize: 14,
-    ),
-    suffixIcon: suffix,
-    filled: true,
-    fillColor: AppColors.offWhite,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.borderGray),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.borderGray),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.darkTeal, width: 1.5),
-    ),
-  ),
-);
+}) =>
+    TextField(
+      controller: ctrl,
+      keyboardType: inputType,
+      style: GoogleFonts.inter(fontSize: 14, color: context.textPrimary),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: GoogleFonts.inter(
+          color: context.textSecondary,
+          fontSize: 14,
+        ),
+        suffixIcon: suffix,
+        filled: true,
+        fillColor: context.surfaceBg,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: context.dividerCol),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: context.dividerCol),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Nebula.teal, width: 1.5),
+        ),
+      ),
+    );
 
 Widget _buildDropdownRow({
+  required BuildContext context,
   required String label,
   required String value,
   required List<String> items,
   required ValueChanged<String?> onChanged,
-}) => Container(
-  padding: const EdgeInsets.symmetric(horizontal: 14),
-  decoration: BoxDecoration(
-    color: AppColors.offWhite,
-    borderRadius: BorderRadius.circular(12),
-    border: Border.all(color: AppColors.borderGray),
-  ),
-  child: Row(
-    children: [
-      Text(
-        '$label: ',
-        style: GoogleFonts.inter(
-          fontSize: 13,
-          color: AppColors.mutedGray,
-        ),
+}) =>
+    Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: context.surfaceBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.dividerCol),
       ),
-      Expanded(
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            value: value,
-            isExpanded: true,
+      child: Row(
+        children: [
+          Text(
+            '$label: ',
             style: GoogleFonts.inter(
-              color: AppColors.nearBlack,
-              fontSize: 14,
+              fontSize: 13,
+              color: context.textSecondary,
             ),
-            onChanged: onChanged,
-            items: items
-                .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                .toList(),
           ),
-        ),
+          Expanded(
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: value,
+                isExpanded: true,
+                style: GoogleFonts.inter(
+                  color: context.textPrimary,
+                  fontSize: 14,
+                ),
+                dropdownColor: context.cardBg,
+                onChanged: onChanged,
+                items: items
+                    .map((e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            e,
+                            style: TextStyle(color: context.textPrimary),
+                          ),
+                        ))
+                    .toList(),
+              ),
+            ),
+          ),
+        ],
       ),
-    ],
-  ),
-);
+    );

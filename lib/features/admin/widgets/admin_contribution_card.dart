@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_bento_card.dart';
 
 /// Role contribution card showing student/canteen/parent activity.
@@ -20,10 +21,10 @@ class AdminContributionCard extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: AppColors.darkTeal,
+              color: Nebula.teal,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Center(
             child: SizedBox(
               width: 88,
@@ -32,22 +33,22 @@ class AdminContributionCard extends StatelessWidget {
                 aspectRatio: 1.0,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: AppColors.darkTeal,
+                    color: Nebula.teal,
                     borderRadius: BorderRadius.circular(44),
                   ),
                   padding: const EdgeInsets.all(10),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: AppColors.white,
+                      color: context.cardBg,
                       borderRadius: BorderRadius.circular(34),
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Text(
                         'Vol.',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.darkTeal,
+                          color: Nebula.teal,
                         ),
                       ),
                     ),
@@ -56,18 +57,18 @@ class AdminContributionCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          _buildLegendItem(AppColors.darkTeal, 'Siswa'),
+          SizedBox(height: 16),
+          _buildLegendItem(context, Nebula.teal, 'Siswa'),
           const SizedBox(height: 4),
-          _buildLegendItem(AppColors.accentOrange2, 'Petugas Kantin'),
+          _buildLegendItem(context, Nebula.amber, 'Petugas Kantin'),
           const SizedBox(height: 4),
-          _buildLegendItem(AppColors.successGreen, 'Orang Tua'),
+          _buildLegendItem(context, Nebula.teal, 'Orang Tua'),
         ],
       ),
     );
   }
 
-  Widget _buildLegendItem(Color color, String text) {
+  Widget _buildLegendItem(BuildContext context, Color color, String text) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -92,7 +93,7 @@ class AdminContributionCard extends StatelessWidget {
           style: GoogleFonts.inter(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: AppColors.darkGray,
+            color: context.textSecondary,
             letterSpacing: 0.05,
           ),
         ),

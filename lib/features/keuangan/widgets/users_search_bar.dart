@@ -1,7 +1,8 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 class UsersSearchBar extends StatefulWidget {
   final TextEditingController controller;
@@ -58,18 +59,18 @@ class _UsersSearchBarState extends State<UsersSearchBar> {
                   : widget.hints.first)
               : 'Cari...',
           hintStyle: GoogleFonts.inter(
-            color: AppColors.mutedGray,
+            color: context.textSecondary,
             fontSize: 14,
           ),
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             CupertinoIcons.search,
-            color: AppColors.mutedGray,
+            color: context.textSecondary,
           ),
           suffixIcon: _hasText
               ? IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     CupertinoIcons.clear_circled_solid,
-                    color: AppColors.mutedGray,
+                    color: context.textSecondary,
                     size: 18,
                   ),
                   onPressed: () {
@@ -79,19 +80,19 @@ class _UsersSearchBarState extends State<UsersSearchBar> {
                 )
               : null,
           filled: true,
-          fillColor: AppColors.white,
+          fillColor: context.cardBg,
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.borderGray),
+            borderSide: BorderSide(color: context.dividerCol),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.borderGray),
+            borderSide: BorderSide(color: context.dividerCol),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.darkTeal, width: 1.5),
+            borderSide: BorderSide(color: Nebula.teal, width: 1.5),
           ),
         ),
       ),

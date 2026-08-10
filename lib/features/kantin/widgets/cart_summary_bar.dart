@@ -1,10 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/kantin/providers/cart_provider.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 class CartSummaryBar extends ConsumerWidget {
   final VoidCallback onAddExtraCharge;
@@ -22,10 +23,10 @@ class CartSummaryBar extends ConsumerWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      decoration: const BoxDecoration(
-        color: AppColors.cardBackground,
+      decoration: BoxDecoration(
+        color: context.cardBg,
         border: Border(
-          top: BorderSide(color: AppColors.borderLight, width: 0.5),
+          top: BorderSide(color: context.borderLight, width: 0.5),
         ),
       ),
       child: SafeArea(
@@ -37,18 +38,18 @@ class CartSummaryBar extends ConsumerWidget {
               width: double.infinity,
               child: OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.primary, width: 1),
+                  side: const BorderSide(color: Nebula.teal, width: 1),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 onPressed: onAddExtraCharge,
-                icon: const Icon(CupertinoIcons.add, size: 16, color: AppColors.primary),
-                label: const Text(
+                icon: const Icon(CupertinoIcons.add, size: 16, color: Nebula.teal),
+                label: Text(
                   AppStrings.labelAddExtraCharge,
                   style: TextStyle(
-                    color: AppColors.primary,
+                    color: Nebula.teal,
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
                   ),
@@ -62,18 +63,18 @@ class CartSummaryBar extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   AppStrings.labelTotal,
                   style: TextStyle(
-                    color: AppColors.textGray,
+                    color: context.textSecondary,
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
                   ),
                 ),
                 Text(
                   CurrencyFormatter.format(cartState.totalAmount),
-                  style: const TextStyle(
-                    color: AppColors.textDark,
+                  style: TextStyle(
+                    color: context.textPrimary,
                     fontWeight: FontWeight.w800,
                     fontSize: 22,
                   ),
@@ -88,7 +89,7 @@ class CartSummaryBar extends ConsumerWidget {
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accentOrange,
+                  backgroundColor: Nebula.amber,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -96,10 +97,10 @@ class CartSummaryBar extends ConsumerWidget {
                   elevation: 0,
                 ),
                 onPressed: onCheckout,
-                child: const Text(
+                child: Text(
                   AppStrings.buttonTapStudentCard,
                   style: TextStyle(
-                    color: AppColors.white,
+                    color: context.cardBg,
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
                   ),

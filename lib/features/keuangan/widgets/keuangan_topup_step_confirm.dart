@@ -2,7 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 /// Step 3 of the keuangan top-up flow — confirmation.
 ///
@@ -42,11 +43,11 @@ class KeuanganTopupStepConfirm extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: AppColors.black.withValues(alpha: 0.04),
+                color: context.shadowColor,
                 blurRadius: 15,
                 offset: const Offset(0, 4),
               ),
@@ -59,57 +60,59 @@ class KeuanganTopupStepConfirm extends StatelessWidget {
                 '📋 RINGKASAN TOP-UP TUNAI',
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.darkTeal,
+                  color: Nebula.teal,
                   fontSize: 14,
                 ),
               ),
-              const SizedBox(height: 16),
-              _buildInfoRow('Nama Siswa', studentName),
-              const Divider(
+              SizedBox(height: 16),
+              _buildInfoRow(context, 'Nama Siswa', studentName),
+              Divider(
                 height: 16,
                 thickness: 0.5,
-                color: AppColors.borderGray,
+                color: context.dividerCol,
               ),
-              _buildInfoRow('NISN', studentNisn),
-              const Divider(
+              _buildInfoRow(context, 'NISN', studentNisn),
+              Divider(
                 height: 16,
                 thickness: 0.5,
-                color: AppColors.borderGray,
+                color: context.dividerCol,
               ),
-              _buildInfoRow('Kelas', 'Kelas $studentClass'),
-              const Divider(
+              _buildInfoRow(context, 'Kelas', 'Kelas $studentClass'),
+              Divider(
                 height: 16,
                 thickness: 0.5,
-                color: AppColors.borderGray,
+                color: context.dividerCol,
               ),
-              _buildInfoRow('Saldo Lama', fmt.format(studentBalance)),
-              const Divider(
+              _buildInfoRow(context, 'Saldo Lama', fmt.format(studentBalance)),
+              Divider(
                 height: 16,
                 thickness: 0.5,
-                color: AppColors.borderGray,
+                color: context.dividerCol,
               ),
               _buildInfoRow(
+                context,
                 'Nominal Top-Up',
                 '+ ${fmt.format(amount)}',
-                valueColor: AppColors.successGreen,
+                valueColor: Nebula.teal,
               ),
-              const Divider(
+              Divider(
                 height: 16,
                 thickness: 0.5,
-                color: AppColors.borderGray,
+                color: context.dividerCol,
               ),
               _buildInfoRow(
+                context,
                 'Saldo Baru',
                 fmt.format(newBalance),
                 isBold: true,
-                valueColor: AppColors.darkTeal,
+                valueColor: Nebula.teal,
               ),
-              const Divider(
+              Divider(
                 height: 16,
                 thickness: 0.5,
-                color: AppColors.borderGray,
+                color: context.dividerCol,
               ),
-              _buildInfoRow('Metode', 'Tunai (Cash)'),
+              _buildInfoRow(context, 'Metode', 'Tunai (Cash)'),
             ],
           ),
         ),
@@ -120,7 +123,7 @@ class KeuanganTopupStepConfirm extends StatelessWidget {
           child: ElevatedButton(
             onPressed: isLoading ? null : onProcess,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.darkOrange,
+              backgroundColor: Nebula.amber,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -128,13 +131,13 @@ class KeuanganTopupStepConfirm extends StatelessWidget {
               elevation: 0,
             ),
             child: isLoading
-                ? const CupertinoActivityIndicator(color: AppColors.white)
+                ? const CupertinoActivityIndicator(color: Colors.white)
                 : Text(
                     '✔ PROSES TOP-UP',
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: AppColors.white,
+                      color: Colors.white,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -146,7 +149,7 @@ class KeuanganTopupStepConfirm extends StatelessWidget {
             'Aksi ini akan dicatat dalam audit log.',
             style: GoogleFonts.inter(
               fontSize: 12,
-              color: AppColors.mutedGray,
+              color: context.textSecondary,
             ),
           ),
         ),
@@ -155,6 +158,7 @@ class KeuanganTopupStepConfirm extends StatelessWidget {
   }
 
   Widget _buildInfoRow(
+    BuildContext context,
     String label,
     String value, {
     bool isBold = false,
@@ -166,7 +170,7 @@ class KeuanganTopupStepConfirm extends StatelessWidget {
         Text(
           label,
           style: GoogleFonts.inter(
-            color: AppColors.mutedGray,
+            color: context.textSecondary,
             fontSize: 13,
           ),
         ),
@@ -175,7 +179,7 @@ class KeuanganTopupStepConfirm extends StatelessWidget {
             value,
             style: GoogleFonts.inter(
               fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-              color: valueColor ?? AppColors.nearBlack,
+              color: valueColor ?? context.textPrimary,
               fontSize: 13,
             ),
             textAlign: TextAlign.right,

@@ -2,10 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/parent/widgets/parent_transaction_tile.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 class ParentTransactionList extends StatelessWidget {
   final List<OperatorTransaction> transactions;
@@ -33,7 +34,7 @@ class ParentTransactionList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryTeal = AppColors.teal;
+    Color primaryTeal = Nebula.teal;
 
     // Apply search filter
     final String query = searchController.text.toLowerCase().trim();
@@ -82,14 +83,14 @@ class ParentTransactionList extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.borderGray, width: 1),
+            border: Border.all(color: context.dividerCol, width: 1),
           ),
           child: Row(
             children: [
-              const Icon(CupertinoIcons.search,
-                  color: AppColors.textGray, size: 20),
+              Icon(CupertinoIcons.search,
+                  color: context.textSecondary, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: TextField(
@@ -104,8 +105,8 @@ class ParentTransactionList extends StatelessWidget {
               ),
               if (searchController.text.isNotEmpty)
                 IconButton(
-                  icon: const Icon(CupertinoIcons.clear_circled_solid,
-                      color: AppColors.textGray, size: 16),
+                  icon: Icon(CupertinoIcons.clear_circled_solid,
+                      color: context.textSecondary, size: 16),
                   onPressed: () {
                     searchController.clear();
                   },
@@ -113,7 +114,7 @@ class ParentTransactionList extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
 
         // Type Segment Filter
         Row(
@@ -122,9 +123,9 @@ class ParentTransactionList extends StatelessWidget {
               child: CupertinoSegmentedControl<String>(
                 groupValue: historyTypeFilter,
                 selectedColor: primaryTeal,
-                unselectedColor: AppColors.white,
-                borderColor: AppColors.borderGray,
-                pressedColor: AppColors.teal.withValues(alpha: 0.1),
+                unselectedColor: context.cardBg,
+                borderColor: context.dividerCol,
+                pressedColor: Nebula.teal.withValues(alpha: 0.1),
                 children: const {
                   'Semua': Padding(
                       padding: EdgeInsets.symmetric(vertical: 8),
@@ -146,13 +147,13 @@ class ParentTransactionList extends StatelessWidget {
         // Date Picker button
         OutlinedButton.icon(
           style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: AppColors.borderGray),
+            side: BorderSide(color: context.dividerCol),
             padding: const EdgeInsets.symmetric(vertical: 12),
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8)),
           ),
           onPressed: onPickDateRange,
-          icon: const Icon(CupertinoIcons.calendar,
+          icon: Icon(CupertinoIcons.calendar,
               color: primaryTeal, size: 16),
           label: Text(
             historyDateRange != null
@@ -167,8 +168,8 @@ class ParentTransactionList extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: onResetDateRange,
-              child: const Text('Reset Tanggal',
-                  style: TextStyle(fontSize: 11, color: AppColors.error)),
+              child: Text('Reset Tanggal',
+                  style: TextStyle(fontSize: 11, color: Nebula.rose)),
             ),
           ),
         const SizedBox(height: 16),
@@ -180,12 +181,12 @@ class ParentTransactionList extends StatelessWidget {
             child: Center(
               child: Column(
                 children: [
-                  const Icon(CupertinoIcons.tray,
-                      color: AppColors.textGray, size: 40),
+                  Icon(CupertinoIcons.tray,
+                      color: context.textSecondary, size: 40),
                   const SizedBox(height: 12),
                   Text('${AppStrings.labelTransaction} tidak ditemukan.',
                       style: GoogleFonts.inter(
-                          color: AppColors.textGray, fontSize: 13)),
+                          color: context.textSecondary, fontSize: 13)),
                 ],
               ),
             ),
@@ -210,23 +211,23 @@ class ParentTransactionList extends StatelessWidget {
                       style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textGray,
+                          color: context.textSecondary,
                           letterSpacing: 0.5),
                     ),
                   ),
                   Container(
                     decoration: BoxDecoration(
-                      color: AppColors.white,
+                      color: context.cardBg,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                          color: AppColors.borderGray, width: 1),
+                          color: context.dividerCol, width: 1),
                     ),
                     child: ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: dayTxs.length,
                       separatorBuilder: (context, i) =>
-                          const Divider(height: 1, color: AppColors.borderGray),
+                          Divider(height: 1, color: context.dividerCol),
                       itemBuilder: (context, i) {
                         final tx = dayTxs[i];
                         return ParentTransactionTile(

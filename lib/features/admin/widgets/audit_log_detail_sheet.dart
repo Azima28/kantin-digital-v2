@@ -1,9 +1,10 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/admin/widgets/audit_log_metadata_row.dart';
@@ -109,18 +110,18 @@ class AuditLogDetailSheet extends StatelessWidget {
                   width: 36,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: AppColors.gray400,
+                    color: context.dividerCol,
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               Text(
                 log.actionType.toString().replaceAll('_', ' '),
                 style: GoogleFonts.inter(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.darkTeal,
+                  color: Nebula.teal,
                 ),
               ),
               const SizedBox(height: 16),
@@ -146,7 +147,7 @@ class AuditLogDetailSheet extends StatelessWidget {
                 style: GoogleFonts.inter(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.nearBlack,
+                  color: context.textPrimary,
                 ),
               ),
               const SizedBox(height: 12),
@@ -162,7 +163,7 @@ class AuditLogDetailSheet extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.textGray,
+                            color: context.textSecondary,
                           ),
                         ),
                         const SizedBox(height: 6),
@@ -170,7 +171,7 @@ class AuditLogDetailSheet extends StatelessWidget {
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppColors.errorLightColor,
+                            color: Nebula.rose.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -178,7 +179,7 @@ class AuditLogDetailSheet extends StatelessWidget {
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.errorDark,
+                              color: Nebula.rose.withValues(alpha: 0.8),
                             ),
                           ),
                         ),
@@ -195,7 +196,7 @@ class AuditLogDetailSheet extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.textGray,
+                            color: context.textSecondary,
                           ),
                         ),
                         const SizedBox(height: 6),
@@ -203,7 +204,7 @@ class AuditLogDetailSheet extends StatelessWidget {
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppColors.successLight,
+                            color: Nebula.teal.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -211,7 +212,7 @@ class AuditLogDetailSheet extends StatelessWidget {
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.successDark,
+                              color: Nebula.tealDark,
                             ),
                           ),
                         ),

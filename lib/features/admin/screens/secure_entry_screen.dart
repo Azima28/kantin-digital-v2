@@ -1,10 +1,12 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 class SecureEntryScreen extends ConsumerStatefulWidget {
@@ -36,7 +38,7 @@ class _SecureEntryScreenState extends ConsumerState<SecureEntryScreen> {
       body: SafeArea(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+            padding: EdgeInsets.symmetric(horizontal: 32.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -45,23 +47,23 @@ class _SecureEntryScreenState extends ConsumerState<SecureEntryScreen> {
                   width: 72,
                   height: 72,
                   decoration: BoxDecoration(
-                    color: AppColors.darkTeal,
+                    color: Nebula.teal,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.darkTeal.withValues(alpha: 0.15),
+                        color: Nebula.teal.withValues(alpha: 0.15),
                         blurRadius: 30,
                         offset: const Offset(0, 10),
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.admin_panel_settings,
-                    color: AppColors.white,
+                    color: context.cardBg,
                     size: 36,
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
 
                 // Title
                 Text(
@@ -69,16 +71,16 @@ class _SecureEntryScreenState extends ConsumerState<SecureEntryScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 34,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.darkTeal,
+                    color: Nebula.teal,
                     letterSpacing: -0.02,
                   ),
                 ),
                 const SizedBox(height: 48),
 
-                const Icon(
+                Icon(
                   Icons.lock_outline,
                   size: 48,
-                  color: AppColors.mutedGray,
+                  color: context.textSecondary,
                 ),
                 const SizedBox(height: 16),
 
@@ -88,7 +90,7 @@ class _SecureEntryScreenState extends ConsumerState<SecureEntryScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 17,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.nearBlack,
+                    color: context.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -98,28 +100,31 @@ class _SecureEntryScreenState extends ConsumerState<SecureEntryScreen> {
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
                     fontSize: 13,
-                    color: AppColors.mutedGray,
+                    color: context.textSecondary,
                   ),
                 ),
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
 
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => context.go('/login'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.darkTeal,
-                      foregroundColor: AppColors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                  child: PressScale(
+                    onTap: () => context.go('/login'),
+                    child: ElevatedButton(
+                      onPressed: null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Nebula.teal,
+                        foregroundColor: context.cardBg,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      AppStrings.buttonLogin,
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
+                      child: Text(
+                        AppStrings.buttonLogin,
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),

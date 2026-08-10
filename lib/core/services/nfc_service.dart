@@ -48,7 +48,8 @@ class NfcService {
     if (kIsWeb) return;
     try {
       await NfcManager.instance.stopSession();
-    } catch (e) {
+    } catch (_) {
+      // Ignore session stop error if session wasn't active
     }
   }
 

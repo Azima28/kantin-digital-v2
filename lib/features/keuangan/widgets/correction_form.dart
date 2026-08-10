@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:intl/intl.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
 
@@ -82,7 +83,7 @@ class _CorrectionFormState extends State<CorrectionForm> {
         Text(
           label,
           style: GoogleFonts.inter(
-            color: AppColors.mutedGray,
+            color: context.textSecondary,
             fontSize: 13,
           ),
         ),
@@ -91,7 +92,7 @@ class _CorrectionFormState extends State<CorrectionForm> {
             value,
             style: GoogleFonts.inter(
               fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-              color: valueColor ?? AppColors.nearBlack,
+              color: valueColor ?? context.textPrimary,
               fontSize: 13,
             ),
             textAlign: TextAlign.right,
@@ -118,11 +119,11 @@ class _CorrectionFormState extends State<CorrectionForm> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: AppColors.black.withValues(alpha: 0.04),
+                color: context.shadowColor,
                 blurRadius: 15,
                 offset: const Offset(0, 4),
               ),
@@ -131,16 +132,16 @@ class _CorrectionFormState extends State<CorrectionForm> {
           child: Column(
             children: [
               _buildInfoRow('Nama Siswa', _studentName),
-              const Divider(
+              Divider(
                 height: 16,
                 thickness: 0.5,
-                color: AppColors.borderGray,
+                color: context.dividerCol,
               ),
               _buildInfoRow(AppStrings.labelStudentClass, 'Kelas $_studentClass'),
-              const Divider(
+              Divider(
                 height: 16,
                 thickness: 0.5,
-                color: AppColors.borderGray,
+                color: context.dividerCol,
               ),
               _buildInfoRow('Saldo Saat Ini', fmt.format(_studentBalance)),
             ],
@@ -153,7 +154,7 @@ class _CorrectionFormState extends State<CorrectionForm> {
           'Jenis Koreksi',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
-            color: AppColors.nearBlack,
+            color: context.textPrimary,
             fontSize: 13,
           ),
         ),
@@ -171,13 +172,13 @@ class _CorrectionFormState extends State<CorrectionForm> {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
                     color: !_isAddition
-                        ? AppColors.errorRed2.withValues(alpha: 0.08)
-                        : AppColors.white,
+                        ? Nebula.rose.withValues(alpha: 0.08)
+                        : Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: !_isAddition
-                          ? AppColors.errorRed2
-                          : AppColors.borderGray,
+                          ? Nebula.rose
+                          : context.dividerCol,
                     ),
                   ),
                   child: Center(
@@ -186,8 +187,8 @@ class _CorrectionFormState extends State<CorrectionForm> {
                       style: GoogleFonts.inter(
                         fontWeight: FontWeight.bold,
                         color: !_isAddition
-                            ? AppColors.errorRed2
-                            : AppColors.mutedGray,
+                            ? Nebula.rose
+                            : context.textSecondary,
                         fontSize: 13,
                       ),
                     ),
@@ -207,13 +208,13 @@ class _CorrectionFormState extends State<CorrectionForm> {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
                     color: _isAddition
-                        ? AppColors.successGreen.withValues(alpha: 0.08)
-                        : AppColors.white,
+                        ? Nebula.teal.withValues(alpha: 0.08)
+                        : Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: _isAddition
-                          ? AppColors.successGreen
-                          : AppColors.borderGray,
+                          ? Nebula.teal
+                          : context.dividerCol,
                     ),
                   ),
                   child: Center(
@@ -222,8 +223,8 @@ class _CorrectionFormState extends State<CorrectionForm> {
                       style: GoogleFonts.inter(
                         fontWeight: FontWeight.bold,
                         color: _isAddition
-                            ? AppColors.successGreen
-                            : AppColors.mutedGray,
+                            ? Nebula.teal
+                            : context.textSecondary,
                         fontSize: 13,
                       ),
                     ),
@@ -240,7 +241,7 @@ class _CorrectionFormState extends State<CorrectionForm> {
           'Nominal Koreksi',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
-            color: AppColors.nearBlack,
+            color: context.textPrimary,
             fontSize: 13,
           ),
         ),
@@ -253,31 +254,31 @@ class _CorrectionFormState extends State<CorrectionForm> {
             prefixText: 'Rp ',
             prefixStyle: GoogleFonts.inter(
               fontWeight: FontWeight.bold,
-              color: AppColors.nearBlack,
+              color: context.textPrimary,
             ),
             hintText: '0',
             hintStyle: GoogleFonts.inter(
-              color: AppColors.mutedGray,
+              color: context.textSecondary,
               fontSize: 14,
             ),
             filled: true,
-            fillColor: AppColors.white,
+            fillColor: context.cardBg,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 14,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.borderGray),
+              borderSide: BorderSide(color: context.dividerCol),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.borderGray),
+              borderSide: BorderSide(color: context.dividerCol),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide:
-                  const BorderSide(color: AppColors.darkTeal, width: 1.5),
+                  BorderSide(color: Nebula.teal, width: 1.5),
             ),
           ),
         ),
@@ -288,7 +289,7 @@ class _CorrectionFormState extends State<CorrectionForm> {
             child: Text(
               '⚠️ Saldo tidak mencukupi untuk pengurangan.',
               style: GoogleFonts.inter(
-                color: AppColors.errorRed2,
+                color: Nebula.rose,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
@@ -300,7 +301,7 @@ class _CorrectionFormState extends State<CorrectionForm> {
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
             fontSize: 14,
-            color: balanceValid ? AppColors.darkTeal : AppColors.errorRed2,
+            color: balanceValid ? Nebula.teal : Nebula.rose,
           ),
         ),
         const SizedBox(height: 20),
@@ -310,7 +311,7 @@ class _CorrectionFormState extends State<CorrectionForm> {
           'Alasan Koreksi (Wajib)',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
-            color: AppColors.nearBlack,
+            color: context.textPrimary,
             fontSize: 13,
           ),
         ),
@@ -322,24 +323,24 @@ class _CorrectionFormState extends State<CorrectionForm> {
           decoration: InputDecoration(
             hintText: 'Masukkan alasan koreksi secara detail...',
             hintStyle: GoogleFonts.inter(
-              color: AppColors.mutedGray,
+              color: context.textSecondary,
               fontSize: 14,
             ),
             filled: true,
-            fillColor: AppColors.white,
+            fillColor: context.cardBg,
             contentPadding: const EdgeInsets.all(16),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.borderGray),
+              borderSide: BorderSide(color: context.dividerCol),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.borderGray),
+              borderSide: BorderSide(color: context.dividerCol),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide:
-                  const BorderSide(color: AppColors.darkTeal, width: 1.5),
+                  BorderSide(color: Nebula.teal, width: 1.5),
             ),
           ),
         ),
@@ -348,10 +349,10 @@ class _CorrectionFormState extends State<CorrectionForm> {
           'Minimal 10 karakter. (Saat ini: ${_reasonController.text.trim().length} karakter)',
           style: GoogleFonts.inter(
             fontSize: 11,
-            color: reasonValid ? AppColors.successGreen : AppColors.mutedGray,
+            color: reasonValid ? Nebula.teal : context.textSecondary,
           ),
         ),
-        const SizedBox(height: 32),
+        SizedBox(height: 32),
 
         SizedBox(
           width: double.infinity,
@@ -366,7 +367,7 @@ class _CorrectionFormState extends State<CorrectionForm> {
                     );
                   },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.darkTeal,
+              backgroundColor: Nebula.teal,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -378,7 +379,7 @@ class _CorrectionFormState extends State<CorrectionForm> {
               style: GoogleFonts.inter(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
-                color: AppColors.white,
+                color: context.cardBg,
               ),
             ),
           ),

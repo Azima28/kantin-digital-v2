@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 /// A reusable bento card container used throughout the admin dashboard.
 class AdminBentoCard extends StatelessWidget {
@@ -13,11 +13,11 @@ class AdminBentoCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.04),
+            color: context.shadowColor,
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),

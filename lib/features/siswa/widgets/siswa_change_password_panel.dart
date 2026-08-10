@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 /// A floating panel for changing the student account password.
 class SiswaChangePasswordPanel extends ConsumerStatefulWidget {
@@ -25,16 +26,31 @@ class _SiswaChangePasswordPanelState
   final _newPwdController = TextEditingController();
   final _confirmPwdController = TextEditingController();
 
+  final _oldFocus = FocusNode();
+  final _newFocus = FocusNode();
+  final _confirmFocus = FocusNode();
+
   bool _obscureOld = true;
   bool _obscureNew = true;
   bool _obscureConfirm = true;
   bool _isSaving = false;
 
   @override
+  void initState() {
+    super.initState();
+    _oldFocus.addListener(() => setState(() {}));
+    _newFocus.addListener(() => setState(() {}));
+    _confirmFocus.addListener(() => setState(() {}));
+  }
+
+  @override
   void dispose() {
     _oldPwdController.dispose();
     _newPwdController.dispose();
     _confirmPwdController.dispose();
+    _oldFocus.dispose();
+    _newFocus.dispose();
+    _confirmFocus.dispose();
     super.dispose();
   }
 
@@ -71,7 +87,7 @@ class _SiswaChangePasswordPanelState
         messenger.showSnackBar(
           const SnackBar(
             content: Text('Sandi lama yang dimasukkan salah.'),
-            backgroundColor: AppColors.error,
+            backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -90,7 +106,7 @@ class _SiswaChangePasswordPanelState
       messenger.showSnackBar(
         const SnackBar(
           content: Text('Kata sandi berhasil diperbarui!'),
-          backgroundColor: AppColors.success,
+          backgroundColor: Nebula.teal,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -99,7 +115,7 @@ class _SiswaChangePasswordPanelState
       messenger.showSnackBar(
         SnackBar(
           content: Text('${AppStrings.labelFailed} mengubah kata sandi: $e'),
-          backgroundColor: AppColors.error,
+          backgroundColor: Nebula.rose,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -113,15 +129,20 @@ class _SiswaChangePasswordPanelState
     return Material(
       color: Colors.transparent,
       child: Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(28),
         decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(20),
+          color: context.cardBg,
+          borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 32,
+              offset: const Offset(0, 12),
+            ),
+            BoxShadow(
+              color: Nebula.teal.withValues(alpha: 0.02),
+              blurRadius: 64,
+              offset: const Offset(0, 24),
             ),
           ],
         ),
@@ -132,51 +153,87 @@ class _SiswaChangePasswordPanelState
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Close button + Title
+                // Close button + Centered Lock Shield Icon
                 Stack(
                   alignment: Alignment.center,
                   children: [
-                    Center(
-                      child: Text(
-                        'Ubah Sandi Akun',
-                        style: GoogleFonts.inter(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textDark,
+                    Align(
+                      alignment: Alignment.center,
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Nebula.teal.withValues(alpha: 0.08),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Nebula.teal.withValues(alpha: 0.15),
+                              blurRadius: 12,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          CupertinoIcons.lock_shield_fill,
+                          color: Nebula.teal,
+                          size: 32,
                         ),
                       ),
                     ),
                     Positioned(
                       right: 0,
+                      top: 0,
                       child: GestureDetector(
                         onTap: () => Navigator.pop(context),
                         child: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: const BoxDecoration(
-                            color: AppColors.scaffoldBackground,
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
+                          child: Icon(
                             CupertinoIcons.xmark,
                             size: 16,
-                            color: AppColors.textGray,
+                            color: context.textSecondary,
                           ),
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 20),
+
+                // Title & Subtitle
+                Text(
+                  'Ubah Sandi Akun',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Nebula.teal,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Gunakan kata sandi yang kuat untuk menjaga keamanan akun Anda.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: context.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 28),
 
                 // Old Password
                 _buildPasswordField(
                   controller: _oldPwdController,
+                  focusNode: _oldFocus,
                   label: 'Kata Sandi Lama',
+                  hintText: 'Kata Sandi Lama',
                   obscure: _obscureOld,
                   onToggle: () => setState(() => _obscureOld = !_obscureOld),
                   validator: (val) {
-                    if (val == null || val.isEmpty) return 'Wajib diisi';
+                    if (val == null || val.isEmpty) return 'Kata sandi lama wajib diisi';
                     return null;
                   },
                 ),
@@ -185,12 +242,14 @@ class _SiswaChangePasswordPanelState
                 // New Password
                 _buildPasswordField(
                   controller: _newPwdController,
+                  focusNode: _newFocus,
                   label: 'Kata Sandi Baru',
+                  hintText: '••••••••',
                   obscure: _obscureNew,
                   onToggle: () => setState(() => _obscureNew = !_obscureNew),
                   validator: (val) {
-                    if (val == null || val.isEmpty) return 'Wajib diisi';
-                    if (val.length < 6) return 'Minimal 6 karakter';
+                    if (val == null || val.isEmpty) return 'Kata sandi baru wajib diisi';
+                    if (val.length < 6) return 'Minimal terdiri dari 6 karakter';
                     return null;
                   },
                 ),
@@ -199,12 +258,14 @@ class _SiswaChangePasswordPanelState
                 // Confirm New Password
                 _buildPasswordField(
                   controller: _confirmPwdController,
-                  label: '${AppStrings.titleConfirmation} Kata Sandi Baru',
+                  focusNode: _confirmFocus,
+                  label: 'Konfirmasi Kata Sandi Baru',
+                  hintText: '••••••••',
                   obscure: _obscureConfirm,
                   onToggle: () =>
                       setState(() => _obscureConfirm = !_obscureConfirm),
                   validator: (val) {
-                    if (val == null || val.isEmpty) return 'Wajib diisi';
+                    if (val == null || val.isEmpty) return 'Konfirmasi kata sandi wajib diisi';
                     if (val != _newPwdController.text) {
                       return 'Kata sandi tidak cocok';
                     }
@@ -218,22 +279,22 @@ class _SiswaChangePasswordPanelState
                   children: [
                     // Cancel Button
                     Expanded(
-                      child: OutlinedButton(
+                      child: TextButton(
                         onPressed:
                             _isSaving ? null : () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.textGray,
-                          side: const BorderSide(color: AppColors.borderLight),
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          foregroundColor: context.textSecondary,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                         child: Text(
                           AppStrings.buttonCancel,
                           style: GoogleFonts.inter(
                             fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
@@ -241,33 +302,47 @@ class _SiswaChangePasswordPanelState
                     const SizedBox(width: 16),
                     // Save Button
                     Expanded(
-                      child: ElevatedButton(
-                        onPressed: _isSaving ? null : _handleSave,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: AppColors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          elevation: 0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: _isSaving
+                              ? null
+                              : [
+                                  BoxShadow(
+                                    color: Nebula.teal.withValues(alpha: 0.3),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
                         ),
-                        child: _isSaving
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: AppColors.white,
+                        child: ElevatedButton(
+                          onPressed: _isSaving ? null : _handleSave,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Nebula.teal,
+                            foregroundColor: context.cardBg,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            elevation: 0,
+                          ),
+                          child: _isSaving
+                              ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    color: context.cardBg,
+                                  ),
+                                )
+                              : Text(
+                                  AppStrings.buttonSave,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
-                              )
-                            : Text(
-                                AppStrings.buttonSave,
-                                style: GoogleFonts.inter(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                        ),
                       ),
                     ),
                   ],
@@ -282,56 +357,100 @@ class _SiswaChangePasswordPanelState
 
   Widget _buildPasswordField({
     required TextEditingController controller,
+    required FocusNode focusNode,
     required String label,
+    required String hintText,
     required bool obscure,
     required VoidCallback onToggle,
     String? Function(String?)? validator,
   }) {
+    final bool isFocused = focusNode.hasFocus;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textDark,
+        Padding(
+          padding: const EdgeInsets.only(left: 2, bottom: 8),
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: isFocused
+                  ? Nebula.teal
+                  : context.textPrimary.withValues(alpha: 0.85),
+            ),
           ),
         ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.borderLight, width: 1),
-            borderRadius: BorderRadius.circular(12),
+        TextFormField(
+          controller: controller,
+          focusNode: focusNode,
+          obscureText: obscure,
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: context.textPrimary,
           ),
-          child: TextFormField(
-            controller: controller,
-            obscureText: obscure,
-            style: GoogleFonts.inter(fontSize: 14, color: AppColors.textDark),
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 14,
-              ),
-              prefixIcon: Icon(
-                CupertinoIcons.lock,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: isFocused
+                ? Nebula.teal.withValues(alpha: 0.08)
+                : (context.isDark
+                    ? Colors.white.withValues(alpha: 0.03)
+                    : Colors.black.withValues(alpha: 0.02)),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            hintText: hintText,
+            hintStyle: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: context.textSecondary.withValues(alpha: 0.5),
+            ),
+            prefixIcon: Icon(
+              CupertinoIcons.lock_fill,
+              size: 18,
+              color: isFocused ? Nebula.teal : context.textSecondary,
+            ),
+            suffixIcon: GestureDetector(
+              onTap: onToggle,
+              child: Icon(
+                obscure
+                    ? CupertinoIcons.eye_slash_fill
+                    : CupertinoIcons.eye_fill,
                 size: 18,
-                color: AppColors.textGray,
-              ),
-              suffixIcon: GestureDetector(
-                onTap: onToggle,
-                child: Icon(
-                  obscure ? CupertinoIcons.eye_slash : CupertinoIcons.eye,
-                  size: 18,
-                  color: AppColors.textGray,
-                ),
+                color: context.textSecondary.withValues(alpha: 0.7),
               ),
             ),
-            validator: validator,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: context.borderLight, width: 1),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                  color: context.borderLight.withValues(alpha: 0.8), width: 1),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Nebula.teal, width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Nebula.rose, width: 1.5),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Nebula.rose, width: 2),
+            ),
+            errorStyle: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Nebula.rose,
+            ),
           ),
+          validator: validator,
         ),
       ],
     );
   }
 }
+

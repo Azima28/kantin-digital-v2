@@ -1,10 +1,12 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 class StudentTransactionsScreen extends ConsumerStatefulWidget {
@@ -17,8 +19,8 @@ class StudentTransactionsScreen extends ConsumerStatefulWidget {
     super.key,
     required this.studentId,
     this.title = 'Semua Transaksi',
-    this.primaryColor = AppColors.darkTeal,
-    this.accentColor = AppColors.darkOrange,
+    this.primaryColor = Nebula.teal,
+    this.accentColor = Nebula.amber,
   });
 
   @override
@@ -175,7 +177,7 @@ class _StudentTransactionsScreenState
                 child: Text(
                   '${AppStrings.labelFailed} memuat transaksi: ${snapshot.error}',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(color: AppColors.error),
+                  style: GoogleFonts.inter(color: Nebula.rose),
                 ),
               ),
             );
@@ -199,7 +201,7 @@ class _StudentTransactionsScreenState
                           '${filtered.length} dari ${txs.length} transaksi',
                           style: GoogleFonts.inter(
                             fontSize: 12,
-                            color: AppColors.textGray,
+                            color: context.textSecondary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -210,7 +212,7 @@ class _StudentTransactionsScreenState
                           TextButton.icon(
                             onPressed: _resetFilters,
                             icon: const Icon(CupertinoIcons.clear, size: 14),
-                            label: const Text('Reset'),
+                            label: Text('Reset'),
                             style: TextButton.styleFrom(
                               foregroundColor: widget.primaryColor,
                               textStyle: GoogleFonts.inter(
@@ -231,7 +233,7 @@ class _StudentTransactionsScreenState
                           txs.isEmpty
                               ? AppStrings.noTransactions
                               : 'Tidak ada transaksi sesuai filter.',
-                          style: GoogleFonts.inter(color: AppColors.textGray),
+                          style: GoogleFonts.inter(color: context.textSecondary),
                         ),
                       )
                     : RefreshIndicator(
@@ -333,7 +335,7 @@ class _StudentTransactionsScreenState
     required VoidCallback onTap,
   }) {
     return Material(
-      color: AppColors.white,
+      color: context.cardBg,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
@@ -343,7 +345,7 @@ class _StudentTransactionsScreenState
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.borderGray),
+            border: Border.all(color: context.dividerCol),
           ),
           child: Row(
             children: [
@@ -357,7 +359,7 @@ class _StudentTransactionsScreenState
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.nearBlack,
+                    color: context.textPrimary,
                   ),
                 ),
               ),
@@ -379,9 +381,9 @@ class _StudentTransactionsScreenState
       height: 48,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderGray),
+        border: Border.all(color: context.dividerCol),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
@@ -396,7 +398,7 @@ class _StudentTransactionsScreenState
           style: GoogleFonts.inter(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: AppColors.nearBlack,
+            color: context.textPrimary,
           ),
           items: items
               .map(
@@ -434,10 +436,10 @@ class _StudentTransactionsScreenState
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      tileColor: AppColors.white,
+      tileColor: context.cardBg,
       leading: CircleAvatar(
         backgroundColor: isTopup
-            ? AppColors.softOrange
+            ? Nebula.amber
             : widget.primaryColor.withValues(alpha: 0.1),
         child: Icon(
           isTopup ? CupertinoIcons.creditcard : Icons.shopping_bag,
@@ -456,7 +458,7 @@ class _StudentTransactionsScreenState
       ),
       subtitle: Text(
         '${DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(date)} WIB • ${isTopup ? "Koperasi" : (tx['purchase_method'] == 'app' ? "Aplikasi" : "Kasir")}',
-        style: GoogleFonts.inter(fontSize: 11, color: AppColors.textGray),
+        style: GoogleFonts.inter(fontSize: 11, color: context.textSecondary),
       ),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -467,7 +469,7 @@ class _StudentTransactionsScreenState
             style: GoogleFonts.inter(
               fontSize: 13,
               fontWeight: FontWeight.bold,
-              color: isTopup ? AppColors.successGreen : AppColors.error,
+              color: isTopup ? Nebula.teal : Nebula.rose,
             ),
           ),
           if (status != 'success')
@@ -476,7 +478,7 @@ class _StudentTransactionsScreenState
               style: GoogleFonts.inter(
                 fontSize: 9,
                 fontWeight: FontWeight.bold,
-                color: AppColors.error,
+                color: Nebula.rose,
               ),
             ),
         ],

@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 class AdminSectionLabel extends StatelessWidget {
   final String label;
@@ -10,10 +10,10 @@ class AdminSectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 11,
         fontWeight: FontWeight.w700,
-        color: AppColors.mutedGray,
+        color: context.textSecondary,
         letterSpacing: 1.2,
       ),
     );

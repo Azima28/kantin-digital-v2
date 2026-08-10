@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 /// Virtual Account payment detail display showing VA number.
 class MidtransVaDetailForm extends StatelessWidget {
@@ -18,9 +19,9 @@ class MidtransVaDetailForm extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: AppColors.offWhite,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.borderGray),
+            border: Border.all(color: context.dividerCol),
           ),
           child: Column(
             children: [
@@ -28,10 +29,10 @@ class MidtransVaDetailForm extends StatelessWidget {
                 'Nomor Virtual Account',
                 style: GoogleFonts.inter(
                   fontSize: 12,
-                  color: AppColors.textGray,
+                  color: context.textSecondary,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -41,12 +42,12 @@ class MidtransVaDetailForm extends StatelessWidget {
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1,
-                      color: AppColors.teal,
+                      color: Nebula.teal,
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Icon(CupertinoIcons.doc_on_doc,
-                      color: AppColors.teal, size: 16),
+                  Icon(CupertinoIcons.doc_on_doc,
+                      color: Nebula.teal, size: 16),
                 ],
               ),
             ],
@@ -58,7 +59,7 @@ class MidtransVaDetailForm extends StatelessWidget {
           textAlign: TextAlign.center,
           style: GoogleFonts.inter(
             fontSize: 12,
-            color: AppColors.textGray,
+            color: context.textSecondary,
           ),
         ),
       ],

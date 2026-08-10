@@ -3,14 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 
 class ParentReceiptScreen extends StatelessWidget {
   final Map<String, dynamic> receiptData;
-  
-  const ParentReceiptScreen({super.key, required this.receiptData});
+
+  const ParentReceiptScreen({
+    super.key,
+    required this.receiptData,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,8 +27,8 @@ class ParentReceiptScreen extends StatelessWidget {
     final double amount = (receiptData['amount'] as num?)?.toDouble() ?? 0.0;
     final int newBalance = (receiptData['newBalance'] as num?)?.toInt() ?? 0;
 
-
-    Widget buildReceiptRow(String label, String value, {bool isPrimary = false, bool isStatus = false}) {
+    Widget buildReceiptRow(String label, String value,
+        {bool isPrimary = false, bool isStatus = false}) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,7 +37,7 @@ class ParentReceiptScreen extends StatelessWidget {
             label,
             style: GoogleFonts.inter(
               fontSize: 14,
-              color: AppColors.textGray,
+              color: context.textSecondary,
               fontWeight: FontWeight.w400,
             ),
           ),
@@ -45,7 +49,7 @@ class ParentReceiptScreen extends StatelessWidget {
                   ? Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.success.withValues(alpha: 0.25),
+                        color: Nebula.teal.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -54,7 +58,7 @@ class ParentReceiptScreen extends StatelessWidget {
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.successGreen,
+                          color: Nebula.teal,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -65,7 +69,7 @@ class ParentReceiptScreen extends StatelessWidget {
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: isPrimary ? FontWeight.w700 : FontWeight.w500,
-                        color: isPrimary ? AppColors.primary : AppColors.textDark,
+                        color: isPrimary ? Nebula.teal : context.textPrimary,
                       ),
                     ),
             ),
@@ -84,14 +88,15 @@ class ParentReceiptScreen extends StatelessWidget {
         child: SingleChildScrollView(
           padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 540),
+            constraints: const BoxConstraints(maxWidth: 480),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Pop-in animated success icon badge
+                const SizedBox(height: 48),
+
+                // Centered Checkmark/Plus
                 TweenAnimationBuilder<double>(
-                  tween: Tween<double>(begin: 0.5, end: 1.0),
+                  tween: Tween<double>(begin: 0.0, end: 1.0),
                   duration: const Duration(milliseconds: 500),
                   curve: Curves.elasticOut,
                   builder: (context, scale, child) {
@@ -103,14 +108,14 @@ class ParentReceiptScreen extends StatelessWidget {
                   child: Container(
                     width: 96,
                     height: 96,
-                    decoration: const BoxDecoration(
-                      color: AppColors.success, // Light green container circle background
+                    decoration: BoxDecoration(
+                      color: Nebula.teal.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
                     child: const Center(
                       child: Icon(
                         CupertinoIcons.checkmark_alt_circle_fill,
-                        color: AppColors.successGreen,
+                        color: Nebula.teal,
                         size: 56,
                       ),
                     ),
@@ -125,7 +130,7 @@ class ParentReceiptScreen extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+                    color: Nebula.teal,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -134,9 +139,9 @@ class ParentReceiptScreen extends StatelessWidget {
                 // Ticket Card
                 Container(
                   decoration: BoxDecoration(
-                    color: AppColors.white,
+                    color: context.cardBg,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.borderGray, width: 1),
+                    border: Border.all(color: context.dividerCol, width: 0.5),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.05),
@@ -158,14 +163,14 @@ class ParentReceiptScreen extends StatelessWidget {
                               style: GoogleFonts.inter(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.textDark,
+                                color: context.textPrimary,
                               ),
                             ),
-                            const Icon(CupertinoIcons.doc_text, color: AppColors.primary, size: 20),
+                            const Icon(CupertinoIcons.doc_text, color: Nebula.teal, size: 20),
                           ],
                         ),
                       ),
-                      const Divider(color: AppColors.borderGray, height: 1),
+                      Divider(color: context.dividerCol, height: 1),
                       
                       // Details Body
                       Padding(
@@ -189,7 +194,7 @@ class ParentReceiptScreen extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: AppColors.offWhite2,
+                                color: context.surfaceBg,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Row(
@@ -200,7 +205,7 @@ class ParentReceiptScreen extends StatelessWidget {
                                     style: GoogleFonts.inter(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
-                                      color: AppColors.textDark,
+                                      color: context.textPrimary,
                                     ),
                                   ),
                                   Text(
@@ -208,7 +213,7 @@ class ParentReceiptScreen extends StatelessWidget {
                                     style: GoogleFonts.inter(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w700,
-                                      color: AppColors.darkOrange, // Orange Accent
+                                      color: Nebula.amber,
                                     ),
                                   ),
                                 ],
@@ -227,7 +232,7 @@ class ParentReceiptScreen extends StatelessWidget {
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.primary, width: 2),
+                      side: const BorderSide(color: Nebula.teal, width: 2),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -240,7 +245,7 @@ class ParentReceiptScreen extends StatelessWidget {
                             'Bukti pembayaran PDF berhasil diunduh ke perangkat Anda.',
                             style: GoogleFonts.inter(),
                           ),
-                          backgroundColor: AppColors.successGreen,
+                          backgroundColor: Nebula.teal,
                           behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -248,11 +253,11 @@ class ParentReceiptScreen extends StatelessWidget {
                         ),
                       );
                     },
-                    icon: const Icon(CupertinoIcons.arrow_down_to_line, color: AppColors.primary, size: 16),
+                    icon: const Icon(CupertinoIcons.arrow_down_to_line, color: Nebula.teal, size: 16),
                     label: Text(
                       'DOWNLOAD BUKTI PEMBAYARAN (PDF)',
                       style: GoogleFonts.inter(
-                        color: AppColors.primary,
+                        color: Nebula.teal,
                         fontWeight: FontWeight.w700,
                         fontSize: 13,
                         letterSpacing: 0.5,
@@ -267,7 +272,7 @@ class ParentReceiptScreen extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: Nebula.teal,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -280,7 +285,7 @@ class ParentReceiptScreen extends StatelessWidget {
                     child: Text(
                       'KEMBALI KE HALAMAN UTAMA',
                       style: GoogleFonts.inter(
-                        color: AppColors.white,
+                        color: Colors.white,
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
                       ),
@@ -295,3 +300,4 @@ class ParentReceiptScreen extends StatelessWidget {
     );
   }
 }
+
