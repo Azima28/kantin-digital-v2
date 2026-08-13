@@ -17,6 +17,7 @@ import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/nebula_components.dart';
 import 'package:kantin_digital/core/widgets/nebula_effects.dart';
+import 'package:kantin_digital/core/widgets/app_toast.dart';
 
 class ProductFormScreen extends ConsumerStatefulWidget {
   final Product? initialProduct;
@@ -91,34 +92,48 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   bool _isSpiciness(String option) {
     final lower = option.toLowerCase();
-    return lower.contains('level') ||
-        lower.contains('pedas') ||
-        (lower.contains('sambal') && !lower.contains('tomat') && !lower.contains('tiram') && !lower.contains('barbekyu') && !lower.contains('teriyaki')) ||
-        lower.contains('cabai') ||
-        lower.contains('cabe');
+    return (lower.contains('level') ||
+            lower.contains('pedas') ||
+            lower.contains('cabai') ||
+            lower.contains('cabe') ||
+            (lower.contains('sambal') && !lower.contains('tomat') && !lower.contains('tiram') && !lower.contains('barbekyu') && !lower.contains('teriyaki'))) &&
+        !lower.contains('saus');
   }
 
   bool _isSauce(String option) {
     final lower = option.toLowerCase();
     return !_isSpiciness(option) && (
       lower.contains('saus') ||
+      lower.contains('sauce') ||
       lower.contains('tiram') ||
       lower.contains('barbekyu') ||
       lower.contains('barbecue') ||
       lower.contains('teriyaki') ||
-      (lower.contains('tomat') && !lower.contains('timun'))
+      lower.contains('mayo') ||
+      lower.contains('mayonnaise')
     );
   }
 
   bool _isVegetable(String option) {
     final lower = option.toLowerCase();
     return !_isSpiciness(option) && !_isSauce(option) && (
+      lower.contains('tomat') ||
       lower.contains('timun') ||
+      lower.contains('bayam') ||
       lower.contains('selada') ||
+      lower.contains('kubis') ||
+      lower.contains('kol') ||
+      lower.contains('kemangi') ||
+      lower.contains('kangkung') ||
+      lower.contains('wortel') ||
+      lower.contains('terong') ||
+      lower.contains('bawang') ||
+      lower.contains('paprika') ||
       lower.contains('sayur') ||
-      lower.contains('lalapan') ||
+      lower.contains('lalap') ||
       lower.contains('cucumber') ||
-      lower.contains('lettuce')
+      lower.contains('lettuce') ||
+      lower.contains('tomato')
     );
   }
 
@@ -1820,12 +1835,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       ref.invalidate(manageProductsProvider);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isEdit ? AppStrings.successProductUpdated : AppStrings.successProductSaved),
-            backgroundColor: Nebula.teal,
-            behavior: SnackBarBehavior.floating,
-          ),
+        AppToast.showSuccess(
+          context,
+          title: 'Berhasil Disimpan',
+          message: isEdit ? AppStrings.successProductUpdated : AppStrings.successProductSaved,
         );
         context.pop();
       }

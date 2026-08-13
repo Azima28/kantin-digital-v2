@@ -1,4 +1,4 @@
-﻿import 'package:flutter/cupertino.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
@@ -37,7 +37,10 @@ class AuditLogTile extends StatelessWidget {
 
     Color actionColor = Nebula.teal;
     IconData actionIcon = CupertinoIcons.settings;
-    if (actionType == 'KOREKSI_SALDO') {
+    if (actionType == 'BATAL_PESANAN' || actionType.contains('BATAL')) {
+      actionColor = Nebula.rose;
+      actionIcon = CupertinoIcons.xmark_circle_fill;
+    } else if (actionType == 'KOREKSI_SALDO') {
       actionColor = Nebula.rose;
       actionIcon = CupertinoIcons.exclamationmark_triangle_fill;
     } else if (actionType == 'REGISTRASI_KARTU') {
@@ -65,7 +68,27 @@ class AuditLogTile extends StatelessWidget {
           CircleAvatar(
             radius: 18,
             backgroundColor: actionColor.withValues(alpha: 0.1),
-            child: Icon(actionIcon, color: actionColor, size: 18),
+            child: (actionType.contains('BLOKIR') || actionType == 'UNLINK_KARTU')
+                ? Padding(
+                    padding: const EdgeInsets.all(3),
+                    child: Image.asset(
+                      'assets/icons/ic_card_block.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) =>
+                          Icon(actionIcon, color: actionColor, size: 18),
+                    ),
+                  )
+                : (actionType.contains('AKTIFKAN') || actionType == 'REGISTRASI_KARTU')
+                    ? Padding(
+                        padding: const EdgeInsets.all(3),
+                        child: Image.asset(
+                          'assets/icons/ic_card_activate.png',
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Icon(actionIcon, color: actionColor, size: 18),
+                        ),
+                      )
+                    : Icon(actionIcon, color: actionColor, size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(

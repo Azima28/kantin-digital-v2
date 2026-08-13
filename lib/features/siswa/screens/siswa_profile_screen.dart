@@ -12,6 +12,7 @@ import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 import 'package:kantin_digital/core/services/storage_service.dart';
 import 'package:kantin_digital/core/widgets/change_password_panel.dart';
 import 'package:kantin_digital/core/widgets/theme_toggle_tile.dart';
+import 'package:kantin_digital/core/widgets/app_toast.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 import 'package:kantin_digital/features/siswa/widgets/siswa_profile_header.dart';
@@ -217,13 +218,10 @@ class SiswaProfileScreen extends ConsumerWidget {
       await storageService.uploadAvatar(userId: userId, imageFile: imageFile);
       ref.invalidate(siswaStudentProvider);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Foto profil berhasil diperbarui!'),
-            backgroundColor: Nebula.teal,
-            behavior: SnackBarBehavior.floating,
-          ),
+        AppToast.showSuccess(
+          context,
+          title: 'Berhasil Disimpan',
+          message: 'Foto profil Anda telah aman diperbarui.',
         );
       }
     } catch (e) {

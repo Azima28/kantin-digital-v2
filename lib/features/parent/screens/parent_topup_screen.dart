@@ -37,7 +37,7 @@ class _ParentTopUpScreenState extends ConsumerState<ParentTopUpScreen> {
       // Fetch profile
       final profile = await client.from('profiles').select('full_name').eq('id', widget.studentId).maybeSingle();
       // Fetch student
-      final student = await client.from('students').select('class').eq('id', widget.studentId).maybeSingle();
+      final student = await client.from('students').select().eq('id', widget.studentId).maybeSingle();
 
       if (profile == null || student == null) {
         if (mounted) {

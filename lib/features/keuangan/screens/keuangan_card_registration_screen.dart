@@ -8,6 +8,7 @@ import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/widgets/app_toast.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_card_registration_form.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_card_registration_success.dart';
@@ -148,12 +149,10 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
                 });
 
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(AppStrings.successCardUnlinked),
-                      backgroundColor: Nebula.teal,
-                      behavior: SnackBarBehavior.floating,
-                    ),
+                  AppToast.showSuccess(
+                    context,
+                    title: 'Berhasil Disimpan',
+                    message: AppStrings.successCardUnlinked,
                   );
                 }
               } catch (e) {
@@ -249,6 +248,14 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
         _successTime = DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(DateTime.now());
         _isSuccess = true;
       });
+
+      if (mounted) {
+        AppToast.showSuccess(
+          context,
+          title: 'Berhasil Disimpan',
+          message: 'Kartu RFID $uid telah aman ditautkan ke $_fullName.',
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

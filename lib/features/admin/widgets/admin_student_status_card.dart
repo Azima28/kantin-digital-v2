@@ -6,7 +6,7 @@ import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 
 /// Info card showing student status, RFID, username, email, balance, and daily limit.
-/// Used inside the admin student detail screen.
+/// Styled according to the floating card detail design for Super Admin.
 class AdminStudentStatusCard extends StatelessWidget {
   final bool isCardActive;
   final String rfidUid;
@@ -28,52 +28,30 @@ class AdminStudentStatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: context.cardBg,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: context.shadowColor,
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.dividerCol.withValues(alpha: 0.7)),
       ),
       child: Column(
         children: [
           _buildInfoRow(context, 'Status Kartu', isCardActive),
-          Divider(
-            height: 24,
-            thickness: 0.5,
-            color: context.dividerCol,
-          ),
+          Divider(height: 20, thickness: 0.5, color: context.dividerCol.withValues(alpha: 0.7)),
           _buildTextInfoRow(context, 'UID RFID', rfidUid, isMonospace: true),
-          Divider(
-            height: 24,
-            thickness: 0.5,
-            color: context.dividerCol,
-          ),
+          Divider(height: 20, thickness: 0.5, color: context.dividerCol.withValues(alpha: 0.7)),
           _buildTextInfoRow(
             context,
             'Username',
             username.isNotEmpty ? username : '-',
           ),
-          Divider(
-            height: 24,
-            thickness: 0.5,
-            color: context.dividerCol,
-          ),
+          Divider(height: 20, thickness: 0.5, color: context.dividerCol.withValues(alpha: 0.7)),
           _buildTextInfoRow(
             context,
             'Email',
             email.isNotEmpty ? email : '-',
           ),
-          Divider(
-            height: 24,
-            thickness: 0.5,
-            color: context.dividerCol,
-          ),
+          Divider(height: 20, thickness: 0.5, color: context.dividerCol.withValues(alpha: 0.7)),
           _buildTextInfoRow(
             context,
             'Saldo',
@@ -81,17 +59,13 @@ class AdminStudentStatusCard extends StatelessWidget {
             highlightColor: Nebula.teal,
             isBold: true,
           ),
-          Divider(
-            height: 24,
-            thickness: 0.5,
-            color: context.dividerCol,
-          ),
+          Divider(height: 20, thickness: 0.5, color: context.dividerCol.withValues(alpha: 0.7)),
           _buildTextInfoRow(
             context,
             'Batas Harian',
-            dailyLimit != null
+            dailyLimit != null && dailyLimit! > 0
                 ? CurrencyFormatter.format(dailyLimit as num)
-                : 'Tidak Terbatas',
+                : 'Rp 0',
           ),
         ],
       ),
@@ -115,19 +89,20 @@ class AdminStudentStatusCard extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
           decoration: BoxDecoration(
-            color: isActive ? Nebula.teal.withValues(alpha: 0.1) : Nebula.rose.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(99),
+            color: isActive
+                ? Nebula.teal.withValues(alpha: 0.15)
+                : Nebula.rose.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
             isActive ? 'ACTIVE' : 'BLOCKED',
             style: GoogleFonts.inter(
               fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: isActive
-                  ? Nebula.teal
-                  : Nebula.rose,
+              color: isActive ? Nebula.teal : Nebula.rose,
+              letterSpacing: 0.5,
             ),
           ),
         ),
@@ -169,12 +144,12 @@ class AdminStudentStatusCard extends StatelessWidget {
             style: isMonospace
                 ? TextStyle(
                     fontFamily: 'Courier',
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: highlightColor ?? context.textPrimary,
                   )
                 : GoogleFonts.inter(
-                    fontSize: isBold ? 20 : 15,
+                    fontSize: isBold ? 14 : 13,
                     fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
                     color: highlightColor ?? context.textPrimary,
                   ),

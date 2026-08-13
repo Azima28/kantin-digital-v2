@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/widgets/app_toast.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
@@ -168,13 +169,10 @@ void showAddCanteenSheet(BuildContext context, WidgetRef ref) {
                             ref.invalidate(adminUsersProvider);
                             if (ctx.mounted) Navigator.pop(ctx);
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    '${nameCtrl.text.trim()} berhasil ditambahkan',
-                                  ),
-                                  backgroundColor: AppColors.successGreen,
-                                ),
+                              AppToast.showSuccess(
+                                context,
+                                title: 'Berhasil Disimpan',
+                                message: '${nameCtrl.text.trim()} telah aman ditambahkan.',
                               );
                             }
                           } catch (e) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 class LoginPreviewItem extends StatelessWidget {
@@ -20,11 +21,11 @@ class LoginPreviewItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = context.isDark;
 
-    final primaryTeal = isDark ? const Color(0xFF06D6A0) : const Color(0xFF065F56);
-    final textMuted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
-    final textCred = isDark ? const Color(0xFFE2E8F0) : const Color(0xFF023835);
-    final itemBg = isDark ? const Color(0x992A2A2A) : const Color(0xFFF0F8F6);
-    final itemBorder = isDark ? const Color(0x14FFFFFF) : const Color(0xFFD4EFE8);
+    final primaryTeal = isDark ? AppColors.tealConst : AppColors.darkTealConst;
+    final textMuted = isDark ? AppColors.darkTextSecondaryVal : AppColors.lightTextSecondaryVal;
+    final textCred = isDark ? AppColors.darkTextPrimaryVal : AppColors.lightTextPrimaryVal;
+    final itemBg = isDark ? AppColors.darkInputFieldBg : AppColors.lightInputFieldBg;
+    final itemBorder = isDark ? AppColors.darkInputFieldBorder : AppColors.lightInputFieldBorder;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -91,7 +92,7 @@ class LoginPreviewItem extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: primaryTeal.withValues(alpha: isDark ? 0.1 : 0.12),
+                  color: primaryTeal.withValues(alpha: isDark ? 0.15 : 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -107,4 +108,5 @@ class LoginPreviewItem extends StatelessWidget {
     );
   }
 }
+
 

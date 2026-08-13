@@ -9,7 +9,7 @@ import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 /// Card showing the RFID status with freeze/unfreeze toggle.
-/// Used inside the admin student detail screen.
+/// Styled as a horizontal action button to match the user screenshot design.
 class AdminStudentRfidSection extends ConsumerStatefulWidget {
   final String studentId;
   final bool isCardActive;
@@ -64,9 +64,7 @@ class _AdminStudentRfidSectionState
             content: Text(
               'Kartu RFID berhasil ${newStatus ? "diaktifkan kembali" : "dibekukan"}.',
             ),
-            backgroundColor: newStatus
-                ? Nebula.teal
-                : Nebula.amber,
+            backgroundColor: newStatus ? Nebula.teal : Nebula.amber,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -89,39 +87,37 @@ class _AdminStudentRfidSectionState
     return GestureDetector(
       onTap: _toggleFreezeCard,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         decoration: BoxDecoration(
           color: widget.isCardActive
               ? Nebula.rose.withValues(alpha: 0.1)
               : Nebula.teal.withValues(alpha: 0.1),
           border: Border.all(
             color: widget.isCardActive
-                ? Nebula.rose.withValues(alpha: 0.1)
-                : Nebula.teal.withValues(alpha: 0.1),
+                ? Nebula.rose.withValues(alpha: 0.3)
+                : Nebula.teal.withValues(alpha: 0.3),
             width: 1,
           ),
           borderRadius: BorderRadius.circular(16),
         ),
-        child: Column(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               widget.isCardActive
                   ? CupertinoIcons.snow
                   : CupertinoIcons.checkmark_circle,
-              color: widget.isCardActive
-                  ? Nebula.rose
-                  : Nebula.teal,
+              color: widget.isCardActive ? Nebula.rose : Nebula.teal,
+              size: 22,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(width: 10),
             Text(
               widget.isCardActive ? 'Bekukan\nKartu RFID' : 'Aktifkan\nKartu RFID',
-              textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: widget.isCardActive
-                    ? Nebula.rose
-                    : Nebula.teal,
+                color: widget.isCardActive ? Nebula.rose : Nebula.teal,
+                height: 1.2,
               ),
             ),
           ],

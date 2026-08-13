@@ -1,4 +1,4 @@
-﻿import 'package:flutter/cupertino.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -416,7 +416,10 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
 
     IconData logIcon = CupertinoIcons.doc_text;
     Color logColor = widget.primaryColor;
-    if (actionType.contains('KOREKSI')) {
+    if (actionType.contains('BATAL')) {
+      logIcon = CupertinoIcons.xmark_circle_fill;
+      logColor = Nebula.rose;
+    } else if (actionType.contains('KOREKSI')) {
       logIcon = CupertinoIcons.refresh;
       logColor = widget.accentColor;
     } else if (actionType.contains('REGISTRASI')) {

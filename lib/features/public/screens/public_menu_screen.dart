@@ -502,7 +502,7 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
       data: (dbItems) {
         var filtered = dbItems;
 
-        if (_selectedCanteenId != null) {
+        if (_selectedCanteenId != null && _selectedCanteenId != 'semua') {
           filtered = filtered.where((item) => item.product.operatorId == _selectedCanteenId || item.canteenName.toLowerCase() == activeStall.name.toLowerCase()).toList();
         }
 
@@ -548,7 +548,7 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
     return productsAsync.when(
       data: (dbItems) {
         var filtered = dbItems;
-        if (_selectedCanteenId != null) {
+        if (_selectedCanteenId != null && _selectedCanteenId != 'semua') {
           filtered = filtered.where((item) => item.product.operatorId == _selectedCanteenId || item.canteenName.toLowerCase() == activeStall.name.toLowerCase()).toList();
         }
         if (_searchQuery.isNotEmpty) {
@@ -701,15 +701,34 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
                               height: 1.2,
                             ),
                           ),
-                          const SizedBox(height: 3),
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              const Icon(Icons.storefront_rounded, size: 11, color: Nebula.teal),
+                              const SizedBox(width: 3),
+                              Expanded(
+                                child: Text(
+                                  item.canteenName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: Nebula.teal,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
                           Text(
                             _getProductDescription(product),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.inter(
-                              fontSize: 11,
+                              fontSize: 10.5,
                               color: context.textSecondary,
-                              height: 1.25,
+                              height: 1.2,
                             ),
                           ),
                         ],
@@ -760,6 +779,7 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
         ..._getPresetProductsForStall(const _CanteenStallInfo(id: 'bude-ani', name: 'Bude Ani')),
         ..._getPresetProductsForStall(const _CanteenStallInfo(id: 'stan-jus-segar', name: 'Stan Jus Segar')),
         ..._getPresetProductsForStall(const _CanteenStallInfo(id: 'stan-bakso-enak', name: 'Stan Bakso Enak')),
+        ..._getPresetProductsForStall(const _CanteenStallInfo(id: 'stan-nasgor', name: 'Stan Nasgor')),
       ];
     }
     if (stall.id == 'stan-bakso-enak') {
@@ -1341,29 +1361,52 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
     // Classification helpers
     bool isSpiciness(String option) {
       final lower = option.toLowerCase();
-      return lower.contains('level') ||
-          lower.contains('pedas') ||
-          lower.contains('spicy') ||
-          lower.contains('cabe') ||
-          lower.contains('cabai') ||
-          lower.contains('sambal') ||
-          lower.contains('saus') ||
-          lower.contains('sauce') ||
-          lower.contains('chili') ||
-          lower.contains('chilli');
+      return (lower.contains('level') ||
+              lower.contains('pedas') ||
+              lower.contains('spicy') ||
+              lower.contains('cabe') ||
+              lower.contains('cabai') ||
+              (lower.contains('sambal') && !lower.contains('tomat') && !lower.contains('tiram') && !lower.contains('barbekyu') && !lower.contains('teriyaki')) ||
+              lower.contains('chili') ||
+              lower.contains('chilli')) &&
+          !lower.contains('saus');
+    }
+
+    bool isSauce(String option) {
+      final lower = option.toLowerCase();
+      return !isSpiciness(option) && (
+        lower.contains('saus') ||
+        lower.contains('sauce') ||
+        lower.contains('tiram') ||
+        lower.contains('barbekyu') ||
+        lower.contains('barbecue') ||
+        lower.contains('teriyaki') ||
+        lower.contains('mayo') ||
+        lower.contains('mayonnaise')
+      );
     }
 
     bool isVegetable(String option) {
       final lower = option.toLowerCase();
-      return lower.contains('cucumber') ||
-          lower.contains('tomato') ||
-          lower.contains('lettuce') ||
-          lower.contains('sayur') ||
-          lower.contains('lalap') ||
-          lower.contains('timun') ||
-          lower.contains('tomat') ||
-          lower.contains('selada') ||
-          lower.contains('bawang');
+      return !isSpiciness(option) && !isSauce(option) && (
+        lower.contains('tomat') ||
+        lower.contains('timun') ||
+        lower.contains('bayam') ||
+        lower.contains('selada') ||
+        lower.contains('kubis') ||
+        lower.contains('kol') ||
+        lower.contains('kemangi') ||
+        lower.contains('kangkung') ||
+        lower.contains('wortel') ||
+        lower.contains('terong') ||
+        lower.contains('bawang') ||
+        lower.contains('paprika') ||
+        lower.contains('sayur') ||
+        lower.contains('lalap') ||
+        lower.contains('cucumber') ||
+        lower.contains('lettuce') ||
+        lower.contains('tomato')
+      );
     }
 
     int getToppingPrice(String option) {

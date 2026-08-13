@@ -7,6 +7,7 @@ import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/widgets/app_toast.dart';
 
 /// A reusable floating panel for changing account passwords across all roles.
 class ChangePasswordPanel extends ConsumerStatefulWidget {
@@ -110,12 +111,10 @@ class _ChangePasswordPanelState extends ConsumerState<ChangePasswordPanel> {
 
       if (!mounted) return;
       nav.pop(); // close dialog
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Kata sandi berhasil diperbarui!'),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-        ),
+      AppToast.showSuccess(
+        context,
+        title: 'Berhasil Disimpan',
+        message: 'Kata sandi Anda telah aman diperbarui.',
       );
     } catch (e) {
       if (!mounted) return;

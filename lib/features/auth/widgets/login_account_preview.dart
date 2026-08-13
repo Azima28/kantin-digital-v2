@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 class LoginAccountPreview extends StatelessWidget {
@@ -12,25 +13,27 @@ class LoginAccountPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = context.isDark;
 
-    final primaryTeal = isDark ? const Color(0xFF06D6A0) : const Color(0xFF0D9488);
-    final glassBorder = isDark ? const Color(0x14FFFFFF) : const Color(0xFFCEECE4);
-    final glassBg = isDark ? const Color(0xA6202020) : const Color(0xF5FFFFFF);
-    final textMuted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569);
+    final primaryTeal = isDark ? AppColors.tealConst : AppColors.darkTealConst;
+    final glassBorder = isDark ? AppColors.darkCardBorder : AppColors.lightInputFieldBorder;
+    final glassBg = isDark ? AppColors.darkCardBg : AppColors.lightCardBg;
+    final textMuted = isDark ? AppColors.darkTextSecondaryVal : AppColors.lightTextSecondaryVal;
 
     return Container(
       width: width ?? 300,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: glassBg,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: glassBorder, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? const Color(0x99000000) : const Color(0x14065F56),
-            blurRadius: 50,
-            offset: const Offset(0, 20),
-          ),
-        ],
+        boxShadow: isDark
+            ? []
+            : [
+                const BoxShadow(
+                  color: Color(0x0D000000),
+                  blurRadius: 24,
+                  offset: Offset(0, 8),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,7 +48,7 @@ class LoginAccountPreview extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                     decoration: BoxDecoration(
-                      color: primaryTeal.withValues(alpha: isDark ? 0.12 : 0.1),
+                      color: primaryTeal.withValues(alpha: isDark ? 0.15 : 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -92,5 +95,6 @@ class LoginAccountPreview extends StatelessWidget {
     );
   }
 }
+
 
 

@@ -81,7 +81,7 @@ final categoryPreviewProvider = FutureProvider.autoDispose
       .select('id, operator_id, name, price, category, is_available, image_url, customizable_options, canteen_operators(canteen_name)')
       .eq('category', filter.category);
 
-  if (filter.canteenId != null) {
+  if (filter.canteenId != null && filter.canteenId != 'semua') {
     query = query.eq('operator_id', filter.canteenId!);
   }
 
@@ -174,7 +174,7 @@ class PaginatedProductsNotifier extends StateNotifier<PaginatedProductsState> {
       if (filter.category != null) {
         query = query.eq('category', filter.category!);
       }
-      if (filter.canteenId != null) {
+      if (filter.canteenId != null && filter.canteenId != 'semua') {
         query = query.eq('operator_id', filter.canteenId!);
       }
       if (filter.searchQuery.isNotEmpty) {
@@ -213,7 +213,7 @@ class PaginatedProductsNotifier extends StateNotifier<PaginatedProductsState> {
       if (filter.category != null) {
         query = query.eq('category', filter.category!);
       }
-      if (filter.canteenId != null) {
+      if (filter.canteenId != null && filter.canteenId != 'semua') {
         query = query.eq('operator_id', filter.canteenId!);
       }
       if (filter.searchQuery.isNotEmpty) {

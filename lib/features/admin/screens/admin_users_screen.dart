@@ -1,4 +1,4 @@
-﻿import 'package:flutter/cupertino.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,14 +6,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
-import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_import_csv_dialog.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_user_list_tile.dart';
-import 'package:kantin_digital/features/admin/widgets/admin_add_student_sheet.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_user_search_filter.dart';
-import 'package:kantin_digital/features/admin/widgets/admin_add_canteen_sheet.dart';
-import 'package:kantin_digital/features/admin/widgets/admin_add_finance_sheet.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 class AdminUsersScreen extends ConsumerStatefulWidget {
@@ -25,7 +21,7 @@ class AdminUsersScreen extends ConsumerStatefulWidget {
 
 class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
   final TextEditingController _searchController = TextEditingController();
-  String _selectedRoleFilter = 'Semua'; // 'Semua', 'Keuangan', 'Kantin', 'Siswa', 'Orang Tua'
+  String _selectedRoleFilter = 'Semua';
   String _searchQuery = '';
 
   @override
@@ -76,7 +72,8 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
           'actor_id': actorId,
           'actor_name': actorName,
           'action_type': newStatus ? 'AKTIFKAN_AKUN' : 'BLOKIR_AKUN',
-          'description': 'Super Admin ${newStatus ? "mengaktifkan" : "memblokir"} akun dengan ID: $profileId (Role: $role)',
+          'description':
+              'Super Admin ${newStatus ? "mengaktifkan" : "memblokir"} akun dengan ID: $profileId (Role: $role)',
           'target_id': profileId,
           'old_value': {'is_active': currentStatus},
           'new_value': {'is_active': newStatus},
@@ -89,7 +86,9 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Status akun berhasil ${newStatus ? "diaktifkan" : "dinonaktifkan"}.'),
+            content: Text(
+              'Status akun berhasil ${newStatus ? "diaktifkan" : "dinonaktifkan"}.',
+            ),
             backgroundColor: Nebula.teal,
             behavior: SnackBarBehavior.floating,
           ),
@@ -125,7 +124,9 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('${AppStrings.titleDetail} untuk peran Admin dikelola langsung dari database.'),
+            content: Text(
+              '${AppStrings.titleDetail} untuk peran Admin dikelola langsung dari database.',
+            ),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -137,7 +138,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
     final usersAsync = ref.watch(adminUsersProvider);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: context.surfaceBg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -145,9 +146,9 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
         title: Text(
           'Kelola Akun Pengguna',
           style: GoogleFonts.inter(
-            fontSize: 20,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: Nebula.teal,
+            color: context.textPrimary,
           ),
         ),
         actions: [
@@ -155,9 +156,10 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
               _selectedRoleFilter != 'Admin' &&
               _selectedRoleFilter != 'Orang Tua')
             IconButton(
-              icon: Icon(CupertinoIcons.square_arrow_down, color: Nebula.teal),
+              icon: const Icon(CupertinoIcons.square_arrow_down, color: Nebula.teal),
               tooltip: 'Import $_selectedRoleFilter (CSV)',
-              onPressed: () => showImportUsersDialog(context, ref, _selectedRoleFilter),
+              onPressed: () =>
+                  showImportUsersDialog(context, ref, _selectedRoleFilter),
             ),
         ],
       ),
@@ -179,11 +181,10 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
             },
           ),
 
-          // User list
+          // User list / grid
           Expanded(
             child: usersAsync.when(
               data: (users) {
-                // In-memory filter by role is now handled at DB layer via adminRoleFilterProvider
                 var filtered = users;
 
                 // Filter by search query
@@ -217,24 +218,66 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                     ref.invalidate(adminUsersProvider);
                   },
                   color: Nebula.teal,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    itemCount: filtered.length,
-                    itemBuilder: (context, index) {
-                      final user = filtered[index];
-                      return AdminUserListTile(
-                        user: user,
-                        getRoleLabel: _getRoleLabel,
-                        onToggleStatus: (id, role, isActive) =>
-                            _toggleUserStatus(id, role, isActive),
-                        onNavigateToDetail: (id, role) =>
-                            _navigateToDetail(id, role),
-                      );
-                    },
-                  ),
-                );
-              },
-              loading: () => Center(child: CupertinoActivityIndicator(color: Nebula.teal)),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final bool isWide = constraints.maxWidth >= 700;
+
+                      if (isWide) {
+                        return GridView.builder(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisExtent: 136,
+                            crossAxisSpacing: 14,
+                            mainAxisSpacing: 14,
+                          ),
+                          itemCount: filtered.length,
+                          itemBuilder: (context, index) {
+                            final user = filtered[index];
+                            return AdminUserListTile(
+                              user: user,
+                              getRoleLabel: _getRoleLabel,
+                              onToggleStatus: (id, role, isActive) =>
+                                  _toggleUserStatus(id, role, isActive),
+                              onNavigateToDetail: (id, role) =>
+                                  _navigateToDetail(id, role),
+                            );
+                          },
+                        );
+                      }
+
+                      return ListView.builder(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 8,
+                        ),
+                        itemCount: filtered.length,
+                        itemBuilder: (context, index) {
+                          final user = filtered[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: AdminUserListTile(
+                              user: user,
+                              getRoleLabel: _getRoleLabel,
+                              onToggleStatus: (id, role, isActive) =>
+                                  _toggleUserStatus(id, role, isActive),
+                              onNavigateToDetail: (id, role) =>
+                                  _navigateToDetail(id, role),
+                            ),
+                          );
+                          },
+                        );
+                      },
+                    ),
+                  );
+                },
+              loading: () => const Center(
+                child: CupertinoActivityIndicator(color: Nebula.teal),
+              ),
               error: (err, stack) => Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -245,7 +288,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                     const SizedBox(height: 8),
                     ElevatedButton(
                       onPressed: () => ref.invalidate(adminUsersProvider),
-                      child: Text(AppStrings.buttonRetry),
+                      child: const Text(AppStrings.buttonRetry),
                     ),
                   ],
                 ),
@@ -254,43 +297,6 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
           ),
         ],
       ),
-      floatingActionButton: (_selectedRoleFilter != 'Semua' &&
-              _selectedRoleFilter != 'Orang Tua')
-          ? PressScale(
-              onTap: () => _showAddUserSheet(context, _selectedRoleFilter),
-              child: FloatingActionButton.small(
-                onPressed: () => _showAddUserSheet(context, _selectedRoleFilter),
-                backgroundColor: Nebula.teal,
-                shape: const CircleBorder(),
-                child: Icon(CupertinoIcons.add, color: context.cardBg),
-              ),
-            )
-          : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
-
-
-  void _showAddUserSheet(BuildContext context, String roleFilter) {
-    if (roleFilter == 'Siswa') {
-      _showAddStudentSheet(context);
-    } else if (roleFilter == 'Kantin') {
-      _showAddCanteenSheet(context);
-    } else if (roleFilter == 'Keuangan') {
-      _showAddFinanceSheet(context);
-    }
-  }
-
-  void _showAddStudentSheet(BuildContext context) {
-    showAddStudentSheet(context, ref);
-  }
-
-  void _showAddCanteenSheet(BuildContext context) {
-    showAddCanteenSheet(context, ref);
-  }
-
-  void _showAddFinanceSheet(BuildContext context) {
-    showAddFinanceSheet(context, ref);
-  }
-
 }

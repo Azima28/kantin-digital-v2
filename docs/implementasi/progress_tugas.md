@@ -301,7 +301,7 @@ lib/
 *   [x] **Main Layout** — bottom navigation (Beranda, Riwayat, Kartu, Akun).
 
 ### [x] Phase 5: Modul Kantin/POS (Mobile App)
-*   [x] **POS Home** — dashboard kasir (termasuk filter harian otomatis pada tab selesai & batal di daftar pesanan).
+*   [x] **POS Home** — dashboard kasir (termasuk grafik volume penjualan harian & grafik donat distribusi makanan terlaris dengan filter tanggal interaktif).
 *   [x] **POS Terminal/Dashboard** — terminal transaksi.
 *   [x] **Cart** — keranjang belanja.
 *   [x] **Check Card** — scan & cek kartu siswa.
@@ -583,3 +583,102 @@ lib/
       - Redesain indikator bottom navigation bar [premium_bottom_nav_bar.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/core/widgets/premium_bottom_nav_bar.dart) dengan badge dan penanda tab aktif yang jernih.
       - Redesain tampilan kosong [empty_state_widget.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/core/widgets/empty_state_widget.dart) dengan kontainer ikon melingkar yang modern dan tipografi yang proporsional.
       - Menjaga 100% fungsionalitas logika bisnis, RPC Supabase, dan aturan keamanan aplikasi.
+42. **Redesain Modal Detail Aktivitas Keuangan & Penyempurnaan Teks Keterangan**: ✅ **Selesai**
+    * **Tampilan Modal Dialog Terpusat**: Mengubah modal detail aktivitas keuangan pada [keuangan_history_screen.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/keuangan/screens/keuangan_history_screen.dart) dari bottom sheet menjadi dialog modal terpusat (`Dialog`) berlayar bersih dengan ikon dokumen hijau mint besar, baris Waktu/Keterangan/Pelaku berikon, kartu komparasi `SEBELUM` & `SESUDAH`, dan tombol pill `TUTUP` hijau tua di kanan bawah persis sesuai gambar referensi.
+    * **Penyempurnaan Teks Keterangan**: Menghapus UUID teknis panjang dan memformat ulang teks keterangan agar lebih jelas mencantumkan nama siswa, nama stan/petugas kantin, serta nominal uang terformat (contoh: *"Pesanan oleh Ahmad Subarjo di Stan Bakso Enak dibatalkan. Saldo Rp 10.231 dikembalikan ke siswa."*).
+43. **Redesain Dialog Export Laporan (Excel & PDF)**: ✅ **Selesai**
+    * **Presisi Sesuai Gambar**: Mengubah dialog eksport laporan pada [keuangan_report_screen.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/keuangan/screens/keuangan_report_screen.dart) menjadi dialog terpusat dengan:
+      - Header berikon dokumen pencarian biru/teal lembut + judul **Export Laporan**.
+      - Kartu pilihan format berdampingan (**Excel (.xls)** dengan border & aksen atas hijau + label "Terpilih", dan **PDF** dengan border & aksen atas merah).
+      - Sakelar `CupertinoSwitch` untuk opsi *"Rekap Riwayat Audit Log"* dan *"Detail Per-Siswa (Data Sensitif)"*.
+      - Tombol teks *"Batal"* di tengah dan tombol utama *"Download File"* berupa tombol pill penuh bergaris membulat dengan ikon unduh.
+44. **Filter 3 Dropdown (Tanggal, Bulan, Tahun) Laporan Keuangan**: ✅ **Selesai**
+    * **Penyederhanaan Tampilan Filter**: Mengubah komponen filter pada [keuangan_report_screen.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/keuangan/screens/keuangan_report_screen.dart) menjadi **hanya 3 dropdown** yang disusun rapi berdampingan dalam 1 baris:
+      - **Dropdown 1 (Tanggal)**: Pilihan *Semua* (rekap penuh 1 bulan) atau *Tgl 01* s/d *Tgl 31* (rekap harian spesifik).
+      - **Dropdown 2 (Bulan)**: Pilihan *Januari* s/d *Desember*.
+      - **Dropdown 3 (Tahun)**: Pilihan *2024* s/d *2030*.
+      - **Pencegahan Hari Tidak Valid**: Pilihan tanggal pada dropdown secara otomatis membatasi hari maksimum sesuai bulan & tahun yang dipilih (contoh: Februari 28/29 hari, April 30 hari).
+45. **Redesain Detail Aktivitas Keuangan Tipe Batal Pesanan**: ✅ **Selesai**
+    * **Presisi 100% Sesuai Gambar Referensi**: Merombak modal dialog detail aktivitas keuangan untuk tipe `BATAL_PESANAN` di [keuangan_history_screen.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/keuangan/screens/keuangan_history_screen.dart) dengan:
+      - Badge header melingkar merah lembut berikon `xmark_circle_fill` merah + tag `TIPE AKSI:` ` BATAL PESANAN ` dalam pill merah muda lembut.
+      - Susunan baris informasi vertikal (*Waktu*, *Keterangan*, *Pelaku (Actor)*) lengkap dengan label terpisah dan teks tebal terformat.
+      - Kartu `SEBELUM` (Latar slate/abu-abu lembut + `Status: Dipesan`) & Kartu `SESUDAH` (Latar merah muda lembut + border merah + header `SESUDAH` merah + `Status: Dibatalkan` merah) yang dipisahkan ikon panah melingkar `( -> )` di tengah.
+      - Tombol utama **TUTUP** selebar kontainer (*full width*) berbentuk pill membulat di bagian paling bawah.
+46. **Kustomisasi Logo Top Up pada Detail & Riwayat Keuangan**: ✅ **Selesai**
+    * **Penerapan Gambar Logo Kustom + Fallback**: Menambahkan aset gambar dompet *Top Up* teal ([ic_topup_wallet.png](file:///d:/mantap%20sih/kantin-digital-v2/assets/icons/ic_topup_wallet.png)) dengan `errorBuilder` fallback ikon dompet bawaan Flutter pada:
+      - Header modal `_showDetailDialog` untuk seluruh aktivitas keuangan bertipe *Top Up* (`TOPUP_SALDO`, `TOPUP_TUNAI`, `TOPUP`).
+      - Ikon kontainer melingkar pada setiap item riwayat transaksi *Top Up* di daftar [keuangan_history_screen.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/keuangan/screens/keuangan_history_screen.dart).
+      - Menambahkan `errorBuilder` otomatis agar saat aplikasi dijalankan via Hot Reload/pemuatan aset baru belum di-restart, ikon dompet bawaan yang rapi dan elegan tetap tampil tanpa pernah memicu kotak silang merah (broken image placeholder).
+47. **Single Filter Button & Modal Dialog Filter Periode**: ✅ **Selesai**
+    * **Presisi 100% Sesuai Gambar Referensi**: Mengganti tampilan 3-dropdown pada [keuangan_report_screen.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/keuangan/screens/keuangan_report_screen.dart) menjadi **1 Tombol Filter** yang dapat diklik untuk membuka modal dialog **Filter Periode**:
+      - Header: Judul **Filter Periode** + tombol silang `X` di sudut kanan atas.
+      - Section **PILIHAN CEPAT**: Chip pill pilihan cepat (*Hari Ini*, *Minggu Ini*, *Bulan Ini*) berlatar teal saat terpilih.
+      - Section **RENTANG WAKTU**: Dua kotak pemilih tanggal berdampingan (*Dari* & *Sampai*) berikon kalender.
+      - Section **PILIH BULAN 🔒**: Pemilih tahun (*< 2026 >*) yang **bisa diketik langsung** (Typable 4-digit input field) maupun diklik via tombol panah (`<` / `>`), serta grid 12 tombol bulan (*Jan* s/d *Des*) berlatar abu-abu lembut.
+      - **Eliminasi Popup Material DatePicker**: Menghapus `showDatePicker` bawaan Flutter yang memunculkan dialog `August 2026` di atas modal, dan menggantinya dengan dialog pemilih tanggal custom yang bersih dan serasi dengan tema aplikasi.
+      - Footer: Tombol **Batal** (Outline) dan **Terapkan** (Teal Pill).
+48. **Pembaruan Logo & Warna Batal Pesanan pada Riwayat Transaksi**: ✅ **Selesai**
+    * **Integrasi Ikon & Tema Warna Merah Batal Pesanan**: Mengubah logo ikon dan skema warna untuk seluruh item aktivitas `BATAL_PESANAN` di [keuangan_history_screen.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/keuangan/screens/keuangan_history_screen.dart), [audit_log_tile.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/admin/widgets/audit_log_tile.dart), dan [officer_activities_screen.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/shared/screens/officer_activities_screen.dart):
+      - Ikon lingkaran silang merah (`xmark_circle_fill`) dengan latar lingkaran merah muda lembut.
+      - Teks judul `BATAL PESANAN` berwarna merah menyala (`Nebula.rose` / `0xFFDC2626`) agar konsisten dengan tema merah pada modal detail pembatalan pesanan.
+49. **Pembaruan & Penyempurnaan Format File Ekspor Excel**: ✅ **Selesai**
+    * **Penataan Layout & Formatting Profesional**: Merombak total `downloadExcelReport` pada [report_export_service.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/core/services/report_export_service.dart):
+      - **Penataan Perataan Sel (Alignment)**: Angka nominal/uang dirata-kanan (Right-aligned), nomor & status dirata-tengah (Center-aligned), dan teks deskripsi dirata-kiri (Left-aligned).
+      - **Penyusun Baris Total Summary**: Menambahkan baris **Total Row** ber-highlight teal muda (`#CCFBF1`) pada bagian paling bawah tabel metrik dan tabel stan kantin.
+      - **Header Seksi Terstruktur**: Menambahkan seksi header bertata letak rapi (`I. RINGKASAN METRIK KEUANGAN`, `II. PENDAPATAN PER STAN KANTIN`).
+      - **Lebar Kolom Ekstra Luas**: Mengatur lebar kolom (36.0, 26.0, 36.0, dst) agar tidak ada teks yang terpotong.
+50. **Logo Aset Kustom untuk Blokir Kartu & Aktifkan Kartu**: ✅ **Selesai**
+    * **Penerapan Gambar Logo Kustom + Fallback**: Mengintegrasikan 2 aset gambar kustom baru:
+      - [ic_card_block.png](file:///d:/mantap%20sih/kantin-digital-v2/assets/icons/ic_card_block.png) (Kartu RFID Teal + Gembok Terkunci Putih) untuk aktivitas **Blokir Kartu / Unlink Kartu / Freeze Kartu**.
+      - [ic_card_activate.png](file:///d:/mantap%20sih/kantin-digital-v2/assets/icons/ic_card_activate.png) (Kartu RFID Teal + Gembok Terbuka Putih) untuk aktivitas **Aktifkan Kartu / Registrasi Kartu / Unfreeze Kartu**.
+      - Diaplikasikan pada modal detail `_showDetailDialog`, riwayat transaksi [keuangan_history_screen.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/keuangan/screens/keuangan_history_screen.dart), dan [audit_log_tile.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/admin/widgets/audit_log_tile.dart) lengkap dengan `errorBuilder` fallback yang aman.
+51. **Penyelarasan Warna Card Panel Akun Demo dengan Card Form Login**: ✅ **Selesai**
+    * **Presisi Token Warna AppColors**: Merombak total variabel warna pada [login_account_preview.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/auth/widgets/login_account_preview.dart) dan [login_preview_item.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/auth/widgets/login_preview_item.dart) agar menggunakan sistem token warna `AppColors` yang persis sama dengan kartu form utama login.
+52. **Redesain Total Styling Cetak PDF Laporan Keuangan (Executive Grade Layout)**: ✅ **Selesai**
+    * **Redesain Visual & Layout dokumen PDF**: Merombak fungsi `downloadPdfReport` di [report_export_service.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/core/services/report_export_service.dart) dengan standar tata letak eksekutif profesional.
+53. **Integrasi Grafik Tren Transaksi Harian Realtime (Supabase Realtime Stream)**: ✅ **Selesai**
+    * **Stream Realtime & Pengolahan Data Transaksi Asli**: Merombak [daily_trend_chart_dialog.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/keuangan/widgets/daily_trend_chart_dialog.dart) dan [keuangan_providers.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/keuangan/providers/keuangan_providers.dart) dari data statis/mock menjadi data **Realtime**.
+54. **Penyelarasan Grafik Tren Transaksi dengan Periode Filter Terpilih**: ✅ **Selesai**
+    * **Penyesuaian Rentang Tanggal & Agregasi Dinamis**: Meng-update `DailyTrendChartDialog` dan `dailyTrendChartRealtimeProvider` agar menerima parameter `ReportFilterParam` yang dipilih user (contoh: *01 Jul 2026 - 17 Jul 2026*, *Hari Ini*, *Minggu Ini*, *Bulan Ini*, atau *Rentang Tanggal Kustom*):
+      - Mengagregasikan data transaksi Supabase secara presisi sesuai rentang tanggal awal (`startDate`) dan akhir (`endDate`) yang aktif.
+      - **Adaptif Skala Waktu**: Rentang <= 14 hari menampilkan titik harian dengan tanggal/nama hari, rentang 15-31 hari menampilkan titik per tanggal (1..31), dan rentang > 31 hari mengelompokkan data per bulan.
+      - Menghitung rata-rata harian dan perbandingan % dengan periode sebelumnya secara dinamis.
+      - Menyesuaikan label header modal dialog dengan nama periode yang sedang aktif.
+55. **Dukungan Tampilan Keseluruhan Menu Saat Memilih "Semua Stan"**: ✅ **Selesai**
+    * **Penyelarasan Query & Filter Provider**: Memperbaiki logika filter pada `categoryPreviewProvider`, `PaginatedProductsNotifier`, serta [public_menu_screen.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/public/screens/public_menu_screen.dart) dan [public_providers.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/public/providers/public_providers.dart):
+      - Ketika opsi **"Semua Stan"** (`canteenId == 'semua'`) dipilih, sistem tidak lagi menyaring berdasarkan satu operator ID spesifik, melainkan secara otomatis menampilkan seluruh daftar makanan, minuman, dan camilan dari semua stan kantin yang terdaftar di aplikasi.
+      - Menambahkan label nama stan penyedia (misal: `🏬 Bude Ani`, `🏬 Stan Bakso Enak`, `🏬 Stan Utama`) pada kartu menu agar pengguna dapat langsung mengetahui asal stan dari setiap item menu.
+56. **Penyempurnaan Kategorisasi Otomatis Opsi Toping (Saus vs Sayuran/Lalapan)**: ✅ **Selesai**
+    * **Presisi Pengelompokan Jenis Toping**: Memperbaiki fungsi klasifikasi `_isSauce` dan `_isVegetable` di [product_form_screen.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/kantin/screens/product_form_screen.dart) dan [public_menu_screen.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/public/screens/public_menu_screen.dart):
+      - **Kategori Saus (`_isSauce`)**: Hanya mengategorikan item yang mengandung kata `saus`/`sauce` atau nama racikan saus spesifik (`tiram`, `barbekyu`, `teriyaki`, `mayo`).
+      - **Kategori Sayuran & Lalapan (`_isVegetable`)**: Nama sayuran polos seperti `tomat`, `timun`, `bayam`, `selada`, `kubis`, `kemangi`, `bawang`, dll. yang tidak mengandung kata `saus` kini secara tepat dimasukkan ke seksi **"4. Lalapan & Sayuran"**.
+57. **Komponen Toast Notifications Eksekutif 'Berhasil Disimpan' di Seluruh Role**: ✅ **Selesai**
+    * **Pembuatan Komponen Reusable `AppToast`**: Membuat [app_toast.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/core/widgets/app_toast.dart) yang mereplikasi desain Toast 'Berhasil Disimpan' 100% presisi sesuai gambar acuan pengguna:
+      - Kartu melayang (floating card) berwarna putih/gelap dengan border halus, bayangan elevasi modern, serta garis aksen vertikal hijau emerald (`#10B981`) di sisi kiri.
+      - Badge bundar checkmark hijau dengan ikon centang putih.
+      - Judul bold **"Berhasil Disimpan"** dan subjudul rincian status (contoh: *"Data Anda telah aman diperbarui."*).
+      - Tombol penutup 'X' untuk menutup toast secara instan.
+    * **Penerapan Lintas Role**: Menghubungkan `AppToast.showSuccess` ke seluruh form simpan, ubah kata sandi, registrasi rfid, update profil, tambah pengguna/stan, dan simpan jajanan di role **Kantin/Merchant**, **Admin**, **Petugas Keuangan**, **Siswa**, dan **Orang Tua**.
+58. **Integrasi Grafik Tren 'Daily Sales Volume' di Beranda Petugas Kantin**: ✅ **Selesai**
+    * **Komponen Grafik Reusable `DailySalesVolumeWidget`**: Membuat [daily_sales_volume_widget.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/kantin/widgets/daily_sales_volume_widget.dart) yang menampilkan kartu grafik tren penjualan harian sesuai gambar acuan pengguna:
+      - Header dengan judul **"Daily Sales Volume"**, subjudul penjelasan, dan dua indikator legenda di kanan: 🔵 **Current Period** (biru/teal solid) & ⚪ **Previous Period** (abu-abu putus-putus).
+      - **Dua Deret Garis Kurva Smooth Bezier**: Garis kurva biru/teal dengan area isi gradien transparan di bawahnya untuk *Current Period* (bulan ini) dan garis kurva putus-putus (dashed) untuk *Previous Period* (bulan sebelumnya).
+      - Label sumbu X (`01`, `05`, `10`, `15`, `20`, `25`, `30`) dan sumbu Y adaptif skala penjualan.
+    * **Provider Supabase Realtime (`canteenSalesVolumeProvider`)**: Menambahkan provider stream di [pos_providers.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/kantin/providers/pos_providers.dart) yang mendengarkan perubahan transaksi secara realtime dan mengagregasi volume penjualan harian stan kantin yang sedang login.
+    * **Pemasangan di Beranda**: Menempatkan `DailySalesVolumeWidget` pada [pos_home_screen.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/kantin/screens/pos_home_screen.dart) tepat di bawah tombol aksi cepat Kasir POS & Cek Kartu.
+59. **Lokalisasi Bahasa Indonesia & Filter Rentang Periode Kustom Grafik Penjualan Kantin**: ✅ **Selesai**
+    * **Lokalisasi Bahasa Indonesia**: Mengubah teks pada [daily_sales_volume_widget.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/kantin/widgets/daily_sales_volume_widget.dart) menjadi Bahasa Indonesia:
+      - Judul: **"Volume Penjualan Harian"**
+      - Subjudul: *"Volume penjualan harian stan kantin Anda"*
+      - Legenda: 🔵 **Periode Saat Ini** & ⚪ **Periode Sebelumnya**
+    * **Filter Rentang Tanggal, Bulan, & Tahun Kustom**:
+      - Menambahkan tombol pemilih periode (`[ 📅 Bulan Ini ▾ ]`) di pojok kanan atas grafik.
+      - Menyediakan menu modal bottom sheet dengan opsi pilihan cepat: **Bulan Ini**, **Bulan Lalu**, **7 Hari Terakhir**, **30 Hari Terakhir**, **Tahun Ini (2026)**, serta **Pilih Rentang Tanggal (Kustom)...**.
+      - Menghubungkan ke `showDateRangePicker` Flutter bawaan berlokalisasi Indonesia sehingga pengguna dapat mengatur tanggal awal dan akhir bebas antar bulan dan tahun.
+    * **Penyelarasan Agregasi Data Dinamis**: Memperbarui `canteenSalesVolumeProvider` di [pos_providers.dart](file:///d:/mantap%20sih/kantin-digital-v2/lib/features/kantin/providers/pos_providers.dart) untuk menerima parameter `CanteenSalesFilterParam`, yang secara otomatis mengagregasi data harian/bulanan periode terpilih dan menghitung periode perbandingan sebelumnya secara tepat.
+
+
+
+
+
+

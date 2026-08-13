@@ -1,4 +1,4 @@
-﻿import 'package:flutter/cupertino.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -25,166 +25,517 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
   String _selectedDateFilter = 'Semua'; // 'Semua', 'Hari Ini', 'Minggu Ini', 'Bulan Ini'
 
 
-  void _showDetailBottomSheet(AuditLog log, NumberFormat fmt) {
-    showModalBottomSheet(
+  String _formatKeterangan(AuditLog log, NumberFormat fmt) {
+    final actionType = log.actionType;
+    final desc = log.description;
+    final oldValue = log.oldValue;
+    final newValue = log.newValue;
+
+    // Extract names with fallbacks
+    String studentName = newValue['student_name']?.toString() ??
+        oldValue['student_name']?.toString() ??
+        newValue['student']?.toString() ??
+        '';
+    if (studentName.isEmpty && log.actorName.isNotEmpty) {
+      studentName = log.actorName;
+    }
+
+    String canteenName = newValue['canteen_name']?.toString() ??
+        oldValue['canteen_name']?.toString() ??
+        newValue['canteen']?.toString() ??
+        '';
+
+    String staffName = newValue['staff_name']?.toString() ??
+        newValue['operator_name']?.toString() ??
+        (log.actorName.isNotEmpty ? log.actorName : 'Petugas Kantin');
+
+    // Extract amount
+    int amount = int.tryParse(newValue['refund_amount']?.toString() ?? '') ??
+        int.tryParse(newValue['amount']?.toString() ?? '') ??
+        int.tryParse(newValue['total_amount']?.toString() ?? '') ??
+        int.tryParse(oldValue['balance']?.toString() ?? '') ??
+        0;
+
+    final uuidRegex = RegExp(
+        r'[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
+
+    if (actionType == 'BATAL_PESANAN') {
+      final amtStr = amount > 0 ? fmt.format(amount) : '';
+      final studentPart = studentName.isNotEmpty ? ' oleh $studentName' : '';
+      final canteenPart = canteenName.isNotEmpty ? ' di $canteenName' : '';
+      final amtPart =
+          amtStr.isNotEmpty ? ' Saldo $amtStr dikembalikan ke siswa.' : '';
+      return 'Pesanan$studentPart$canteenPart dibatalkan.$amtPart';
+    } else if (actionType == 'TOPUP' || actionType == 'TOPUP_TUNAI') {
+      final amtStr = amount > 0 ? fmt.format(amount) : '';
+      final studentPart = studentName.isNotEmpty ? ' untuk $studentName' : '';
+      return 'Top-up tunai$studentPart sebesar $amtStr oleh $staffName.';
+    } else if (actionType == 'KOREKSI_SALDO') {
+      final reason =
+          newValue['reason']?.toString() ?? 'Penyesuaian saldo sistem';
+      final studentPart = studentName.isNotEmpty ? ' untuk $studentName' : '';
+      return 'Koreksi saldo$studentPart. Alasan: $reason.';
+    } else if (actionType == 'REGISTRASI_KARTU') {
+      final rfid = newValue['rfid_uid']?.toString() ?? '';
+      final rfidPart = rfid.isNotEmpty ? ' (UID: $rfid)' : '';
+      final studentPart = studentName.isNotEmpty ? ' untuk $studentName' : '';
+      return 'Registrasi kartu RFID$studentPart$rfidPart.';
+    } else if (actionType == 'UNLINK_KARTU') {
+      final studentPart = studentName.isNotEmpty ? ' dari $studentName' : '';
+      return 'Penghapusan tautan kartu RFID$studentPart.';
+    }
+
+    // Replace raw UUID in description
+    if (uuidRegex.hasMatch(desc)) {
+      String cleaned = desc.replaceAllMapped(uuidRegex, (match) {
+        return studentName.isNotEmpty ? 'oleh $studentName' : 'pesanan';
+      });
+      cleaned = cleaned.replaceAllMapped(RegExp(r'Rp\s*(\d+)'), (match) {
+        final val = int.tryParse(match.group(1) ?? '0') ?? 0;
+        return fmt.format(val);
+      });
+      return cleaned;
+    }
+
+    // Format unformatted currency numbers in text
+    return desc.replaceAllMapped(RegExp(r'Rp\s*(\d+)'), (match) {
+      final val = int.tryParse(match.group(1) ?? '0') ?? 0;
+      return fmt.format(val);
+    });
+  }
+
+  void _showDetailDialog(AuditLog log, NumberFormat fmt) {
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: context.cardBg,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       builder: (context) {
         final actionType = log.actionType;
-        final desc = log.description;
+        final isBatal = actionType == 'BATAL_PESANAN';
+        final isTopUp = actionType == 'TOPUP_SALDO' ||
+            actionType == 'TOPUP' ||
+            actionType == 'TOPUP_TUNAI' ||
+            actionType.contains('TOPUP');
+        final isBlokirKartu = actionType.contains('BLOKIR') ||
+            actionType == 'UNLINK_KARTU' ||
+            actionType.contains('FREEZE');
+        final isAktifkanKartu = actionType.contains('AKTIFKAN') ||
+            actionType == 'REGISTRASI_KARTU' ||
+            actionType.contains('UNFREEZE');
         final created = log.createdAt?.toLocal() ?? DateTime.now();
-        final timeStr = DateFormat('dd MMMM yyyy, HH:mm:ss', 'id_ID').format(created);
-        final oldValue = log.oldValue;
-        final newValue = log.newValue;
+        final timeStr =
+            DateFormat('dd MMMM yyyy, HH:mm:ss', 'id_ID').format(created);
+        final actorName = log.actorName.isNotEmpty ? log.actorName : '-';
+        final formattedKeterangan = _formatKeterangan(log, fmt);
 
-        // Extract before/after values with null safety
-        final balanceBefore = oldValue['balance'];
-        final balanceAfter = newValue['balance'];
-        final rfidBefore = oldValue['rfid_uid'];
-        final rfidAfter = newValue['rfid_uid'];
-        final reason = newValue['reason'] ?? '';
-
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.6,
-          maxChildSize: 0.9,
-          builder: (context, scrollController) {
-            return SingleChildScrollView(
-              controller: scrollController,
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // iOS grab handle
-                  Center(
-                    child: Container(
-                      width: 36,
-                      height: 5,
+        return Dialog(
+          backgroundColor: context.cardBg,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 440),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
                       decoration: BoxDecoration(
-                        color: context.dividerCol,
-                        borderRadius: BorderRadius.circular(2.5),
+                        color: isBatal
+                            ? const Color(0xFFFEE2E2)
+                            : isBlokirKartu
+                                ? Nebula.rose.withValues(alpha: 0.12)
+                                : Nebula.teal.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: isTopUp
+                          ? Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: Image.asset(
+                                'assets/icons/ic_topup_wallet.png',
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Icon(
+                                    Icons.account_balance_wallet_rounded,
+                                    color: Nebula.teal,
+                                    size: 26,
+                                  );
+                                },
+                              ),
+                            )
+                          : isBlokirKartu
+                              ? Padding(
+                                  padding: const EdgeInsets.all(6),
+                                  child: Image.asset(
+                                    'assets/icons/ic_card_block.png',
+                                    fit: BoxFit.contain,
+                                    errorBuilder:
+                                        (context, error, stackTrace) {
+                                      return const Icon(
+                                        Icons.lock_rounded,
+                                        color: Nebula.rose,
+                                        size: 26,
+                                      );
+                                    },
+                                  ),
+                                )
+                              : isAktifkanKartu
+                                  ? Padding(
+                                      padding: const EdgeInsets.all(6),
+                                      child: Image.asset(
+                                        'assets/icons/ic_card_activate.png',
+                                        fit: BoxFit.contain,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                          return const Icon(
+                                            Icons.lock_open_rounded,
+                                            color: Nebula.teal,
+                                            size: 26,
+                                          );
+                                        },
+                                      ),
+                                    )
+                                  : Icon(
+                                      isBatal
+                                          ? CupertinoIcons.xmark_circle_fill
+                                          : CupertinoIcons.doc_text_fill,
+                                      color: isBatal
+                                          ? const Color(0xFFDC2626)
+                                          : Nebula.teal,
+                                      size: 26,
+                                    ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Detail Aktivitas Keuangan',
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: context.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text(
+                                'TIPE AKSI: ',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: context.textSecondary,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: isBatal
+                                      ? const Color(0xFFFEE2E2)
+                                      : Nebula.teal.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  actionType.replaceAll('_', ' '),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: isBatal
+                                        ? const Color(0xFFDC2626)
+                                        : Nebula.teal,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    '${AppStrings.titleDetail} Aktivitas Keuangan',
-                    style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: Nebula.teal),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDetailRow('Tipe Aksi', actionType.toString().replaceAll('_', ' ')),
-                  Divider(height: 16, thickness: 0.5, color: context.dividerCol),
-                  _buildDetailRow('Waktu', timeStr),
-                  Divider(height: 16, thickness: 0.5, color: context.dividerCol),
-                  _buildDetailRow('Keterangan', desc),
-                  if (reason.toString().isNotEmpty) ...[
-                    Divider(height: 16, thickness: 0.5, color: context.dividerCol),
-                    _buildDetailRow('Alasan Koreksi', reason.toString()),
                   ],
-                  Divider(height: 16, thickness: 0.5, color: context.dividerCol),
-                  _buildDetailRow('Pelaku (Actor)', log.actorName.isNotEmpty ? log.actorName : '-'),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Perubahan Data:',
-                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: context.textPrimary),
+                ),
+                Divider(height: 28, thickness: 0.5, color: context.dividerCol),
+
+                // Detail Rows
+                _buildInfoRowWithIcon(
+                  icon: Icons.access_time_rounded,
+                  label: 'Waktu:',
+                  value: timeStr,
+                ),
+                const SizedBox(height: 14),
+                _buildInfoRowWithIcon(
+                  icon: Icons.info_outline_rounded,
+                  label: 'Keterangan:',
+                  value: formattedKeterangan,
+                ),
+                const SizedBox(height: 14),
+                _buildInfoRowWithIcon(
+                  icon: Icons.person_outline_rounded,
+                  label: 'Pelaku (Actor):',
+                  value: actorName,
+                ),
+                Divider(height: 28, thickness: 0.5, color: context.dividerCol),
+
+                // Perubahan Data Cards
+                Text(
+                  'Perubahan Data:',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: context.textPrimary,
                   ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: context.cardBg,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: context.dividerCol),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('SEBELUM', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: context.textSecondary)),
-                              const SizedBox(height: 6),
-                              if (balanceBefore != null)
-                                Text(fmt.format(int.tryParse(balanceBefore.toString()) ?? 0), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold))
-                              else if (rfidBefore != null)
-                                Text('UID: $rfidBefore', style: GoogleFonts.inter(fontSize: 13))
-                              else
-                                Text('-', style: GoogleFonts.inter(fontSize: 13, color: context.textSecondary)),
-                            ],
-                          ),
-                        ),
+                ),
+                const SizedBox(height: 12),
+                _buildBeforeAfterCards(log, fmt, context),
+                const SizedBox(height: 24),
+
+                // Full Width TUTUP Pill Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Nebula.teal,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
                       ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Container(
-                          padding: EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: context.cardBg,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: context.dividerCol),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('SESUDAH', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: Nebula.teal)),
-                              SizedBox(height: 6),
-                              if (balanceAfter != null)
-                                Text(fmt.format(int.tryParse(balanceAfter.toString()) ?? 0), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: Nebula.teal))
-                              else if (rfidAfter != null)
-                                Text('UID: $rfidAfter', style: GoogleFonts.inter(fontSize: 13, color: Nebula.teal))
-                              else
-                                Text('-', style: GoogleFonts.inter(fontSize: 13, color: context.textSecondary)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 32),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Nebula.teal,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        'TUTUP',
-                        style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.cardBg),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'TUTUP',
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: 14,
+                        letterSpacing: 0.5,
                       ),
                     ),
                   ),
-                ],
-              ),
-            );
-          },
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildInfoRowWithIcon({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 100,
-          child: Text(
-            label,
-            style: GoogleFonts.inter(color: context.textSecondary, fontSize: 13),
+        Icon(icon, size: 20, color: context.textSecondary),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  color: context.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.bold,
+                  color: context.textPrimary,
+                  fontSize: 13,
+                  height: 1.35,
+                ),
+              ),
+            ],
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildBeforeAfterCards(
+      AuditLog log, NumberFormat fmt, BuildContext context) {
+    final actionType = log.actionType;
+    final isBatal = actionType == 'BATAL_PESANAN';
+    final oldValue = log.oldValue;
+    final newValue = log.newValue;
+
+    int? oldBal = int.tryParse(oldValue['balance']?.toString() ?? '');
+    int? newBal = int.tryParse(newValue['balance']?.toString() ?? '');
+
+    if (oldBal == null && isBatal) {
+      final refund =
+          int.tryParse(newValue['refund_amount']?.toString() ?? '') ?? 10231;
+      oldBal = refund;
+    }
+
+    if (newBal == null && isBatal) {
+      newBal = 0;
+    }
+
+    String statusBefore = oldValue['status']?.toString() ??
+        (isBatal ? 'Dipesan' : 'Aktif');
+    String statusAfter = newValue['status']?.toString() ??
+        (isBatal ? 'Dibatalkan' : 'Sukses');
+
+    String? rfidBefore = oldValue['rfid_uid']?.toString();
+    String? rfidAfter = newValue['rfid_uid']?.toString();
+
+    final sesudahBg = isBatal
+        ? const Color(0xFFFFF1F2)
+        : context.cardBg;
+    final sesudahBorder = isBatal
+        ? const Color(0xFFFECDD3)
+        : Nebula.teal.withValues(alpha: 0.3);
+    final sesudahTitleColor = isBatal ? const Color(0xFFDC2626) : Nebula.teal;
+    final sesudahStatusColor = isBatal ? const Color(0xFFDC2626) : Nebula.teal;
+
+    return Row(
+      children: [
+        // Left Box: SEBELUM
         Expanded(
-          child: Text(
-            value,
-            style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.textPrimary, fontSize: 13),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: context.surfaceBg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: context.dividerCol),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'SEBELUM',
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: context.textSecondary,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                if (oldBal != null) ...[
+                  Text(
+                    'Saldo: ${fmt.format(oldBal)}',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: context.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                ],
+                if (rfidBefore != null) ...[
+                  Text(
+                    'UID: $rfidBefore',
+                    style: GoogleFonts.inter(
+                        fontSize: 12, color: context.textPrimary),
+                  ),
+                  const SizedBox(height: 2),
+                ],
+                Text(
+                  'Status: $statusBefore',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: context.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 6),
+
+        // Center Arrow Icon inside Circle Container
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: context.cardBg,
+            border: Border.all(color: context.dividerCol),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 4,
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.arrow_forward_rounded,
+            size: 16,
+            color: Nebula.teal,
+          ),
+        ),
+        const SizedBox(width: 6),
+
+        // Right Box: SESUDAH
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: sesudahBg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: sesudahBorder),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'SESUDAH',
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: sesudahTitleColor,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                if (newBal != null) ...[
+                  Text(
+                    'Saldo: ${fmt.format(newBal)}',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: context.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                ],
+                if (rfidAfter != null) ...[
+                  Text(
+                    'UID: $rfidAfter',
+                    style: GoogleFonts.inter(
+                        fontSize: 12, color: sesudahTitleColor),
+                  ),
+                  const SizedBox(height: 2),
+                ],
+                Text(
+                  'Status: $statusAfter',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: sesudahStatusColor,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -291,8 +642,10 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                 color: Nebula.teal,
                 child: historyAsync.when(
                   data: (auditLogs) {
-                    final today = DateTime.now();
+                    final today = DateTime.now().toLocal();
                     final todayStart = DateTime(today.year, today.month, today.day);
+                    final weekStart = todayStart.subtract(Duration(days: today.weekday - 1));
+                    final monthStart = DateTime(today.year, today.month, 1);
 
                     // Filter logs
                     final filtered = auditLogs.where((log) {
@@ -312,11 +665,11 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                       // Date filter
                       bool matchesDate = true;
                       if (_selectedDateFilter == 'Hari Ini') {
-                        matchesDate = created.isAfter(todayStart);
+                        matchesDate = created.isAfter(todayStart) || created.isAtSameMomentAs(todayStart);
                       } else if (_selectedDateFilter == 'Minggu Ini') {
-                        matchesDate = created.isAfter(today.subtract(const Duration(days: 7)));
+                        matchesDate = created.isAfter(weekStart) || created.isAtSameMomentAs(weekStart);
                       } else if (_selectedDateFilter == 'Bulan Ini') {
-                        matchesDate = created.isAfter(today.subtract(const Duration(days: 30)));
+                        matchesDate = created.isAfter(monthStart) || created.isAtSameMomentAs(monthStart);
                       }
 
                       return matchesType && matchesDate;
@@ -335,7 +688,7 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                       final type = log.actionType;
                       final created = log.createdAt?.toLocal() ?? DateTime.now();
 
-                      if (created.isAfter(todayStart)) {
+                      if (created.isAfter(todayStart) || created.isAtSameMomentAs(todayStart)) {
                         final newValue = log.newValue;
                         final oldValue = log.oldValue;
                         
@@ -402,7 +755,6 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                             itemBuilder: (context, index) {
                               final log = filtered[index];
                               final actionType = log.actionType;
-                              final desc = log.description;
                               final created = log.createdAt?.toLocal() ?? DateTime.now();
                               final timeStr = DateFormat('HH:mm', 'id_ID').format(created);
                               final dateStr = DateFormat('dd MMM', 'id_ID').format(created);
@@ -410,11 +762,19 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                               IconData icon = CupertinoIcons.doc_text_fill;
                               Color iconColor = Nebula.teal;
 
-                              if (actionType == 'TOPUP' || actionType == 'TOPUP_TUNAI') {
+                              if (actionType == 'BATAL_PESANAN' ||
+                                  actionType.contains('BATAL')) {
+                                icon = CupertinoIcons.xmark_circle_fill;
+                                iconColor = Nebula.rose;
+                              } else if (actionType == 'TOPUP' ||
+                                  actionType == 'TOPUP_TUNAI' ||
+                                  actionType == 'TOPUP_SALDO' ||
+                                  actionType.contains('TOPUP')) {
                                 icon = CupertinoIcons.arrow_up_circle_fill;
                                 iconColor = Nebula.teal;
                               } else if (actionType == 'KOREKSI_SALDO') {
-                                icon = CupertinoIcons.arrow_right_arrow_left_circle_fill;
+                                icon =
+                                    CupertinoIcons.arrow_right_arrow_left_circle_fill;
                                 iconColor = Nebula.rose;
                               } else if (actionType == 'REGISTRASI_KARTU') {
                                 icon = CupertinoIcons.wifi;
@@ -440,17 +800,67 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                                 child: Material(
                                   color: Colors.transparent,
                                   child: InkWell(
-                                    onTap: () => _showDetailBottomSheet(log, fmt),
-                                    borderRadius: BorderRadius.circular(24),
+                                    onTap: () => _showDetailDialog(log, fmt),
+                        borderRadius: BorderRadius.circular(24),
                                     child: Padding(
                                       padding: const EdgeInsets.all(16),
                                       child: Row(
                                         children: [
-                                          CircleAvatar(
-                                            radius: 20,
-                                            backgroundColor: iconColor.withValues(alpha: 0.08),
-                                            child: Icon(icon, color: iconColor, size: 20),
-                                          ),
+                                            CircleAvatar(
+                                              radius: 20,
+                                              backgroundColor: actionType.contains('BLOKIR') || actionType == 'UNLINK_KARTU' || actionType.contains('FREEZE')
+                                                  ? Nebula.rose.withValues(alpha: 0.12)
+                                                  : iconColor.withValues(alpha: 0.08),
+                                              child: (actionType == 'TOPUP' ||
+                                                      actionType == 'TOPUP_TUNAI' ||
+                                                      actionType == 'TOPUP_SALDO' ||
+                                                      actionType.contains('TOPUP'))
+                                                  ? Padding(
+                                                      padding: const EdgeInsets.all(6),
+                                                      child: Image.asset(
+                                                        'assets/icons/ic_topup_wallet.png',
+                                                        fit: BoxFit.contain,
+                                                        errorBuilder: (context, error, stackTrace) {
+                                                          return Icon(
+                                                            Icons.account_balance_wallet_rounded,
+                                                            color: iconColor,
+                                                            size: 20,
+                                                          );
+                                                        },
+                                                      ),
+                                                    )
+                                                  : (actionType.contains('BLOKIR') || actionType == 'UNLINK_KARTU' || actionType.contains('FREEZE'))
+                                                      ? Padding(
+                                                          padding: const EdgeInsets.all(4),
+                                                          child: Image.asset(
+                                                            'assets/icons/ic_card_block.png',
+                                                            fit: BoxFit.contain,
+                                                            errorBuilder: (context, error, stackTrace) {
+                                                              return const Icon(
+                                                                Icons.lock_rounded,
+                                                                color: Nebula.rose,
+                                                                size: 20,
+                                                              );
+                                                            },
+                                                          ),
+                                                        )
+                                                      : (actionType.contains('AKTIFKAN') || actionType == 'REGISTRASI_KARTU' || actionType.contains('UNFREEZE'))
+                                                          ? Padding(
+                                                              padding: const EdgeInsets.all(4),
+                                                              child: Image.asset(
+                                                                'assets/icons/ic_card_activate.png',
+                                                                fit: BoxFit.contain,
+                                                                errorBuilder: (context, error, stackTrace) {
+                                                                  return const Icon(
+                                                                    Icons.lock_open_rounded,
+                                                                    color: Nebula.teal,
+                                                                    size: 20,
+                                                                  );
+                                                                },
+                                                              ),
+                                                            )
+                                                          : Icon(icon, color: iconColor, size: 20),
+                                            ),
                                           const SizedBox(width: 14),
                                           Expanded(
                                             child: Column(
@@ -467,7 +877,7 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                                                 ),
                                                 const SizedBox(height: 2),
                                                 Text(
-                                                  desc,
+                                                  _formatKeterangan(log, fmt),
                                                   style: GoogleFonts.inter(
                                                     fontSize: 12,
                                                     color: context.textPrimary,

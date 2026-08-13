@@ -12,6 +12,7 @@ import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.da
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/widgets/app_toast.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_topup_step_amount.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_topup_step_confirm.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_topup_step_search.dart';
@@ -180,6 +181,14 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
         _successTime = DateFormat('dd MMM yyyy, HH:mm:ss', 'id_ID').format(now);
         _currentStep = 4; // success screen
       });
+
+      if (mounted) {
+        AppToast.showSuccess(
+          context,
+          title: 'Berhasil Disimpan',
+          message: 'Top-up saldo siswa $_studentName telah aman diproses.',
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

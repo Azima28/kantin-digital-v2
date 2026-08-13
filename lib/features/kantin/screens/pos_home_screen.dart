@@ -16,6 +16,9 @@ import 'package:kantin_digital/core/widgets/notification_bell.dart';
 import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/nebula_components.dart';
+import 'package:kantin_digital/features/kantin/widgets/daily_sales_volume_widget.dart';
+import 'package:kantin_digital/features/kantin/widgets/top_selling_food_widget.dart';
+
 
 class PosHomeScreen extends ConsumerWidget {
   const PosHomeScreen({super.key});
@@ -96,11 +99,12 @@ class PosHomeScreen extends ConsumerWidget {
         onRefresh: () async {
           ref.invalidate(todayRevenueProvider);
           ref.invalidate(operatorTransactionsProvider);
+          ref.invalidate(topSellingFoodProvider);
         },
         child: Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
+            constraints: const BoxConstraints(maxWidth: 1100),
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16.0),
@@ -293,7 +297,7 @@ class PosHomeScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 16),
 
                   // Quick Actions Grid Row
                   Row(
@@ -335,7 +339,7 @@ class PosHomeScreen extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: GestureDetector(
                           onTap: () => context.push('/pos/check-card'),
@@ -375,7 +379,39 @@ class PosHomeScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 20),
+
+                  // Sales Volume & Food Distribution Charts Section
+                  Builder(
+                    builder: (context) {
+                      if (Responsive.isDesktop(context) || Responsive.isTablet(context)) {
+                        return IntrinsicHeight(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: const [
+                              Expanded(
+                                flex: 1,
+                                child: DailySalesVolumeWidget(),
+                              ),
+                              SizedBox(width: 20),
+                              Expanded(
+                                flex: 1,
+                                child: TopSellingFoodWidget(),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return const Column(
+                        children: [
+                          DailySalesVolumeWidget(),
+                          SizedBox(height: 20),
+                          TopSellingFoodWidget(),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 32),
 
                   // Penjualan Hari Ini Title & Lihat Semua link
                   Row(
