@@ -18,6 +18,7 @@ const _wibTimezone = Duration(hours: 7);
 /// Digunakan di: keuangan_dashboard_screen.dart
 final keuanganDashboardProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+      ref.keepAlive();
       final client = ref.read(supabaseClientProvider);
       final profile = ref.read(authNotifierProvider).profile;
       final officerId = profile?['id'];
@@ -43,69 +44,66 @@ final keuanganDashboardProvider =
           '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
       final startOfDayUtc = '${todayStr}T00:00:00${_wibTimezone.isNegative ? '-' : '+'}${_wibTimezone.inHours.toString().padLeft(2, '0')}:00';
 
-      // 1. Total saldo beredar semua siswa (data real dari DB)
       int totalSaldo = 0;
-      try {
-        final List<dynamic> balances =
-            await client.from('students').select('balance');
-        for (final row in balances) {
-          totalSaldo +=
-              (row['balance'] as num?)?.toInt() ?? 0;
-        }
-      } catch (e, st) {
-        debugPrint('keuanganDashboard saldo error: $e\n$st');
-      }
-
-      // 2. Top-up hari ini
       int topupToday = 0;
       int topupCount = 0;
-      try {
-        final List<dynamic> topups = await client
-            .from('transactions')
-            .select('total_amount')
-            .eq('type', 'topup')
-            .eq('status', 'success')
-            .gte('created_at', startOfDayUtc);
-        topupCount = topups.length;
-        for (final tx in topups) {
-          topupToday +=
-              int.tryParse(tx['total_amount']?.toString() ?? '0') ?? 0;
-        }
-      } catch (e, st) {
-        debugPrint('keuanganDashboard topup error: $e\n$st');
-      }
-
-      // 3. Koreksi saldo hari ini (audit_logs KOREKSI_SALDO)
       int koreksCount = 0;
       int koreksNet = 0;
+      List<dynamic> logs = [];
+
       try {
-        final List<dynamic> koreksi = await client
-            .from('audit_logs')
-            .select('old_value, new_value')
-            .eq('action_type', 'KOREKSI_SALDO')
-            .eq('actor_id', officerId)
-            .gte('created_at', startOfDayUtc);
+        // Run all queries in parallel concurrently
+        final results = await Future.wait([
+          // 0: Student balances
+          client.from('students').select('balance'),
+          // 1: Top-ups today
+          client
+              .from('transactions')
+              .select('total_amount')
+              .eq('type', 'topup')
+              .eq('status', 'success')
+              .gte('created_at', startOfDayUtc),
+          // 2: Audit log corrections today
+          client
+              .from('audit_logs')
+              .select('old_value, new_value')
+              .eq('action_type', 'KOREKSI_SALDO')
+              .eq('actor_id', officerId)
+              .gte('created_at', startOfDayUtc),
+          // 3: Recent audit logs by this officer
+          client
+              .from('audit_logs')
+              .select('actor_name, action_type, description, created_at')
+              .eq('actor_id', officerId)
+              .order('created_at', ascending: false)
+              .limit(5),
+        ]);
+
+        final balances = results[0] as List<dynamic>;
+        for (final row in balances) {
+          totalSaldo += (row['balance'] as num?)?.toInt() ?? 0;
+        }
+
+        final topups = results[1] as List<dynamic>;
+        topupCount = topups.length;
+        for (final tx in topups) {
+          topupToday += int.tryParse(tx['total_amount']?.toString() ?? '0') ?? 0;
+        }
+
+        final koreksi = results[2] as List<dynamic>;
         koreksCount = koreksi.length;
         for (final log in koreksi) {
           final oldVal = log['old_value'] as Map<String, dynamic>? ?? {};
           final newVal = log['new_value'] as Map<String, dynamic>? ?? {};
-          final int oldBal =
-              int.tryParse(oldVal['balance']?.toString() ?? '0') ?? 0;
-          final int newBal =
-              int.tryParse(newVal['balance']?.toString() ?? '0') ?? 0;
+          final int oldBal = int.tryParse(oldVal['balance']?.toString() ?? '0') ?? 0;
+          final int newBal = int.tryParse(newVal['balance']?.toString() ?? '0') ?? 0;
           koreksNet += (newBal - oldBal);
         }
-      } catch (e, st) {
-        debugPrint('keuanganDashboard koreksi error: $e\n$st');
-      }
 
-      // 4. Recent audit logs by this officer
-      final List<dynamic> logs = await client
-          .from('audit_logs')
-          .select('actor_name, action_type, description, created_at')
-          .eq('actor_id', officerId)
-          .order('created_at', ascending: false)
-          .limit(5);
+        logs = results[3] as List<dynamic>;
+      } catch (e, st) {
+        debugPrint('keuanganDashboard error: $e\n$st');
+      }
 
       return {
         'profile': profile,
@@ -296,20 +294,22 @@ final keuanganReportProvider = FutureProvider.family
 // STUDENTS PROVIDER (Keuangan)
 // ============================================================================
 
-/// Fetch semua siswa dengan data profile + student (join).
+/// Fetch daftar siswa dengan data profile + student (join).
 /// Digunakan di: keuangan_students_screen.dart
 final keuanganStudentsProvider =
     FutureProvider<List<StudentWithProfile>>((ref) async {
+      ref.keepAlive();
       final client = ref.read(supabaseClientProvider);
 
-      // Fetch profiles that are students and join student details
+      // Fetch profiles that are students and join student details with limit
       final List<dynamic> res = await client
           .from('profiles')
           .select(
             'id, full_name, email, nisn, is_active, students:students!students_id_fkey(balance, rfid_uid, is_active, classes:classes(name))',
           )
           .eq('role', 'student')
-          .order('full_name', ascending: true);
+          .order('full_name', ascending: true)
+          .limit(50);
 
       return res
           .map(
@@ -367,6 +367,7 @@ final keuanganStudentDetailProvider = FutureProvider
 /// Digunakan di: keuangan_users_screen.dart
 final keuanganParentsProvider =
     FutureProvider<List<Map<String, dynamic>>>((ref) async {
+      ref.keepAlive();
       final client = ref.read(supabaseClientProvider);
       final List<dynamic> res = await client
           .from('profiles')
@@ -374,7 +375,8 @@ final keuanganParentsProvider =
             'id, full_name, email, phone_number, is_active, created_at, parent_students!parent_students_parent_id_fkey(students!parent_students_student_id_fkey(id, classes:classes(name), profiles:profiles!students_id_fkey(full_name, nisn)))',
           )
           .eq('role', 'parent')
-          .order('full_name', ascending: true);
+          .order('full_name', ascending: true)
+          .limit(50);
       return List<Map<String, dynamic>>.from(res);
     });
 
@@ -382,6 +384,7 @@ final keuanganParentsProvider =
 /// Digunakan di: keuangan_users_screen.dart
 final keuanganStaffProvider =
     FutureProvider<List<Map<String, dynamic>>>((ref) async {
+      ref.keepAlive();
       final client = ref.read(supabaseClientProvider);
       final List<dynamic> res = await client
           .from('profiles')
@@ -389,7 +392,8 @@ final keuanganStaffProvider =
             'id, full_name, username, phone_number, is_active, canteen_operators(canteen_name, balance_earned)',
           )
           .eq('role', 'petugas_kantin')
-          .order('full_name', ascending: true);
+          .order('full_name', ascending: true)
+          .limit(50);
       return List<Map<String, dynamic>>.from(res);
     });
 

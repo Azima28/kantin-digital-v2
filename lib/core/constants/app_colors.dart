@@ -48,8 +48,8 @@ class AppColors {
   static const Color darkTextPrimaryVal = Color(0xFFF1F5F9);
   static const Color darkTextSecondaryVal = Color(0xFF94A3B8);
 
-  /// Light Mode Specific Colors (#F8FAFC Scaffold, #FFFFFF Card)
-  static const Color lightScaffoldBg = Color(0xFFF8FAFC);
+  /// Light Mode Specific Colors (#F1F5F9 Scaffold, #FFFFFF Card)
+  static const Color lightScaffoldBg = Color(0xFFF1F5F9);
   static const Color lightCardBg = Color(0xFFFFFFFF);
   static const Color lightInputFieldBg = Color(0xFFF1F5F9);
   static const Color lightInputFieldBorder = Color(0xFFE2E8F0);
@@ -186,11 +186,11 @@ class AppColors {
   // LIGHT MODE BACKGROUNDS (Standard App Style)
   // ─────────────────────────────────────────────────────────────────────────
 
-  static const Color systemBackground = Color(0xFFF8FAFC);
+  static const Color systemBackground = Color(0xFFF1F5F9);
   static const Color cardBackground = Color(0xFFFFFFFF);
-  static const Color scaffoldBackground = Color(0xFFF8FAFC);
+  static const Color scaffoldBackground = Color(0xFFF1F5F9);
   static const Color surfaceContainer = Color(0xFFF1F5F9);
-  static const Color surfaceContainerLow = Color(0xFFF8FAFC);
+  static const Color surfaceContainerLow = Color(0xFFF1F5F9);
   static const Color surfaceContainerHigh = Color(0xFFFFFFFF);
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -288,9 +288,9 @@ class AppColors {
   static const Color grayLight = Color(0xFFE2E8F0);
   static const Color gray400 = Color(0xFF94A3B8);
   static const Color inputBorder = Color(0xFFCBD5E1);
-  static const Color grayLighter = Color(0xFFF8FAFC);
+  static const Color grayLighter = Color(0xFFF1F5F9);
   static const Color lightGray = Color(0xFFF1F5F9);
-  static const Color offWhite = Color(0xFFF8FAFC);
+  static const Color offWhite = Color(0xFFF1F5F9);
   static const Color offWhite2 = Color(0xFFF1F5F9);
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
@@ -313,7 +313,7 @@ class AppColors {
 
   static const Color canteenPrimary = Color(0xFF0D9488);
   static const Color canteenSecondary = Color(0xFF14B8A6);
-  static const Color canteenBackground = Color(0xFFF8FAFC);
+  static const Color canteenBackground = Color(0xFFF1F5F9);
   static const Color canteenBorder = Color(0xFFE2E8F0);
   static const Color canteenDanger = Color(0xFFEF4444);
   static const Color canteenWarning = Color(0xFFD97706);

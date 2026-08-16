@@ -2,74 +2,41 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/hallmark_color_scheme.dart';
+import 'package:kantin_digital/core/theme/hallmark_typography.dart';
 
-/// MASTER DARK MODE DESIGN SYSTEM — Applied 2026
+/// MASTER DARK MODE DESIGN SYSTEM — Applied 2026 (Hallmark Anti-AI-Slop Enhanced)
 /// Premium dark theme: layered surfaces, soft teal accent, WCAG-AA typography.
-/// References: MASTER_DARK_MODE_DESIGN_SYSTEM.md + BRIGHT_TEXT_DARK_MODE.md
 class AppTheme {
   AppTheme._();
 
   // ─────────────────────────────────────────────────────────────────────────
-  // LIGHT THEME
+  // LIGHT THEME (Hallmark Enhanced)
   // ─────────────────────────────────────────────────────────────────────────
 
   static ThemeData get lightTheme {
+    final colors = HallmarkColorScheme.light();
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      scaffoldBackgroundColor: Colors.transparent,
+      scaffoldBackgroundColor: colors.surfaceBase,
+      extensions: [colors],
       colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primary,
-        primary: AppColors.primary,
-        secondary: AppColors.accentOrange,
-        surface: AppColors.cardBackground,
+        seedColor: colors.brandPrimary,
+        primary: colors.brandPrimary,
+        secondary: colors.brandAccent,
+        surface: colors.surfaceContainer,
       ),
       textTheme: GoogleFonts.interTextTheme().copyWith(
-        displayLarge: GoogleFonts.inter(
-          fontSize: 28,
-          fontWeight: FontWeight.bold,
-          color: AppColors.textDark,
-        ),
-        titleLarge: GoogleFonts.inter(
-          fontSize: 22,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textDark,
-        ),
-        titleMedium: GoogleFonts.inter(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textDark,
-        ),
-        titleSmall: GoogleFonts.inter(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          color: AppColors.textDark,
-        ),
-        bodyLarge: GoogleFonts.inter(
-          fontSize: 15,
-          fontWeight: FontWeight.normal,
-          color: AppColors.textDark,
-        ),
-        bodyMedium: GoogleFonts.inter(
-          fontSize: 14,
-          fontWeight: FontWeight.normal,
-          color: AppColors.textDark,
-        ),
-        bodySmall: GoogleFonts.inter(
-          fontSize: 13,
-          fontWeight: FontWeight.normal,
-          color: AppColors.mutedGray,
-        ),
-        labelLarge: GoogleFonts.inter(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: AppColors.mutedGray,
-        ),
-        labelSmall: GoogleFonts.inter(
-          fontSize: 12,
-          fontWeight: FontWeight.normal,
-          color: AppColors.mutedGray,
-        ),
+        displayLarge: HallmarkTypography.displayL1(colors.textPrimary),
+        titleLarge: HallmarkTypography.headingL2(colors.textPrimary),
+        titleMedium: HallmarkTypography.titleL3(colors.textPrimary),
+        titleSmall: HallmarkTypography.titleSmall(colors.textPrimary),
+        bodyLarge: HallmarkTypography.bodyLarge(colors.textPrimary),
+        bodyMedium: HallmarkTypography.bodyMain(colors.textPrimary),
+        bodySmall: HallmarkTypography.bodySmall(colors.textMuted),
+        labelLarge: HallmarkTypography.labelButton(colors.textPrimary),
+        labelSmall: HallmarkTypography.bodySmall(colors.textMuted),
       ),
       cardTheme: CardThemeData(
         color: AppColors.cardBackground,
@@ -183,6 +150,7 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       scaffoldBackgroundColor: bgMain,
+      extensions: [HallmarkColorScheme.darkPos()],
 
       // ── Color Scheme ───────────────────────────────────────────────────
       colorScheme: ColorScheme(

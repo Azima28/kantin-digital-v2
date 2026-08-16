@@ -13,6 +13,7 @@ import 'package:kantin_digital/features/admin/widgets/setting_section_widget.dar
 import 'package:kantin_digital/features/admin/widgets/admin_settings_broadcast_section.dart';
 import 'package:kantin_digital/features/admin/widgets/setting_tile_widget.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 class AdminSettingsScreen extends ConsumerStatefulWidget {
   const AdminSettingsScreen({super.key});
@@ -436,7 +437,67 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
             ),
           );
         },
-        loading: () => Center(child: CupertinoActivityIndicator(color: Nebula.teal)),
+        loading: () => Shimmer(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SkeletonBox(width: 140, height: 14, borderRadius: 4),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: context.cardBg,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: context.borderLight, width: 0.8),
+                  ),
+                  child: Column(
+                    children: List.generate(
+                      3,
+                      (i) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          children: const [
+                            SkeletonBox(width: 120, height: 14, borderRadius: 4),
+                            Spacer(),
+                            SkeletonBox(width: 45, height: 26, borderRadius: 14),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const SkeletonBox(width: 120, height: 14, borderRadius: 4),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: context.cardBg,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: context.borderLight, width: 0.8),
+                  ),
+                  child: Column(
+                    children: List.generate(
+                      2,
+                      (i) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          children: const [
+                            SkeletonBox(width: 100, height: 14, borderRadius: 4),
+                            Spacer(),
+                            SkeletonBox(width: 45, height: 26, borderRadius: 14),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         error: (err, stack) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,

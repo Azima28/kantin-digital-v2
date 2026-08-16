@@ -13,6 +13,7 @@ import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_edit_parent_sheet.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 
 class AdminParentDetailScreen extends ConsumerStatefulWidget {
@@ -449,7 +450,49 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
             ),
           );
         },
-        loading: () => Center(child: CupertinoActivityIndicator(color: Nebula.teal)),
+        loading: () => Shimmer(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: context.cardBg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: context.borderLight, width: 0.8),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: context.cardBg,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: context.borderLight, width: 0.8),
+                  ),
+                  child: Column(
+                    children: List.generate(
+                      3,
+                      (i) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          children: const [
+                            SkeletonBox(width: 80, height: 14, borderRadius: 4),
+                            Spacer(),
+                            SkeletonBox(width: 120, height: 14, borderRadius: 4),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         error: (err, stack) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,

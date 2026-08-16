@@ -12,6 +12,7 @@ import 'package:kantin_digital/features/keuangan/widgets/daily_trend_chart_dialo
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 class KeuanganReportScreen extends ConsumerStatefulWidget {
   const KeuanganReportScreen({super.key});
@@ -1543,10 +1544,74 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                       ],
                     );
                   },
-                  loading: () => Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(40),
-                      child: CupertinoActivityIndicator(color: Nebula.teal),
+                  loading: () => Shimmer(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          height: 110,
+                          decoration: BoxDecoration(
+                            color: context.cardBg,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(color: context.borderLight, width: 0.8),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                height: 90,
+                                decoration: BoxDecoration(
+                                  color: context.cardBg,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: context.borderLight, width: 0.8),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Container(
+                                height: 90,
+                                decoration: BoxDecoration(
+                                  color: context.cardBg,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: context.borderLight, width: 0.8),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        const SkeletonBox(width: 140, height: 14, borderRadius: 4),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: context.cardBg,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: context.borderLight, width: 0.8),
+                          ),
+                          child: Column(
+                            children: List.generate(
+                              3,
+                              (i) => Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                child: Row(
+                                  children: const [
+                                    SkeletonCircle(size: 36),
+                                    SizedBox(width: 12),
+                                    SkeletonBox(width: 100, height: 14, borderRadius: 4),
+                                    Spacer(),
+                                    SkeletonBox(width: 70, height: 14, borderRadius: 4),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   error: (e, _) => Center(

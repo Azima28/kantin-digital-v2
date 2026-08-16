@@ -2,11 +2,13 @@ class OrderSubItem {
   final String name;
   final int qty;
   final int price; // fixed: changed from double to int
+  final String? imageUrl;
 
   const OrderSubItem({
     required this.name,
     required this.qty,
     required this.price,
+    this.imageUrl,
   });
 }
 
@@ -34,6 +36,18 @@ class OrderItem {
     this.cancelRequestReason,
     this.createdAt,
   });
+
+  /// Returns the item with the highest unit price (termahal) in this order
+  OrderSubItem? get mostExpensiveItem {
+    if (items.isEmpty) return null;
+    OrderSubItem top = items.first;
+    for (final item in items) {
+      if (item.price > top.price) {
+        top = item;
+      }
+    }
+    return top;
+  }
 
   OrderItem copyWith({
     String? status,

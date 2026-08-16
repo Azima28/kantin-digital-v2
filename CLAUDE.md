@@ -46,6 +46,7 @@ Each feature: `screens/`, `providers/`, `widgets/` subdirectories. Some also hav
 ## Design Rules
 - **Colors:** ONLY use AppColors constants from `core/constants/app_colors.dart`. NO hardcoded colors.
 - **Strings:** ALL UI strings from `core/constants/app_strings.dart`. NO inline strings.
+- **No AI Emojis:** TIDAK BOLEH menggunakan emoji AI / AI-slop pada teks UI, tombol, atau label (ikuti Hallmark Anti-AI-Slop design guidelines).
 - **Card Style:** radius 16, elevation 0, border 0.5px `AppColors.borderLight`
 - **AppBar:** centered title, transparent/no shadow
 - **Input Fields:** underline border, iOS-style borderless
@@ -60,6 +61,7 @@ Each feature: `screens/`, `providers/`, `widgets/` subdirectories. Some also hav
   - `process_refund()` — ACID refund with 10-minute expiry check
 - **RLS Active:** All queries evaluated against `auth.uid()` via Row Level Security policies
 - **Double-Spend Prevention:** Handled entirely inside the PostgreSQL RPC procedure
+- **Supabase CLI:** Supabase CLI sudah terhubung & ter-link ke project remote (`npx supabase db push` untuk mengeksekusi migrasi database).
 
 ## App Routes
 | Route | Screen | Role |

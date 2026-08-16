@@ -17,6 +17,7 @@ export 'audit_log.dart';
 export 'parent_student.dart';
 export 'finance_officer.dart';
 export 'system_setting.dart';
+export 'order_message.dart';
 
 // ── Composite models ─────────────────────────────────────────
 export 'operator_transaction.dart';

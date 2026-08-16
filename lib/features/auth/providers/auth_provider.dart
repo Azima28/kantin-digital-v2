@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:kantin_digital/core/services/secure_session_service.dart';
 import 'package:kantin_digital/features/auth/services/auth_service.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 
@@ -79,7 +81,32 @@ class AuthNotifier extends StateNotifier<AuthState> {
     super.dispose();
   }
 
-  void _initAuthListener() {
+  void _initAuthListener() async {
+    // 1. Check persistent 7-day session storage on launch or page refresh first
+    try {
+      final cachedSession = await SecureSessionService.getValidSessionData();
+      if (cachedSession != null) {
+        final Map<String, dynamic> profile = cachedSession['profile'] as Map<String, dynamic>;
+        final String? sessionToken = cachedSession['session_token'] as String?;
+        state = AuthState(
+          isAuthenticated: true,
+          profile: profile,
+          sessionToken: sessionToken,
+          isInitialized: true,
+          isLoading: false,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error reading cached session: $e');
+    }
+
+    // Safety fallback timeout to prevent stuck splash screen on slow network initialization
+    Future.delayed(const Duration(seconds: 3), () {
+      if (!state.isInitialized && mounted) {
+        state = state.copyWith(isInitialized: true, isLoading: false);
+      }
+    });
+
     _authSubscription = _authService.onAuthStateChange.listen((data) async {
       final session = data.session;
       if (session != null) {
@@ -87,7 +114,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         final String? currentUserId = state.profile?['id'];
         if (state.isAuthenticated && currentUserId == session.user.id) {
           if (!state.isInitialized) {
-            state = state.copyWith(isInitialized: true);
+            state = state.copyWith(isInitialized: true, isLoading: false);
           }
           return;
         }
@@ -99,10 +126,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
               profile['role'] == AuthRoles.parent ||
               profile['role'] == AuthRoles.superAdmin ||
               profile['role'] == AuthRoles.keuangan)) {
+            await SecureSessionService.saveSessionData(
+              profile: profile,
+              sessionToken: state.sessionToken,
+            );
             state = AuthState(
               isAuthenticated: true,
               profile: profile,
               isInitialized: true,
+              isLoading: false,
               sessionToken: state.sessionToken,
             );
             return;
@@ -111,7 +143,27 @@ class AuthNotifier extends StateNotifier<AuthState> {
           // Fall through on error
         }
       }
-      state = const AuthState(isAuthenticated: false, isInitialized: true);
+
+      // Check if valid 7-day cached session exists before logging out
+      final activeSession = await SecureSessionService.getValidSessionData();
+      if (activeSession != null) {
+        final Map<String, dynamic> profile = activeSession['profile'] as Map<String, dynamic>;
+        final String? sessionToken = activeSession['session_token'] as String?;
+        if (!state.isAuthenticated || state.profile?['id'] != profile['id']) {
+          state = AuthState(
+            isAuthenticated: true,
+            profile: profile,
+            sessionToken: sessionToken,
+            isInitialized: true,
+            isLoading: false,
+          );
+        } else if (!state.isInitialized) {
+          state = state.copyWith(isInitialized: true, isLoading: false);
+        }
+        return;
+      }
+
+      state = const AuthState(isAuthenticated: false, isInitialized: true, isLoading: false);
     });
   }
 
@@ -126,6 +178,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       final Map<String, dynamic> profile = result['profile'] as Map<String, dynamic>;
       final String? sessionToken = result['session_token'] as String?;
+
+      // Persist to 7-day local storage
+      await SecureSessionService.saveSessionData(
+        profile: profile,
+        sessionToken: sessionToken,
+      );
+
       state = AuthState(
         isAuthenticated: true,
         profile: profile,
@@ -142,9 +201,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  // Fungsi Logout Kasir
+  // Fungsi Logout Kasir / User
   Future<void> logout() async {
     state = state.copyWith(isLoading: true);
+    await SecureSessionService.clearSessionData();
     await _authService.signOut();
     state = const AuthState(isAuthenticated: false, sessionToken: null, isInitialized: true);
   }

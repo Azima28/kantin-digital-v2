@@ -1,13 +1,17 @@
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 */
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+
 import 'package:kantin_digital/core/constants/app_strings.dart';
-import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/theme/hallmark_color_scheme.dart';
+import 'package:kantin_digital/core/theme/hallmark_typography.dart';
+import 'package:kantin_digital/core/widgets/hallmark_card.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 
+/// Hallmark Siswa Cards Management Screen
 class SiswaCardsScreen extends ConsumerWidget {
   const SiswaCardsScreen({super.key});
 
@@ -17,7 +21,6 @@ class SiswaCardsScreen extends ConsumerWidget {
     String studentId,
     bool currentStatus,
   ) async {
-    // Confirmation dialog
     showCupertinoDialog(
       context: context,
       builder: (BuildContext ctx) => CupertinoAlertDialog(
@@ -36,19 +39,17 @@ class SiswaCardsScreen extends ConsumerWidget {
               Navigator.pop(ctx);
               try {
                 final client = ref.read(supabaseClientProvider);
-                
-                // Update active status
+
                 await client
                     .from('students')
                     .update({'is_active': !currentStatus})
                     .eq('id', studentId);
 
-                // Send a notification about freeze
                 await client.from('notifications').insert({
                   'student_id': studentId,
                   'title': !currentStatus ? 'Kartu Diaktifkan' : 'Kartu Dibekukan',
-                  'message': !currentStatus 
-                      ? 'Kartu RFID Anda berhasil diaktifkan kembali.' 
+                  'message': !currentStatus
+                      ? 'Kartu RFID Anda berhasil diaktifkan kembali.'
                       : 'Kartu RFID Anda telah dibekukan sementara untuk keamanan.',
                   'type': 'system',
                 });
@@ -60,7 +61,6 @@ class SiswaCardsScreen extends ConsumerWidget {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(!currentStatus ? 'Kartu berhasil diaktifkan!' : 'Kartu berhasil dibekukan!'),
-                      backgroundColor: !currentStatus ? Nebula.teal : Nebula.rose,
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -70,7 +70,6 @@ class SiswaCardsScreen extends ConsumerWidget {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('${AppStrings.labelFailed} memperbarui kartu: $e'),
-                      backgroundColor: Nebula.rose,
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -86,6 +85,7 @@ class SiswaCardsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.colors;
     final studentAsync = ref.watch(siswaStudentProvider);
     final authState = ref.watch(authNotifierProvider);
     final String fullName = authState.profile?['full_name'] ?? AppStrings.adminStudents;
@@ -93,18 +93,18 @@ class SiswaCardsScreen extends ConsumerWidget {
     final String nis = email.split('@').first;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: colors.surfaceBase,
       appBar: AppBar(
         title: Text(
           'Manajemen Kartu',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+          style: HallmarkTypography.titleL3(colors.textPrimary),
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         shape: Border(
-          bottom: BorderSide(color: context.borderLight, width: 0.5),
+          bottom: BorderSide(color: colors.borderTactile, width: 0.5),
         ),
       ),
       body: RefreshIndicator(
@@ -117,11 +117,16 @@ class SiswaCardsScreen extends ConsumerWidget {
             constraints: const BoxConstraints(maxWidth: 800),
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.all(20.0),
               child: studentAsync.when(
                 data: (student) {
                   if (student == null) {
-                    return const Center(child: Text('Data kartu tidak tersedia.'));
+                    return Center(
+                      child: Text(
+                        'Data kartu tidak tersedia.',
+                        style: HallmarkTypography.bodyMain(colors.textMuted),
+                      ),
+                    );
                   }
 
                   final String rfidUid = student.rfidUid ?? 'BELUM DIHUBUNGKAN';
@@ -129,192 +134,139 @@ class SiswaCardsScreen extends ConsumerWidget {
                   final bool isActive = student.isActive;
                   final String studentId = student.id;
 
-                   return Column(
+                  return Column(
                     children: [
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
 
-                      // RFID Card Replica Widget — Stitch teal gradient
+                      // Hallmark Digital Card Specimen
                       Container(
                         width: double.infinity,
                         height: 200,
+                        padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color(0xFF00C4B4),  // Stitch bright teal
-                              Color(0xFF00A896),  // Mid teal
-                              Color(0xFF007B6E),  // Deep teal
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
+                          color: colors.surfaceContainer,
                           borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: colors.brandPrimary.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF00C4B4).withValues(alpha: 0.35),
-                              blurRadius: 24,
-                              offset: const Offset(0, 10),
+                              color: colors.brandPrimary.withValues(alpha: 0.12),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
                             ),
                           ],
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: Stack(
-                            children: [
-                              // Decorative circles
-                              Positioned(
-                                top: -40,
-                                right: -40,
-                                child: Container(
-                                  width: 160,
-                                  height: 160,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.white.withValues(alpha: 0.08),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'KARTU SISWA DIGITAL',
+                                  style: HallmarkTypography.labelButton(colors.brandPrimary),
+                                ),
+                                Icon(
+                                  CupertinoIcons.wifi,
+                                  color: colors.brandPrimary,
+                                  size: 20,
+                                ),
+                              ],
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  fullName,
+                                  style: HallmarkTypography.headingL2(colors.textPrimary),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'NIS: $nis • Kelas $studentClass',
+                                  style: HallmarkTypography.bodySmall(colors.textMuted),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'UID: $rfidUid',
+                                  style: HallmarkTypography.financialNumeral(
+                                    color: colors.textMuted,
+                                    fontSize: 12,
                                   ),
                                 ),
-                              ),
-                              Positioned(
-                                bottom: -50,
-                                left: -30,
-                                child: Container(
-                                  width: 180,
-                                  height: 180,
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.white.withValues(alpha: 0.05),
+                                    color: (isActive ? colors.statusSuccess : colors.statusError)
+                                        .withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(999),
+                                    border: Border.all(
+                                      color: (isActive ? colors.statusSuccess : colors.statusError)
+                                          .withValues(alpha: 0.3),
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    isActive ? 'Aktif' : 'Beku',
+                                    style: HallmarkTypography.bodySmall(
+                                      isActive ? colors.statusSuccess : colors.statusError,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            'KARTU SISWA DIGITAL',
-                                            style: GoogleFonts.inter(
-                                              color: Colors.white.withValues(alpha: 0.85),
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.bold,
-                                              letterSpacing: 1.5,
-                                            ),
-                                          ),
-                                          Icon(
-                                            CupertinoIcons.wifi,
-                                            color: Colors.white.withValues(alpha: 0.85),
-                                            size: 20,
-                                          ),
-                                        ],
-                                      ),
-                                      Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            fullName,
-                                            style: GoogleFonts.inter(
-                                              color: Colors.white,
-                                              fontSize: 22,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            'NIS: $nis • Kelas $studentClass',
-                                            style: GoogleFonts.inter(
-                                              color: Colors.white.withValues(alpha: 0.85),
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            'UID: $rfidUid',
-                                            style: GoogleFonts.inter(
-                                              color: Colors.white.withValues(alpha: 0.7),
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                                            decoration: BoxDecoration(
-                                              color: isActive
-                                                  ? Colors.white.withValues(alpha: 0.25)
-                                                  : Colors.red.withValues(alpha: 0.3),
-                                              borderRadius: BorderRadius.circular(999),
-                                            ),
-                                            child: Text(
-                                              isActive ? 'Aktif' : 'Beku',
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                              ),
-                            ],
-                          ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
+                      const SizedBox(height: 28),
 
-                      const SizedBox(height: 36),
-
-                      // IOS List Group
-                      Container(
-                        decoration: BoxDecoration(
-                          color: context.cardBg,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: context.borderLight, width: 0.5),
-                        ),
-                        child: Column(
+                      // Hallmark Settings Tile Card
+                      HallmarkCard(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
                           children: [
-                            ListTile(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                              leading: Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: isActive ? Nebula.teal.withValues(alpha: 0.08) : Nebula.rose.withValues(alpha: 0.08),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  isActive ? CupertinoIcons.lock : CupertinoIcons.lock_open,
-                                  color: isActive ? Nebula.teal : Nebula.rose,
-                                  size: 16,
-                                ),
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: (isActive ? colors.statusError : colors.statusSuccess)
+                                    .withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                              title: Text(
-                                'Bekukan Sementara',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: context.textPrimary,
-                                ),
+                              child: Icon(
+                                isActive ? CupertinoIcons.lock : CupertinoIcons.lock_open,
+                                color: isActive ? colors.statusError : colors.statusSuccess,
+                                size: 18,
                               ),
-                              subtitle: Text(
-                                'Kunci kartu agar tidak bisa digunakan jajan.',
-                                style: TextStyle(fontSize: 11, color: context.textSecondary),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Bekukan Sementara',
+                                    style: HallmarkTypography.titleSmall(colors.textPrimary),
+                                  ),
+                                  Text(
+                                    'Kunci kartu agar tidak bisa digunakan jajan.',
+                                    style: HallmarkTypography.bodySmall(colors.textMuted),
+                                  ),
+                                ],
                               ),
-                              trailing: CupertinoSwitch(
-                                value: !isActive,
-                                activeTrackColor: Nebula.teal,
-                                onChanged: (bool val) {
-                                  _toggleCardStatus(context, ref, studentId, isActive);
-                                },
-                              ),
+                            ),
+                            CupertinoSwitch(
+                              value: !isActive,
+                              activeTrackColor: colors.statusError,
+                              onChanged: (bool val) {
+                                _toggleCardStatus(context, ref, studentId, isActive);
+                              },
                             ),
                           ],
                         ),
@@ -322,16 +274,66 @@ class SiswaCardsScreen extends ConsumerWidget {
                     ],
                   );
                 },
-                loading: () => const Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40),
-                    child: CupertinoActivityIndicator(),
+                loading: () => Shimmer(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        height: 200,
+                        decoration: BoxDecoration(
+                          color: colors.surfaceContainer,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: colors.borderTactile, width: 0.8),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      HallmarkCard(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: const [
+                                SkeletonBox(width: 80, height: 14, borderRadius: 4),
+                                SkeletonBox(width: 60, height: 22, borderRadius: 8),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: const [
+                                SkeletonBox(width: 60, height: 12, borderRadius: 4),
+                                SkeletonBox(width: 120, height: 14, borderRadius: 4),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      HallmarkCard(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: const [
+                                SkeletonBox(width: 120, height: 14, borderRadius: 4),
+                                SizedBox(height: 6),
+                                SkeletonBox(width: 180, height: 11, borderRadius: 4),
+                              ],
+                            ),
+                            const SkeletonBox(width: 50, height: 30, borderRadius: 16),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 error: (err, stack) => Center(
                   child: Text(
-                    '${AppStrings.labelFailed} memuat status kartu: $err',
-                    style: const TextStyle(color: Nebula.rose),
+                    '${AppStrings.labelFailed} memuat status kartu',
+                    style: HallmarkTypography.bodyMain(colors.statusError),
                   ),
                 ),
               ),

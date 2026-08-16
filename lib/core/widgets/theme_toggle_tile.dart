@@ -1,13 +1,23 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/providers/theme_provider.dart';
 
 /// A premium ListTile-style row for switching between light and dark mode.
 class ThemeToggleTile extends ConsumerWidget {
   final bool showDivider;
-  const ThemeToggleTile({super.key, this.showDivider = false});
+  final EdgeInsetsGeometry? padding;
+  final bool useCircleIcon;
+
+  const ThemeToggleTile({
+    super.key,
+    this.showDivider = false,
+    this.padding,
+    this.useCircleIcon = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -17,6 +27,31 @@ class ThemeToggleTile extends ConsumerWidget {
         : AppColors.primaryLight;
     final iconColor = AppColors.primary;
 
+    Widget leadingIcon;
+    if (useCircleIcon) {
+      leadingIcon = Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: iconBgColor,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          isDark ? CupertinoIcons.moon_fill : CupertinoIcons.sun_max_fill,
+          key: ValueKey(isDark),
+          color: iconColor,
+          size: 18,
+        ),
+      );
+    } else {
+      leadingIcon = Icon(
+        isDark ? CupertinoIcons.moon_fill : CupertinoIcons.sun_max_fill,
+        key: ValueKey(isDark),
+        color: context.textSecondary,
+        size: 20,
+      );
+    }
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -24,30 +59,10 @@ class ThemeToggleTile extends ConsumerWidget {
           onTap: () => ref.read(themeProvider.notifier).toggle(),
           borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: padding ?? const EdgeInsets.symmetric(vertical: 6),
             child: Row(
               children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: iconBgColor,
-                    shape: BoxShape.circle,
-                  ),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 350),
-                    transitionBuilder: (child, anim) => RotationTransition(
-                      turns: Tween<double>(begin: 0.75, end: 1.0).animate(anim),
-                      child: FadeTransition(opacity: anim, child: child),
-                    ),
-                    child: Icon(
-                      isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-                      key: ValueKey(isDark),
-                      color: iconColor,
-                      size: 20,
-                    ),
-                  ),
-                ),
+                leadingIcon,
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -55,39 +70,37 @@ class ThemeToggleTile extends ConsumerWidget {
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: Theme.of(context).colorScheme.onSurface,
+                      color: context.textPrimary,
                     ),
                   ),
                 ),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: isDark
-                        ? AppColors.primary.withValues(alpha: 0.20)
+                        ? AppColors.primary.withValues(alpha: 0.15)
                         : AppColors.primaryLight,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isDark
-                          ? AppColors.primary.withValues(alpha: 0.5)
+                          ? AppColors.primary.withValues(alpha: 0.4)
                           : AppColors.primary.withValues(alpha: 0.25),
-                      width: 1,
+                      width: 0.8,
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-                        size: 13,
+                        isDark ? CupertinoIcons.moon_fill : CupertinoIcons.sun_max_fill,
+                        size: 12,
                         color: iconColor,
                       ),
-                      const SizedBox(width: 5),
+                      const SizedBox(width: 4),
                       Text(
                         isDark ? 'Gelap' : 'Terang',
                         style: GoogleFonts.inter(
-                          fontSize: 12,
+                          fontSize: 11.5,
                           fontWeight: FontWeight.w600,
                           color: iconColor,
                         ),
@@ -100,7 +113,14 @@ class ThemeToggleTile extends ConsumerWidget {
           ),
         ),
         if (showDivider)
-          const Divider(height: 1, indent: 64, endIndent: 16),
+          Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 8),
+            child: Divider(
+              height: 1,
+              thickness: 0.5,
+              color: context.borderLight,
+            ),
+          ),
       ],
     );
   }

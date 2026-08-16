@@ -14,6 +14,7 @@ import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/auth/widgets/login_account_preview.dart';
 import 'package:kantin_digital/features/auth/widgets/login_preview_item.dart';
+import 'package:kantin_digital/features/auth/widgets/running_food_characters.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   final String? from;
@@ -33,7 +34,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   // Base color constants
   static const Color primaryTeal = Color(0xFF0D9488);
-  static const Color accentBlue = Color(0xFF14B8A6);
 
   @override
   void dispose() {
@@ -62,7 +62,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         if (role == 'petugas_kantin') {
           context.go('/pos');
         } else if (role == 'student') {
-          context.go('/student');
+          if (widget.from != null && widget.from!.isNotEmpty && (widget.from!.startsWith('/student') || widget.from!.startsWith('/public'))) {
+            context.go(widget.from!);
+          } else {
+            context.go('/student');
+          }
         } else if (role == 'super_admin') {
           context.go('/admin');
         } else if (role == 'petugas_keuangan') {
@@ -150,67 +154,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final isDesktop = Responsive.isDesktop(context);
     final isDark = context.isDark;
 
-    // Responsive Light & Dark Mode dynamic tokens (Unified Emerald/Teal Theme)
-    final pageBg = isDark ? AppColors.darkScaffoldBg : AppColors.lightScaffoldBg;
+    // Full White Background for Clean Modern School Canteen Aesthetic
+    final pageBg = isDark ? AppColors.darkScaffoldBg : Colors.white;
     final activeTeal = isDark ? AppColors.tealConst : AppColors.darkTealConst;
     final activeTealDark = isDark ? AppColors.darkTealConst : const Color(0xFF065F56);
-    final activeGlassBg = isDark ? AppColors.darkCardBg : AppColors.lightCardBg;
-    final activeGlassBorder = isDark ? AppColors.darkCardBorder : AppColors.lightInputFieldBorder;
-    final activeInputBg = isDark ? AppColors.darkInputFieldBg : AppColors.lightInputFieldBg;
+    final activeGlassBg = isDark ? AppColors.darkCardBg : Colors.white;
+    final activeGlassBorder = isDark ? AppColors.darkCardBorder : const Color(0xFFE2E8F0);
+    final activeInputBg = isDark ? AppColors.darkInputFieldBg : const Color(0xFFF8FAFC);
     final activeInputBorder = isDark
         ? const BorderSide(color: AppColors.darkInputFieldBorder, width: 1)
-        : const BorderSide(color: AppColors.lightInputFieldBorder, width: 1);
-    final activeTextMain = isDark ? AppColors.darkTextPrimaryVal : AppColors.lightTextPrimaryVal;
-    final activeTextMuted = isDark ? AppColors.darkTextSecondaryVal : AppColors.lightTextSecondaryVal;
-    final activeTextLabel = isDark ? AppColors.darkTextPrimaryVal : AppColors.lightTextPrimaryVal;
-    final activeTextPlaceholder = isDark ? AppColors.darkTextSecondaryVal : AppColors.lightTextSecondaryVal;
-    final activeShadow = isDark ? Colors.transparent : const Color(0x0D000000);
-    final activeSecBtnBg = isDark ? AppColors.darkInputFieldBg : const Color(0xFFE6F5F2);
-    final activeSecBtnBorder = isDark ? AppColors.darkCardBorder : const Color(0xFFB2DFDF);
-    final activeSecBtnText = isDark ? AppColors.darkTextPrimaryVal : AppColors.darkTealConst;
+        : const BorderSide(color: Color(0xFFE2E8F0), width: 1);
+    final activeTextMain = isDark ? AppColors.darkTextPrimaryVal : const Color(0xFF0F172A);
+    final activeTextMuted = isDark ? AppColors.darkTextSecondaryVal : const Color(0xFF64748B);
+    final activeTextLabel = isDark ? AppColors.darkTextPrimaryVal : const Color(0xFF334155);
+    final activeTextPlaceholder = isDark ? AppColors.darkTextSecondaryVal : const Color(0xFF94A3B8);
+    final activeShadow = isDark ? Colors.transparent : const Color(0x08000000);
+    final activeSecBtnBg = isDark ? AppColors.darkInputFieldBg : const Color(0xFFF1F5F9);
+    final activeSecBtnBorder = isDark ? AppColors.darkCardBorder : const Color(0xFFCBD5E1);
+    final activeSecBtnText = isDark ? AppColors.darkTextPrimaryVal : const Color(0xFF0F172A);
 
     return Scaffold(
       backgroundColor: pageBg,
       body: Stack(
         children: [
-          // Background Animated Blobs (Light & Dark mode aware)
-          Positioned(
-            top: -100,
-            right: -100,
-            child: Container(
-              width: 400,
-              height: 400,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: activeTeal.withValues(alpha: isDark ? 0.35 : 0.15),
-                boxShadow: [
-                  BoxShadow(
-                    color: activeTeal.withValues(alpha: isDark ? 0.35 : 0.15),
-                    blurRadius: 100,
-                    spreadRadius: 50,
-                  ),
-                ],
+          // Background Subtle Ambient Lighting (Minimal & Clean)
+          if (isDark) ...[
+            Positioned(
+              top: -100,
+              right: -100,
+              child: Container(
+                width: 400,
+                height: 400,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: activeTeal.withValues(alpha: 0.25),
+                  boxShadow: [
+                    BoxShadow(
+                      color: activeTeal.withValues(alpha: 0.25),
+                      blurRadius: 100,
+                      spreadRadius: 50,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          Positioned(
-            bottom: -50,
-            left: -50,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: (isDark ? accentBlue : activeTealDark).withValues(alpha: isDark ? 0.35 : 0.12),
-                boxShadow: [
-                  BoxShadow(
-                    color: (isDark ? accentBlue : activeTealDark).withValues(alpha: isDark ? 0.35 : 0.12),
-                    blurRadius: 100,
-                    spreadRadius: 50,
-                  ),
-                ],
-              ),
-            ),
+          ],
+
+          // Full-Screen Ambient Running Food & Drink Mascots (All over background behind text/cards)
+          const Positioned.fill(
+            child: RunningFoodBackground(isInteractive: true),
           ),
 
           SafeArea(
@@ -222,29 +214,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      PressScale(
-                        onTap: () {
-                          if (widget.from != null && widget.from!.isNotEmpty) {
-                            context.go(widget.from!);
-                          } else {
-                            context.go('/welcome');
-                          }
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            children: [
-                              Icon(Icons.chevron_left_rounded, color: activeTeal, size: 22),
-                              const SizedBox(width: 4),
-                              Text(
-                                AppStrings.buttonBack,
-                                style: GoogleFonts.poppins(
-                                  color: activeTeal,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                      Flexible(
+                        child: PressScale(
+                          onTap: () {
+                            if (widget.from != null && widget.from!.isNotEmpty) {
+                              context.go(widget.from!);
+                            } else {
+                              context.go('/welcome');
+                            }
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.chevron_left_rounded, color: activeTeal, size: 22),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    AppStrings.buttonBack,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.poppins(
+                                      color: activeTeal,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -449,28 +448,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     required Color activeSecBtnText,
     required bool isDark,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(28),
-      decoration: BoxDecoration(
-        color: activeGlassBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: activeGlassBorder, width: 1),
-        boxShadow: isDark
-            ? []
-            : [
-                const BoxShadow(
-                  color: Color(0x0D000000),
-                  blurRadius: 24,
-                  offset: Offset(0, 8),
-                ),
-              ],
-      ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
             // 1. App Header (.app-header)
             Row(
               children: [
@@ -514,33 +497,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
             const SizedBox(height: 24),
 
-            // 2. Secure Area Badge (.secure-area)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: activeTeal.withValues(alpha: isDark ? 0.08 : 0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.lock_rounded, size: 12, color: activeTeal),
-                  const SizedBox(width: 6),
-                  Text(
-                    'AREA AMAN',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: activeTeal,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // 3. Hero Titles
+            // Hero Titles
             Text(
               _selectedLoginTab == 0 ? 'Selamat datang kembali.' : 'Masuk Orang Tua Sekolah',
               style: GoogleFonts.poppins(
@@ -824,9 +781,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
+      );
+    }
 
   /// List of demo account items (populated from DB credentials)
   Widget _buildDemoItemsList(BuildContext context) {

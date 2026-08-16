@@ -1,11 +1,13 @@
 import 'dart:math';
 import 'dart:ui' show lerpDouble;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
-// â”€â”€â”€ Particle Data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Particle Data ---
 
 class ParticleData {
   final double angle;
@@ -35,7 +37,6 @@ List<ParticleData> _buildParticles() {
   ];
   return List.generate(24, (i) {
     final angle = (i / 24) * 2 * pi + rng.nextDouble() * 0.4;
-    // distanceFactor defines the explosion radius multiplier
     final distanceFactor = 0.5 + rng.nextDouble() * 0.5;
     return ParticleData(
       angle: angle,
@@ -47,7 +48,7 @@ List<ParticleData> _buildParticles() {
   });
 }
 
-// â”€â”€â”€ Overlay Widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Overlay Widget ---
 
 class SiswaPaymentAnimationOverlay extends ConsumerStatefulWidget {
   final int totalAmount;
@@ -139,7 +140,7 @@ class _SiswaPaymentAnimationOverlayState
       animation: _ctrl,
       builder: (context, _) {
         return Scaffold(
-          backgroundColor: const Color(0xFFFFFBF5),
+          backgroundColor: context.isDark ? const Color(0xFF111827) : const Color(0xFFFFFBF5),
           body: Opacity(
             opacity: _bgFade.value,
             child: Stack(
@@ -165,7 +166,7 @@ class _SiswaPaymentAnimationOverlayState
                               child: _buildAnimatedCard(size),
                             ),
                           ),
-                          const SizedBox(height: 40),
+                          const SizedBox(height: 36),
                           // Text details
                           Transform.translate(
                             offset: Offset(0, _textSlide.value),
@@ -195,10 +196,10 @@ class _SiswaPaymentAnimationOverlayState
     // Scale explosion distance based on current viewport size
     final maxExplosionRadius = min(size.width, size.height) * 0.45;
     final dist = maxExplosionRadius * p.distanceFactor;
-    
+
     final dx = cos(p.angle) * dist * progress;
     final dy = sin(p.angle) * dist * progress;
-    
+
     // Simulate natural gravity drop
     final gravity = 45 * progress * progress;
 
@@ -286,13 +287,28 @@ class _SiswaPaymentAnimationOverlayState
               : _buildCheckContent(),
         ),
 
-        // Graduation cap landing bounce
+        // Graduation cap landing badge
         if (_capBounce.value > 0)
           Positioned(
             top: -(24 * _capBounce.value),
-            child: Text(
-              'ðŸŽ“',
-              style: TextStyle(fontSize: 22 + 6 * _capBounce.value),
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.school_rounded,
+                size: 20 + 4 * _capBounce.value,
+                color: const Color(0xFF00C897),
+              ),
             ),
           ),
       ],
@@ -317,12 +333,21 @@ class _SiswaPaymentAnimationOverlayState
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
-              const Text('â—†', style: TextStyle(color: Colors.white70, fontSize: 18)),
+              const Icon(
+                CupertinoIcons.creditcard_fill,
+                color: Colors.white70,
+                size: 20,
+              ),
             ],
           ),
-          const Text(
+          Text(
             'Kantin Digital',
-            style: TextStyle(color: Colors.white54, fontSize: 11, letterSpacing: 1),
+            style: GoogleFonts.inter(
+              color: Colors.white54,
+              fontSize: 11,
+              letterSpacing: 1,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -341,40 +366,63 @@ class _SiswaPaymentAnimationOverlayState
   Widget _buildTexts(String studentName) {
     return Column(
       children: [
-        Text(
-          'Pembayaran Berhasil! 🥳',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: context.textPrimary,
-          ),
-          textAlign: TextAlign.center,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.verified_rounded,
+              color: Color(0xFF00C897),
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Pembayaran Berhasil!',
+              style: GoogleFonts.inter(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: context.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         Text(
           'Halo, $studentName!',
-          style: const TextStyle(
-            fontSize: 16,
-            color: Color(0xFF00C897),
-            fontWeight: FontWeight.w600,
+          style: GoogleFonts.inter(
+            fontSize: 15,
+            color: const Color(0xFF00C897),
+            fontWeight: FontWeight.w700,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 6),
-        Text(
-          'Transaksi kamu sudah selesai ✅',
-          style: TextStyle(
-            fontSize: 14,
-            color: context.textSecondary,
-          ),
-          textAlign: TextAlign.center,
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              CupertinoIcons.checkmark_circle_fill,
+              size: 16,
+              color: Color(0xFF00C897),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'Transaksi kamu sudah selesai',
+              style: GoogleFonts.inter(
+                fontSize: 13.5,
+                color: context.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ],
     );
   }
 }
 
-// â”€â”€â”€ Custom Painters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Custom Painters ---
 
 class _DashedRingPainter extends CustomPainter {
   final Color color;

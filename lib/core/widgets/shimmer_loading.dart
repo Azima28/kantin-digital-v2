@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
+/// A theme-aware Shimmer animation wrapper.
 class Shimmer extends StatefulWidget {
   final Widget child;
   final bool enabled;
+  final Color? baseColor;
+  final Color? highlightColor;
 
   const Shimmer({
     super.key,
     required this.child,
     this.enabled = true,
+    this.baseColor,
+    this.highlightColor,
   });
 
   @override
@@ -37,6 +42,17 @@ class _ShimmerState extends State<Shimmer> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     if (!widget.enabled) return widget.child;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final defaultBaseColor = isDark
+        ? const Color(0xFF1E293B)
+        : const Color(0xFFE2E8F0);
+    final defaultHighlightColor = isDark
+        ? const Color(0xFF334155)
+        : const Color(0xFFF8FAFC);
+
+    final base = widget.baseColor ?? defaultBaseColor;
+    final highlight = widget.highlightColor ?? defaultHighlightColor;
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -47,9 +63,9 @@ class _ShimmerState extends State<Shimmer> with SingleTickerProviderStateMixin {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Colors.grey[300]!,
-                Colors.grey[100]!,
-                Colors.grey[300]!,
+                base,
+                highlight,
+                base,
               ],
               stops: const [0.15, 0.5, 0.85],
               transform: _SlidingGradientTransform(slidePercent: _controller.value),
@@ -74,6 +90,161 @@ class _SlidingGradientTransform extends GradientTransform {
   }
 }
 
+/// A basic rectangular or rounded skeleton placeholder box.
+class SkeletonBox extends StatelessWidget {
+  final double? width;
+  final double? height;
+  final double borderRadius;
+  final Color? color;
+  final EdgeInsetsGeometry? margin;
+
+  const SkeletonBox({
+    super.key,
+    this.width,
+    this.height = 16,
+    this.borderRadius = 8,
+    this.color,
+    this.margin,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final defaultColor = isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0);
+
+    return Container(
+      width: width,
+      height: height,
+      margin: margin,
+      decoration: BoxDecoration(
+        color: color ?? defaultColor,
+        borderRadius: BorderRadius.circular(borderRadius),
+      ),
+    );
+  }
+}
+
+/// A circular skeleton placeholder (for avatars, icon badges, etc.).
+class SkeletonCircle extends StatelessWidget {
+  final double size;
+  final Color? color;
+
+  const SkeletonCircle({
+    super.key,
+    this.size = 40,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final defaultColor = isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0);
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color ?? defaultColor,
+        shape: BoxShape.circle,
+      ),
+    );
+  }
+}
+
+/// A card skeleton container with border and background matching Hallmark style.
+class SkeletonCardContainer extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+  final EdgeInsetsGeometry? margin;
+  final double borderRadius;
+  final double? height;
+  final double? width;
+
+  const SkeletonCardContainer({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(16),
+    this.margin = const EdgeInsets.only(bottom: 12),
+    this.borderRadius = 16,
+    this.height,
+    this.width,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      margin: margin,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: context.cardBg,
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(
+          color: context.borderLight,
+          width: 0.8,
+        ),
+      ),
+      child: child,
+    );
+  }
+}
+
+/// A standard list tile skeleton (Icon/Avatar + Title + Subtitle + Trailing Badge).
+class SkeletonListTile extends StatelessWidget {
+  final bool hasLeading;
+  final double leadingSize;
+  final bool isCircleLeading;
+  final bool hasTrailing;
+  final EdgeInsetsGeometry? margin;
+
+  const SkeletonListTile({
+    super.key,
+    this.hasLeading = true,
+    this.leadingSize = 40,
+    this.isCircleLeading = true,
+    this.hasTrailing = true,
+    this.margin = const EdgeInsets.only(bottom: 10),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer(
+      child: SkeletonCardContainer(
+        margin: margin,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            if (hasLeading) ...[
+              if (isCircleLeading)
+                SkeletonCircle(size: leadingSize)
+              else
+                SkeletonBox(width: leadingSize, height: leadingSize, borderRadius: 10),
+              const SizedBox(width: 14),
+            ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SkeletonBox(width: 130, height: 14, borderRadius: 4),
+                  const SizedBox(height: 8),
+                  const SkeletonBox(width: 80, height: 11, borderRadius: 4),
+                ],
+              ),
+            ),
+            if (hasTrailing) ...[
+              const SizedBox(width: 12),
+              const SkeletonBox(width: 64, height: 22, borderRadius: 8),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Order item card skeleton tailored to match OrderItemCard in POS.
 class SkeletonCard extends StatelessWidget {
   const SkeletonCard({super.key});
 
@@ -82,142 +253,127 @@ class SkeletonCard extends StatelessWidget {
     return Shimmer(
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
-        height: 180,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.cardBg,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.canteenBorder, width: 0.5),
+          border: Border.all(color: context.borderLight, width: 0.8),
         ),
-        child: Row(
-          children: [
-            // Left indicator strip mockup
-            Container(
-              width: 5,
-              decoration: const BoxDecoration(
-                color: Colors.grey,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(18),
-                  bottomLeft: Radius.circular(18),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(
+                left: BorderSide(
+                  color: context.borderLight,
+                  width: 6,
                 ),
               ),
             ),
-            // Rest of card contents
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Student name skeleton
-                        Container(
-                          width: 140,
-                          height: 18,
-                          decoration: BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                        // Status badge skeleton
-                        Container(
-                          width: 80,
-                          height: 22,
-                          decoration: BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    // Time skeleton
-                    Container(
-                      width: 60,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: Colors.grey,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    // Item row 1
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          width: 110,
-                          height: 14,
-                          decoration: BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                        Container(
-                          width: 60,
-                          height: 14,
-                          decoration: BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    // Item row 2
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          width: 90,
-                          height: 14,
-                          decoration: BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                        Container(
-                          width: 65,
-                          height: 14,
-                          decoration: BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    // Divider
-                    Container(
-                      height: 1,
-                      color: Colors.grey[200],
-                    ),
-                    const SizedBox(height: 12),
-                    // Total
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 16,
-                          decoration: BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                        Container(
-                          width: 80,
-                          height: 16,
-                          decoration: BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                      ],
-                    ),
+            padding: const EdgeInsets.all(18.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header: Name + Badge
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: const [
+                    SkeletonBox(width: 130, height: 16, borderRadius: 4),
+                    SkeletonBox(width: 80, height: 24, borderRadius: 8),
                   ],
                 ),
+                const SizedBox(height: 8),
+                // Time & code
+                Row(
+                  children: const [
+                    SkeletonBox(width: 50, height: 12, borderRadius: 4),
+                    SizedBox(width: 10),
+                    SkeletonBox(width: 60, height: 16, borderRadius: 4),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Item rows
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: const [
+                    SkeletonBox(width: 140, height: 14, borderRadius: 4),
+                    SkeletonBox(width: 60, height: 14, borderRadius: 4),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: const [
+                    SkeletonBox(width: 100, height: 14, borderRadius: 4),
+                    SkeletonBox(width: 50, height: 14, borderRadius: 4),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                // Divider
+                Container(
+                  height: 0.8,
+                  color: context.borderLight,
+                ),
+                const SizedBox(height: 12),
+                // Total
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: const [
+                    SkeletonBox(width: 45, height: 15, borderRadius: 4),
+                    SkeletonBox(width: 85, height: 16, borderRadius: 4),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A product grid card skeleton matching POS product grid & public menu catalog.
+class SkeletonProductGridCard extends StatelessWidget {
+  const SkeletonProductGridCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer(
+      child: Container(
+        decoration: BoxDecoration(
+          color: context.cardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: context.borderLight, width: 0.8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image area
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: context.isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SkeletonBox(width: double.infinity, height: 14, borderRadius: 4),
+                  const SizedBox(height: 6),
+                  const SkeletonBox(width: 70, height: 12, borderRadius: 4),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: const [
+                      SkeletonBox(width: 60, height: 14, borderRadius: 4),
+                      SkeletonBox(width: 28, height: 28, borderRadius: 8),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],

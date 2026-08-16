@@ -1,120 +1,88 @@
-﻿import 'package:flutter/cupertino.dart';
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 */
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
-/// Halaman landing publik yang bisa diakses tanpa login.
-/// Menampilkan info singkat sistem kantin, CTA ke menu, dan tombol login.
+import 'package:kantin_digital/core/theme/hallmark_color_scheme.dart';
+import 'package:kantin_digital/core/theme/hallmark_typography.dart';
+import 'package:kantin_digital/core/widgets/hallmark_button.dart';
+import 'package:kantin_digital/core/widgets/hallmark_card.dart';
+
+/// Hallmark Public Landing Page Screen
 class PublicHomeScreen extends StatelessWidget {
   const PublicHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: colors.surfaceBase,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ─── Hero Section ───
+              // Hero Section
               Container(
                 width: double.infinity,
-                padding:
-                    EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Nebula.teal, Nebula.teal],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                  color: colors.surfaceContainer,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: colors.borderTactile,
+                      width: 0.5,
+                    ),
                   ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Starlight.bright.withValues(alpha: 0.15),
+                        color: colors.brandPrimary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '🍽️  Kantin Digital',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Starlight.bright,
+                        border: Border.all(
+                          color: colors.brandPrimary.withValues(alpha: 0.2),
+                          width: 0.5,
                         ),
                       ),
+                      child: Text(
+                        '🍽️  Kantin Digital v2.0',
+                        style: HallmarkTypography.bodySmall(colors.brandPrimary),
+                      ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     Text(
                       'Kantin Modern\nBerbasis Kartu Digital',
-                      style: GoogleFonts.inter(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w800,
-                        color: Starlight.bright,
-                        height: 1.15,
-                      ),
+                      style: HallmarkTypography.displayL1(colors.textPrimary),
                     ),
                     const SizedBox(height: 12),
                     Text(
                       'Jajan lebih mudah, aman, dan tanpa uang tunai. '
-                      'Cukup tap kartu RFID di kasir kantin.',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        color: Starlight.bright.withValues(alpha: 0.85),
-                        height: 1.5,
-                      ),
+                      'Cukup tap kartu RFID/NFC Anda di kasir kantin.',
+                      style: HallmarkTypography.bodyLarge(colors.textMuted),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
 
                     // CTA Buttons
                     Row(
                       children: [
                         Expanded(
-                          child: ElevatedButton.icon(
+                          child: HallmarkButton(
+                            label: 'Lihat Menu',
+                            icon: CupertinoIcons.list_bullet,
                             onPressed: () => context.go('/public/menu'),
-                            icon: Icon(CupertinoIcons.list_bullet,
-                                size: 16),
-                            label: Text(
-                              'Lihat Menu',
-                              style: GoogleFonts.inter(
-                                  fontWeight: FontWeight.w600),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              foregroundColor: Nebula.teal,
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                              elevation: 0,
-                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: OutlinedButton.icon(
+                          child: HallmarkButton(
+                            label: 'Masuk Aplikasi',
+                            icon: CupertinoIcons.person,
                             onPressed: () => context.go('/login?from=/public'),
-                            icon: const Icon(CupertinoIcons.person,
-                                size: 16, color: Starlight.bright),
-                            label: Text(
-                              'Masuk',
-                              style: GoogleFonts.inter(
-                                  fontWeight: FontWeight.w600,
-                                  color: Starlight.bright),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(
-                                  color: Starlight.bright, width: 1.5),
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                            ),
                           ),
                         ),
                       ],
@@ -123,7 +91,7 @@ class PublicHomeScreen extends StatelessWidget {
                 ),
               ),
 
-              // ─── Feature Cards ───
+              // Feature Cards Section
               Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
@@ -131,69 +99,61 @@ class PublicHomeScreen extends StatelessWidget {
                   children: [
                     Text(
                       'Fitur Unggulan',
-                      style: GoogleFonts.inter(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Starlight.bright,
-                      ),
+                      style: HallmarkTypography.headingL2(colors.textPrimary),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     _buildFeatureCard(
+                      colors: colors,
                       icon: CupertinoIcons.creditcard,
-                      color: Nebula.teal,
+                      color: colors.brandPrimary,
                       title: 'Tap & Bayar',
-                      desc:
-                          'Cukup tempelkan kartu RFID di kasir. Transaksi selesai dalam 1 detik.',
+                      desc: 'Cukup tempelkan kartu RFID di kasir. Transaksi selesai dalam 1 detik.',
                     ),
                     const SizedBox(height: 12),
                     _buildFeatureCard(
+                      colors: colors,
                       icon: CupertinoIcons.lock_shield,
-                      color: Nebula.amber,
+                      color: colors.statusWarning,
                       title: 'Aman & Terkontrol',
-                      desc:
-                          'Orang tua dapat memantau dan mengatur batas belanja harian anak.',
+                      desc: 'Orang tua dapat memantau dan mengatur batas belanja harian anak.',
                     ),
                     const SizedBox(height: 12),
                     _buildFeatureCard(
+                      colors: colors,
                       icon: CupertinoIcons.chart_bar,
-                      color: Nebula.teal,
+                      color: colors.brandAccent,
                       title: 'Laporan Real-time',
-                      desc:
-                          'Riwayat transaksi tersedia kapanpun. Tidak ada lagi uang hilang.',
+                      desc: 'Riwayat transaksi tersedia kapanpun dengan transparansi penuh.',
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 28),
 
-                    // Quick links
                     Text(
                       'Akses Cepat',
-                      style: GoogleFonts.inter(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Starlight.bright,
-                      ),
+                      style: HallmarkTypography.headingL2(colors.textPrimary),
                     ),
                     const SizedBox(height: 12),
                     _buildLinkTile(
-                      context,
+                      colors: colors,
                       icon: CupertinoIcons.list_bullet,
                       label: 'Menu Kantin',
                       subtitle: 'Lihat semua menu yang tersedia',
                       onTap: () => context.go('/public/menu'),
                     ),
+                    const SizedBox(height: 8),
                     _buildLinkTile(
-                      context,
+                      colors: colors,
                       icon: CupertinoIcons.info_circle,
                       label: 'Info Sekolah',
                       subtitle: 'Jam operasional & kontak kantin',
                       onTap: () => context.go('/public/info'),
                     ),
+                    const SizedBox(height: 8),
                     _buildLinkTile(
-                      context,
+                      colors: colors,
                       icon: CupertinoIcons.person_badge_plus,
                       label: 'Login Pengguna',
-                      subtitle: 'Siswa, orang tua, atau petugas',
+                      subtitle: 'Siswa, orang tua, atau petugas kantin',
                       onTap: () => context.go('/login?from=/public'),
-                      isHighlighted: true,
                     ),
                     const SizedBox(height: 32),
                   ],
@@ -207,56 +167,32 @@ class PublicHomeScreen extends StatelessWidget {
   }
 
   Widget _buildFeatureCard({
+    required HallmarkColorScheme colors,
     required IconData icon,
     required Color color,
     required String title,
     required String desc,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Starlight.bright,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return HallmarkCard(
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: color, size: 24),
+            child: Icon(icon, color: color, size: 22),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Starlight.bright,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  desc,
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: Starlight.dim,
-                    height: 1.4,
-                  ),
-                ),
+                Text(title, style: HallmarkTypography.titleSmall(colors.textPrimary)),
+                const SizedBox(height: 2),
+                Text(desc, style: HallmarkTypography.bodySmall(colors.textMuted)),
               ],
             ),
           ),
@@ -265,77 +201,31 @@ class PublicHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLinkTile(
-    BuildContext context, {
+  Widget _buildLinkTile({
+    required HallmarkColorScheme colors,
     required IconData icon,
     required String label,
     required String subtitle,
     required VoidCallback onTap,
-    bool isHighlighted = false,
   }) {
-    return GestureDetector(
+    return HallmarkCard(
       onTap: onTap,
-      child: Container(
-        margin: EdgeInsets.only(bottom: 10),
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: isHighlighted
-              ? Nebula.teal.withValues(alpha: 0.07)
-              : Starlight.bright,
-          borderRadius: BorderRadius.circular(14),
-          border: isHighlighted
-              ? Border.all(
-                  color: Nebula.teal.withValues(alpha: 0.3))
-              : null,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        children: [
+          Icon(icon, color: colors.brandPrimary, size: 20),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: HallmarkTypography.titleSmall(colors.textPrimary)),
+                Text(subtitle, style: HallmarkTypography.bodySmall(colors.textMuted)),
+              ],
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Icon(icon,
-                size: 20,
-                color: isHighlighted
-                    ? Nebula.teal
-                    : Starlight.dim),
-            SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: isHighlighted
-                          ? Nebula.teal
-                          : Starlight.bright,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      color: Starlight.dim,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              CupertinoIcons.chevron_right,
-              size: 14,
-              color: isHighlighted
-                  ? Nebula.teal
-                  : Starlight.dim,
-            ),
-          ],
-        ),
+          ),
+          Icon(CupertinoIcons.chevron_right, color: colors.textMuted, size: 16),
+        ],
       ),
     );
   }

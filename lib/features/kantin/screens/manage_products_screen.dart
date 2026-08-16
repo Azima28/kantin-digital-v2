@@ -12,6 +12,7 @@ import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 class ManageProductsScreen extends ConsumerWidget {
   const ManageProductsScreen({super.key});
@@ -420,9 +421,19 @@ class ManageProductsScreen extends ConsumerWidget {
                     ),
                   );
                 },
-                loading: () => const SliverFillRemaining(
-                  child: Center(
-                    child: CupertinoActivityIndicator(radius: 12),
+                loading: () => SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  sliver: SliverGrid(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => const SkeletonProductGridCard(),
+                      childCount: 6,
+                    ),
+                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 220,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                      childAspectRatio: 0.72,
+                    ),
                   ),
                 ),
                 error: (err, stack) => SliverFillRemaining(

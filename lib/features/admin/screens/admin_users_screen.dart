@@ -11,6 +11,7 @@ import 'package:kantin_digital/features/admin/widgets/admin_import_csv_dialog.da
 import 'package:kantin_digital/features/admin/widgets/admin_user_list_tile.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_user_search_filter.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 class AdminUsersScreen extends ConsumerStatefulWidget {
   const AdminUsersScreen({super.key});
@@ -275,8 +276,10 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                     ),
                   );
                 },
-              loading: () => const Center(
-                child: CupertinoActivityIndicator(color: Nebula.teal),
+              loading: () => ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                itemCount: 6,
+                itemBuilder: (context, index) => const SkeletonListTile(),
               ),
               error: (err, stack) => Center(
                 child: Column(

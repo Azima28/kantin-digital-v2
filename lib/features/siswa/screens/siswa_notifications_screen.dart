@@ -8,6 +8,7 @@ import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 
@@ -251,7 +252,42 @@ class SiswaNotificationsScreen extends ConsumerWidget {
                   },
                 );
               },
-              loading: () => const Center(child: CupertinoActivityIndicator()),
+              loading: () => Shimmer(
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: 4,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: context.cardBg,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: context.borderLight, width: 0.8),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SkeletonCircle(size: 38),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: const [
+                                SkeletonBox(width: 130, height: 14, borderRadius: 4),
+                                SizedBox(height: 6),
+                                SkeletonBox(width: double.infinity, height: 12, borderRadius: 4),
+                                SizedBox(height: 8),
+                                SkeletonBox(width: 80, height: 10, borderRadius: 4),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
               error: (err, stack) => Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,

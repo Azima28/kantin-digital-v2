@@ -1,5 +1,4 @@
-﻿import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
@@ -10,6 +9,7 @@ import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/admin/widgets/audit_log_action_filter.dart';
 import 'package:kantin_digital/features/admin/widgets/audit_log_detail_sheet.dart';
 import 'package:kantin_digital/features/admin/widgets/audit_log_tile.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 class AdminAuditLogScreen extends ConsumerStatefulWidget {
   const AdminAuditLogScreen({super.key});
@@ -199,10 +199,10 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                 ),
               );
             },
-            loading: () => Center(
-              child: CupertinoActivityIndicator(
-                color: Nebula.teal,
-              ),
+            loading: () => ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              itemCount: 6,
+              itemBuilder: (context, index) => const SkeletonListTile(),
             ),
             error: (err, stack) => Center(
               child: Column(

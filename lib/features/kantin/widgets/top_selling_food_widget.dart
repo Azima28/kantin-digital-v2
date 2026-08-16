@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 /// TopSellingFoodWidget — Widget Kartu Donat "Distribusi Makanan Terlaris"
 /// Menampilkan statistik menu makanan yang paling banyak dibeli pada hari itu atau hari sebelumnya.
@@ -58,7 +59,8 @@ class _TopSellingFoodWidgetState extends ConsumerState<TopSellingFoodWidget> {
           const SizedBox(height: 16),
 
           // Donut Chart & Legend Content
-          Expanded(
+          SizedBox(
+            height: 320,
             child: foodDataAsync.when(
               data: (data) {
                 return Column(
@@ -73,10 +75,30 @@ class _TopSellingFoodWidgetState extends ConsumerState<TopSellingFoodWidget> {
                   ],
                 );
               },
-              loading: () => const Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: Nebula.teal,
+              loading: () => Shimmer(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SkeletonCircle(size: 130),
+                    const SizedBox(height: 16),
+                    Column(
+                      children: List.generate(
+                        3,
+                        (i) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            children: const [
+                              SkeletonCircle(size: 10),
+                              SizedBox(width: 8),
+                              SkeletonBox(width: 100, height: 12, borderRadius: 4),
+                              Spacer(),
+                              SkeletonBox(width: 40, height: 12, borderRadius: 4),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               error: (err, stack) => Center(

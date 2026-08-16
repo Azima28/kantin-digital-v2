@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 /// DailySalesVolumeWidget — Kartu Grafik Volume Penjualan Harian Interaktif & Bahasa Indonesia
 class DailySalesVolumeWidget extends ConsumerStatefulWidget {
@@ -67,12 +68,35 @@ class _DailySalesVolumeWidgetState extends ConsumerState<DailySalesVolumeWidget>
               }
               return _buildChartContent(context, data);
             },
-            loading: () => SizedBox(
-              height: 220,
-              child: Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: context.isDark ? Nebula.teal : const Color(0xFF2563EB),
+            loading: () => Shimmer(
+              child: SizedBox(
+                height: 220,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: const [
+                          SkeletonBox(width: 24, height: 60, borderRadius: 6),
+                          SkeletonBox(width: 24, height: 110, borderRadius: 6),
+                          SkeletonBox(width: 24, height: 80, borderRadius: 6),
+                          SkeletonBox(width: 24, height: 140, borderRadius: 6),
+                          SkeletonBox(width: 24, height: 95, borderRadius: 6),
+                          SkeletonBox(width: 24, height: 160, borderRadius: 6),
+                          SkeletonBox(width: 24, height: 120, borderRadius: 6),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: List.generate(
+                        7,
+                        (i) => const SkeletonBox(width: 24, height: 10, borderRadius: 3),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

@@ -12,6 +12,7 @@ import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.da
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/widgets/notification_bell.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 // keuanganDashboardProvider is defined in keuangan_providers.dart
 
@@ -105,10 +106,69 @@ class KeuanganDashboardScreen extends ConsumerWidget {
 
                 dashAsync.when(
                   data: (data) => _buildContent(context, data, fmt),
-                  loading: () => Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(40),
-                      child: CupertinoActivityIndicator(color: Nebula.teal),
+                  loading: () => Shimmer(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          height: 110,
+                          decoration: BoxDecoration(
+                            color: context.cardBg,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(color: context.borderLight, width: 0.8),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                height: 90,
+                                decoration: BoxDecoration(
+                                  color: context.cardBg,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: context.borderLight, width: 0.8),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Container(
+                                height: 90,
+                                decoration: BoxDecoration(
+                                  color: context.cardBg,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: context.borderLight, width: 0.8),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        const SkeletonBox(width: 120, height: 14, borderRadius: 4),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: List.generate(
+                            4,
+                            (i) => Expanded(
+                              child: Container(
+                                margin: EdgeInsets.only(right: i < 3 ? 8 : 0),
+                                height: 75,
+                                decoration: BoxDecoration(
+                                  color: context.cardBg,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: context.borderLight, width: 0.8),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        const SkeletonBox(width: 140, height: 14, borderRadius: 4),
+                        const SizedBox(height: 12),
+                        ...List.generate(3, (i) => const SkeletonListTile()),
+                      ],
                     ),
                   ),
                   error: (e, _) => Center(

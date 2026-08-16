@@ -8,6 +8,7 @@ import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/kantin/providers/operator_activities_provider.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 class ActivitiesTab extends ConsumerStatefulWidget {
   const ActivitiesTab({super.key});
@@ -179,8 +180,11 @@ class _ActivitiesTabState extends ConsumerState<ActivitiesTab> {
                     },
                   );
                 },
-                loading: () =>
-                    const Center(child: CupertinoActivityIndicator()),
+                loading: () => ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  itemCount: 4,
+                  itemBuilder: (context, index) => const SkeletonListTile(),
+                ),
                 error: (err, stack) => Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,

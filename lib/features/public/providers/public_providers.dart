@@ -48,7 +48,7 @@ final publicCanteensProvider = FutureProvider.autoDispose<List<CanteenOperator>>
   final client = ref.read(supabaseClientProvider);
   final res = await client
       .from('canteen_operators')
-      .select('id, canteen_name, balance_earned')
+      .select('id, canteen_name, balance_earned, is_delivery_enabled, delivery_fee')
       .order('canteen_name', ascending: true);
 
   return res.map((e) => CanteenOperator.fromJson(e)).toList();

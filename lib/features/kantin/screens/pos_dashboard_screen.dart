@@ -16,6 +16,7 @@ import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/kantin/providers/cart_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 class PosDashboardScreen extends ConsumerStatefulWidget {
   const PosDashboardScreen({super.key});
@@ -130,8 +131,9 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                                   color: Nebula.teal,
                                 ),
                               ),
-                              loading: () =>
-                                  const CupertinoActivityIndicator(),
+                              loading: () => Shimmer(
+                                child: const SkeletonBox(width: 140, height: 28, borderRadius: 6),
+                              ),
                               error: (err, stack) => Text(
                                 '${AppStrings.labelFailed} memuat',
                                 style: GoogleFonts.inter(
@@ -287,10 +289,19 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                           ),
                         );
                       },
-                      loading: () => const SliverFillRemaining(
-                        child: Center(
-                          child:
-                              CupertinoActivityIndicator(radius: 12),
+                      loading: () => SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        sliver: SliverGrid(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) => const SkeletonProductGridCard(),
+                            childCount: 6,
+                          ),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: Responsive.productGridColumns(context),
+                            childAspectRatio: Responsive.productGridAspectRatio(context),
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                          ),
                         ),
                       ),
                       error: (err, stack) => SliverFillRemaining(

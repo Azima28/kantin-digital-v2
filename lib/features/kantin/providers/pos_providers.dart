@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -11,8 +10,7 @@ import 'package:kantin_digital/features/kantin/models/order_item.dart';
 final posProductsProvider =
     FutureProvider<List<Product>>((Ref ref) async {
   try {
-    final authState = ref.watch(authNotifierProvider);
-    final operatorId = authState.profile?['id'];
+    final operatorId = ref.watch(authNotifierProvider.select((s) => s.profile?['id'] as String?));
     if (operatorId == null) return <Product>[];
 
     final client = ref.watch(supabaseClientProvider);
@@ -36,8 +34,7 @@ final posProductsProvider =
 final todayRevenueProvider =
     FutureProvider.autoDispose<double>((Ref ref) async {
   try {
-    final authState = ref.watch(authNotifierProvider);
-    final operatorId = authState.profile?['id'];
+    final operatorId = ref.watch(authNotifierProvider.select((s) => s.profile?['id'] as String?));
     if (operatorId == null) return 0.0;
 
     final client = ref.watch(supabaseClientProvider);
@@ -79,8 +76,7 @@ final todayRevenueProvider =
 final manageProductsProvider =
     FutureProvider<List<Product>>((Ref ref) async {
   try {
-    final authState = ref.watch(authNotifierProvider);
-    final operatorId = authState.profile?['id'];
+    final operatorId = ref.watch(authNotifierProvider.select((s) => s.profile?['id'] as String?));
     if (operatorId == null) return <Product>[];
 
     final client = ref.watch(supabaseClientProvider);
@@ -99,12 +95,31 @@ final manageProductsProvider =
   }
 });
 
+// Provider to fetch current canteen operator profile and settings
+final canteenOperatorProvider = FutureProvider.autoDispose<CanteenOperator?>((Ref ref) async {
+  try {
+    final operatorId = ref.watch(authNotifierProvider.select((s) => s.profile?['id'] as String?));
+    if (operatorId == null) return null;
+
+    final client = ref.watch(supabaseClientProvider);
+    final response = await client
+        .from('canteen_operators')
+        .select()
+        .eq('id', operatorId)
+        .maybeSingle();
+
+    if (response == null) return null;
+    return CanteenOperator.fromJson(response);
+  } catch (e) {
+    return null;
+  }
+});
+
 // Provider to fetch transaction history for the logged in operator
 final operatorTransactionsProvider =
     FutureProvider.autoDispose<List<OperatorTransaction>>((Ref ref) async {
   try {
-    final authState = ref.watch(authNotifierProvider);
-    final operatorId = authState.profile?['id'];
+    final operatorId = ref.watch(authNotifierProvider.select((s) => s.profile?['id'] as String?));
     if (operatorId == null) return <OperatorTransaction>[];
 
     final client = ref.watch(supabaseClientProvider);
@@ -126,29 +141,84 @@ final operatorTransactionsProvider =
   }
 });
 
+// In-memory cache for product images to eliminate N+1 product image queries
+final Map<String, String?> _productImageCache = {};
+
+Future<Map<String, String?>> _fetchProductImages(
+  SupabaseClient client,
+  Set<String> productNames,
+) async {
+  final Map<String, String?> result = {};
+  final List<String> missingNames = [];
+
+  for (final name in productNames) {
+    if (_productImageCache.containsKey(name)) {
+      result[name] = _productImageCache[name];
+    } else {
+      missingNames.add(name);
+    }
+  }
+
+  if (missingNames.isNotEmpty) {
+    try {
+      final List<dynamic> prodRes = await client
+          .from('products')
+          .select('name, image_url')
+          .inFilter('name', missingNames);
+      for (var prod in prodRes) {
+        final name = prod['name'] as String?;
+        final img = prod['image_url'] as String?;
+        if (name != null) {
+          _productImageCache[name] = img;
+          result[name] = img;
+        }
+      }
+    } catch (_) {}
+  }
+
+  return result;
+}
+
 final canteenOrdersProvider = FutureProvider.autoDispose<List<OrderItem>>((Ref ref) async {
+  ref.keepAlive();
   try {
-    final authState = ref.watch(authNotifierProvider);
-    final operatorId = authState.profile?['id'];
+    final operatorId = ref.watch(authNotifierProvider.select((s) => s.profile?['id'] as String?));
     if (operatorId == null) return <OrderItem>[];
 
     final client = ref.watch(supabaseClientProvider);
-    
+
     final List<dynamic> response = await client
         .from('orders')
         .select('id, student_id, student_name, status, delivery_location, total_amount, created_at, cancel_request_reason, order_items(product_name, quantity, price)')
         .eq('operator_id', operatorId)
         .order('created_at', ascending: false);
 
+    final Set<String> productNames = {};
+    for (var e in response) {
+      final List<dynamic> rawItems = (e as Map<String, dynamic>)['order_items'] ?? [];
+      for (var item in rawItems) {
+        final name = (item as Map<String, dynamic>)['product_name'] as String?;
+        if (name != null && name.isNotEmpty) {
+          productNames.add(name);
+        }
+      }
+    }
+
+    final Map<String, String?> imageMap = productNames.isNotEmpty
+        ? await _fetchProductImages(client, productNames)
+        : {};
+
     return response.map((e) {
       final map = e as Map<String, dynamic>;
       final List<dynamic> rawItems = map['order_items'] ?? [];
       final List<OrderSubItem> subItems = rawItems.map((item) {
         final itemMap = item as Map<String, dynamic>;
+        final name = itemMap['product_name'] ?? '';
         return OrderSubItem(
-          name: itemMap['product_name'] ?? '',
+          name: name,
           qty: (itemMap['quantity'] as num).toInt(),
           price: (itemMap['price'] as num).toInt(),
+          imageUrl: imageMap[name],
         );
       }).toList();
 
@@ -240,207 +310,188 @@ class DailySalesVolumeData {
   });
 }
 
-final canteenSalesVolumeProvider = StreamProvider.autoDispose
-    .family<DailySalesVolumeData, CanteenSalesFilterParam?>((ref, filterParam) {
-  final authState = ref.watch(authNotifierProvider);
-  final operatorId = authState.profile?['id'];
-
-  final client = ref.watch(supabaseClientProvider);
-  final controller = StreamController<DailySalesVolumeData>();
+final canteenSalesVolumeProvider = FutureProvider.autoDispose
+    .family<DailySalesVolumeData, CanteenSalesFilterParam?>((ref, filterParam) async {
+  final operatorId = ref.watch(authNotifierProvider.select((s) => s.profile?['id'] as String?));
 
   if (operatorId == null) {
-    controller.add(DailySalesVolumeData(
+    return DailySalesVolumeData(
       points: [],
-      maxAmount: 100,
+      maxAmount: 100000,
       totalCurrent: 0,
       totalPrevious: 0,
       percentChange: 0,
-      periodLabel: 'Bulan Ini',
-    ));
-    return controller.stream;
+      periodLabel: filterParam?.periodLabel ?? 'Bulan Ini',
+    );
   }
 
-  Future<void> fetchData() async {
-    try {
-      final now = DateTime.now();
+  final client = ref.watch(supabaseClientProvider);
+  try {
+    final now = DateTime.now();
 
-      // Determine Start & End Dates for Current Period
-      final DateTime startDate = filterParam?.startDate ?? DateTime(now.year, now.month, 1);
-      final DateTime endDate = filterParam?.endDate ?? DateTime(now.year, now.month + 1, 0);
+    // Determine Start & End Dates for Current Period
+    final DateTime startDate = filterParam?.startDate ?? DateTime(now.year, now.month, 1);
+    final DateTime endDate = filterParam?.endDate ?? DateTime(now.year, now.month + 1, 0);
 
-      final startCurrentUtc = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0)
-          .toUtc()
-          .toIso8601String();
-      final endCurrentUtc = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59)
-          .toUtc()
-          .toIso8601String();
+    final startCurrentUtc = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0)
+        .toUtc()
+        .toIso8601String();
+    final endCurrentUtc = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59)
+        .toUtc()
+        .toIso8601String();
 
-      // Calculate Previous Period of matching duration right before startDate
-      final int durationDays = endDate.difference(startDate).inDays + 1;
-      final DateTime prevEndDate = startDate.subtract(const Duration(days: 1));
-      final DateTime prevStartDate = prevEndDate.subtract(Duration(days: durationDays - 1));
+    // Calculate Previous Period of matching duration right before startDate
+    final int durationDays = endDate.difference(startDate).inDays + 1;
+    final DateTime prevEndDate = startDate.subtract(const Duration(days: 1));
+    final DateTime prevStartDate = prevEndDate.subtract(Duration(days: durationDays - 1));
 
-      final startPrevUtc = DateTime(prevStartDate.year, prevStartDate.month, prevStartDate.day, 0, 0, 0)
-          .toUtc()
-          .toIso8601String();
-      final endPrevUtc = DateTime(prevEndDate.year, prevEndDate.month, prevEndDate.day, 23, 59, 59)
-          .toUtc()
-          .toIso8601String();
+    final startPrevUtc = DateTime(prevStartDate.year, prevStartDate.month, prevStartDate.day, 0, 0, 0)
+        .toUtc()
+        .toIso8601String();
+    final endPrevUtc = DateTime(prevEndDate.year, prevEndDate.month, prevEndDate.day, 23, 59, 59)
+        .toUtc()
+        .toIso8601String();
 
-      // Query Supabase for Current and Previous Period Transactions
-      final List<dynamic> currentTx = await client
-          .from('transactions')
-          .select('total_amount, created_at')
-          .eq('operator_id', operatorId)
-          .eq('status', 'success')
-          .gte('created_at', startCurrentUtc)
-          .lte('created_at', endCurrentUtc);
+    // Query Supabase for Current and Previous Period Transactions
+    final List<dynamic> currentTx = await client
+        .from('transactions')
+        .select('total_amount, created_at')
+        .eq('operator_id', operatorId)
+        .eq('status', 'success')
+        .gte('created_at', startCurrentUtc)
+        .lte('created_at', endCurrentUtc);
 
-      final List<dynamic> prevTx = await client
-          .from('transactions')
-          .select('total_amount, created_at')
-          .eq('operator_id', operatorId)
-          .eq('status', 'success')
-          .gte('created_at', startPrevUtc)
-          .lte('created_at', endPrevUtc);
+    final List<dynamic> prevTx = await client
+        .from('transactions')
+        .select('total_amount, created_at')
+        .eq('operator_id', operatorId)
+        .eq('status', 'success')
+        .gte('created_at', startPrevUtc)
+        .lte('created_at', endPrevUtc);
 
-      final List<DailySalesVolumePoint> points = [];
-      double maxAmount = 0.0;
-      double totalCurrent = 0.0;
-      double totalPrevious = 0.0;
+    final List<DailySalesVolumePoint> points = [];
+    double maxAmount = 0.0;
+    double totalCurrent = 0.0;
+    double totalPrevious = 0.0;
 
-      if (durationDays <= 31) {
-        // Daily Aggregation
-        final Map<String, double> currentDaily = {};
-        final Map<String, double> prevDaily = {};
+    if (durationDays <= 31) {
+      // Daily Aggregation
+      final Map<String, double> currentDaily = {};
+      final Map<String, double> prevDaily = {};
 
-        for (var tx in currentTx) {
-          final date = DateTime.parse(tx['created_at']).toLocal();
-          final key = DateFormat('yyyy-MM-dd').format(date);
-          final amount = (tx['total_amount'] as num?)?.toDouble() ?? 0.0;
-          currentDaily[key] = (currentDaily[key] ?? 0.0) + amount;
-          totalCurrent += amount;
-        }
-
-        for (var tx in prevTx) {
-          final date = DateTime.parse(tx['created_at']).toLocal();
-          final amount = (tx['total_amount'] as num?)?.toDouble() ?? 0.0;
-          final dayOffset = date.difference(prevStartDate).inDays;
-          if (dayOffset >= 0 && dayOffset < durationDays) {
-            prevDaily[dayOffset.toString()] = (prevDaily[dayOffset.toString()] ?? 0.0) + amount;
-          }
-          totalPrevious += amount;
-        }
-
-        DateTime curr = startDate;
-        int index = 0;
-        while (!curr.isAfter(endDate)) {
-          final key = DateFormat('yyyy-MM-dd').format(curr);
-          final cAmt = currentDaily[key] ?? 0.0;
-          final pAmt = prevDaily[index.toString()] ?? 0.0;
-
-          if (cAmt > maxAmount) maxAmount = cAmt;
-          if (pAmt > maxAmount) maxAmount = pAmt;
-
-          points.add(DailySalesVolumePoint(
-            day: curr.day,
-            label: durationDays <= 14
-                ? DateFormat('E dd', 'id_ID').format(curr)
-                : curr.day.toString().padLeft(2, '0'),
-            currentAmount: cAmt,
-            previousAmount: pAmt,
-          ));
-
-          curr = curr.add(const Duration(days: 1));
-          index++;
-        }
-      } else {
-        // Monthly Aggregation (for multi-month or year date ranges)
-        final Map<String, double> currentMonthly = {};
-        final Map<String, double> prevMonthly = {};
-
-        for (var tx in currentTx) {
-          final date = DateTime.parse(tx['created_at']).toLocal();
-          final key = DateFormat('yyyy-MM').format(date);
-          final amount = (tx['total_amount'] as num?)?.toDouble() ?? 0.0;
-          currentMonthly[key] = (currentMonthly[key] ?? 0.0) + amount;
-          totalCurrent += amount;
-        }
-
-        for (var tx in prevTx) {
-          final date = DateTime.parse(tx['created_at']).toLocal();
-          final key = DateFormat('yyyy-MM').format(date);
-          final amount = (tx['total_amount'] as num?)?.toDouble() ?? 0.0;
-          prevMonthly[key] = (prevMonthly[key] ?? 0.0) + amount;
-          totalPrevious += amount;
-        }
-
-        DateTime curr = DateTime(startDate.year, startDate.month, 1);
-        final DateTime endMonth = DateTime(endDate.year, endDate.month, 1);
-        DateTime prevCurr = DateTime(prevStartDate.year, prevStartDate.month, 1);
-
-        while (!curr.isAfter(endMonth)) {
-          final key = DateFormat('yyyy-MM').format(curr);
-          final prevKey = DateFormat('yyyy-MM').format(prevCurr);
-
-          final cAmt = currentMonthly[key] ?? 0.0;
-          final pAmt = prevMonthly[prevKey] ?? 0.0;
-
-          if (cAmt > maxAmount) maxAmount = cAmt;
-          if (pAmt > maxAmount) maxAmount = pAmt;
-
-          points.add(DailySalesVolumePoint(
-            day: curr.month,
-            label: DateFormat('MMM', 'id_ID').format(curr),
-            currentAmount: cAmt,
-            previousAmount: pAmt,
-          ));
-
-          curr = DateTime(curr.year, curr.month + 1, 1);
-          prevCurr = DateTime(prevCurr.year, prevCurr.month + 1, 1);
-        }
+      for (var tx in currentTx) {
+        final date = DateTime.parse(tx['created_at']).toLocal();
+        final key = DateFormat('yyyy-MM-dd').format(date);
+        final amount = (tx['total_amount'] as num?)?.toDouble() ?? 0.0;
+        currentDaily[key] = (currentDaily[key] ?? 0.0) + amount;
+        totalCurrent += amount;
       }
 
-      double pctChange = 0.0;
-      if (totalPrevious > 0) {
-        pctChange = ((totalCurrent - totalPrevious) / totalPrevious) * 100;
-      } else if (totalCurrent > 0) {
-        pctChange = 100.0;
+      for (var tx in prevTx) {
+        final date = DateTime.parse(tx['created_at']).toLocal();
+        final amount = (tx['total_amount'] as num?)?.toDouble() ?? 0.0;
+        final dayOffset = date.difference(prevStartDate).inDays;
+        if (dayOffset >= 0 && dayOffset < durationDays) {
+          prevDaily[dayOffset.toString()] = (prevDaily[dayOffset.toString()] ?? 0.0) + amount;
+        }
+        totalPrevious += amount;
       }
 
-      if (!controller.isClosed) {
-        controller.add(DailySalesVolumeData(
-          points: points,
-          maxAmount: maxAmount > 0 ? maxAmount : 100000,
-          totalCurrent: totalCurrent,
-          totalPrevious: totalPrevious,
-          percentChange: pctChange,
-          periodLabel: filterParam?.periodLabel ?? 'Bulan Ini',
+      DateTime curr = startDate;
+      int index = 0;
+      while (!curr.isAfter(endDate)) {
+        final key = DateFormat('yyyy-MM-dd').format(curr);
+        final cAmt = currentDaily[key] ?? 0.0;
+        final pAmt = prevDaily[index.toString()] ?? 0.0;
+
+        if (cAmt > maxAmount) maxAmount = cAmt;
+        if (pAmt > maxAmount) maxAmount = pAmt;
+
+        points.add(DailySalesVolumePoint(
+          day: curr.day,
+          label: durationDays <= 14
+              ? DateFormat('E dd', 'id_ID').format(curr)
+              : curr.day.toString().padLeft(2, '0'),
+          currentAmount: cAmt,
+          previousAmount: pAmt,
         ));
+
+        curr = curr.add(const Duration(days: 1));
+        index++;
       }
-    } catch (e, st) {
-      debugPrint('canteenSalesVolumeProvider error: $e\n$st');
+    } else {
+      // Monthly Aggregation (for multi-month or year date ranges)
+      final Map<String, double> currentMonthly = {};
+      final Map<String, double> prevMonthly = {};
+
+      for (var tx in currentTx) {
+        final date = DateTime.parse(tx['created_at']).toLocal();
+        final key = DateFormat('yyyy-MM').format(date);
+        final amount = (tx['total_amount'] as num?)?.toDouble() ?? 0.0;
+        currentMonthly[key] = (currentMonthly[key] ?? 0.0) + amount;
+        totalCurrent += amount;
+      }
+
+      for (var tx in prevTx) {
+        final date = DateTime.parse(tx['created_at']).toLocal();
+        final key = DateFormat('yyyy-MM').format(date);
+        final amount = (tx['total_amount'] as num?)?.toDouble() ?? 0.0;
+        prevMonthly[key] = (prevMonthly[key] ?? 0.0) + amount;
+        totalPrevious += amount;
+      }
+
+      DateTime curr = DateTime(startDate.year, startDate.month, 1);
+      final DateTime endMonth = DateTime(endDate.year, endDate.month, 1);
+      DateTime prevCurr = DateTime(prevStartDate.year, prevStartDate.month, 1);
+
+      while (!curr.isAfter(endMonth)) {
+        final key = DateFormat('yyyy-MM').format(curr);
+        final prevKey = DateFormat('yyyy-MM').format(prevCurr);
+
+        final cAmt = currentMonthly[key] ?? 0.0;
+        final pAmt = prevMonthly[prevKey] ?? 0.0;
+
+        if (cAmt > maxAmount) maxAmount = cAmt;
+        if (pAmt > maxAmount) maxAmount = pAmt;
+
+        points.add(DailySalesVolumePoint(
+          day: curr.month,
+          label: DateFormat('MMM', 'id_ID').format(curr),
+          currentAmount: cAmt,
+          previousAmount: pAmt,
+        ));
+
+        curr = DateTime(curr.year, curr.month + 1, 1);
+        prevCurr = DateTime(prevCurr.year, prevCurr.month + 1, 1);
+      }
     }
+
+    double pctChange = 0.0;
+    if (totalPrevious > 0) {
+      pctChange = ((totalCurrent - totalPrevious) / totalPrevious) * 100;
+    } else if (totalCurrent > 0) {
+      pctChange = 100.0;
+    }
+
+    return DailySalesVolumeData(
+      points: points,
+      maxAmount: maxAmount > 0 ? maxAmount : 100000,
+      totalCurrent: totalCurrent,
+      totalPrevious: totalPrevious,
+      percentChange: pctChange,
+      periodLabel: filterParam?.periodLabel ?? 'Bulan Ini',
+    );
+  } catch (e, st) {
+    debugPrint('canteenSalesVolumeProvider error: $e\n$st');
+    return DailySalesVolumeData(
+      points: [],
+      maxAmount: 100000,
+      totalCurrent: 0,
+      totalPrevious: 0,
+      percentChange: 0,
+      periodLabel: filterParam?.periodLabel ?? 'Bulan Ini',
+    );
   }
-
-  fetchData();
-
-  // Supabase Realtime Channel
-  final channel = client.channel('realtime:canteen_sales_vol_${operatorId}_${filterParam?.hashCode ?? 'default'}');
-  channel.onPostgresChanges(
-    event: PostgresChangeEvent.all,
-    schema: 'public',
-    table: 'transactions',
-    filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'operator_id', value: operatorId),
-    callback: (_) => fetchData(),
-  ).subscribe();
-
-  ref.onDispose(() {
-    channel.unsubscribe();
-    controller.close();
-  });
-
-  return controller.stream;
 });
 
 // ============================================================================
@@ -475,169 +526,148 @@ class FoodSalesDistributionData {
   });
 }
 
-final topSellingFoodProvider = StreamProvider.autoDispose
-    .family<FoodSalesDistributionData, CanteenSalesFilterParam?>((ref, filterParam) {
-  final authState = ref.watch(authNotifierProvider);
-  final operatorId = authState.profile?['id'];
-
-  final client = ref.watch(supabaseClientProvider);
-  final controller = StreamController<FoodSalesDistributionData>();
+final topSellingFoodProvider = FutureProvider.autoDispose
+    .family<FoodSalesDistributionData, CanteenSalesFilterParam?>((ref, filterParam) async {
+  final operatorId = ref.watch(authNotifierProvider.select((s) => s.profile?['id'] as String?));
 
   if (operatorId == null) {
-    controller.add(FoodSalesDistributionData(
+    return FoodSalesDistributionData(
       items: [],
       totalQuantity: 0,
       topCount: 0,
-      periodLabel: 'Hari Ini',
-    ));
-    return controller.stream;
+      periodLabel: filterParam?.periodLabel ?? 'Hari Ini',
+    );
   }
 
-  Future<void> fetchData() async {
+  final client = ref.watch(supabaseClientProvider);
+  try {
+    final now = DateTime.now();
+
+    // Determine Start & End Dates
+    final DateTime startDate = filterParam?.startDate ?? DateTime(now.year, now.month, now.day);
+    final DateTime endDate = filterParam?.endDate ?? DateTime(now.year, now.month, now.day);
+
+    final startUtc = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0)
+        .toUtc()
+        .toIso8601String();
+    final endUtc = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59)
+        .toUtc()
+        .toIso8601String();
+
+    final Map<String, int> productQtyMap = {};
+
+    // 1. Query POS Transactions & items
     try {
-      final now = DateTime.now();
+      final List<dynamic> txRes = await client
+          .from('transactions')
+          .select('transaction_items(quantity, products(name))')
+          .eq('operator_id', operatorId)
+          .eq('status', 'success')
+          .gte('created_at', startUtc)
+          .lte('created_at', endUtc);
 
-      // Determine Start & End Dates
-      final DateTime startDate = filterParam?.startDate ?? DateTime(now.year, now.month, now.day);
-      final DateTime endDate = filterParam?.endDate ?? DateTime(now.year, now.month, now.day);
-
-      final startUtc = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0)
-          .toUtc()
-          .toIso8601String();
-      final endUtc = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59)
-          .toUtc()
-          .toIso8601String();
-
-      final Map<String, int> productQtyMap = {};
-
-      // 1. Query POS Transaction Items
-      try {
-        final List<dynamic> txItemsRes = await client
-            .from('transaction_items')
-            .select('quantity, products!inner(name), transactions!inner(operator_id, created_at, status)')
-            .eq('transactions.operator_id', operatorId)
-            .eq('transactions.status', 'success')
-            .gte('transactions.created_at', startUtc)
-            .lte('transactions.created_at', endUtc);
-
-        for (var row in txItemsRes) {
+      for (var tx in txRes) {
+        final List<dynamic> txItems = tx['transaction_items'] ?? [];
+        for (var row in txItems) {
           final qty = (row['quantity'] as num?)?.toInt() ?? 0;
           final prodName = row['products']?['name']?.toString() ?? 'Menu Kantin';
           if (qty > 0) {
             productQtyMap[prodName] = (productQtyMap[prodName] ?? 0) + qty;
           }
         }
-      } catch (e) {
-        debugPrint('Error fetching transaction_items for food chart: $e');
       }
+    } catch (e) {
+      debugPrint('Error fetching transaction_items for food chart: $e');
+    }
 
-      // 2. Query Online Order Items
-      try {
-        final List<dynamic> orderItemsRes = await client
-            .from('order_items')
-            .select('product_name, quantity, orders!inner(operator_id, created_at, status)')
-            .eq('orders.operator_id', operatorId)
-            .neq('orders.status', 'cancelled')
-            .neq('orders.status', 'dibatalkan')
-            .gte('orders.created_at', startUtc)
-            .lte('orders.created_at', endUtc);
+    // 2. Query Online Orders & items
+    try {
+      final List<dynamic> ordersRes = await client
+          .from('orders')
+          .select('order_items(product_name, quantity)')
+          .eq('operator_id', operatorId)
+          .neq('status', 'cancelled')
+          .neq('status', 'dibatalkan')
+          .gte('created_at', startUtc)
+          .lte('created_at', endUtc);
 
-        for (var row in orderItemsRes) {
+      for (var order in ordersRes) {
+        final List<dynamic> orderItems = order['order_items'] ?? [];
+        for (var row in orderItems) {
           final qty = (row['quantity'] as num?)?.toInt() ?? 0;
           final prodName = row['product_name']?.toString() ?? 'Menu Kantin';
           if (qty > 0) {
             productQtyMap[prodName] = (productQtyMap[prodName] ?? 0) + qty;
           }
         }
-      } catch (e) {
-        debugPrint('Error fetching order_items for food chart: $e');
       }
+    } catch (e) {
+      debugPrint('Error fetching order_items for food chart: $e');
+    }
 
-      // Calculate totals and sort
-      final sortedEntries = productQtyMap.entries.toList()
-        ..sort((a, b) => b.value.compareTo(a.value));
+    // Calculate totals and sort
+    final sortedEntries = productQtyMap.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
 
-      int totalQty = 0;
-      for (var entry in sortedEntries) {
-        totalQty += entry.value;
-      }
+    int totalQty = 0;
+    for (var entry in sortedEntries) {
+      totalQty += entry.value;
+    }
 
-      final List<FoodSalesDistributionItem> items = [];
-      final defaultColors = const [
-        Color(0xFF1D4ED8), // Royal Blue
-        Color(0xFF06B6D4), // Cyan
-        Color(0xFF0F172A), // Dark Slate
-        Color(0xFF8B5CF6), // Purple
-        Color(0xFF94A3B8), // Other Slate
-      ];
+    final List<FoodSalesDistributionItem> items = [];
+    final defaultColors = const [
+      Color(0xFF1D4ED8), // Royal Blue
+      Color(0xFF06B6D4), // Cyan
+      Color(0xFF0F172A), // Dark Slate
+      Color(0xFF8B5CF6), // Purple
+      Color(0xFF94A3B8), // Other Slate
+    ];
 
-      if (sortedEntries.isNotEmpty && totalQty > 0) {
-        int otherQty = 0;
-        final int topLimit = 4;
+    if (sortedEntries.isNotEmpty && totalQty > 0) {
+      int otherQty = 0;
+      final int topLimit = 4;
 
-        for (int i = 0; i < sortedEntries.length; i++) {
-          if (i < topLimit) {
-            final entry = sortedEntries[i];
-            final pct = (entry.value / totalQty) * 100;
-            items.add(FoodSalesDistributionItem(
-              name: entry.key,
-              quantity: entry.value,
-              percentage: pct,
-              color: defaultColors[i % defaultColors.length],
-            ));
-          } else {
-            otherQty += sortedEntries[i].value;
-          }
-        }
-
-        if (otherQty > 0) {
-          final pct = (otherQty / totalQty) * 100;
+      for (int i = 0; i < sortedEntries.length; i++) {
+        if (i < topLimit) {
+          final entry = sortedEntries[i];
+          final pct = (entry.value / totalQty) * 100;
           items.add(FoodSalesDistributionItem(
-            name: 'Lainnya',
-            quantity: otherQty,
+            name: entry.key,
+            quantity: entry.value,
             percentage: pct,
-            color: defaultColors.last,
+            color: defaultColors[i % defaultColors.length],
           ));
+        } else {
+          otherQty += sortedEntries[i].value;
         }
       }
 
-      if (!controller.isClosed) {
-        controller.add(FoodSalesDistributionData(
-          items: items,
-          totalQuantity: totalQty,
-          topCount: sortedEntries.length > 4 ? 4 : sortedEntries.length,
-          periodLabel: filterParam?.periodLabel ?? 'Hari Ini',
+      if (otherQty > 0) {
+        final pct = (otherQty / totalQty) * 100;
+        items.add(FoodSalesDistributionItem(
+          name: 'Lainnya',
+          quantity: otherQty,
+          percentage: pct,
+          color: defaultColors.last,
         ));
       }
-    } catch (e, st) {
-      debugPrint('topSellingFoodProvider error: $e\n$st');
     }
+
+    return FoodSalesDistributionData(
+      items: items,
+      totalQuantity: totalQty,
+      topCount: sortedEntries.length > 4 ? 4 : sortedEntries.length,
+      periodLabel: filterParam?.periodLabel ?? 'Hari Ini',
+    );
+  } catch (e, st) {
+    debugPrint('topSellingFoodProvider error: $e\n$st');
+    return FoodSalesDistributionData(
+      items: [],
+      totalQuantity: 0,
+      topCount: 0,
+      periodLabel: filterParam?.periodLabel ?? 'Hari Ini',
+    );
   }
-
-  fetchData();
-
-  // Supabase Realtime Channel
-  final channel = client.channel('realtime:canteen_top_food_${operatorId}_${filterParam?.hashCode ?? 'default'}');
-  channel.onPostgresChanges(
-    event: PostgresChangeEvent.all,
-    schema: 'public',
-    table: 'transactions',
-    filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'operator_id', value: operatorId),
-    callback: (_) => fetchData(),
-  ).onPostgresChanges(
-    event: PostgresChangeEvent.all,
-    schema: 'public',
-    table: 'orders',
-    filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'operator_id', value: operatorId),
-    callback: (_) => fetchData(),
-  ).subscribe();
-
-  ref.onDispose(() {
-    channel.unsubscribe();
-    controller.close();
-  });
-
-  return controller.stream;
 });
 
 

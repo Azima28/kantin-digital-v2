@@ -17,6 +17,7 @@ import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/nebula_components.dart';
 import 'package:kantin_digital/core/widgets/nebula_effects.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 // keuanganStudentDetailProvider is defined in keuangan_providers.dart
 
@@ -412,10 +413,51 @@ class _KeuanganStudentDetailScreenState
               ),
             );
           },
-          loading: () => Center(
-            child: Padding(
-              padding: EdgeInsets.all(40),
-              child: CupertinoActivityIndicator(color: Nebula.teal),
+          loading: () => Shimmer(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: context.cardBg,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: context.borderLight, width: 0.8),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: context.cardBg,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: context.borderLight, width: 0.8),
+                    ),
+                    child: Column(
+                      children: List.generate(
+                        3,
+                        (i) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Row(
+                            children: const [
+                              SkeletonBox(width: 80, height: 14, borderRadius: 4),
+                              Spacer(),
+                              SkeletonBox(width: 120, height: 14, borderRadius: 4),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const SkeletonBox(width: 140, height: 14, borderRadius: 4),
+                  const SizedBox(height: 12),
+                  ...List.generate(3, (i) => const SkeletonListTile()),
+                ],
+              ),
             ),
           ),
           error: (e, _) => Center(

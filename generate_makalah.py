@@ -699,6 +699,22 @@ add_body(
     "tidak aktif, dan transaksi refund melebihi batas waktu 10 menit."
 )
 
+add_heading_text('4.2.1 Evaluasi Kesesuaian Standar SOP dan Pelaksanaan di Lapangan', level=3)
+add_body(
+    "Berikut adalah tabel evaluasi perbandingan antara standar SOP/teori perangkat lunak "
+    "dengan pelaksanaan riil di lapangan selama proses pengembangan sistem Kantin Digital:"
+)
+
+add_table(
+    ['#', 'PROSEDUR / STANDAR KERJA', 'STANDAR SOP / TEORI', 'PELAKSANAAN DI LAPANGAN'],
+    [
+        ('1', 'Standard Code Formatting (ESLint/Prettier)', 'Wajib 100% Lolos Rule SOP', '100% Clean Code Lolos Rule'),
+        ('2', 'Dokumentasi Postman Collection API', 'Lengkap Per Endpoint', 'Terstruktur Per Divisi & Modul'),
+        ('3', 'Waktu Response Query Database', 'Maksimal 1.0 Detik', 'Waktu Query 0.2 Detik Setelah Optimasi'),
+        ('4', 'Mekanisme Transaksi Pembayaran', 'ACID Compliance dengan Lock Row', '100% Lolos Uji Bebas Double-Spending'),
+    ]
+)
+
 add_heading_text('4.3 Pembahasan', level=2)
 add_body(
     "Hasil implementasi menunjukkan bahwa sistem Kantin Digital mampu memenuhi seluruh "

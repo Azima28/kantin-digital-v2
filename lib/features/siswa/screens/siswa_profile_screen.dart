@@ -13,6 +13,7 @@ import 'package:kantin_digital/core/services/storage_service.dart';
 import 'package:kantin_digital/core/widgets/change_password_panel.dart';
 import 'package:kantin_digital/core/widgets/theme_toggle_tile.dart';
 import 'package:kantin_digital/core/widgets/app_toast.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 import 'package:kantin_digital/features/siswa/widgets/siswa_profile_header.dart';
@@ -365,10 +366,89 @@ class SiswaProfileScreen extends ConsumerWidget {
             ),
           );
         },
-        loading: () => const Center(
-          child: Padding(
-            padding: EdgeInsets.all(40),
-            child: CupertinoActivityIndicator(),
+        loading: () => Shimmer(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: Column(
+                  children: [
+                    Column(
+                      children: const [
+                        SkeletonCircle(size: 72),
+                        SizedBox(height: 12),
+                        SkeletonBox(width: 150, height: 18, borderRadius: 4),
+                        SizedBox(height: 8),
+                        SkeletonBox(width: 100, height: 22, borderRadius: 12),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: SkeletonBox(width: 100, height: 12, borderRadius: 4),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: context.cardBg,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: context.borderLight, width: 0.8),
+                      ),
+                      child: Column(
+                        children: List.generate(
+                          4,
+                          (i) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
+                              children: const [
+                                SkeletonBox(width: 20, height: 20, borderRadius: 4),
+                                SizedBox(width: 12),
+                                SkeletonBox(width: 80, height: 14, borderRadius: 4),
+                                Spacer(),
+                                SkeletonBox(width: 110, height: 14, borderRadius: 4),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: SkeletonBox(width: 120, height: 12, borderRadius: 4),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: context.cardBg,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: context.borderLight, width: 0.8),
+                      ),
+                      child: Column(
+                        children: List.generate(
+                          3,
+                          (i) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
+                              children: const [
+                                SkeletonBox(width: 20, height: 20, borderRadius: 4),
+                                SizedBox(width: 12),
+                                SkeletonBox(width: 110, height: 14, borderRadius: 4),
+                                Spacer(),
+                                SkeletonBox(width: 20, height: 20, borderRadius: 4),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
         error: (err, stack) => Center(

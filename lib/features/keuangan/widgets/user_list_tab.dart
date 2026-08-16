@@ -11,6 +11,7 @@ import 'package:kantin_digital/features/keuangan/widgets/keuangan_users_list.dar
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 // ── Students Tab ────────────────────────────────────────────────────────────
 
@@ -124,8 +125,11 @@ class _StudentsTabState extends ConsumerState<StudentsTab> {
             ],
           );
         },
-        loading: () =>
-            Center(child: CupertinoActivityIndicator(color: Nebula.teal)),
+        loading: () => ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          itemCount: 6,
+          itemBuilder: (context, index) => const SkeletonListTile(),
+        ),
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(20),

@@ -59,6 +59,7 @@ import 'package:kantin_digital/features/keuangan/widgets/keuangan_main_layout.da
 import 'package:kantin_digital/features/public/screens/public_home_screen.dart';
 import 'package:kantin_digital/features/public/screens/public_menu_screen.dart';
 import 'package:kantin_digital/features/public/screens/public_school_info_screen.dart';
+import 'package:kantin_digital/features/public/screens/stan_detail_screen.dart';
 import 'package:kantin_digital/core/models/models.dart';
 
 class AppRouter {
@@ -128,6 +129,7 @@ class AppRouter {
   static const String publicHome = '/public';
   static const String publicMenu = '/public/menu';
   static const String publicInfo = '/public/info';
+  static const String publicStanDetail = '/public/stan/:canteenId';
 }
 
 /// Role constants used for route guard checks.
@@ -274,6 +276,17 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
+      GoRoute(
+        path: AppRouter.publicStanDetail,
+        builder: (BuildContext context, GoRouterState state) {
+          final canteenId = state.pathParameters['canteenId'] ?? 'stan-utama';
+          final productId = state.uri.queryParameters['productId'];
+          return StanDetailScreen(
+            canteenId: canteenId,
+            initialProductId: productId,
+          );
+        },
+      ),
 
       // Siswa Welcome & Login
       GoRoute(
@@ -330,18 +343,19 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: AppRouter.publicMenu,
-            builder: (BuildContext context, GoRouterState state) =>
-                const PublicMenuScreen(),
+            builder: (BuildContext context, GoRouterState state) {
+              final search = state.uri.queryParameters['search'];
+              final canteenId = state.uri.queryParameters['canteenId'];
+              return PublicMenuScreen(
+                initialSearch: search,
+                initialCanteenId: canteenId,
+              );
+            },
           ),
           GoRoute(
             path: AppRouter.studentHistory,
             builder: (BuildContext context, GoRouterState state) =>
                 const SiswaHistoryScreen(),
-          ),
-          GoRoute(
-            path: AppRouter.studentCart,
-            builder: (BuildContext context, GoRouterState state) =>
-                const SiswaCartScreen(),
           ),
           GoRoute(
             path: AppRouter.studentCards,
@@ -366,6 +380,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRouter.studentTopUp,
         builder: (BuildContext context, GoRouterState state) =>
             const SiswaTopUpScreen(),
+      ),
+      GoRoute(
+        path: AppRouter.studentCart,
+        builder: (BuildContext context, GoRouterState state) =>
+            const SiswaCartScreen(),
       ),
       GoRoute(
         path: AppRouter.studentNotifications,

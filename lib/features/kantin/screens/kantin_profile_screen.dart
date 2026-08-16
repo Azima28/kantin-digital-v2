@@ -9,6 +9,8 @@ import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 import 'package:kantin_digital/core/widgets/change_password_panel.dart';
 import 'package:kantin_digital/core/widgets/theme_toggle_tile.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
+import 'package:kantin_digital/features/public/providers/public_providers.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 class KantinProfileScreen extends ConsumerStatefulWidget {
@@ -19,6 +21,17 @@ class KantinProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
+  final TextEditingController _deliveryFeeController = TextEditingController(text: '2000');
+  bool _isDeliveryEnabled = true;
+  bool _isDeliveryInitialized = false;
+  bool _isSavingDelivery = false;
+
+  @override
+  void dispose() {
+    _deliveryFeeController.dispose();
+    super.dispose();
+  }
+
   void _showChangePasswordDialog() {
     showGeneralDialog(
       context: context,
@@ -60,6 +73,50 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
     );
   }
 
+  Future<void> _saveDeliverySettings() async {
+    final operatorId = ref.read(authNotifierProvider).profile?['id'];
+    if (operatorId == null) return;
+
+    final int fee = int.tryParse(_deliveryFeeController.text.replaceAll('.', '').trim()) ?? 2000;
+
+    setState(() => _isSavingDelivery = true);
+
+    try {
+      final client = ref.read(supabaseClientProvider);
+      await client.from('canteen_operators').update({
+        'is_delivery_enabled': _isDeliveryEnabled,
+        'delivery_fee': fee,
+      }).eq('id', operatorId);
+
+      ref.invalidate(canteenOperatorProvider);
+      ref.invalidate(publicCanteensProvider);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pengaturan layanan antar (delivery) berhasil disimpan!'),
+            backgroundColor: Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menyimpan pengaturan: $e'),
+            backgroundColor: Nebula.rose,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSavingDelivery = false);
+      }
+    }
+  }
+
   Future<void> _handleLogout() async {
     final confirmed = await showLogoutConfirmationDialog(context);
     if (confirmed) {
@@ -78,6 +135,15 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
     final String email = authState.profile?['email'] ?? '';
     final String username = authState.profile?['username'] ?? '';
     final String phone = authState.profile?['phone_number'] ?? '-';
+    final operatorAsync = ref.watch(canteenOperatorProvider);
+
+    operatorAsync.whenData((op) {
+      if (op != null && !_isDeliveryInitialized) {
+        _isDeliveryInitialized = true;
+        _isDeliveryEnabled = op.isDeliveryEnabled;
+        _deliveryFeeController.text = op.deliveryFee.toString();
+      }
+    });
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -186,6 +252,10 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
               ),
               const SizedBox(height: 16),
 
+              // Pengaturan Layanan Antar (Delivery) Card
+              _buildDeliverySettingsCard(context),
+              const SizedBox(height: 16),
+
               // Keamanan Card
               Container(
                 width: double.infinity,
@@ -283,6 +353,157 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildDeliverySettingsCard(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: context.cardBg,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: context.cardBorder,
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: context.shadowColor,
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(CupertinoIcons.car_detailed, color: Color(0xFF10B981), size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Layanan Antar (Delivery)',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: context.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Switch Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Terima Pesanan Delivery',
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13.5,
+                        color: context.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _isDeliveryEnabled
+                          ? 'Siswa dapat memilih opsi antar ke meja/kelas'
+                          : 'Siswa hanya dapat memilih ambil sendiri (Pickup)',
+                      style: GoogleFonts.inter(
+                        fontSize: 11.5,
+                        color: context.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              CupertinoSwitch(
+                value: _isDeliveryEnabled,
+                activeTrackColor: const Color(0xFF10B981),
+                onChanged: (val) {
+                  setState(() => _isDeliveryEnabled = val);
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Ongkir Input
+          if (_isDeliveryEnabled) ...[
+            Text(
+              'Tarif Ongkos Kirim (Delivery Fee)',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: context.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _deliveryFeeController,
+              keyboardType: TextInputType.number,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: context.textPrimary,
+              ),
+              decoration: InputDecoration(
+                prefixText: 'Rp ',
+                prefixStyle: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF10B981),
+                ),
+                hintText: '2000',
+                filled: true,
+                fillColor: context.surfaceBg,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: context.borderLight),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.5),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+          ],
+
+          // Save Button
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: ElevatedButton(
+              onPressed: _isSavingDelivery ? null : _saveDeliverySettings,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF10B981),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: _isSavingDelivery
+                  ? const CupertinoActivityIndicator(color: Colors.white)
+                  : Text(
+                      'Simpan Pengaturan Delivery',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+            ),
+          ),
+        ],
       ),
     );
   }

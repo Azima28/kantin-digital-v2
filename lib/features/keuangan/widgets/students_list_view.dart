@@ -8,6 +8,7 @@ import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 class StudentsListView extends ConsumerWidget {
   final String searchQuery;
@@ -299,11 +300,10 @@ class StudentsListView extends ConsumerWidget {
             },
           );
         },
-        loading: () => Center(
-          child: Padding(
-            padding: EdgeInsets.all(40),
-            child: CupertinoActivityIndicator(color: Nebula.teal),
-          ),
+        loading: () => ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          itemCount: 6,
+          itemBuilder: (context, index) => const SkeletonListTile(),
         ),
         error: (e, _) => Center(
           child: Padding(

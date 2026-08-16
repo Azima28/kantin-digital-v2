@@ -140,61 +140,65 @@ class AdminUserListTile extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               // Status Label & Toggle
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Status: ',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: context.textSecondary,
-                    ),
-                  ),
-                  Text(
-                    isActive ? 'AKTIF' : 'DIBLOKIR',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: isActive ? Nebula.teal : Nebula.rose,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  SizedBox(
-                    width: 38,
-                    height: 24,
-                    child: FittedBox(
-                      fit: BoxFit.contain,
-                      child: CupertinoSwitch(
-                        value: isActive,
-                        activeTrackColor: Nebula.teal,
-                        onChanged: (val) => onToggleStatus(id, role, isActive),
+              Flexible(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Status: ',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: context.textSecondary,
                       ),
                     ),
-                  ),
-                ],
+                    Text(
+                      isActive ? 'AKTIF' : 'DIBLOKIR',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: isActive ? Nebula.teal : Nebula.rose,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    SizedBox(
+                      width: 36,
+                      height: 22,
+                      child: FittedBox(
+                        fit: BoxFit.contain,
+                        child: CupertinoSwitch(
+                          value: isActive,
+                          activeTrackColor: Nebula.teal,
+                          onChanged: (val) => onToggleStatus(id, role, isActive),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+
+              const SizedBox(width: 6),
 
               // Detail & Riwayat > Link
               InkWell(
                 onTap: () => onNavigateToDetail(id, role),
                 borderRadius: BorderRadius.circular(8),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         'Detail & Riwayat',
                         style: GoogleFonts.inter(
-                          fontSize: 12,
+                          fontSize: 11.5,
                           fontWeight: FontWeight.w600,
                           color: Nebula.teal,
                         ),
                       ),
-                      const SizedBox(width: 2),
+                      const SizedBox(width: 1),
                       const Icon(
                         CupertinoIcons.chevron_right,
-                        size: 13,
+                        size: 12,
                         color: Nebula.teal,
                       ),
                     ],

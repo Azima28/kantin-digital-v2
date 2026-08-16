@@ -12,7 +12,7 @@ class PremiumBackground extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkBgPrimary : AppColors.scaffoldBackground,
+        color: isDark ? AppColors.darkBgPrimary : const Color(0xFFF1F5F9),
         gradient: isDark
             ? const LinearGradient(
                 begin: Alignment.topCenter,
@@ -26,7 +26,7 @@ class PremiumBackground extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xFFF8FAFC),
+                  Color(0xFFF1F5F9),
                   Color(0xFFF1F5F9),
                 ],
               ),

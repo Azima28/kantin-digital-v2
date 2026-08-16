@@ -46,3 +46,6 @@ app.*.map.json
 screenshot*.jpg
 screenshot*.png
 .hermes-tmp.*
+.claude/
+.agents/
+scratch/

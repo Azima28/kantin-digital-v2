@@ -17,6 +17,7 @@ import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/nebula_components.dart';
 import 'package:kantin_digital/core/widgets/nebula_effects.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 class SalesHistoryScreen extends ConsumerStatefulWidget {
   const SalesHistoryScreen({super.key});
@@ -135,8 +136,9 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
                                     letterSpacing: -0.5,
                                   ),
                                 ),
-                                loading: () =>
-                                    const CupertinoActivityIndicator(),
+                                loading: () => Shimmer(
+                                  child: const SkeletonBox(width: 140, height: 28, borderRadius: 6),
+                                ),
                                 error: (err, stack) => Text(
                                   '${AppStrings.labelFailed} menghitung',
                                   style: TextStyle(color: Nebula.rose),
@@ -436,9 +438,13 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
                             ),
                           );
                         },
-                        loading: () => const SliverFillRemaining(
-                          child: Center(
-                            child: CupertinoActivityIndicator(radius: 12),
+                        loading: () => SliverPadding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) => const SkeletonListTile(),
+                              childCount: 5,
+                            ),
                           ),
                         ),
                         error: (err, stack) => SliverFillRemaining(

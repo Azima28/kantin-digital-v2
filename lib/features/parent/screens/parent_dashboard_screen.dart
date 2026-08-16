@@ -23,6 +23,7 @@ import 'package:kantin_digital/features/parent/widgets/parent_receipt_bottom_she
 import 'package:kantin_digital/features/parent/widgets/parent_settings_section.dart';
 import 'package:kantin_digital/features/parent/widgets/parent_dashboard_header.dart';
 import 'package:kantin_digital/features/parent/widgets/parent_home_tab.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/features/parent/widgets/parent_weekly_trend_chart.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 
@@ -749,10 +750,53 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                             ),
                           );
                         },
-                        loading: () => const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(80.0),
-                            child: CupertinoActivityIndicator(radius: 16),
+                        loading: () => Shimmer(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: double.infinity,
+                                  height: 140,
+                                  decoration: BoxDecoration(
+                                    color: context.cardBg,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: context.borderLight, width: 0.8),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Container(
+                                        height: 80,
+                                        decoration: BoxDecoration(
+                                          color: context.cardBg,
+                                          borderRadius: BorderRadius.circular(16),
+                                          border: Border.all(color: context.borderLight, width: 0.8),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Container(
+                                        height: 80,
+                                        decoration: BoxDecoration(
+                                          color: context.cardBg,
+                                          borderRadius: BorderRadius.circular(16),
+                                          border: Border.all(color: context.borderLight, width: 0.8),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                const SkeletonBox(width: 140, height: 14, borderRadius: 4),
+                                const SizedBox(height: 12),
+                                ...List.generate(3, (i) => const SkeletonListTile()),
+                              ],
+                            ),
                           ),
                         ),
                         error: (err, stack) => Center(

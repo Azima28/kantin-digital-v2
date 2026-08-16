@@ -18,6 +18,7 @@ import 'package:kantin_digital/features/admin/widgets/merchant_stats_card.dart';
 import 'package:kantin_digital/features/admin/widgets/merchant_product_list_item.dart';
 import 'package:kantin_digital/features/admin/widgets/merchant_transaction_list_item.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_edit_merchant_sheet.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 class AdminMerchantDetailScreen extends ConsumerStatefulWidget {
   final String merchantId;
@@ -217,7 +218,37 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
             ),
           );
         },
-        loading: () => Center(child: CupertinoActivityIndicator(color: Nebula.teal)),
+        loading: () => Shimmer(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: context.cardBg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: context.borderLight, width: 0.8),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: context.cardBg,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: context.borderLight, width: 0.8),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ...List.generate(3, (i) => const SkeletonListTile()),
+              ],
+            ),
+          ),
+        ),
         error: (err, stack) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,

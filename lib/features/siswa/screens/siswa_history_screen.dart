@@ -9,6 +9,7 @@ import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 
@@ -304,7 +305,23 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
                                           );
                                         }).toList(),
                                       ),
-                                      loading: () => const Center(child: CupertinoActivityIndicator()),
+                                      loading: () => Shimmer(
+                                        child: Column(
+                                          children: List.generate(
+                                            2,
+                                            (i) => Padding(
+                                              padding: const EdgeInsets.symmetric(vertical: 4),
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: const [
+                                                  SkeletonBox(width: 110, height: 13, borderRadius: 4),
+                                                  SkeletonBox(width: 60, height: 13, borderRadius: 4),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                       error: (_, __) => Text(
                                         'Gagal memuat item',
                                         style: GoogleFonts.inter(fontSize: 12, color: Nebula.rose),
@@ -481,69 +498,92 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: Text(
-          'Riwayat Jajan',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        shape: Border(
-          bottom: BorderSide(color: context.borderLight, width: 0.5),
-        ),
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(siswaTransactionsProvider);
-        },
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
-            child: Column(
-              children: [
-                // Search Bar & Filters Header Container
-                Container(
-                  color: context.cardBg,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Column(
-                    children: [
-                      // Search Bar Input
-                      Container(
-                        decoration: BoxDecoration(
-                          color: context.surfaceBg,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                        child: Row(
-                          children: [
-                            Icon(CupertinoIcons.search, color: context.textSecondary, size: 18),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: TextField(
-                                style: TextStyle(fontSize: 14, color: context.textPrimary),
-                                decoration: const InputDecoration(
-                                  hintText: 'Cari nama stan jajan...',
-                                  border: InputBorder.none,
-                                  enabledBorder: InputBorder.none,
-                                  focusedBorder: InputBorder.none,
-                                  fillColor: Colors.transparent,
-                                  filled: false,
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                                onChanged: (val) {
-                                  setState(() {
-                                    _searchQuery = val.trim().toLowerCase();
-                                  });
-                                },
-                              ),
-                            ),
-                          ],
+      body: SafeArea(
+        bottom: false,
+        child: RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(siswaTransactionsProvider);
+          },
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 800),
+              child: Column(
+                children: [
+                  // Unified Header Container (Title Left-aligned + Search + Filters)
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: context.cardBg,
+                      border: Border(
+                        bottom: BorderSide(
+                          color: context.borderLight,
+                          width: 0.5,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.02),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Centered Page Title
+                        Center(
+                          child: Text(
+                            'Riwayat',
+                            style: GoogleFonts.inter(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: context.textPrimary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Search Bar Input
+                        Container(
+                          decoration: BoxDecoration(
+                            color: context.surfaceBg,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: context.borderLight,
+                              width: 0.5,
+                            ),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                          child: Row(
+                            children: [
+                              Icon(CupertinoIcons.search, color: context.textSecondary, size: 18),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: TextField(
+                                  style: TextStyle(fontSize: 14, color: context.textPrimary),
+                                  decoration: const InputDecoration(
+                                    hintText: 'Cari nama stan jajan...',
+                                    border: InputBorder.none,
+                                    enabledBorder: InputBorder.none,
+                                    focusedBorder: InputBorder.none,
+                                    fillColor: Colors.transparent,
+                                    filled: false,
+                                    contentPadding: EdgeInsets.symmetric(vertical: 10),
+                                  ),
+                                  onChanged: (val) {
+                                    setState(() {
+                                      _searchQuery = val.trim().toLowerCase();
+                                    });
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
 
                       // Sliding segmented control filter (Semua, Jajan, Top-Up, Batal)
                       Center(
@@ -888,7 +928,56 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
                         },
                       );
                     },
-                    loading: () => const Center(child: CupertinoActivityIndicator()),
+                    loading: () => Shimmer(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: SkeletonBox(width: 90, height: 13, borderRadius: 4),
+                          ),
+                          ...List.generate(
+                            4,
+                            (index) => Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: context.cardBg,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: context.borderLight, width: 0.8),
+                              ),
+                              child: Row(
+                                children: [
+                                  const SkeletonCircle(size: 40),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: const [
+                                        SkeletonBox(width: 130, height: 14, borderRadius: 4),
+                                        SizedBox(height: 6),
+                                        SkeletonBox(width: 100, height: 11, borderRadius: 4),
+                                        SizedBox(height: 4),
+                                        SkeletonBox(width: 60, height: 10, borderRadius: 4),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: const [
+                                      SkeletonBox(width: 70, height: 14, borderRadius: 4),
+                                      SizedBox(height: 6),
+                                      SkeletonBox(width: 60, height: 20, borderRadius: 8),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     error: (err, stack) => Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -914,6 +1003,7 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }

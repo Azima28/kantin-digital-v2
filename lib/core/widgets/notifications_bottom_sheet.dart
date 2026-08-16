@@ -11,6 +11,7 @@ import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 /// Bottom Sheet for viewing and managing notifications across all roles.
 class NotificationsBottomSheet extends ConsumerStatefulWidget {
@@ -417,7 +418,11 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
                     },
                   );
                 },
-                loading: () => const Center(child: CupertinoActivityIndicator()),
+                loading: () => ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  itemCount: 4,
+                  itemBuilder: (context, index) => const SkeletonListTile(),
+                ),
                 error: (err, stack) => Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,

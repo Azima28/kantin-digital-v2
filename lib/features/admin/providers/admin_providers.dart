@@ -13,6 +13,7 @@ import 'package:kantin_digital/core/models/models.dart';
 final adminDashboardProvider = FutureProvider.autoDispose<AdminDashboardData>((
   ref,
 ) async {
+  ref.keepAlive();
   final client = ref.read(supabaseClientProvider);
 
   int studentBalanceSum = 0;
@@ -22,55 +23,58 @@ final adminDashboardProvider = FutureProvider.autoDispose<AdminDashboardData>((
   int transactionVolumeToday = 0;
 
   try {
-    // 1. Fetch Student Balance
-    final studentRes = await client.from('students').select('balance');
+    final now = DateTime.now().toLocal();
+    final todayStr =
+        "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+    final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 29)).toLocal();
+    final thirtyDaysAgoStr =
+        "${thirtyDaysAgo.year}-${thirtyDaysAgo.month.toString().padLeft(2, '0')}-${thirtyDaysAgo.day.toString().padLeft(2, '0')}T00:00:00+07:00";
+
+    // Run independent database queries concurrently using Future.wait
+    final results = await Future.wait([
+      // 0: Student balances
+      client.from('students').select('balance'),
+      // 1: Merchant balances
+      client.from('canteen_operators').select('balance_earned'),
+      // 2: User profiles count
+      client.from('profiles').select('id'),
+      // 3: Today's transactions
+      client
+          .from('transactions')
+          .select('total_amount')
+          .eq('status', 'success')
+          .eq('type', 'purchase')
+          .gte('created_at', '${todayStr}T00:00:00Z'),
+      // 4: Last 30 days transactions for trend
+      client
+          .from('transactions')
+          .select('total_amount, created_at')
+          .eq('status', 'success')
+          .eq('type', 'purchase')
+          .gte('created_at', thirtyDaysAgoStr),
+    ]);
+
+    final studentRes = results[0] as List<dynamic>;
     for (var row in studentRes) {
       studentBalanceSum += (row['balance'] as num?)?.toInt() ?? 0;
     }
 
-    // 2. Fetch Merchant Balance
-    final merchantRes = await client
-        .from('canteen_operators')
-        .select('balance_earned');
+    final merchantRes = results[1] as List<dynamic>;
     for (var row in merchantRes) {
-      merchantBalanceSum +=
-          (row['balance_earned'] as num?)?.toInt() ?? 0;
+      merchantBalanceSum += (row['balance_earned'] as num?)?.toInt() ?? 0;
     }
 
-    // 2b. Fetch user count
-    final profilesRes = await client.from('profiles').select('id');
+    final profilesRes = results[2] as List<dynamic>;
     userCount = profilesRes.length;
 
-    // 3. Fetch Transactions Today
-    final now = DateTime.now().toLocal();
-    final todayStr =
-        "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
-    final txRes = await client
-        .from('transactions')
-        .select('total_amount')
-        .eq('status', 'success')
-        .eq('type', 'purchase')
-        .gte('created_at', '${todayStr}T00:00:00Z');
-
+    final txRes = results[3] as List<dynamic>;
     totalTransactionsToday = txRes.length;
     for (var row in txRes) {
       transactionVolumeToday +=
           (double.tryParse(row['total_amount']?.toString() ?? '0') ?? 0.0).toInt();
     }
 
-    // 4. Fetch last 30 days of transactions for trend
-    final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 29)).toLocal();
-    final thirtyDaysAgoStr =
-        "${thirtyDaysAgo.year}-${thirtyDaysAgo.month.toString().padLeft(2, '0')}-${thirtyDaysAgo.day.toString().padLeft(2, '0')}T00:00:00+07:00";
-
-    final trendTxs = await client
-        .from('transactions')
-        .select('total_amount, created_at')
-        .eq('status', 'success')
-        .eq('type', 'purchase')
-        .gte('created_at', thirtyDaysAgoStr);
-
-    // Group by date
+    final trendTxs = results[4] as List<dynamic>;
     final Map<String, int> dailyVolumes = {};
     for (var row in trendTxs) {
       final String? createdAt = row['created_at']?.toString();
@@ -127,6 +131,7 @@ final adminRoleFilterProvider = StateProvider<String?>((ref) => null);
 final adminUsersProvider = FutureProvider<List<UserProfile>>((
   ref,
 ) async {
+  ref.keepAlive();
   final client = ref.read(supabaseClientProvider);
   final roleFilter = ref.watch(adminRoleFilterProvider);
 

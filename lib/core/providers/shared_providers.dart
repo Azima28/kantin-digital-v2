@@ -42,6 +42,7 @@ final transactionTypeMapProvider =
 /// Fetch profile user yang sedang login.
 final currentUserProfileProvider =
     FutureProvider.autoDispose<UserProfile?>((ref) async {
+  ref.keepAlive();
   try {
     final client = ref.read(supabaseClientProvider);
     final authState = ref.watch(authNotifierProvider);

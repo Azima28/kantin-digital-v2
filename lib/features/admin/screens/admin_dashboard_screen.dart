@@ -13,6 +13,7 @@ import 'package:kantin_digital/features/admin/widgets/admin_transaction_trend_ca
 import 'package:kantin_digital/features/admin/widgets/admin_contribution_card.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_system_health_card.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 class AdminDashboardScreen extends ConsumerWidget {
   const AdminDashboardScreen({super.key});
@@ -77,7 +78,69 @@ class AdminDashboardScreen extends ConsumerWidget {
       ),
       body: metricsAsync.when(
         data: (data) => _buildBody(context, ref, data),
-        loading: () => const Center(child: CircularProgressIndicator(color: Nebula.teal)),
+        loading: () => Shimmer(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: const [
+                    SkeletonBox(width: 140, height: 22, borderRadius: 4),
+                    SkeletonCircle(size: 36),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  width: double.infinity,
+                  height: 140,
+                  decoration: BoxDecoration(
+                    color: context.cardBg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: context.borderLight, width: 0.8),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: context.cardBg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: context.borderLight, width: 0.8),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 130,
+                        decoration: BoxDecoration(
+                          color: context.cardBg,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: context.borderLight, width: 0.8),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Container(
+                        height: 130,
+                        decoration: BoxDecoration(
+                          color: context.cardBg,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: context.borderLight, width: 0.8),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
         error: (err, stack) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,

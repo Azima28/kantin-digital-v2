@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/widgets/order_chat_button.dart';
 import 'package:kantin_digital/features/kantin/models/order_item.dart';
 import 'package:kantin_digital/features/kantin/widgets/order_detail_sheet.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
@@ -172,29 +173,41 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                                 ),
                               ),
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: badgeBgColor,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(badgeIcon, size: 13, color: badgeTextColor),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    badgeLabel,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: badgeTextColor,
+                            const SizedBox(width: 8),
+                            OrderChatIconButton(
+                              order: widget.order,
+                              myRole: 'canteen_operator',
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: badgeBgColor,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(badgeIcon, size: 13, color: badgeTextColor),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        badgeLabel,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: badgeTextColor,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ],
@@ -237,34 +250,133 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
 
-                        // List of items
-                        ...widget.order.items.map(
-                          (item) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  '${item.qty}x ${item.name}',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    color: context.textPrimary,
-                                    fontWeight: FontWeight.w500,
+                        // Delivery / Pickup Location Badge for Cashier
+                        if (widget.order.deliveryLocation != null && widget.order.deliveryLocation!.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Builder(
+                            builder: (context) {
+                              final loc = widget.order.deliveryLocation!;
+                              final bool isDelivery = !loc.toLowerCase().contains('pickup') && !loc.toLowerCase().contains('ambil');
+
+                              return Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: isDelivery
+                                      ? const Color(0xFF10B981).withValues(alpha: 0.1)
+                                      : context.surfaceBg,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: isDelivery
+                                        ? const Color(0xFF10B981).withValues(alpha: 0.35)
+                                        : context.dividerCol,
+                                    width: 0.6,
                                   ),
                                 ),
-                                Text(
-                                  'Rp ${NumberFormat('#,###', 'id_ID').format(item.price * item.qty)}',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    color: context.textPrimary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      isDelivery ? CupertinoIcons.location_solid : CupertinoIcons.bag_fill,
+                                      size: 12,
+                                      color: isDelivery ? const Color(0xFF10B981) : context.textSecondary,
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Flexible(
+                                      child: Text(
+                                        loc,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w600,
+                                          color: isDelivery ? const Color(0xFF10B981) : context.textSecondary,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
+                              );
+                            },
                           ),
+                        ],
+                        const SizedBox(height: 14),
+
+                        // Food Thumbnail + List of items
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Builder(
+                              builder: (context) {
+                                final topItem = widget.order.mostExpensiveItem;
+                                final String? imgUrl = topItem?.imageUrl;
+
+                                final fallbackChild = Icon(
+                                  Icons.restaurant_menu_rounded,
+                                  color: Nebula.teal,
+                                  size: 20,
+                                );
+
+                                return Container(
+                                  width: 44,
+                                  height: 44,
+                                  margin: const EdgeInsets.only(right: 12),
+                                  decoration: BoxDecoration(
+                                    color: context.surfaceBg,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: context.dividerCol, width: 0.5),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: (imgUrl != null && imgUrl.isNotEmpty)
+                                        ? Image.network(
+                                            imgUrl,
+                                            width: 44,
+                                            height: 44,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) => fallbackChild,
+                                          )
+                                        : fallbackChild,
+                                  ),
+                                );
+                              },
+                            ),
+                            Expanded(
+                              child: Column(
+                                children: widget.order.items.map(
+                                  (item) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 6.0),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            '${item.qty}x ${item.name}',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 14,
+                                              color: context.textPrimary,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Rp ${NumberFormat('#,###', 'id_ID').format(item.price * item.qty)}',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 14,
+                                            color: context.textPrimary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ).toList(),
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 8),
 

@@ -27,6 +27,7 @@ class OrderDetailSheet extends ConsumerWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => OrderDetailSheet(
         order: order,
@@ -82,7 +83,7 @@ class OrderDetailSheet extends ConsumerWidget {
     }
 
     return Container(
-      height: screenHeight * 0.85,
+      height: screenHeight,
       decoration: BoxDecoration(
         color: context.cardBg,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -482,7 +483,9 @@ class OrderDetailSheet extends ConsumerWidget {
                 _buildReceiptMetaRow(
                   context,
                   'Tipe Pengambilan',
-                  order.deliveryLocation != null ? 'Antar (${order.deliveryLocation})' : 'Ambil Mandiri',
+                  order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty
+                      ? order.deliveryLocation!
+                      : 'Ambil Mandiri (Pickup)',
                 ),
                 const SizedBox(height: 8),
                 _buildReceiptMetaRow(context, 'Metode Pembelian', order.deliveryLocation != null ? 'Aplikasi' : 'NFC / Kasir'),
@@ -609,14 +612,19 @@ class OrderDetailSheet extends ConsumerWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'TOTAL PEMBAYARAN',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: context.textPrimary,
+                Expanded(
+                  child: Text(
+                    'TOTAL PEMBAYARAN',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: context.textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                const SizedBox(width: 8),
                 Text(
                   'Rp ${NumberFormat('#,###', 'id_ID').format(order.totalAmount)}',
                   style: GoogleFonts.inter(
