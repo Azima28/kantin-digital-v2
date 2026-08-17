@@ -1,10 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 import 'package:kantin_digital/features/parent/widgets/parent_transaction_tile.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
@@ -69,7 +69,7 @@ class ParentTransactionList extends StatelessWidget {
     Map<String, List<OperatorTransaction>> grouped = {};
     for (var tx in filtered) {
       final date = tx.createdAt?.toLocal() ?? DateTime.now();
-      final dateStr = DateFormat('dd MMMM yyyy', 'id_ID').format(date);
+      final dateStr = AppDateFormatter.formatFullDate(date);
       if (grouped[dateStr] == null) {
         grouped[dateStr] = [];
       }
@@ -80,38 +80,61 @@ class ParentTransactionList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Search bar
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: context.cardBg,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: context.dividerCol, width: 1),
-          ),
-          child: Row(
-            children: [
-              Icon(CupertinoIcons.search,
-                  color: context.textSecondary, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextField(
-                  controller: searchController,
-                  onChanged: (_) {},
-                  decoration: const InputDecoration(
-                    hintText: 'Cari transaksi atau nama stan...',
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 14),
-                  ),
-                ),
+        TextField(
+          controller: searchController,
+          onChanged: (_) {},
+          style: GoogleFonts.inter(fontSize: 13.5, fontWeight: FontWeight.w500, color: context.textPrimary),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: context.isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+            hintText: 'Cari transaksi atau nama stan...',
+            hintStyle: GoogleFonts.inter(
+              color: context.textSecondary.withValues(alpha: 0.75),
+              fontSize: 13,
+            ),
+            prefixIcon: const Icon(
+              CupertinoIcons.search,
+              color: Nebula.teal,
+              size: 18,
+            ),
+            suffixIcon: searchController.text.isNotEmpty
+                ? IconButton(
+                    icon: Icon(
+                      CupertinoIcons.clear_circled_solid,
+                      color: context.textSecondary,
+                      size: 16,
+                    ),
+                    onPressed: () {
+                      searchController.clear();
+                    },
+                  )
+                : null,
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 12,
+              horizontal: 14,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: context.isDark ? context.borderLight : const Color(0xFFE2E8F0),
+                width: 0.8,
               ),
-              if (searchController.text.isNotEmpty)
-                IconButton(
-                  icon: Icon(CupertinoIcons.clear_circled_solid,
-                      color: context.textSecondary, size: 16),
-                  onPressed: () {
-                    searchController.clear();
-                  },
-                ),
-            ],
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: context.isDark ? context.borderLight : const Color(0xFFE2E8F0),
+                width: 0.8,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: Nebula.teal,
+                width: 1.2,
+              ),
+            ),
           ),
         ),
         SizedBox(height: 16),
@@ -157,7 +180,7 @@ class ParentTransactionList extends StatelessWidget {
               color: primaryTeal, size: 16),
           label: Text(
             historyDateRange != null
-                ? '${DateFormat('dd MMM', 'id_ID').format(historyDateRange!.start)} - ${DateFormat('dd MMM yyyy', 'id_ID').format(historyDateRange!.end)}'
+                ? '${AppDateFormatter.formatDate(historyDateRange!.start)} - ${AppDateFormatter.formatDate(historyDateRange!.end)}'
                 : '${AppStrings.buttonSelect} Rentang Tanggal...',
             style: GoogleFonts.inter(
                 fontSize: 12, fontWeight: FontWeight.w600, color: primaryTeal),

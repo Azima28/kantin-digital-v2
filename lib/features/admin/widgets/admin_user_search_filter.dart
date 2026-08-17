@@ -53,42 +53,49 @@ class AdminUserSearchFilter extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 1. Search Input Field
-          Container(
-            decoration: BoxDecoration(
-              color: context.cardBg,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: context.dividerCol.withValues(alpha: 0.6),
+          TextField(
+            controller: searchController,
+            onChanged: (val) {
+              onSearchChanged(val.toLowerCase().trim());
+            },
+            style: GoogleFonts.inter(fontSize: 13.5, fontWeight: FontWeight.w500, color: context.textPrimary),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: context.isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+              hintText: 'Cari nama, email, NISN, usn...',
+              hintStyle: GoogleFonts.inter(
+                color: context.textSecondary.withValues(alpha: 0.75),
+                fontSize: 13,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
+              prefixIcon: const Icon(
+                CupertinoIcons.search,
+                color: Nebula.teal,
+                size: 18,
+              ),
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 12,
+                horizontal: 14,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: context.isDark ? context.borderLight : const Color(0xFFE2E8F0),
+                  width: 0.8,
                 ),
-              ],
-            ),
-            child: TextField(
-              controller: searchController,
-              onChanged: (val) {
-                onSearchChanged(val.toLowerCase().trim());
-              },
-              style: GoogleFonts.inter(fontSize: 14, color: context.textPrimary),
-              decoration: InputDecoration(
-                hintText: 'Cari nama, email, NISN, usn...',
-                hintStyle: GoogleFonts.inter(
-                  color: context.textSecondary.withValues(alpha: 0.6),
-                  fontSize: 14,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: context.isDark ? context.borderLight : const Color(0xFFE2E8F0),
+                  width: 0.8,
                 ),
-                prefixIcon: Icon(
-                  CupertinoIcons.search,
-                  color: context.textSecondary,
-                  size: 20,
-                ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 14,
-                  horizontal: 16,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Nebula.teal,
+                  width: 1.2,
                 ),
               ),
             ),

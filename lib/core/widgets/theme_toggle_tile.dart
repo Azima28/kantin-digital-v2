@@ -2,11 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/providers/theme_provider.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
-/// A premium ListTile-style row for switching between light and dark mode.
+/// A sleek, minimal ListTile-style row for switching between light and dark mode.
 class ThemeToggleTile extends ConsumerWidget {
   final bool showDivider;
   final EdgeInsetsGeometry? padding;
@@ -22,32 +22,29 @@ class ThemeToggleTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeProvider) == ThemeMode.dark;
-    final iconBgColor = isDark
-        ? AppColors.primary.withValues(alpha: 0.18)
-        : AppColors.primaryLight;
-    final iconColor = AppColors.primary;
+    final themeAccent = isDark ? const Color(0xFFF59E0B) : Nebula.teal;
 
     Widget leadingIcon;
     if (useCircleIcon) {
       leadingIcon = Container(
-        width: 36,
-        height: 36,
+        width: 32,
+        height: 32,
         decoration: BoxDecoration(
-          color: iconBgColor,
+          color: themeAccent.withValues(alpha: 0.12),
           shape: BoxShape.circle,
         ),
         child: Icon(
           isDark ? CupertinoIcons.moon_fill : CupertinoIcons.sun_max_fill,
           key: ValueKey(isDark),
-          color: iconColor,
-          size: 18,
+          color: themeAccent,
+          size: 16,
         ),
       );
     } else {
       leadingIcon = Icon(
         isDark ? CupertinoIcons.moon_fill : CupertinoIcons.sun_max_fill,
         key: ValueKey(isDark),
-        color: context.textSecondary,
+        color: themeAccent,
         size: 20,
       );
     }
@@ -57,9 +54,9 @@ class ThemeToggleTile extends ConsumerWidget {
       children: [
         InkWell(
           onTap: () => ref.read(themeProvider.notifier).toggle(),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           child: Padding(
-            padding: padding ?? const EdgeInsets.symmetric(vertical: 6),
+            padding: padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: Row(
               children: [
                 leadingIcon,
@@ -67,6 +64,8 @@ class ThemeToggleTile extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     'Mode Tampilan',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -74,17 +73,14 @@ class ThemeToggleTile extends ConsumerWidget {
                     ),
                   ),
                 ),
+                const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.primary.withValues(alpha: 0.15)
-                        : AppColors.primaryLight,
+                    color: themeAccent.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isDark
-                          ? AppColors.primary.withValues(alpha: 0.4)
-                          : AppColors.primary.withValues(alpha: 0.25),
+                      color: themeAccent.withValues(alpha: 0.3),
                       width: 0.8,
                     ),
                   ),
@@ -94,15 +90,15 @@ class ThemeToggleTile extends ConsumerWidget {
                       Icon(
                         isDark ? CupertinoIcons.moon_fill : CupertinoIcons.sun_max_fill,
                         size: 12,
-                        color: iconColor,
+                        color: themeAccent,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         isDark ? 'Gelap' : 'Terang',
                         style: GoogleFonts.inter(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: iconColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: themeAccent,
                         ),
                       ),
                     ],
@@ -114,7 +110,7 @@ class ThemeToggleTile extends ConsumerWidget {
         ),
         if (showDivider)
           Padding(
-            padding: const EdgeInsets.only(top: 8, bottom: 8),
+            padding: const EdgeInsets.only(top: 10, bottom: 10),
             child: Divider(
               height: 1,
               thickness: 0.5,
@@ -125,3 +121,4 @@ class ThemeToggleTile extends ConsumerWidget {
     );
   }
 }
+

@@ -2,10 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 import 'package:kantin_digital/features/kantin/providers/operator_activities_provider.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
@@ -58,13 +58,16 @@ class _ActivitiesTabState extends ConsumerState<ActivitiesTab> {
                           value: 'Semua Aktivitas',
                           child: Text('Semua Aktivitas')),
                       DropdownMenuItem(
+                          value: 'Pesanan Selesai',
+                          child: Text('Pesanan Selesai')),
+                      DropdownMenuItem(
                           value: 'Tambah Menu',
                           child: Text('Tambah Menu')),
                       DropdownMenuItem(
                           value: 'Ubah Menu', child: Text('Ubah Menu')),
                       DropdownMenuItem(
                           value: 'Refund Transaksi',
-                          child: Text('Refund Transaksi')),
+                          child: Text('Refund / Batal')),
                     ],
                   ),
                 ),
@@ -78,12 +81,14 @@ class _ActivitiesTabState extends ConsumerState<ActivitiesTab> {
                   // Filter logs
                   final filtered = logs.where((log) {
                     final type = log.actionType;
-                    if (_selectedActivity == 'Tambah Menu') {
+                    if (_selectedActivity == 'Pesanan Selesai') {
+                      return type == 'SELESAI_PESANAN';
+                    } else if (_selectedActivity == 'Tambah Menu') {
                       return type == 'TAMBAH_PRODUK';
                     } else if (_selectedActivity == 'Ubah Menu') {
                       return type == 'UBAH_PRODUK';
                     } else if (_selectedActivity == 'Refund Transaksi') {
-                      return type == 'REFUND_TRANSAKSI';
+                      return type == 'REFUND_TRANSAKSI' || type == 'BATAL_PESANAN';
                     }
                     return true; // Semua Aktivitas
                   }).toList();
@@ -95,7 +100,7 @@ class _ActivitiesTabState extends ConsumerState<ActivitiesTab> {
                         children: [
                           Icon(CupertinoIcons.list_bullet,
                               size: 48, color: context.textSecondary),
-                          SizedBox(height: 12),
+                          const SizedBox(height: 12),
                           Text(
                             'Tidak ada aktivitas',
                             style: TextStyle(
@@ -120,20 +125,22 @@ class _ActivitiesTabState extends ConsumerState<ActivitiesTab> {
                       final desc = log.description;
                       final createdAt = log.createdAt?.toLocal();
                       final timeStr = createdAt != null
-                          ? DateFormat('dd MMM yyyy, HH:mm', 'id_ID')
-                              .format(createdAt)
+                          ? AppDateFormatter.formatShortDateWithTime(createdAt)
                           : '-';
 
                       IconData iconData = CupertinoIcons.info;
                       Color iconColor = Nebula.teal;
 
-                      if (type == 'TAMBAH_PRODUK') {
+                      if (type == 'SELESAI_PESANAN') {
+                        iconData = CupertinoIcons.checkmark_seal_fill;
+                        iconColor = const Color(0xFF10B981);
+                      } else if (type == 'TAMBAH_PRODUK') {
                         iconData = CupertinoIcons.add_circled;
                         iconColor = Nebula.teal;
                       } else if (type == 'UBAH_PRODUK') {
                         iconData = CupertinoIcons.pencil_circle;
                         iconColor = Colors.orange;
-                      } else if (type == 'REFUND_TRANSAKSI') {
+                      } else if (type == 'REFUND_TRANSAKSI' || type == 'BATAL_PESANAN') {
                         iconData = CupertinoIcons.arrow_counterclockwise_circle;
                         iconColor = Nebula.rose;
                       }

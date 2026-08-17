@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
@@ -313,12 +313,9 @@ class ParentsTab extends ConsumerWidget {
     String parentId,
     String name,
   ) async {
-    final client = ref.read(supabaseClientProvider);
+    final apiClient = ref.read(apiClientProvider);
     try {
-      await client
-          .from('profiles')
-          .update({'is_active': true})
-          .eq('id', parentId);
+      await apiClient.patch('/users/$parentId/status', body: {'is_active': true});
       ref.invalidate(keuanganParentsProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -357,12 +354,9 @@ class ParentsTab extends ConsumerWidget {
             isDestructiveAction: true,
             onPressed: () async {
               Navigator.pop(ctx);
-              final client = ref.read(supabaseClientProvider);
+              final apiClient = ref.read(apiClientProvider);
               try {
-                await client
-                    .from('profiles')
-                    .update({'is_active': false})
-                    .eq('id', parentId);
+                await apiClient.patch('/users/$parentId/status', body: {'is_active': false});
                 ref.invalidate(keuanganParentsProvider);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(

@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/widgets/app_toast.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 /// Bottom sheet for adding a new student user.
 void showAddStudentSheet(BuildContext context, WidgetRef ref) {
@@ -115,7 +115,7 @@ void showAddStudentSheet(BuildContext context, WidgetRef ref) {
                           }
                           setLocal(() => isSaving = true);
                           try {
-                            final client = ref.read(supabaseClientProvider);
+                            final apiClient = ref.read(apiClientProvider);
 
                             final email = emailCtrl.text.trim().isNotEmpty
                                 ? emailCtrl.text.trim()
@@ -128,42 +128,20 @@ void showAddStudentSheet(BuildContext context, WidgetRef ref) {
                                 : null;
                             final rfidVal = rfid.isNotEmpty ? rfid : null;
 
-                            final newProfile = await client.rpc('create_user_account', params: {
-                              'p_email': email,
-                              'p_password': password,
-                              'p_full_name': name,
-                              'p_role': 'student',
-                              'p_phone_number': parentPhone,
-                              'p_username': username,
-                              'p_nisn': nisn,
-                              'p_class': selectedClass,
-                              'p_is_active': true,
-                              'p_rfid_uid': rfidVal,
-                              'p_parent_phone': parentPhone,
+                            final response = await apiClient.post('/admin/students', body: {
+                              'email': email,
+                              'password': password,
+                              'full_name': name,
+                              'phone_number': parentPhone,
+                              'username': username,
+                              'nisn': nisn,
+                              'class': selectedClass,
+                              'rfid_uid': rfidVal,
                             });
 
-                            final String studentId = newProfile['id'];
-
-                            try {
-                              final authProfile = ref.read(authNotifierProvider).profile;
-                              final actorName = authProfile?['full_name'] ?? 'Super Admin';
-                              final actorId = authProfile?['id'];
-
-                              await client.from('audit_logs').insert({
-                                'actor_id': actorId,
-                                'actor_name': actorName,
-                                'action_type': 'TAMBAH_PENGGUNA',
-                                'description': 'Super Admin menambahkan siswa baru secara manual: $name (NISN: $nisn)',
-                                'target_id': studentId,
-                                'new_value': {
-                                  'full_name': name,
-                                  'email': email,
-                                  'nisn': nisn,
-                                  'class': selectedClass,
-                                  'rfid_uid': rfidVal,
-                                },
-                              });
-                            } catch (_) {}
+                            if (!response.success) {
+                              throw Exception(response.message ?? 'Gagal membuat profil siswa.');
+                            }
 
                             ref.invalidate(adminUsersProvider);
                             if (ctx.mounted) Navigator.pop(ctx);

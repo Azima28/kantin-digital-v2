@@ -5,8 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
 
 /// Bottom sheet for editing an existing merchant (canteen operator) profile and data.
@@ -106,49 +106,22 @@ void showEditMerchantSheet(
 
                           setLocal(() => isSaving = true);
                           try {
-                            final client = ref.read(supabaseClientProvider);
+                            final apiClient = ref.read(apiClientProvider);
 
-                            // 1. Update profiles table
-                            await client.from('profiles').update({
-                              'full_name': name,
-                              'email': email,
-                              'username': username,
-                              'phone_number': phone,
-                            }).eq('id', profile.id);
+                            final response = await apiClient.put(
+                              '/admin/canteen-operators/${profile.id}',
+                              body: {
+                                'full_name': name,
+                                'email': email,
+                                'username': username,
+                                'phone_number': phone,
+                                'canteen_name': canteen,
+                              },
+                            );
 
-                            // 2. Update canteen_operators table
-                            await client.from('canteen_operators').update({
-                              'canteen_name': canteen,
-                            }).eq('id', profile.id);
-
-                            // 3. Write audit log
-                            try {
-                              final authProfile = ref.read(authNotifierProvider).profile;
-                              final actorName = authProfile?['full_name'] ?? 'Super Admin';
-                              final actorId = authProfile?['id'];
-
-                              await client.from('audit_logs').insert({
-                                'actor_id': actorId,
-                                'actor_name': actorName,
-                                'action_type': 'EDIT_PENGGUNA',
-                                'description': 'Super Admin mengedit profil pedagang: $name (Stan: $canteen)',
-                                'target_id': profile.id,
-                                'old_value': {
-                                  'full_name': profile.fullName,
-                                  'email': profile.email,
-                                  'username': profile.username,
-                                  'phone_number': profile.phoneNumber,
-                                  'canteen_name': operatorInfo.canteenName,
-                                },
-                                'new_value': {
-                                  'full_name': name,
-                                  'email': email,
-                                  'username': username,
-                                  'phone_number': phone,
-                                  'canteen_name': canteen,
-                                },
-                              });
-                            } catch (_) {}
+                            if (!response.success) {
+                              throw Exception(response.message ?? 'Gagal memperbarui profil pedagang');
+                            }
 
                             // Invalidate details and user list providers
                             ref.invalidate(adminMerchantDetailProvider(profile.id));

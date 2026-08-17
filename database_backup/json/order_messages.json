@@ -1,0 +1,122 @@
+[
+  {
+    "id": "96f61a7c-3489-4637-a50e-2aecf420a5f2",
+    "order_id": "ddd7eeb2-3c52-458c-8ab7-2e458500c62d",
+    "sender_id": null,
+    "sender_role": "student",
+    "sender_name": "Siswa",
+    "message": "halo",
+    "created_at": "2026-08-13T08:25:56.206936+00:00",
+    "is_read": true
+  },
+  {
+    "id": "d3a0f1c7-4111-4c95-afd2-36f3c512880c",
+    "order_id": "ddd7eeb2-3c52-458c-8ab7-2e458500c62d",
+    "sender_id": null,
+    "sender_role": "canteen_operator",
+    "sender_name": "Pedagang",
+    "message": "Pesanan sedang dimasak ya dek 🍳",
+    "created_at": "2026-08-13T09:13:35.042199+00:00",
+    "is_read": true
+  },
+  {
+    "id": "f9a5bbdb-e048-42cf-b1d8-9f37b909b4a7",
+    "order_id": "ddd7eeb2-3c52-458c-8ab7-2e458500c62d",
+    "sender_id": null,
+    "sender_role": "canteen_operator",
+    "sender_name": "Pedagang",
+    "message": "Bahan makanan habis, mau diganti?",
+    "created_at": "2026-08-13T09:16:27.545238+00:00",
+    "is_read": true
+  },
+  {
+    "id": "efe5df8d-8d97-4236-9072-44a508662a25",
+    "order_id": "ddd7eeb2-3c52-458c-8ab7-2e458500c62d",
+    "sender_id": null,
+    "sender_role": "student",
+    "sender_name": "Siswa",
+    "message": "Pesanan saya sudah sampai mana ya?",
+    "created_at": "2026-08-13T09:16:52.741661+00:00",
+    "is_read": true
+  },
+  {
+    "id": "bcb9fee1-79e4-442c-9fd9-1a199334a122",
+    "order_id": "ddd7eeb2-3c52-458c-8ab7-2e458500c62d",
+    "sender_id": null,
+    "sender_role": "canteen_operator",
+    "sender_name": "Pedagang",
+    "message": "Pesanan sedang dimasak ya dek 🍳",
+    "created_at": "2026-08-13T09:37:54.19456+00:00",
+    "is_read": true
+  },
+  {
+    "id": "f77d3e04-572d-4357-bb12-c29435f37d8d",
+    "order_id": "ddd7eeb2-3c52-458c-8ab7-2e458500c62d",
+    "sender_id": null,
+    "sender_role": "student",
+    "sender_name": "Siswa",
+    "message": "Pesanan saya sudah sampai mana ya?",
+    "created_at": "2026-08-13T09:37:57.825369+00:00",
+    "is_read": true
+  },
+  {
+    "id": "c4db92f3-dce7-4cea-977e-29d66c45611e",
+    "order_id": "ddd7eeb2-3c52-458c-8ab7-2e458500c62d",
+    "sender_id": null,
+    "sender_role": "student",
+    "sender_name": "Siswa",
+    "message": "halo",
+    "created_at": "2026-08-13T17:18:29.791795+00:00",
+    "is_read": false
+  },
+  {
+    "id": "ff951944-c29f-47d5-9b3b-0899f19030dd",
+    "order_id": "ddd7eeb2-3c52-458c-8ab7-2e458500c62d",
+    "sender_id": null,
+    "sender_role": "student",
+    "sender_name": "Siswa",
+    "message": "kak",
+    "created_at": "2026-08-13T17:18:34.627502+00:00",
+    "is_read": false
+  },
+  {
+    "id": "c54bc443-cd58-4262-929e-e7a3e7a2919f",
+    "order_id": "ddd7eeb2-3c52-458c-8ab7-2e458500c62d",
+    "sender_id": null,
+    "sender_role": "student",
+    "sender_name": "Siswa",
+    "message": "halo",
+    "created_at": "2026-08-13T17:18:42.106407+00:00",
+    "is_read": false
+  },
+  {
+    "id": "e2411717-a85b-4462-a6c8-47b571ad5ac1",
+    "order_id": "ddd7eeb2-3c52-458c-8ab7-2e458500c62d",
+    "sender_id": null,
+    "sender_role": "student",
+    "sender_name": "Siswa",
+    "message": "halo",
+    "created_at": "2026-08-13T17:37:04.026322+00:00",
+    "is_read": false
+  },
+  {
+    "id": "f328b53a-1cbd-4d57-93b8-ca288adf9cbf",
+    "order_id": "ddd7eeb2-3c52-458c-8ab7-2e458500c62d",
+    "sender_id": null,
+    "sender_role": "student",
+    "sender_name": "Siswa",
+    "message": "halo",
+    "created_at": "2026-08-13T17:37:10.396973+00:00",
+    "is_read": false
+  },
+  {
+    "id": "9a4db66f-e602-415e-b573-5454619cf186",
+    "order_id": "ddd7eeb2-3c52-458c-8ab7-2e458500c62d",
+    "sender_id": null,
+    "sender_role": "student",
+    "sender_name": "Siswa",
+    "message": "halo",
+    "created_at": "2026-08-13T17:37:14.501263+00:00",
+    "is_read": false
+  }
+]

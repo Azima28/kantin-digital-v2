@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL Database Service
+  postgres:
+    image: postgres:16-alpine
+    container_name: kantin_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: kantin_digital
+      TZ: Asia/Jakarta
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./migrations/000001_init_schema.up.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d kantin_digital"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Golang API Backend Service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kantin_api_go
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 8080
+      DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/kantin_digital?sslmode=disable
+      JWT_SECRET: kantin-digital-v2-super-secret-key-2026-production-ready
+      JWT_EXPIRY_HOURS: 72
+      CORS_ORIGINS: "*"
+      UPLOAD_DIR: "./uploads"
+      APP_ENV: production
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./uploads:/app/uploads
+
+volumes:
+  pgdata:
+    driver: local

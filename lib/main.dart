@@ -2,9 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/router/app_router.dart';
+import 'package:kantin_digital/core/services/realtime_service.dart';
 import 'package:kantin_digital/core/services/secure_session_service.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
@@ -17,6 +18,11 @@ void main() async {
   // Ini fix "Zone mismatch" — WidgetsFlutterBinding & runApp harus di zone yg sama.
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
+
+    // Konfigurasi ImageCache Memory Bounds untuk HP Low-End hingga Mid-Range
+    // Batasi decoded image cache ke 120 items & 30MB RAM agar super ringan, anti-lag, & bebas OOM
+    PaintingBinding.instance.imageCache.maximumSize = 120;
+    PaintingBinding.instance.imageCache.maximumSizeBytes = 30 * 1024 * 1024; // 30 MB
 
     // Custom error page — no red screen of death
     ErrorWidget.builder = (FlutterErrorDetails details) {
@@ -47,14 +53,10 @@ void main() async {
       );
     };
 
-    // Inisialisasi format tanggal bahasa Indonesia
+    // Inisialisasi format tanggal bahasa Indonesia & default locale
     await initializeDateFormatting('id_ID', null);
-
-    // Inisialisasi Supabase
-    await Supabase.initialize(
-      url: const String.fromEnvironment('SUPABASE_URL', defaultValue: 'https://vgainyzrpfyaakqttjbm.supabase.co'),
-      publishableKey: const String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: 'sb_publishable_kI9Am0ws3AUeIk84mS3hBQ_NZ-bwoAI'),
-    );
+    await initializeDateFormatting('id', null);
+    Intl.defaultLocale = 'id_ID';
 
     // Inisialisasi secure session storage listener
     await SecureSessionService.initAuthListener();
@@ -74,6 +76,9 @@ class MainApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Activate Realtime WebSocket Service across all modules
+    ref.watch(realtimeServiceProvider);
+
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeProvider);
 

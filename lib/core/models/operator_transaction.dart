@@ -15,10 +15,11 @@ class OperatorTransaction {
   final String? operatorId;
   final String? purchaseMethod; // 'rfid' or 'app'
 
-  /// Nested data dari join Supabase (opsional).
+  /// Nested data terkait (opsional).
   final String? canteenName;
   final String? studentName;
   final String? studentNisn;
+  final String? imageUrl;
   final List<TransactionItem>? transactionItems;
 
   const OperatorTransaction({
@@ -33,6 +34,7 @@ class OperatorTransaction {
     this.canteenName,
     this.studentName,
     this.studentNisn,
+    this.imageUrl,
     this.transactionItems,
   });
 
@@ -40,19 +42,32 @@ class OperatorTransaction {
   /// `transactions.select('id, student_id, operator_id, total_amount, type, status, created_at, canteen_operators(canteen_name)')`
   factory OperatorTransaction.fromSiswaJson(Map<String, dynamic> json) {
     final canteenData = json['canteen_operators'];
-    String? canteenName;
-    if (canteenData is Map<String, dynamic>) {
-      canteenName = canteenData['canteen_name'] as String?;
-    } else if (canteenData is List && canteenData.isNotEmpty) {
-      canteenName = (canteenData.first as Map<String, dynamic>)['canteen_name'] as String?;
+    String? canteenName = json['canteen_name'] as String?;
+    if (canteenName == null || canteenName.isEmpty) {
+      if (canteenData is Map<String, dynamic>) {
+        canteenName = canteenData['canteen_name'] as String?;
+      } else if (canteenData is List && canteenData.isNotEmpty) {
+        canteenName = (canteenData.first as Map<String, dynamic>)['canteen_name'] as String?;
+      }
     }
 
-    final txsItemsData = json['transaction_items'];
+    final txsItemsData = json['items'] ?? json['transaction_items'];
     List<TransactionItem>? transactionItems;
+    String? extractedImage = json['image_url'] as String?;
+
     if (txsItemsData is List) {
       transactionItems = txsItemsData
           .map((e) => TransactionItem.fromJson(e as Map<String, dynamic>))
           .toList();
+      if (extractedImage == null || extractedImage.isEmpty) {
+        for (final item in transactionItems) {
+          final img = item.imageUrl ?? (item.product != null ? item.product!['image_url'] as String? : null);
+          if (img != null && img.isNotEmpty) {
+            extractedImage = img;
+            break;
+          }
+        }
+      }
     }
 
     return OperatorTransaction(
@@ -67,6 +82,7 @@ class OperatorTransaction {
       operatorId: json['operator_id'] as String?,
       purchaseMethod: json['purchase_method'] as String? ?? 'rfid',
       canteenName: canteenName,
+      imageUrl: extractedImage,
       transactionItems: transactionItems,
     );
   }
@@ -96,6 +112,28 @@ class OperatorTransaction {
       }
     }
 
+    studentName ??= json['student_name'] as String?;
+    studentNisn ??= json['student_nisn'] as String?;
+
+    final txsItemsData = json['items'] ?? json['transaction_items'];
+    List<TransactionItem>? transactionItems;
+    String? extractedImage = json['image_url'] as String?;
+
+    if (txsItemsData is List) {
+      transactionItems = txsItemsData
+          .map((e) => TransactionItem.fromJson(e as Map<String, dynamic>))
+          .toList();
+      if (extractedImage == null || extractedImage.isEmpty) {
+        for (final item in transactionItems) {
+          final img = item.imageUrl ?? (item.product != null ? item.product!['image_url'] as String? : null);
+          if (img != null && img.isNotEmpty) {
+            extractedImage = img;
+            break;
+          }
+        }
+      }
+    }
+
     return OperatorTransaction(
       id: json['id']?.toString() ?? '',
       totalAmount: (double.tryParse(json['total_amount']?.toString() ?? '0') ?? 0.0).toInt(),
@@ -108,6 +146,8 @@ class OperatorTransaction {
       purchaseMethod: json['purchase_method'] as String? ?? 'rfid',
       studentName: studentName,
       studentNisn: studentNisn,
+      imageUrl: extractedImage,
+      transactionItems: transactionItems,
     );
   }
 
@@ -120,11 +160,15 @@ class OperatorTransaction {
         'student_id': studentId,
         'operator_id': operatorId,
         'purchase_method': purchaseMethod,
+        'image_url': imageUrl,
       };
 
   bool get isPurchase => type == 'purchase';
   bool get isTopup => type == 'topup';
   bool get isSuccess => status == 'success';
+  bool get isApp => purchaseMethod == 'app' || purchaseMethod == 'app_order';
+  bool get isRfid => !isApp;
+  String get purchaseMethodDisplay => isApp ? 'Aplikasi' : 'Tap Kartu';
 
   OperatorTransaction copyWith({
     String? id,
@@ -138,6 +182,7 @@ class OperatorTransaction {
     String? canteenName,
     String? studentName,
     String? studentNisn,
+    String? imageUrl,
     List<TransactionItem>? transactionItems,
   }) {
     return OperatorTransaction(
@@ -152,6 +197,7 @@ class OperatorTransaction {
       canteenName: canteenName ?? this.canteenName,
       studentName: studentName ?? this.studentName,
       studentNisn: studentNisn ?? this.studentNisn,
+      imageUrl: imageUrl ?? this.imageUrl,
       transactionItems: transactionItems ?? this.transactionItems,
     );
   }

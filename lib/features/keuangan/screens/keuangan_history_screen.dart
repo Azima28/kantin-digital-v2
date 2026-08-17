@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/widgets/date_filter_modal.dart';
 import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 
@@ -11,6 +12,7 @@ import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 
 // keuanganHistoryProvider is defined in keuangan_providers.dart
 
@@ -23,7 +25,7 @@ class KeuanganHistoryScreen extends ConsumerStatefulWidget {
 
 class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
   String _selectedType = 'Semua'; // 'Semua', 'Top-Up', 'Koreksi', 'Kartu'
-  String _selectedDateFilter = 'Semua'; // 'Semua', 'Hari Ini', 'Minggu Ini', 'Bulan Ini'
+  AppDateFilterParam? _dateFilter;
 
 
   String _formatKeterangan(AuditLog log, NumberFormat fmt) {
@@ -103,6 +105,41 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
       final val = int.tryParse(match.group(1) ?? '0') ?? 0;
       return fmt.format(val);
     });
+  }
+
+  Widget _buildDateHeader(String dateStr) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 12, bottom: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 16,
+            decoration: BoxDecoration(
+              color: Nebula.teal,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            dateStr,
+            style: GoogleFonts.inter(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
+              color: Nebula.teal,
+              letterSpacing: 0.3,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Divider(
+              color: context.dividerCol,
+              thickness: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showDetailDialog(AuditLog log, NumberFormat fmt) {
@@ -551,15 +588,20 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
+        toolbarHeight: 56,
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
+        centerTitle: true,
+        shape: Border(
+          bottom: BorderSide(color: context.dividerCol, width: 0.5),
+        ),
         title: Text(
           'Riwayat Transaksi',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
-            color: Nebula.teal,
-            fontSize: 20,
+            color: context.textPrimary,
+            fontSize: 18,
           ),
         ),
       ),
@@ -601,36 +643,14 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: context.cardBg,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: context.dividerCol),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _selectedDateFilter,
-                          isExpanded: true,
-                          style: GoogleFonts.inter(color: context.textPrimary, fontSize: 13),
-                          onChanged: (val) {
-                            if (val != null) {
-                              setState(() {
-                                _selectedDateFilter = val;
-                              });
-                            }
-                          },
-                          items: const [
-                            DropdownMenuItem(value: 'Semua', child: Text('Semua Waktu')),
-                            DropdownMenuItem(value: 'Hari Ini', child: Text('Hari Ini')),
-                            DropdownMenuItem(value: 'Minggu Ini', child: Text('Minggu Ini')),
-                            DropdownMenuItem(value: 'Bulan Ini', child: Text('Bulan Ini')),
-                          ],
-                        ),
-                      ),
-                    ),
+                  const SizedBox(width: 10),
+                  DateFilterPillButton(
+                    activeFilter: _dateFilter,
+                    onFilterChanged: (param) {
+                      setState(() {
+                        _dateFilter = param;
+                      });
+                    },
                   ),
                 ],
               ),
@@ -645,13 +665,10 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                   data: (auditLogs) {
                     final today = DateTime.now().toLocal();
                     final todayStart = DateTime(today.year, today.month, today.day);
-                    final weekStart = todayStart.subtract(Duration(days: today.weekday - 1));
-                    final monthStart = DateTime(today.year, today.month, 1);
 
                     // Filter logs
                     final filtered = auditLogs.where((log) {
                       final type = log.actionType;
-                      final created = log.createdAt?.toLocal() ?? DateTime.now();
 
                       // Type filter
                       bool matchesType = true;
@@ -665,12 +682,8 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
 
                       // Date filter
                       bool matchesDate = true;
-                      if (_selectedDateFilter == 'Hari Ini') {
-                        matchesDate = created.isAfter(todayStart) || created.isAtSameMomentAs(todayStart);
-                      } else if (_selectedDateFilter == 'Minggu Ini') {
-                        matchesDate = created.isAfter(weekStart) || created.isAtSameMomentAs(weekStart);
-                      } else if (_selectedDateFilter == 'Bulan Ini') {
-                        matchesDate = created.isAfter(monthStart) || created.isAtSameMomentAs(monthStart);
+                      if (_dateFilter != null && !_dateFilter!.isAllTime) {
+                        matchesDate = _dateFilter!.matches(log.createdAt);
                       }
 
                       return matchesType && matchesDate;
@@ -692,7 +705,7 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                       if (created.isAfter(todayStart) || created.isAtSameMomentAs(todayStart)) {
                         final newValue = log.newValue;
                         final oldValue = log.oldValue;
-                        
+
                         if (type == 'TOPUP' || type == 'TOPUP_TUNAI') {
                           final int currentB = int.tryParse(oldValue['balance']?.toString() ?? '0') ?? 0;
                           final int newB = int.tryParse(newValue['balance']?.toString() ?? '0') ?? 0;
@@ -708,7 +721,7 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                     return Column(
                       children: [
                         // Statistics Summary Banner (Sticky Header)
-                        if (_selectedDateFilter == 'Hari Ini' || _selectedDateFilter == 'Semua')
+                        if (_dateFilter == null || _dateFilter!.isAllTime || _dateFilter?.label == 'Hari Ini')
                           Container(
                             margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                             padding: EdgeInsets.all(16),
@@ -748,17 +761,39 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                             ),
                           ),
 
-                        // List of Audit Logs
+                        // List of Audit Logs grouped by date
                         Expanded(
-                          child: ListView.builder(
-                            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                            itemCount: filtered.length,
-                            itemBuilder: (context, index) {
-                              final log = filtered[index];
-                              final actionType = log.actionType;
-                              final created = log.createdAt?.toLocal() ?? DateTime.now();
-                              final timeStr = DateFormat('HH:mm', 'id_ID').format(created);
-                              final dateStr = DateFormat('dd MMM', 'id_ID').format(created);
+                          child: Builder(
+                            builder: (context) {
+                              final List<dynamic> listItems = [];
+                              DateTime? lastDate;
+                              for (final log in filtered) {
+                                final DateTime createdAt = log.createdAt?.toLocal() ?? DateTime.now();
+                                if (lastDate == null ||
+                                    lastDate.year != createdAt.year ||
+                                    lastDate.month != createdAt.month ||
+                                    lastDate.day != createdAt.day) {
+                                  final String dateHeaderStr = AppDateFormatter.formatDayFullDate(createdAt);
+                                  listItems.add(dateHeaderStr);
+                                  lastDate = createdAt;
+                                }
+                                listItems.add(log);
+                              }
+
+                              return ListView.builder(
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                                itemCount: listItems.length,
+                                itemBuilder: (context, index) {
+                                  final item = listItems[index];
+                                  if (item is String) {
+                                    return _buildDateHeader(item);
+                                  }
+
+                                  final log = item as AuditLog;
+                                  final actionType = log.actionType;
+                                  final created = log.createdAt?.toLocal() ?? DateTime.now();
+                                  final timeStr = DateFormat('HH:mm', 'id_ID').format(created);
+                                  final dateStr = DateFormat('dd MMM', 'id_ID').format(created);
 
                               IconData icon = CupertinoIcons.doc_text_fill;
                               Color iconColor = Nebula.teal;
@@ -917,8 +952,10 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                                 ),
                               );
                             },
-                          ),
-                        ),
+                          );
+                        },
+                      ),
+                    ),
                       ],
                     );
                   },

@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/models/models.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 
@@ -101,28 +100,23 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
     });
 
     try {
-      final client = ref.read(supabaseClientProvider);
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient.get('/student/lookup', queryParams: {'search': query});
 
-      // Query profiles for student matching NISN or name (fuzzy search)
-      final List<dynamic> res = await client
-          .from('profiles')
-          .select(
-            'id, full_name, nisn, is_active, students:students!students_id_fkey(balance, rfid_uid, classes:classes(name))',
-          )
-          .eq('role', 'student')
-          .or('nisn.ilike."%$query%",full_name.ilike."%$query%"')
-          .limit(5);
-
-      setState(() {
-        _searchResults = res
-            .map(
-              (item) => StudentWithProfile.fromJoinedJson(
-                item as Map<String, dynamic>,
-              ),
-            )
-            .toList();
-        _hasSearched = true;
-      });
+      if (response.success && response.data != null) {
+        final list = response.data as List<dynamic>;
+        setState(() {
+          _searchResults = list
+              .map((item) => StudentWithProfile.fromJoinedJson(item as Map<String, dynamic>))
+              .toList();
+          _hasSearched = true;
+        });
+      } else {
+        setState(() {
+          _searchResults = [];
+          _hasSearched = true;
+        });
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -150,22 +144,18 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
     });
 
     try {
-      final client = ref.read(supabaseClientProvider);
-      final sessionToken = ref.read(authNotifierProvider).sessionToken;
-      final callerId = ref.read(authNotifierProvider).profile?['id'] as String?;
-
+      final apiClient = ref.read(apiClientProvider);
       final studentId = _selectedStudent!.id;
       final int amount = _getAmount();
 
-      // Call RPC process_topup (handles balance update, transaction, audit log, notification)
-      await client.rpc('process_topup', params: {
-        'p_student_id': studentId,
-        'p_amount': amount.toInt(),
-        'p_session_token': sessionToken,
-        'p_method': 'tunai',
-        'p_notes': '',
-        'p_caller_id': callerId,
+      final response = await apiClient.post('/finance/topup', body: {
+        'student_id': studentId,
+        'amount': amount,
       });
+
+      if (!response.success) {
+        throw Exception(response.message ?? 'Top-up gagal');
+      }
 
       // Invalidate providers to trigger update
       ref.invalidate(keuanganDashboardProvider);

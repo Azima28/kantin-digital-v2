@@ -2,12 +2,11 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// 7-Day Persistent JWT & Profile Session Service for Kantin Digital v2.0
 /// Works across Web, Android, iOS, Windows, Mac, Linux.
 class SecureSessionService {
-  static const String _sessionKey = 'supabase_session';
+  static const String _sessionKey = 'kantin_digital_session';
   static const String _profileKey = 'kantin_digital_session_profile';
   static const String _sessionTokenKey = 'kantin_digital_session_token';
   static const String _timestampKey = 'kantin_digital_session_timestamp';
@@ -24,7 +23,7 @@ class SecureSessionService {
     }
   }
 
-  /// Save session data (profile, RPC token, timestamp) to persistent storage
+  /// Save session data (profile, JWT token, timestamp) to persistent storage
   static Future<void> saveSessionData({
     required Map<String, dynamic> profile,
     String? sessionToken,
@@ -100,14 +99,8 @@ class SecureSessionService {
     await clearSessionData();
   }
 
-  /// Initialize auth state listener to persist session automatically
+  /// Initialize auth listener
   static Future<void> initAuthListener() async {
-    try {
-      Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-        if (data.event == AuthChangeEvent.signedOut) {
-          clearSessionData();
-        }
-      });
-    } catch (_) {}
+    // No-op for standalone Go backend (handled by Riverpod / ApiClient)
   }
 }

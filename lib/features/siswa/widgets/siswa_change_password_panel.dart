@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 /// A floating panel for changing the student account password.
@@ -61,32 +61,22 @@ class _SiswaChangePasswordPanelState
     final String oldPwd = _oldPwdController.text;
     final String newPwd = _newPwdController.text;
 
-    final authState = ref.read(authNotifierProvider);
-    final profileId = authState.profile?['id'];
-    if (profileId == null) {
-      setState(() => _isSaving = false);
-      return;
-    }
-
     final messenger = ScaffoldMessenger.of(widget.parentContext);
     final nav = Navigator.of(context);
 
     try {
-      final client = ref.read(supabaseClientProvider);
-
-      // Verify old password
-      final profile = await client
-          .from('profiles')
-          .select('password')
-          .eq('id', profileId)
-          .maybeSingle();
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient.post('/auth/change-password', body: {
+        'old_password': oldPwd,
+        'new_password': newPwd,
+      });
 
       if (!mounted) return;
 
-      if (profile == null || profile['password'] != oldPwd) {
+      if (!response.success) {
         messenger.showSnackBar(
-          const SnackBar(
-            content: Text('Sandi lama yang dimasukkan salah.'),
+          SnackBar(
+            content: Text(response.message ?? 'Gagal mengubah kata sandi.'),
             backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
@@ -95,13 +85,6 @@ class _SiswaChangePasswordPanelState
         return;
       }
 
-      // Update new password
-      await client
-          .from('profiles')
-          .update({'password': newPwd})
-          .eq('id', profileId);
-
-      if (!mounted) return;
       nav.pop(); // close dialog
       messenger.showSnackBar(
         const SnackBar(

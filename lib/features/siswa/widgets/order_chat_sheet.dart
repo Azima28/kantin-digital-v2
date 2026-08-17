@@ -1,13 +1,16 @@
 /* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 */
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-
 import 'package:kantin_digital/core/theme/hallmark_color_scheme.dart';
 import 'package:kantin_digital/core/theme/hallmark_typography.dart';
 import 'package:kantin_digital/core/models/order_message.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
+import 'package:kantin_digital/core/widgets/order_chat_product_card.dart';
 import 'package:kantin_digital/features/kantin/models/order_item.dart';
 import 'package:kantin_digital/features/kantin/providers/order_chat_provider.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
@@ -36,11 +39,14 @@ class _OrderChatSheetState extends ConsumerState<OrderChatSheet> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isMarkingRead = false;
+  int _lastMessageCount = 0;
+  bool _initialScrollDone = false;
 
   @override
   void initState() {
     super.initState();
     _markRead();
+    ref.read(trackOrderPresenceProvider)(widget.order.id, 'student');
   }
 
   @override
@@ -52,13 +58,7 @@ class _OrderChatSheetState extends ConsumerState<OrderChatSheet> {
 
   Future<void> _markRead() async {
     try {
-      await ref.read(supabaseClientProvider).rpc(
-        'mark_order_messages_read',
-        params: {
-          'p_order_id': widget.order.id,
-          'p_sender_role': 'student',
-        },
-      );
+      await ref.read(apiClientProvider).patch('/orders/${widget.order.id}/messages/read');
     } catch (_) {}
   }
 
@@ -66,12 +66,8 @@ class _OrderChatSheetState extends ConsumerState<OrderChatSheet> {
     final hasUnreadFromOther = messages.any((m) => m.senderRole != myRole && !m.isRead);
     if (hasUnreadFromOther && !_isMarkingRead) {
       _isMarkingRead = true;
-      ref.read(supabaseClientProvider).rpc(
-        'mark_order_messages_read',
-        params: {
-          'p_order_id': widget.order.id,
-          'p_sender_role': myRole,
-        },
+      ref.read(apiClientProvider).patch(
+        '/orders/${widget.order.id}/messages/read',
       ).then((_) {
         _isMarkingRead = false;
       }).catchError((_) {
@@ -85,7 +81,9 @@ class _OrderChatSheetState extends ConsumerState<OrderChatSheet> {
     if (text.isEmpty) return;
 
     if (customText == null) _messageController.clear();
-    HapticFeedback.lightImpact();
+    if (!kIsWeb) {
+      HapticFeedback.lightImpact();
+    }
 
     try {
       final sendFn = ref.read(sendOrderMessageProvider);
@@ -108,14 +106,124 @@ class _OrderChatSheetState extends ConsumerState<OrderChatSheet> {
     }
   }
 
-  void _scrollToBottom() {
+  void _showOrderDetails(BuildContext context) {
+    final colors = context.colors;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: colors.surfaceContainer,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border.all(color: colors.borderTactile, width: 0.5),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colors.textMuted.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Rincian Menu Pesanan',
+                    style: HallmarkTypography.titleL3(colors.textPrimary),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close_rounded, color: colors.textMuted),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ...widget.order.items.map((item) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${item.qty}x ${item.name}',
+                          style: HallmarkTypography.bodyMain(colors.textPrimary).copyWith(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      Text(
+                        CurrencyFormatter.format(item.price * item.qty),
+                        style: HallmarkTypography.bodyMain(colors.brandPrimary).copyWith(fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              const SizedBox(height: 14),
+              Divider(height: 1, color: colors.borderTactile),
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Total Tagihan',
+                    style: HallmarkTypography.titleSmall(colors.textPrimary),
+                  ),
+                  Text(
+                    CurrencyFormatter.format(widget.order.totalAmount),
+                    style: HallmarkTypography.titleSmall(colors.brandPrimary).copyWith(fontSize: 16, fontWeight: FontWeight.w800),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _handleAutoScroll(int currentCount) {
+    if (!_initialScrollDone) {
+      _initialScrollDone = true;
+      _lastMessageCount = currentCount;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom(immediate: true));
+      return;
+    }
+
+    if (currentCount > _lastMessageCount) {
+      _lastMessageCount = currentCount;
+      if (_scrollController.hasClients) {
+        final pos = _scrollController.position;
+        if (pos.maxScrollExtent - pos.pixels < 160) {
+          WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+        }
+      }
+    }
+  }
+
+  void _scrollToBottom({bool immediate = false}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOut,
-        );
+        if (immediate) {
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        } else {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+          );
+        }
       }
     });
   }
@@ -212,15 +320,29 @@ class _OrderChatSheetState extends ConsumerState<OrderChatSheet> {
             ),
             child: Row(
               children: [
-                Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: isPedagangOnline ? colors.statusSuccess : colors.textMuted.withValues(alpha: 0.5),
-                    shape: BoxShape.circle,
-                  ),
+                Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: colors.brandPrimary.withValues(alpha: 0.15),
+                      child: Icon(Icons.storefront_rounded, color: colors.brandPrimary, size: 20),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: isPedagangOnline ? colors.statusSuccess : colors.textMuted.withValues(alpha: 0.5),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: colors.surfaceContainer, width: 1.5),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -266,36 +388,51 @@ class _OrderChatSheetState extends ConsumerState<OrderChatSheet> {
                 final messages = [...remoteMessages, ...uniqueLocal];
                 _checkAndMarkRead(messages, 'student');
                 if (messages.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(CupertinoIcons.chat_bubble_2, color: colors.brandPrimary.withValues(alpha: 0.4), size: 48),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Belum ada pesan.\nMulai obrolan langsung dengan pedagang kantin!',
-                            textAlign: TextAlign.center,
-                            style: HallmarkTypography.bodyMain(colors.textMuted),
-                          ),
-                        ],
+                  return ListView(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    children: [
+                      OrderChatProductCard(
+                        order: widget.order,
+                        onTap: () => _showOrderDetails(context),
                       ),
-                    ),
+                      const SizedBox(height: 24),
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(CupertinoIcons.chat_bubble_2, color: colors.brandPrimary.withValues(alpha: 0.4), size: 44),
+                            const SizedBox(height: 10),
+                            Text(
+                              'Belum ada pesan.\nMulai obrolan langsung dengan pedagang kantin!',
+                              textAlign: TextAlign.center,
+                              style: HallmarkTypography.bodyMain(colors.textMuted),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   );
                 }
-                WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+                _handleAutoScroll(messages.length);
 
                 return ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  itemCount: messages.length,
+                  itemCount: messages.length + 1,
                   itemBuilder: (context, index) {
-                    final msg = messages[index];
-                    final isMe = msg.senderRole == 'student';
-                    final timeStr = msg.createdAt != null
-                        ? DateFormat('HH:mm').format(msg.createdAt!)
-                        : '';
+                    if (index == 0) {
+                      return OrderChatProductCard(
+                        order: widget.order,
+                        onTap: () => _showOrderDetails(context),
+                      );
+                    }
+
+                    final msg = messages[index - 1];
+                    final isMe = msg.isFromCurrentSession ||
+                        msg.senderRole == 'student' ||
+                        msg.senderRole == 'siswa';
+                    final timeStr = AppDateFormatter.formatTime(msg.createdAt);
 
                     return Align(
                       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,

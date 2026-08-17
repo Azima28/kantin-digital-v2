@@ -7,6 +7,8 @@ class CanteenOperator {
   final int balanceEarned;
   final bool isDeliveryEnabled;
   final int deliveryFee;
+  final double rating;
+  final int totalReviews;
 
   const CanteenOperator({
     required this.id,
@@ -14,6 +16,8 @@ class CanteenOperator {
     this.balanceEarned = 0,
     this.isDeliveryEnabled = true,
     this.deliveryFee = 2000,
+    this.rating = 0.0,
+    this.totalReviews = 0,
   });
 
   factory CanteenOperator.fromJson(Map<String, dynamic> json) {
@@ -24,6 +28,8 @@ class CanteenOperator {
           (double.tryParse(json['balance_earned']?.toString() ?? '0') ?? 0.0).toInt(),
       isDeliveryEnabled: json['is_delivery_enabled'] as bool? ?? true,
       deliveryFee: (double.tryParse(json['delivery_fee']?.toString() ?? '2000') ?? 2000.0).toInt(),
+      rating: (double.tryParse(json['rating']?.toString() ?? '0') ?? 0.0),
+      totalReviews: (json['total_reviews'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -33,6 +39,8 @@ class CanteenOperator {
         'balance_earned': balanceEarned,
         'is_delivery_enabled': isDeliveryEnabled,
         'delivery_fee': deliveryFee,
+        'rating': rating,
+        'total_reviews': totalReviews,
       };
 
   CanteenOperator copyWith({
@@ -41,6 +49,8 @@ class CanteenOperator {
     int? balanceEarned,
     bool? isDeliveryEnabled,
     int? deliveryFee,
+    double? rating,
+    int? totalReviews,
   }) {
     return CanteenOperator(
       id: id ?? this.id,
@@ -48,8 +58,12 @@ class CanteenOperator {
       balanceEarned: balanceEarned ?? this.balanceEarned,
       isDeliveryEnabled: isDeliveryEnabled ?? this.isDeliveryEnabled,
       deliveryFee: deliveryFee ?? this.deliveryFee,
+      rating: rating ?? this.rating,
+      totalReviews: totalReviews ?? this.totalReviews,
     );
   }
+
+  bool get hasRating => totalReviews > 0 && rating > 0;
 
   @override
   String toString() =>

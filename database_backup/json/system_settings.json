@@ -1,0 +1,24 @@
+[
+  {
+    "key": "maintenance_mode",
+    "value": false,
+    "updated_by": null,
+    "updated_at": "2026-06-17T04:41:33.797819+00:00"
+  },
+  {
+    "key": "midtrans_config",
+    "value": {
+      "mode": "sandbox",
+      "is_active": true,
+      "client_key": "SB-Mid-client-1234567890"
+    },
+    "updated_by": null,
+    "updated_at": "2026-06-17T04:41:33.797819+00:00"
+  },
+  {
+    "key": "canteen_fee",
+    "value": 2.0,
+    "updated_by": null,
+    "updated_at": "2026-06-17T04:41:33.797819+00:00"
+  }
+]

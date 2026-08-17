@@ -16,6 +16,7 @@ import 'package:kantin_digital/core/theme/hallmark_color_scheme.dart';
 import 'package:kantin_digital/core/theme/hallmark_typography.dart';
 import 'package:kantin_digital/core/widgets/hallmark_button.dart';
 import 'package:kantin_digital/core/widgets/hallmark_card.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/features/public/providers/public_providers.dart';
 
 /// Hallmark Student Mobile Native Onboarding & Welcome Screen
@@ -549,7 +550,11 @@ class _StudentWelcomeScreenState extends ConsumerState<StudentWelcomeScreen> {
                 ? CachedNetworkImage(
                     imageUrl: item.product.imageUrl!,
                     fit: BoxFit.cover,
-                    placeholder: (_, __) => const Center(child: CupertinoActivityIndicator()),
+                    placeholder: (_, __) => const ShimmerRect(
+                      width: double.infinity,
+                      height: double.infinity,
+                      borderRadius: 16,
+                    ),
                     errorWidget: (_, __, ___) => _buildPromoFallback(colors, item),
                   )
                 : _buildPromoFallback(colors, item),

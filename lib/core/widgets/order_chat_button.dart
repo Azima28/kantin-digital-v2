@@ -13,12 +13,14 @@ class OrderChatIconButton extends ConsumerWidget {
   final OrderItem order;
   final String myRole; // 'student' or 'canteen_operator'
   final VoidCallback? onTap;
+  final bool isCompact;
 
   const OrderChatIconButton({
     super.key,
     required this.order,
     required this.myRole,
     this.onTap,
+    this.isCompact = true,
   });
 
   @override
@@ -31,6 +33,9 @@ class OrderChatIconButton extends ConsumerWidget {
       data: (messages) => messages.where((m) => m.senderRole != myRole && !m.isRead).length,
       orElse: () => 0,
     );
+
+    final double iconSize = isCompact ? 15 : 18;
+    final double paddingVal = isCompact ? 5.5 : 8;
 
     return InkWell(
       onTap: onTap ??
@@ -46,7 +51,7 @@ class OrderChatIconButton extends ConsumerWidget {
         clipBehavior: Clip.none,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.all(paddingVal),
             decoration: BoxDecoration(
               color: isDark
                   ? colors.brandPrimary.withValues(alpha: 0.15)
@@ -59,23 +64,23 @@ class OrderChatIconButton extends ConsumerWidget {
             ),
             child: Icon(
               CupertinoIcons.chat_bubble_2_fill,
-              size: 18,
+              size: iconSize,
               color: colors.brandPrimary,
             ),
           ),
           if (unreadCount > 0)
             Positioned(
-              top: -4,
-              right: -4,
+              top: -3,
+              right: -3,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                 decoration: BoxDecoration(
                   color: const Color(0xFFEF4444), // Crimson Red
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: colors.surfaceContainer,
-                    width: 1.5,
+                    width: 1.2,
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -90,7 +95,7 @@ class OrderChatIconButton extends ConsumerWidget {
                     unreadCount > 9 ? '9+' : '$unreadCount',
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 10,
+                      fontSize: 9,
                       fontWeight: FontWeight.bold,
                       height: 1.0,
                     ),

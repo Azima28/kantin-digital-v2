@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/core/widgets/order_chat_button.dart';
 import 'package:kantin_digital/features/kantin/models/order_item.dart';
 import 'package:kantin_digital/features/kantin/widgets/order_detail_sheet.dart';
@@ -38,6 +38,14 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
       upperBound: 1.0,
     )..value = 1.0;
     _scaleAnimation = _scaleController;
+  }
+
+  @override
+  void didUpdateWidget(OrderItemCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.order.id != widget.order.id) {
+      _isExiting = false;
+    }
   }
 
   @override
@@ -111,7 +119,7 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
       } else if (widget.order.status == 'Menunggu Persetujuan Murid') {
         badgeIcon = Icons.hourglass_empty_rounded;
       } else {
-        badgeIcon = Icons.fiber_new_outlined; // Baru
+        badgeIcon = Icons.receipt_long_rounded; // Baru
       }
     }
 
@@ -158,61 +166,65 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Header: Name + Status Badge
+                        // Header: Student Name + Chat Button (Left) and Status Badge (Right)
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Expanded(
-                              child: Text(
-                                widget.order.studentName,
-                                style: GoogleFonts.inter(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: context.textPrimary,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            OrderChatIconButton(
-                              order: widget.order,
-                              myRole: 'canteen_operator',
-                            ),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 5,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: badgeBgColor,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(badgeIcon, size: 13, color: badgeTextColor),
-                                    const SizedBox(width: 4),
-                                    Flexible(
-                                      child: Text(
-                                        badgeLabel,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: GoogleFonts.inter(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                          color: badgeTextColor,
-                                        ),
+                              child: Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      widget.order.studentName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: context.textPrimary,
+                                        letterSpacing: -0.2,
                                       ),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  OrderChatIconButton(
+                                    order: widget.order,
+                                    myRole: 'canteen_operator',
+                                    isCompact: true,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 3.5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: badgeBgColor,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(badgeIcon, size: 11, color: badgeTextColor),
+                                  const SizedBox(width: 3.5),
+                                  Text(
+                                    badgeLabel,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: badgeTextColor,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
 
                         // Time & Order Code Row
                         Row(
@@ -302,7 +314,7 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                         ],
                         const SizedBox(height: 14),
 
-                        // Food Thumbnail + List of items
+                        // Food Thumbnail + List of items (Sorted by highest price, max 2 preview)
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -311,15 +323,20 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                                 final topItem = widget.order.mostExpensiveItem;
                                 final String? imgUrl = topItem?.imageUrl;
 
-                                final fallbackChild = Icon(
-                                  Icons.restaurant_menu_rounded,
-                                  color: Nebula.teal,
-                                  size: 20,
+                                final fallbackChild = Container(
+                                  color: Nebula.teal.withValues(alpha: 0.1),
+                                  child: Center(
+                                    child: Icon(
+                                      Icons.restaurant_menu_rounded,
+                                      color: Nebula.teal,
+                                      size: 22,
+                                    ),
+                                  ),
                                 );
 
                                 return Container(
-                                  width: 44,
-                                  height: 44,
+                                  width: 48,
+                                  height: 48,
                                   margin: const EdgeInsets.only(right: 12),
                                   decoration: BoxDecoration(
                                     color: context.surfaceBg,
@@ -331,8 +348,8 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                                     child: (imgUrl != null && imgUrl.isNotEmpty)
                                         ? Image.network(
                                             imgUrl,
-                                            width: 44,
-                                            height: 44,
+                                            width: 48,
+                                            height: 48,
                                             fit: BoxFit.cover,
                                             errorBuilder: (_, __, ___) => fallbackChild,
                                           )
@@ -342,38 +359,64 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                               },
                             ),
                             Expanded(
-                              child: Column(
-                                children: widget.order.items.map(
-                                  (item) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 6.0),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
+                              child: Builder(
+                                builder: (context) {
+                                  // Sort items by price descending (termahal di atas)
+                                  final sortedItems = List<OrderSubItem>.from(widget.order.items)
+                                    ..sort((a, b) => (b.price * b.qty).compareTo(a.price * a.qty));
+                                  final previewItems = sortedItems.take(2).toList();
+                                  final remainingCount = sortedItems.length - previewItems.length;
+
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      ...previewItems.map(
+                                        (item) => Padding(
+                                          padding: const EdgeInsets.only(bottom: 5.0),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  '${item.qty}x ${item.name}',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 13.5,
+                                                    color: context.textPrimary,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                CurrencyFormatter.format(item.price * item.qty),
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 13.5,
+                                                  color: context.textPrimary,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      if (remainingCount > 0)
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 2.0, bottom: 4.0),
                                           child: Text(
-                                            '${item.qty}x ${item.name}',
+                                            '+$remainingCount menu lainnya...',
                                             style: GoogleFonts.inter(
-                                              fontSize: 14,
-                                              color: context.textPrimary,
-                                              fontWeight: FontWeight.w500,
+                                              fontSize: 11.5,
+                                              fontWeight: FontWeight.w600,
+                                              color: Nebula.teal,
+                                              fontStyle: FontStyle.italic,
                                             ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'Rp ${NumberFormat('#,###', 'id_ID').format(item.price * item.qty)}',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 14,
-                                            color: context.textPrimary,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ).toList(),
+                                    ],
+                                  );
+                                },
                               ),
                             ),
                           ],
@@ -397,7 +440,7 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                               ),
                             ),
                             Text(
-                              'Rp ${NumberFormat('#,###', 'id_ID').format(widget.order.totalAmount)}',
+                              CurrencyFormatter.format(widget.order.totalAmount),
                               style: GoogleFonts.inter(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
@@ -522,98 +565,119 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                                       ),
                                     )
                                   : Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         // Cancel Button
-                                        OutlinedButton(
-                                          onPressed: () => _triggerStatusChange('Dibatalkan'),
-                                          style: OutlinedButton.styleFrom(
-                                            foregroundColor: Nebula.rose,
-                                            side: const BorderSide(color: Nebula.rose, width: 1.2),
-                                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(10),
+                                        Expanded(
+                                          child: OutlinedButton(
+                                            onPressed: () => _triggerStatusChange('Dibatalkan'),
+                                            style: OutlinedButton.styleFrom(
+                                              foregroundColor: Nebula.rose,
+                                              side: const BorderSide(color: Nebula.rose, width: 1.0),
+                                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
                                             ),
-                                          ),
-                                          child: Text(
-                                            'Batalkan',
-                                            style: GoogleFonts.inter(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w600,
+                                            child: Text(
+                                              'Batalkan',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: GoogleFonts.inter(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                              ),
                                             ),
                                           ),
                                         ),
-                                        
+                                        const SizedBox(width: 8),
+
                                         // Accept or Dropdown Selector
-                                        widget.order.status == 'Baru'
-                                            ? ElevatedButton.icon(
-                                                onPressed: () => _triggerStatusChange('Sedang Dimasak'),
-                                                icon: const Icon(CupertinoIcons.checkmark_circle, size: 16),
-                                                label: Text(
-                                                  'Terima Pesanan',
-                                                  style: GoogleFonts.inter(
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.w700,
-                                                  ),
-                                                ),
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Nebula.teal,
-                                                  foregroundColor: context.cardBg,
-                                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.circular(10),
-                                                  ),
-                                                  elevation: 0,
-                                                ),
-                                              )
-                                            : PopupMenuButton<String>(
-                                                onSelected: (newStatus) => _triggerStatusChange(newStatus),
-                                                itemBuilder: (BuildContext context) {
-                                                  final bool isDelivery = widget.order.deliveryLocation != null && widget.order.deliveryLocation!.isNotEmpty;
-                                                  final List<String> statusOptions = [
-                                                    'Sedang Dimasak',
-                                                    if (isDelivery) 'Siap Diantar' else 'Siap Diambil',
-                                                    'Selesai',
-                                                  ];
-                                                  return statusOptions
-                                                      .where((s) => s != widget.order.status)
-                                                      .map((status) => PopupMenuItem(
-                                                            value: status,
-                                                            child: Text(status),
-                                                          ))
-                                                      .toList();
-                                                },
-                                                child: Container(
-                                                  padding: const EdgeInsets.symmetric(
-                                                    horizontal: 14,
-                                                    vertical: 8,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: context.surfaceBg,
-                                                    borderRadius: BorderRadius.circular(10),
-                                                    border: Border.all(color: context.dividerCol, width: 0.5),
+                                        Expanded(
+                                          child: widget.order.status == 'Baru'
+                                              ? ElevatedButton(
+                                                  onPressed: () => _triggerStatusChange('Sedang Dimasak'),
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: Nebula.teal,
+                                                    foregroundColor: Colors.white,
+                                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius.circular(10),
+                                                    ),
+                                                    elevation: 0,
                                                   ),
                                                   child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.center,
                                                     mainAxisSize: MainAxisSize.min,
                                                     children: [
-                                                      Text(
-                                                        widget.order.status,
-                                                        style: GoogleFonts.inter(
-                                                          fontSize: 13,
-                                                          fontWeight: FontWeight.w600,
-                                                          color: context.textPrimary,
+                                                      const Icon(CupertinoIcons.checkmark_circle, size: 14),
+                                                      const SizedBox(width: 4),
+                                                      Flexible(
+                                                        child: Text(
+                                                          'Terima',
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow.ellipsis,
+                                                          style: GoogleFonts.inter(
+                                                            fontSize: 12,
+                                                            fontWeight: FontWeight.w700,
+                                                          ),
                                                         ),
-                                                      ),
-                                                      const SizedBox(width: 6),
-                                                      Icon(
-                                                        CupertinoIcons.chevron_down,
-                                                        size: 12,
-                                                        color: context.textPrimary,
                                                       ),
                                                     ],
                                                   ),
+                                                )
+                                              : PopupMenuButton<String>(
+                                                  onSelected: (newStatus) => _triggerStatusChange(newStatus),
+                                                  itemBuilder: (BuildContext context) {
+                                                    final bool isDelivery = widget.order.deliveryLocation != null && widget.order.deliveryLocation!.isNotEmpty;
+                                                    final List<String> statusOptions = [
+                                                      'Sedang Dimasak',
+                                                      if (isDelivery) 'Siap Diantar' else 'Siap Diambil',
+                                                      'Selesai',
+                                                    ];
+                                                    return statusOptions
+                                                        .where((s) => s != widget.order.status)
+                                                        .map((status) => PopupMenuItem(
+                                                              value: status,
+                                                              child: Text(status),
+                                                            ))
+                                                        .toList();
+                                                  },
+                                                  child: Container(
+                                                    padding: const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 8,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: context.surfaceBg,
+                                                      borderRadius: BorderRadius.circular(10),
+                                                      border: Border.all(color: context.dividerCol, width: 0.5),
+                                                    ),
+                                                    child: FittedBox(
+                                                      fit: BoxFit.scaleDown,
+                                                      child: Row(
+                                                        mainAxisAlignment: MainAxisAlignment.center,
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        children: [
+                                                          Text(
+                                                            widget.order.status,
+                                                            style: GoogleFonts.inter(
+                                                              fontSize: 12,
+                                                              fontWeight: FontWeight.w600,
+                                                              color: context.textPrimary,
+                                                            ),
+                                                          ),
+                                                          const SizedBox(width: 4),
+                                                          Icon(
+                                                            CupertinoIcons.chevron_down,
+                                                            size: 11,
+                                                            color: context.textPrimary,
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
                                                 ),
-                                              ),
+                                        ),
                                       ],
                                     ),
                       ],

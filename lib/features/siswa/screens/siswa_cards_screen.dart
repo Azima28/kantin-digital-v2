@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/hallmark_color_scheme.dart';
 import 'package:kantin_digital/core/theme/hallmark_typography.dart';
@@ -38,20 +39,10 @@ class SiswaCardsScreen extends ConsumerWidget {
             onPressed: () async {
               Navigator.pop(ctx);
               try {
-                final client = ref.read(supabaseClientProvider);
+                final apiClient = ref.read(apiClientProvider);
 
-                await client
-                    .from('students')
-                    .update({'is_active': !currentStatus})
-                    .eq('id', studentId);
-
-                await client.from('notifications').insert({
-                  'student_id': studentId,
-                  'title': !currentStatus ? 'Kartu Diaktifkan' : 'Kartu Dibekukan',
-                  'message': !currentStatus
-                      ? 'Kartu RFID Anda berhasil diaktifkan kembali.'
-                      : 'Kartu RFID Anda telah dibekukan sementara untuk keamanan.',
-                  'type': 'system',
+                await apiClient.patch('/student/card-status', body: {
+                  'is_active': !currentStatus,
                 });
 
                 ref.invalidate(siswaStudentProvider);

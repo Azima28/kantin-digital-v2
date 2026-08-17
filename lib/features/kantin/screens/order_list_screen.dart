@@ -4,15 +4,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/kantin/models/order_item.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
 import 'package:kantin_digital/features/kantin/widgets/order_item_card.dart';
 import 'package:kantin_digital/features/kantin/widgets/order_status_tabs.dart';
 import 'package:kantin_digital/core/widgets/cancel_order_modal.dart';
+import 'package:kantin_digital/core/widgets/date_filter_modal.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 
 class OrderListScreen extends ConsumerStatefulWidget {
   const OrderListScreen({super.key});
@@ -23,6 +25,7 @@ class OrderListScreen extends ConsumerStatefulWidget {
 
 class _OrderListScreenState extends ConsumerState<OrderListScreen> {
   String _selectedTab = 'baru';
+  AppDateFilterParam? _dateFilter;
   late final PageController _pageController;
   final List<String> _tabsKeys = ['baru', 'proses', 'selesai', 'batal'];
 
@@ -41,8 +44,6 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
 
   Future<void> _updateOrderStatus(String id, String newStatus, String studentId) async {
     try {
-      final client = ref.read(supabaseClientProvider);
-      
       if (newStatus == 'Dibatalkan') {
         final success = await CancelOrderModal.show(
           context,
@@ -51,7 +52,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
             ref.invalidate(canteenOrdersProvider);
           },
         );
-        
+
         if (success == true && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -64,97 +65,14 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
         }
         return;
       }
-      
-      // Ambil status sebelum update untuk notifikasi spesifik
-      final orderData = await client
-          .from('orders')
-          .select('status, student_name, student_id, total_amount, order_items(product_name, quantity)')
-          .eq('id', id)
-          .maybeSingle();
 
-      final String prevStatus = orderData?['status'] as String? ?? '';
-      final num totalAmount = (orderData?['total_amount'] as num?) ?? 0;
-      final String operatorId = orderData?['operator_id'] as String? ?? '';
-      
-      await client.from('orders').update({'status': newStatus}).eq('id', id);
-
-      // Escrow Release: If status becomes 'Selesai', release held escrow funds to canteen operator
-      if (newStatus == 'Selesai' && prevStatus != 'Selesai') {
-        try {
-          await client.rpc('complete_order_release_escrow', params: {'p_order_id': id});
-        } catch (_) {
-          // Fallback if RPC not yet deployed to remote DB
-          if (operatorId.isNotEmpty && totalAmount > 0) {
-            final opData = await client
-                .from('canteen_operators')
-                .select('balance_earned')
-                .eq('id', operatorId)
-                .maybeSingle();
-            if (opData != null) {
-              final double opEarned = (opData['balance_earned'] as num).toDouble();
-              await client
-                  .from('canteen_operators')
-                  .update({'balance_earned': opEarned + totalAmount.toDouble()})
-                  .eq('id', operatorId);
-            }
-          }
-          if (studentId.isNotEmpty && totalAmount > 0) {
-            await client
-                .from('transactions')
-                .update({'status': 'success'})
-                .eq('student_id', studentId)
-                .eq('type', 'purchase')
-                .filter('status', 'in', '("pending_escrow","pending")');
-          }
-        }
-      }
-
-      // Send notification to student based on status
-      if (studentId.isNotEmpty) {
-        String title = '';
-        String message = '';
-        
-        String itemSummary = '';
-        if (orderData != null && orderData['order_items'] != null) {
-          final List<dynamic> items = orderData['order_items'];
-          itemSummary = items.map((item) => "${item['quantity']}x ${item['product_name']}").join(', ');
-        }
-
-        final String prefix = itemSummary.isNotEmpty ? "($itemSummary) " : "";
-
-        if (newStatus == 'Sedang Dimasak') {
-          if (prevStatus == 'Menunggu Pembatalan') {
-            title = 'Pengajuan Batal Ditolak 🍳';
-            message = 'Pengajuan pembatalan untuk pesanan Anda ${prefix}telah ditolak. Pesanan Anda tetap diproses dan sedang dimasak.';
-          } else {
-            title = 'Pesanan Diterima! 🍳';
-            message = 'Pesanan Anda ${prefix}telah diterima oleh kantin dan sedang dimasak.';
-          }
-        } else if (newStatus == 'Siap Diambil') {
-          title = 'Pesanan Siap Diambil! 🛍️';
-          message = 'Pesanan Anda ${prefix}siap diambil di stan kantin.';
-        } else if (newStatus == 'Siap Diantar') {
-          title = 'Pesanan Siap Diantar! 🚴';
-          message = 'Pesanan Anda ${prefix}sedang diantar.';
-        } else if (newStatus == 'Selesai') {
-          title = 'Pesanan Selesai! 🎉';
-          message = 'Pesanan Anda ${prefix}telah selesai. Dana yang ditahan sistem telah diserahkan ke kantin.';
-        }
-
-        if (title.isNotEmpty && message.isNotEmpty) {
-          await client.from('notifications').insert({
-            'student_id': studentId,
-            'title': title,
-            'message': message,
-            'type': 'system',
-          });
-        }
-      }
+      final apiClient = ref.read(apiClientProvider);
+      await apiClient.patch('/orders/$id/status', body: {'status': newStatus});
 
       ref.invalidate(canteenOrdersProvider);
       ref.invalidate(todayRevenueProvider);
       ref.invalidate(operatorTransactionsProvider);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -179,13 +97,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
   }
 
   List<OrderItem> _getFilteredOrders(List<OrderItem> orders, String tab) {
-    final now = DateTime.now();
-    return orders.where((order) {
-      final bool isToday = order.createdAt != null &&
-          order.createdAt!.year == now.year &&
-          order.createdAt!.month == now.month &&
-          order.createdAt!.day == now.day;
-
+    var filtered = orders.where((order) {
       if (tab == 'baru') {
         return order.status == 'Baru';
       } else if (tab == 'proses') {
@@ -195,12 +107,52 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
             order.status == 'Menunggu Pembatalan' ||
             order.status == 'Menunggu Persetujuan Murid';
       } else if (tab == 'selesai') {
-        return order.status == 'Selesai' && isToday;
+        return order.status == 'Selesai';
       } else if (tab == 'batal') {
-        return order.status == 'Dibatalkan' && isToday;
+        return order.status == 'Dibatalkan';
       }
       return false;
     }).toList();
+
+    if (_dateFilter != null && !_dateFilter!.isAllTime) {
+      filtered = filtered.where((o) => _dateFilter!.matches(o.createdAt)).toList();
+    }
+    return filtered;
+  }
+
+  Widget _buildDateHeader(BuildContext context, String dateStr) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 10, bottom: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 16,
+            decoration: BoxDecoration(
+              color: Nebula.teal,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            dateStr,
+            style: GoogleFonts.inter(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
+              color: Nebula.teal,
+              letterSpacing: 0.3,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Divider(
+              color: context.dividerCol,
+              thickness: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildEmptyState() {
@@ -325,34 +277,38 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        toolbarHeight: 64,
+        toolbarHeight: 56,
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         titleSpacing: 24,
-        centerTitle: false,
+        centerTitle: true,
+        shape: Border(
+          bottom: BorderSide(color: context.dividerCol, width: 0.5),
+        ),
         title: Text(
           'Daftar Pesanan',
           style: GoogleFonts.inter(
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-            color: Nebula.teal,
-            letterSpacing: -0.5,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: context.textPrimary,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               CupertinoIcons.bell,
-              color: Nebula.teal,
+              color: context.textPrimary,
               size: 22,
             ),
             onPressed: () {},
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 8),
         ],
       ),
       body: ordersAsync.when(
+        skipLoadingOnRefresh: true,
+        skipLoadingOnReload: true,
         loading: () => ListView.builder(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
           itemCount: 3,
@@ -424,7 +380,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
                     children: [
                       // Segmented Tabs Header Row
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
                         child: OrderStatusTabs(
                           selectedTab: _selectedTab,
                           countBaru: countBaru,
@@ -442,6 +398,32 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
                               );
                             }
                           },
+                        ),
+                      ),
+
+                      // Date Filter Toolbar Row (Di Bawah Slide - Jumlah Pesanan di Kiri, Filter Tanggal di Kanan)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '${_getFilteredOrders(orders, _selectedTab).length} Pesanan',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: context.textPrimary,
+                              ),
+                            ),
+                            DateFilterPillButton(
+                              activeFilter: _dateFilter,
+                              onFilterChanged: (param) {
+                                setState(() {
+                                  _dateFilter = param;
+                                });
+                              },
+                            ),
+                          ],
                         ),
                       ),
 
@@ -463,15 +445,38 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
                               return _buildEmptyState();
                             }
 
+                            // Group and flatten orders by date
+                            final List<dynamic> listItems = [];
+                            DateTime? lastDate;
+                            for (final order in filteredOrders) {
+                              final DateTime createdAt = order.createdAt?.toLocal() ?? DateTime.now();
+                              if (lastDate == null ||
+                                  lastDate.year != createdAt.year ||
+                                  lastDate.month != createdAt.month ||
+                                  lastDate.day != createdAt.day) {
+                                final String dateHeaderStr = AppDateFormatter.formatDayFullDate(createdAt);
+                                listItems.add(dateHeaderStr);
+                                lastDate = createdAt;
+                              }
+                              listItems.add(order);
+                            }
+
                             return ListView.builder(
                               key: PageStorageKey<String>(tabKey),
                               padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                              itemCount: filteredOrders.length,
+                              itemCount: listItems.length,
                               itemBuilder: (context, index) {
+                                final item = listItems[index];
+                                if (item is String) {
+                                  return _buildDateHeader(context, item);
+                                }
+                                final order = item as OrderItem;
                                 return _AnimatedCardEntry(
+                                  key: ValueKey<String>('entry_${order.id}'),
                                   index: index,
                                   child: OrderItemCard(
-                                    order: filteredOrders[index],
+                                    key: ValueKey<String>('card_${order.id}'),
+                                    order: order,
                                     onStatusChanged: _updateOrderStatus,
                                   ),
                                 );
@@ -498,6 +503,7 @@ class _AnimatedCardEntry extends StatefulWidget {
   final int index;
 
   const _AnimatedCardEntry({
+    super.key,
     required this.child,
     required this.index,
   });
@@ -507,16 +513,16 @@ class _AnimatedCardEntry extends StatefulWidget {
 }
 
 class _AnimatedCardEntryState extends State<_AnimatedCardEntry> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _opacityAnimation;
-  late Animation<Offset> _slideAnimation;
+  late final AnimationController _controller;
+  late final Animation<double> _opacityAnimation;
+  late final Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 240),
     );
 
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -524,17 +530,21 @@ class _AnimatedCardEntryState extends State<_AnimatedCardEntry> with SingleTicke
     );
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 20),
+      begin: const Offset(0, 16),
       end: Offset.zero,
     ).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOut),
     );
 
-    Future.delayed(Duration(milliseconds: widget.index * 60), () {
-      if (mounted) {
-        _controller.forward();
-      }
-    });
+    if (widget.index < 4) {
+      Future.delayed(Duration(milliseconds: widget.index * 35), () {
+        if (mounted) {
+          _controller.forward();
+        }
+      });
+    } else {
+      _controller.value = 1.0;
+    }
   }
 
   @override

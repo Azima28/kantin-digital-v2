@@ -45,10 +45,10 @@ class _ShimmerState extends State<Shimmer> with SingleTickerProviderStateMixin {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final defaultBaseColor = isDark
         ? const Color(0xFF1E293B)
-        : const Color(0xFFE2E8F0);
+        : const Color(0xFFF1F5F9);
     final defaultHighlightColor = isDark
         ? const Color(0xFF334155)
-        : const Color(0xFFF8FAFC);
+        : Colors.white;
 
     final base = widget.baseColor ?? defaultBaseColor;
     final highlight = widget.highlightColor ?? defaultHighlightColor;
@@ -87,6 +87,52 @@ class _SlidingGradientTransform extends GradientTransform {
   @override
   Matrix4? transform(Rect bounds, {TextDirection? textDirection}) {
     return Matrix4.translationValues(bounds.width * (slidePercent - 0.5) * 2, 0.0, 0.0);
+  }
+}
+
+/// A sleek white/light rectangular shimmer animation box designed for image and card placeholders.
+class ShimmerRect extends StatelessWidget {
+  final double? width;
+  final double? height;
+  final double borderRadius;
+  final Color? baseColor;
+  final Color? highlightColor;
+  final EdgeInsetsGeometry? margin;
+
+  const ShimmerRect({
+    super.key,
+    this.width,
+    this.height,
+    this.borderRadius = 12,
+    this.baseColor,
+    this.highlightColor,
+    this.margin,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final defaultBase = isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0);
+    final defaultHighlight = isDark ? const Color(0xFF334155) : Colors.white;
+
+    final base = baseColor ?? defaultBase;
+    final highlight = highlightColor ?? defaultHighlight;
+
+    return Container(
+      margin: margin,
+      child: Shimmer(
+        baseColor: base,
+        highlightColor: highlight,
+        child: Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            color: base,
+            borderRadius: BorderRadius.circular(borderRadius),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -348,32 +394,44 @@ class SkeletonProductGridCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image area
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: context.isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+            // Image area - sleek white rectangular shimmer placeholder
+            Padding(
+              padding: const EdgeInsets.all(6),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  height: 96,
+                  width: double.infinity,
+                  color: context.isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SkeletonBox(width: double.infinity, height: 14, borderRadius: 4),
-                  const SizedBox(height: 6),
-                  const SkeletonBox(width: 70, height: 12, borderRadius: 4),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                      SkeletonBox(width: 60, height: 14, borderRadius: 4),
-                      SkeletonBox(width: 28, height: 28, borderRadius: 8),
-                    ],
-                  ),
-                ],
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        SkeletonBox(width: 100, height: 14, borderRadius: 4),
+                        SizedBox(height: 5),
+                        SkeletonBox(width: 50, height: 10, borderRadius: 4),
+                        SizedBox(height: 6),
+                        SkeletonBox(width: 70, height: 14, borderRadius: 4),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: const [
+                        SkeletonBox(width: 38, height: 20, borderRadius: 10),
+                        SkeletonBox(width: 48, height: 16, borderRadius: 4),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

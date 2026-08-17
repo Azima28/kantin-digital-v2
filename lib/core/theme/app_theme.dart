@@ -84,6 +84,72 @@ class AppTheme {
         labelStyle: GoogleFonts.inter(color: AppColors.mutedGray, fontSize: 14),
         hintStyle: GoogleFonts.inter(color: AppColors.mutedGray, fontSize: 14),
       ),
+      dialogTheme: const DialogThemeData(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 6,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(24)),
+        ),
+      ),
+      datePickerTheme: DatePickerThemeData(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        headerBackgroundColor: Colors.white,
+        headerForegroundColor: const Color(0xFF0F172A),
+        headerHeadlineStyle: GoogleFonts.inter(
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          color: const Color(0xFF0F172A),
+        ),
+        headerHelpStyle: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF64748B),
+          letterSpacing: 0.5,
+        ),
+        weekdayStyle: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF64748B),
+        ),
+        dayStyle: GoogleFonts.inter(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: const Color(0xFF0F172A),
+        ),
+        yearStyle: GoogleFonts.inter(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: const Color(0xFF0F172A),
+        ),
+        dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return Colors.white;
+          if (states.contains(WidgetState.disabled)) return const Color(0xFFCBD5E1);
+          return const Color(0xFF0F172A);
+        }),
+        dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return AppColors.primary;
+          return Colors.transparent;
+        }),
+        todayForegroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return Colors.white;
+          return AppColors.primary;
+        }),
+        todayBorder: const BorderSide(color: AppColors.primary, width: 1.5),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+        ),
+        cancelButtonStyle: TextButton.styleFrom(
+          foregroundColor: const Color(0xFF64748B),
+          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
+        ),
+        confirmButtonStyle: TextButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700),
+        ),
+      ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
@@ -416,6 +482,66 @@ class AppTheme {
         ),
         contentTextStyle: GoogleFonts.inter(
           fontSize: 15, fontWeight: FontWeight.normal, color: textSecondary,
+        ),
+      ),
+
+      // ── Date Picker ───────────────────────────────────────────────────
+      datePickerTheme: DatePickerThemeData(
+        backgroundColor: popup,
+        surfaceTintColor: Colors.transparent,
+        headerBackgroundColor: popup,
+        headerForegroundColor: textPrimary,
+        headerHeadlineStyle: GoogleFonts.inter(
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          color: textPrimary,
+        ),
+        headerHelpStyle: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: textMuted,
+          letterSpacing: 0.5,
+        ),
+        weekdayStyle: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: textMuted,
+        ),
+        dayStyle: GoogleFonts.inter(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: textPrimary,
+        ),
+        yearStyle: GoogleFonts.inter(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: textPrimary,
+        ),
+        dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return Colors.white;
+          if (states.contains(WidgetState.disabled)) return textDisabled;
+          return textPrimary;
+        }),
+        dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return primary;
+          return Colors.transparent;
+        }),
+        todayForegroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return Colors.white;
+          return primary;
+        }),
+        todayBorder: const BorderSide(color: primary, width: 1.5),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(color: borderElevated, width: 0.5),
+        ),
+        cancelButtonStyle: TextButton.styleFrom(
+          foregroundColor: textMuted,
+          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
+        ),
+        confirmButtonStyle: TextButton.styleFrom(
+          foregroundColor: primary,
+          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700),
         ),
       ),
 

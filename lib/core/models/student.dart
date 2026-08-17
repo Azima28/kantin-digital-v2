@@ -152,8 +152,7 @@ class StudentWithProfile {
     );
   }
 
-  /// Parse dari query Supabase:
-  /// `profiles.select('id, full_name, email, nisn, is_active, students:students!students_id_fkey(class, balance, rfid_uid, is_active)')`
+  /// Parse dari response data join student + profile:
   factory StudentWithProfile.fromJoinedJson(Map<String, dynamic> json) {
     final studentData = json['students'] is List
         ? (json['students'] as List).firstOrNull as Map<String, dynamic>?

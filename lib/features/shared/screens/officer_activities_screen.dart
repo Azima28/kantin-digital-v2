@@ -8,8 +8,9 @@ import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 
 class OfficerActivitiesScreen extends ConsumerStatefulWidget {
   final String officerId;
@@ -45,14 +46,16 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
   }
 
   Future<List<Map<String, dynamic>>> _fetchActivities() async {
-    final client = ref.read(supabaseClientProvider);
-    final List<dynamic> logs = await client
-        .from('audit_logs')
-        .select('id, action_type, description, created_at')
-        .or('actor_id.eq.${widget.officerId},actor_name.eq.${widget.actorName}')
-        .order('created_at', ascending: false);
-
-    return List<Map<String, dynamic>>.from(logs);
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient.get('/pos/sales-history');
+      if (response.success && response.data != null) {
+        return List<Map<String, dynamic>>.from(response.data as List<dynamic>);
+      }
+      return <Map<String, dynamic>>[];
+    } catch (_) {
+      return <Map<String, dynamic>>[];
+    }
   }
 
   void _refresh() {
@@ -104,12 +107,28 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
     final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate ?? now,
-      firstDate: DateTime(now.year - 10),
-      lastDate: DateTime(now.year + 1, 12, 31),
+      firstDate: DateTime(2000, 1, 1),
+      lastDate: DateTime(2100, 12, 31),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(primary: widget.primaryColor),
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+                  primary: widget.primaryColor,
+                  onPrimary: Colors.white,
+                  surface: context.isDark ? const Color(0xFF1E293B) : Colors.white,
+                  onSurface: context.isDark ? Colors.white : const Color(0xFF0F172A),
+                  surfaceTint: Colors.transparent,
+                ),
+            dialogTheme: DialogThemeData(
+              backgroundColor: context.isDark ? const Color(0xFF1E293B) : Colors.white,
+              surfaceTintColor: Colors.transparent,
+            ),
+            datePickerTheme: DatePickerThemeData(
+              backgroundColor: context.isDark ? const Color(0xFF1E293B) : Colors.white,
+              surfaceTintColor: Colors.transparent,
+              headerBackgroundColor: context.isDark ? const Color(0xFF1E293B) : Colors.white,
+              headerForegroundColor: context.isDark ? Colors.white : const Color(0xFF0F172A),
+            ),
           ),
           child: child!,
         );
@@ -138,25 +157,30 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
+        toolbarHeight: 56,
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
+        centerTitle: true,
+        shape: Border(
+          bottom: BorderSide(color: context.dividerCol, width: 0.5),
+        ),
         leading: IconButton(
-          icon: Icon(CupertinoIcons.left_chevron, color: widget.primaryColor),
+          icon: Icon(CupertinoIcons.left_chevron, color: context.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           widget.title,
           style: GoogleFonts.inter(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: widget.primaryColor,
+            color: context.textPrimary,
           ),
         ),
         actions: [
           IconButton(
             tooltip: 'Muat ulang',
-            icon: Icon(CupertinoIcons.refresh, color: widget.primaryColor),
+            icon: Icon(CupertinoIcons.refresh, color: context.textPrimary),
             onPressed: _refresh,
           ),
         ],
@@ -236,18 +260,85 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
                     : RefreshIndicator(
                         color: widget.primaryColor,
                         onRefresh: () async => _refresh(),
-                        child: ListView.separated(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                          itemCount: filtered.length,
-                          separatorBuilder: (_, _) => const SizedBox(height: 10),
-                          itemBuilder: (context, index) => _buildActivityTile(filtered[index]),
+                        child: Builder(
+                          builder: (context) {
+                            final List<dynamic> listItems = [];
+                            DateTime? lastDate;
+                            for (final log in filtered) {
+                              final createdAt = log['created_at'];
+                              final date = createdAt == null
+                                  ? null
+                                  : DateTime.tryParse(createdAt.toString())?.toLocal();
+                              if (date != null) {
+                                if (lastDate == null ||
+                                    lastDate.year != date.year ||
+                                    lastDate.month != date.month ||
+                                    lastDate.day != date.day) {
+                                  final String dateHeaderStr = AppDateFormatter.formatDayFullDate(date);
+                                  listItems.add(dateHeaderStr);
+                                  lastDate = date;
+                                }
+                              }
+                              listItems.add(log);
+                            }
+
+                            return ListView.builder(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                              itemCount: listItems.length,
+                              itemBuilder: (context, index) {
+                                final item = listItems[index];
+                                if (item is String) {
+                                  return _buildDateHeader(item);
+                                }
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 10),
+                                  child: _buildActivityTile(item as Map<String, dynamic>),
+                                );
+                              },
+                            );
+                          },
                         ),
                       ),
               ),
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildDateHeader(String dateStr) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 14, bottom: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 16,
+            decoration: BoxDecoration(
+              color: widget.primaryColor,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            dateStr,
+            style: GoogleFonts.inter(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
+              color: widget.primaryColor,
+              letterSpacing: 0.3,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Divider(
+              color: context.dividerCol,
+              thickness: 0.5,
+            ),
+          ),
+        ],
       ),
     );
   }

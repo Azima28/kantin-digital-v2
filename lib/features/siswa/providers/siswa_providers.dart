@@ -1,85 +1,206 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
+import 'package:kantin_digital/core/services/api_client.dart';
+import 'package:kantin_digital/core/utils/riverpod_cache_extensions.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/kantin/models/order_item.dart';
 
-// In-memory cache for product images
-final Map<String, String?> _siswaProductImageCache = {};
-
-Future<Map<String, String?>> _fetchSiswaProductImages(
-  SupabaseClient client,
-  Set<String> productNames,
-) async {
-  final Map<String, String?> result = {};
-  final List<String> missingNames = [];
-
-  for (final name in productNames) {
-    if (_siswaProductImageCache.containsKey(name)) {
-      result[name] = _siswaProductImageCache[name];
-    } else {
-      missingNames.add(name);
-    }
-  }
-
-  if (missingNames.isNotEmpty) {
-    try {
-      final List<dynamic> prodRes = await client
-          .from('products')
-          .select('name, image_url')
-          .inFilter('name', missingNames);
-      for (var prod in prodRes) {
-        final name = prod['name'] as String?;
-        final img = prod['image_url'] as String?;
-        if (name != null) {
-          _siswaProductImageCache[name] = img;
-          result[name] = img;
-        }
-      }
-    } catch (_) {}
-  }
-
-  return result;
-}
-
-// Provider untuk mengambil data detail siswa (kelas, saldo, status kartu)
+// Provider untuk mengambil data detail siswa (kelas, saldo, status kartu) - Cache 5 Menit
 final AutoDisposeFutureProvider<Student?> siswaStudentProvider =
     FutureProvider.autoDispose<Student?>((Ref ref) async {
-  ref.keepAlive();
+  ref.cacheFor(const Duration(minutes: 5));
   final profileId = ref.watch(authNotifierProvider.select((s) => s.profile?['id'] as String?));
   if (profileId == null) return null;
 
-  final client = ref.read(supabaseClientProvider);
-  final Map<String, dynamic>? student = await client
-      .from('students')
-      .select('id, balance, rfid_uid, is_active')
-      .eq('id', profileId)
-      .maybeSingle();
-
-  if (student == null) return null;
-  return Student.fromJson(student);
+  final apiClient = ref.read(apiClientProvider);
+  final response = await apiClient.get('/student/me');
+  if (response.success && response.data != null) {
+    return Student.fromJson(response.data as Map<String, dynamic>);
+  }
+  return null;
 });
 
-// Provider untuk mengambil daftar transaksi milik siswa
+// State untuk pagination & lazy loading riwayat transaksi siswa
+class SiswaTransactionsState {
+  final List<OperatorTransaction> transactions;
+  final bool isLoading;
+  final bool isLoadingMore;
+  final bool hasMore;
+  final int page;
+  final String? error;
+  final DateTime? lastFetched;
+  final int totalCount;
+
+  const SiswaTransactionsState({
+    this.transactions = const [],
+    this.isLoading = false,
+    this.isLoadingMore = false,
+    this.hasMore = true,
+    this.page = 1,
+    this.error,
+    this.lastFetched,
+    this.totalCount = 0,
+  });
+
+  SiswaTransactionsState copyWith({
+    List<OperatorTransaction>? transactions,
+    bool? isLoading,
+    bool? isLoadingMore,
+    bool? hasMore,
+    int? page,
+    String? error,
+    DateTime? lastFetched,
+    int? totalCount,
+  }) {
+    return SiswaTransactionsState(
+      transactions: transactions ?? this.transactions,
+      isLoading: isLoading ?? this.isLoading,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      hasMore: hasMore ?? this.hasMore,
+      page: page ?? this.page,
+      error: error,
+      lastFetched: lastFetched ?? this.lastFetched,
+      totalCount: totalCount ?? this.totalCount,
+    );
+  }
+}
+
+// StateNotifier untuk lazy loading & memory caching transaksi siswa
+class SiswaTransactionsNotifier extends StateNotifier<SiswaTransactionsState> {
+  final ApiClient _apiClient;
+
+  SiswaTransactionsNotifier(this._apiClient)
+      : super(const SiswaTransactionsState()) {
+    loadInitial();
+  }
+
+  Future<void> loadInitial({bool forceRefresh = false}) async {
+    if (!forceRefresh &&
+        state.transactions.isNotEmpty &&
+        state.lastFetched != null &&
+        DateTime.now().difference(state.lastFetched!).inMinutes < 3) {
+      return;
+    }
+
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final response = await _apiClient.get('/student/transactions', queryParams: {
+        'page': 1,
+        'limit': 15,
+      });
+
+      if (response.success && response.data != null) {
+        List<dynamic> itemsList = [];
+        int total = 0;
+        bool hasMore = false;
+
+        if (response.data is Map<String, dynamic>) {
+          final dataMap = response.data as Map<String, dynamic>;
+          itemsList = dataMap['items'] as List<dynamic>? ?? [];
+          total = (dataMap['total'] as num?)?.toInt() ?? itemsList.length;
+          hasMore = dataMap['has_more'] as bool? ?? (itemsList.length >= 15);
+        } else if (response.data is List<dynamic>) {
+          itemsList = response.data as List<dynamic>;
+          total = itemsList.length;
+          hasMore = itemsList.length >= 15;
+        }
+
+        final parsed = itemsList
+            .map((e) => OperatorTransaction.fromSiswaJson(e as Map<String, dynamic>))
+            .toList();
+
+        state = state.copyWith(
+          transactions: parsed,
+          isLoading: false,
+          hasMore: hasMore,
+          page: 1,
+          lastFetched: DateTime.now(),
+          totalCount: total,
+        );
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          error: response.message ?? 'Gagal memuat riwayat transaksi',
+        );
+      }
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
+  }
+
+  Future<void> loadMore() async {
+    if (state.isLoading || state.isLoadingMore || !state.hasMore) return;
+
+    state = state.copyWith(isLoadingMore: true);
+
+    try {
+      final nextPage = state.page + 1;
+      final response = await _apiClient.get('/student/transactions', queryParams: {
+        'page': nextPage,
+        'limit': 15,
+      });
+
+      if (response.success && response.data != null) {
+        List<dynamic> itemsList = [];
+        bool hasMore = false;
+        int total = state.totalCount;
+
+        if (response.data is Map<String, dynamic>) {
+          final dataMap = response.data as Map<String, dynamic>;
+          itemsList = dataMap['items'] as List<dynamic>? ?? [];
+          total = (dataMap['total'] as num?)?.toInt() ?? total;
+          hasMore = dataMap['has_more'] as bool? ?? (itemsList.length >= 15);
+        } else if (response.data is List<dynamic>) {
+          itemsList = response.data as List<dynamic>;
+          hasMore = itemsList.length >= 15;
+        }
+
+        final parsed = itemsList
+            .map((e) => OperatorTransaction.fromSiswaJson(e as Map<String, dynamic>))
+            .toList();
+
+        final existingIds = state.transactions.map((t) => t.id).toSet();
+        final newItems = parsed.where((t) => !existingIds.contains(t.id)).toList();
+
+        state = state.copyWith(
+          transactions: [...state.transactions, ...newItems],
+          isLoadingMore: false,
+          hasMore: hasMore && newItems.isNotEmpty,
+          page: nextPage,
+          totalCount: total,
+        );
+      } else {
+        state = state.copyWith(isLoadingMore: false);
+      }
+    } catch (e) {
+      state = state.copyWith(isLoadingMore: false);
+    }
+  }
+
+  Future<void> refresh() async {
+    await loadInitial(forceRefresh: true);
+  }
+}
+
+final siswaTransactionsNotifierProvider =
+    StateNotifierProvider.autoDispose<SiswaTransactionsNotifier, SiswaTransactionsState>((ref) {
+  ref.keepAlive();
+  final apiClient = ref.read(apiClientProvider);
+  return SiswaTransactionsNotifier(apiClient);
+});
+
+// Provider untuk mengambil daftar transaksi milik siswa (dengan auto cache & lazy load)
 final AutoDisposeFutureProvider<List<OperatorTransaction>>
     siswaTransactionsProvider =
     FutureProvider.autoDispose<List<OperatorTransaction>>((Ref ref) async {
-  final profileId = ref.watch(authNotifierProvider.select((s) => s.profile?['id'] as String?));
-  if (profileId == null) return <OperatorTransaction>[];
-
-  final client = ref.read(supabaseClientProvider);
-  final List<dynamic> response = await client
-      .from('transactions')
-      .select(
-          'id, student_id, operator_id, total_amount, type, status, created_at, purchase_method, canteen_operators(canteen_name)')
-      .eq('student_id', profileId)
-      .order('created_at', ascending: false)
-      .limit(50);
-
-  return response
-      .map((e) => OperatorTransaction.fromSiswaJson(e as Map<String, dynamic>))
-      .toList();
+  final txState = ref.watch(siswaTransactionsNotifierProvider);
+  return txState.transactions;
 });
 
 // Provider untuk mengambil detail item suatu transaksi
@@ -87,134 +208,91 @@ final AutoDisposeFutureProviderFamily<List<TransactionItem>, String>
     transactionDetailsProvider =
     FutureProvider.autoDispose.family<List<TransactionItem>, String>(
         (Ref ref, String txId) async {
-  final client = ref.read(supabaseClientProvider);
-  final List<dynamic> response = await client
-      .from('transaction_items')
-      .select(
-          'id, transaction_id, product_id, quantity, unit_price, custom_notes, products(name)')
-      .eq('transaction_id', txId);
-
-  return response
-      .map((e) => TransactionItem.fromJson(e as Map<String, dynamic>))
-      .toList();
+  return <TransactionItem>[];
 });
 
-// Provider untuk mengambil notifikasi milik siswa
+// Provider untuk mengambil notifikasi milik siswa (Cache 2 Menit)
 final AutoDisposeFutureProvider<List<AppNotification>>
     siswaNotificationsProvider =
     FutureProvider.autoDispose<List<AppNotification>>((Ref ref) async {
+  ref.cacheFor(const Duration(minutes: 2));
   final profileId = ref.watch(authNotifierProvider.select((s) => s.profile?['id'] as String?));
   if (profileId == null) return <AppNotification>[];
 
-  final client = ref.read(supabaseClientProvider);
-  final List<dynamic> response = await client
-      .from('notifications')
-      .select('*')
-      .eq('student_id', profileId)
-      .order('created_at', ascending: false)
-      .limit(50);
-
-  return response
-      .map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
-      .toList();
+  final apiClient = ref.read(apiClientProvider);
+  final response = await apiClient.get('/student/notifications');
+  if (response.success && response.data != null) {
+    final list = response.data as List<dynamic>;
+    return list
+        .map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+  return <AppNotification>[];
 });
 
 // Provider untuk mengambil data kontak orang tua
 final AutoDisposeFutureProvider<Map<String, String>?> siswaParentContactProvider =
     FutureProvider.autoDispose<Map<String, String>?>((Ref ref) async {
-  final profileId = ref.watch(authNotifierProvider.select((s) => s.profile?['id'] as String?));
-  if (profileId == null) return null;
-
-  final client = ref.read(supabaseClientProvider);
-  try {
-    final parentRel = await client
-        .from('parent_students')
-        .select('parent_id')
-        .eq('student_id', profileId)
-        .maybeSingle();
-
-    if (parentRel != null && parentRel['parent_id'] != null) {
-      final String parentId = parentRel['parent_id'];
-      final parentProfile = await client
-          .from('profiles')
-          .select('email, phone_number')
-          .eq('id', parentId)
-          .maybeSingle();
-
-      if (parentProfile != null) {
-        return {
-          'email': parentProfile['email']?.toString() ?? '',
-          'phone': parentProfile['phone_number']?.toString() ?? '',
-        };
-      }
-    }
-  } catch (_) {
-    // Database query failed
-  }
-
   return null;
 });
 
-// Provider untuk mengambil pesanan aktif milik siswa (belum selesai & belum dibatalkan)
+// Provider untuk mengambil pesanan aktif milik siswa (Cache 3 Menit)
 final siswaActiveOrdersProvider =
     FutureProvider.autoDispose<List<OrderItem>>((Ref ref) async {
-  ref.keepAlive();
-  final profileId = ref.watch(authNotifierProvider.select((s) => s.profile?['id'] as String?));
+  ref.cacheFor(const Duration(minutes: 3));
+  final profile = ref.watch(authNotifierProvider.select((s) => s.profile));
+  if (profile == null || profile['role']?.toString() != 'student') return <OrderItem>[];
+  final profileId = profile['id'] as String?;
   if (profileId == null) return <OrderItem>[];
 
-  final client = ref.read(supabaseClientProvider);
-  final List<dynamic> response = await client
-      .from('orders')
-      .select(
-          'id, student_id, student_name, status, delivery_location, total_amount, created_at, cancel_request_reason, order_items(product_name, quantity, price)')
-      .eq('student_id', profileId)
-      .not('status', 'in', '("Selesai","Dibatalkan")')
-      .order('created_at', ascending: false);
+  final apiClient = ref.read(apiClientProvider);
+  final response = await apiClient.get('/orders/student');
+  if (response.success && response.data != null) {
+    final list = response.data as List<dynamic>;
+    return list.map((e) {
+      final map = e as Map<String, dynamic>;
+      final List<dynamic> rawItems = map['items'] ?? map['order_items'] ?? [];
+      final List<OrderSubItem> subItems = rawItems.map((item) {
+        final itemMap = item as Map<String, dynamic>;
+        final name = itemMap['product_name'] ?? itemMap['name'] ?? '';
+        return OrderSubItem(
+          name: name,
+          qty: (itemMap['quantity'] as num?)?.toInt() ?? 1,
+          price: (itemMap['price'] as num?)?.toInt() ?? (itemMap['unit_price'] as num?)?.toInt() ?? 0,
+          imageUrl: itemMap['image_url'],
+        );
+      }).toList();
 
-  final Set<String> productNames = {};
-  for (var e in response) {
-    final List<dynamic> rawItems = (e as Map<String, dynamic>)['order_items'] ?? [];
-    for (var item in rawItems) {
-      final name = (item as Map<String, dynamic>)['product_name'] as String?;
-      if (name != null && name.isNotEmpty) {
-        productNames.add(name);
-      }
-    }
-  }
+      final createdAtStr = map['created_at'] != null
+          ? '${DateFormat('HH:mm').format(DateTime.parse(map['created_at']).toLocal())} WIB'
+          : '';
 
-  final Map<String, String?> imageMap = productNames.isNotEmpty
-      ? await _fetchSiswaProductImages(client, productNames)
-      : {};
-
-  return response.map((e) {
-    final map = e as Map<String, dynamic>;
-    final List<dynamic> rawItems = map['order_items'] ?? [];
-    final List<OrderSubItem> subItems = rawItems.map((item) {
-      final itemMap = item as Map<String, dynamic>;
-      final name = itemMap['product_name'] ?? '';
-      return OrderSubItem(
-        name: name,
-        qty: (itemMap['quantity'] as num).toInt(),
-        price: (itemMap['price'] as num).toInt(),
-        imageUrl: imageMap[name],
+      return OrderItem(
+        id: map['id']?.toString() ?? '',
+        studentId: map['student_id']?.toString() ?? '',
+        studentName: map['student_name']?.toString() ?? 'Siswa',
+        time: createdAtStr,
+        status: map['status']?.toString() ?? 'Baru',
+        deliveryLocation: map['delivery_location']?.toString(),
+        items: subItems,
+        totalAmount: (map['total_amount'] as num?)?.toInt() ?? 0,
+        cancelRequestReason: map['cancel_request_reason']?.toString(),
+        createdAt: map['created_at'] != null ? DateTime.tryParse(map['created_at'].toString())?.toLocal() : null,
       );
     }).toList();
-
-    final createdAtStr = map['created_at'] != null
-        ? '${DateFormat('HH:mm').format(DateTime.parse(map['created_at']).toLocal())} WIB'
-        : '';
-
-    return OrderItem(
-      id: map['id'] ?? '',
-      studentId: map['student_id'] ?? '',
-      studentName: map['student_name'] ?? 'Siswa',
-      time: createdAtStr,
-      status: map['status'] ?? 'Baru',
-      deliveryLocation: map['delivery_location'],
-      items: subItems,
-      totalAmount: (map['total_amount'] as num).toInt(),
-      cancelRequestReason: map['cancel_request_reason'],
-      createdAt: map['created_at'] != null ? DateTime.parse(map['created_at']).toLocal() : null,
-    );
-  }).toList();
+  }
+  return <OrderItem>[];
 });
+
+// Provider untuk menghitung jumlah pesanan aktif siswa
+final siswaActiveOrdersCountProvider = Provider.autoDispose<int>((ref) {
+  final ordersAsync = ref.watch(siswaActiveOrdersProvider);
+  return ordersAsync.maybeWhen(
+    data: (orders) => orders.where((o) {
+      final s = o.status.trim().toLowerCase();
+      return s != 'selesai' && s != 'dibatalkan' && s != 'cancelled' && s != 'refunded';
+    }).length,
+    orElse: () => 0,
+  );
+});
+

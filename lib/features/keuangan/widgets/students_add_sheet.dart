@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 
 /// Shows a modal bottom sheet for adding a new student.
@@ -115,8 +115,8 @@ void showAddStudentSheet(BuildContext context, WidgetRef ref) {
                           }
                           setLocal(() => isSaving = true);
                           try {
-                            final client = ref.read(supabaseClientProvider);
-                            
+                            final apiClient = ref.read(apiClientProvider);
+
                             final email = emailCtrl.text.trim().isNotEmpty
                                 ? emailCtrl.text.trim()
                                 : '$nisn@sekolah.sch.id';
@@ -128,29 +128,20 @@ void showAddStudentSheet(BuildContext context, WidgetRef ref) {
                                 : null;
                             final rfidVal = rfid.isNotEmpty ? rfid : null;
 
-                            // 1. Call RPC function to create the user account
-                            final newProfile = await client.rpc('create_user_account', params: {
-                              'p_email': email,
-                              'p_password': password,
-                              'p_full_name': name,
-                              'p_role': 'student',
-                              'p_phone_number': parentPhone,
-                              'p_username': username,
-                              'p_nisn': nisn,
+                            final response = await apiClient.post('/admin/students', body: {
+                              'email': email,
+                              'password': password,
+                              'full_name': name,
+                              'phone_number': parentPhone,
+                              'username': username,
+                              'nisn': nisn,
+                              'class': selectedClass,
+                              'rfid_uid': rfidVal,
                             });
 
-                            if (newProfile == null) {
-                              throw Exception('Gagal membuat profil auth / database.');
+                            if (!response.success) {
+                              throw Exception(response.message ?? 'Gagal membuat profil siswa.');
                             }
-
-                            final newProfileMap = Map<String, dynamic>.from(newProfile as Map);
-                            final studentId = newProfileMap['id'] as String;
-
-                            // 2. Call RPC process_topup to register the card UID
-                            await client.rpc('register_rfid_card', params: {
-                              'p_student_id': studentId,
-                              'p_rfid_uid': rfidVal,
-                            });
 
                             ref.invalidate(keuanganStudentsProvider);
                             if (context.mounted) {

@@ -106,11 +106,7 @@ class _SiswaMainLayoutState extends ConsumerState<SiswaMainLayout> {
         ),
         bottomNavigationBar: Consumer(
           builder: (context, ref, child) {
-            final activeOrdersAsync = ref.watch(siswaActiveOrdersProvider);
-            final int activeOrdersCount = activeOrdersAsync.maybeWhen(
-              data: (orders) => orders.length,
-              orElse: () => 0,
-            );
+            final activeOrdersCount = ref.watch(siswaActiveOrdersCountProvider);
 
             return PremiumBottomNavBar(
               currentIndex: selectedIndex,

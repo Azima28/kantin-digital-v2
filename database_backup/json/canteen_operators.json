@@ -1,0 +1,30 @@
+[
+  {
+    "id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "canteen_name": "Stan Bakso Enak",
+    "balance_earned": 0,
+    "is_delivery_enabled": true,
+    "delivery_fee": 2000
+  },
+  {
+    "id": "51325215-0176-4324-bb74-4e973bcfff13",
+    "canteen_name": "Stan Nasgor",
+    "balance_earned": 0,
+    "is_delivery_enabled": true,
+    "delivery_fee": 2000
+  },
+  {
+    "id": "98dd238b-b56c-4d27-8125-e0624385d2e7",
+    "canteen_name": "Bude Ani",
+    "balance_earned": 0,
+    "is_delivery_enabled": true,
+    "delivery_fee": 2000
+  },
+  {
+    "id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "canteen_name": "Stan Utama",
+    "balance_earned": 341269,
+    "is_delivery_enabled": true,
+    "delivery_fee": 2000
+  }
+]

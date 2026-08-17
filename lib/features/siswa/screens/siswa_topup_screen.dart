@@ -66,7 +66,7 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
     });
 
     try {
-      final client = ref.read(supabaseClientProvider);
+      final apiClient = ref.read(apiClientProvider);
       final authState = ref.read(authNotifierProvider);
       final String? studentId = authState.profile?['id'];
 
@@ -74,23 +74,13 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
         throw Exception('Identitas siswa tidak ditemukan.');
       }
 
-      final sessionToken = authState.sessionToken;
-
-      final response = await client.rpc('process_topup', params: {
-        'p_student_id': studentId,
-        'p_amount': amount.toInt(),
-        'p_session_token': sessionToken,
-        'p_method': 'simulasi',
-        'p_notes': 'Top-up mandiri siswa',
-        'p_caller_id': studentId,
+      final response = await apiClient.post('/finance/topup', body: {
+        'student_id': studentId,
+        'amount': amount.toInt(),
       });
 
-      if (response != null && response is Map) {
-        final bool success = response['success'] == true;
-        if (!success) {
-          final String errorMsg = response['error']?.toString() ?? 'Terjadi kesalahan';
-          throw Exception(errorMsg);
-        }
+      if (!response.success) {
+        throw Exception(response.message ?? 'Gagal memproses top-up');
       }
 
       // Invalidate providers to reload UI data

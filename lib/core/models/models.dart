@@ -18,6 +18,7 @@ export 'parent_student.dart';
 export 'finance_officer.dart';
 export 'system_setting.dart';
 export 'order_message.dart';
+export 'order_review.dart';
 
 // ── Composite models ─────────────────────────────────────────
 export 'operator_transaction.dart';

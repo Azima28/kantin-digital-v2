@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/widgets/app_toast.dart';
 
 /// A reusable floating panel for changing account passwords across all roles.
@@ -60,36 +60,22 @@ class _ChangePasswordPanelState extends ConsumerState<ChangePasswordPanel> {
     final String oldPwd = _oldPwdController.text;
     final String newPwd = _newPwdController.text;
 
-    final authState = ref.read(authNotifierProvider);
-    final profileId = authState.profile?['id'];
-    if (profileId == null) {
-      setState(() => _isSaving = false);
-      return;
-    }
-
-    final profileEmail = authState.profile?['email'];
-    final profileNisn = authState.profile?['nisn'];
-    final profileUsername = authState.profile?['username'];
-    final String identifier = profileEmail ?? profileNisn ?? profileUsername ?? '';
-
     final messenger = ScaffoldMessenger.of(widget.parentContext);
     final nav = Navigator.of(context);
 
     try {
-      final client = ref.read(supabaseClientProvider);
-
-      // Verify old password using verify_password RPC
-      final verifyRes = await client.rpc('verify_password', params: {
-        'p_email': identifier,
-        'p_password': oldPwd,
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient.post('/auth/change-password', body: {
+        'old_password': oldPwd,
+        'new_password': newPwd,
       });
 
-      final bool isValid = verifyRes is Map && verifyRes['password_valid'] == true;
-      if (!isValid) {
-        if (!mounted) return;
+      if (!mounted) return;
+
+      if (!response.success) {
         messenger.showSnackBar(
-          const SnackBar(
-            content: Text('Sandi lama yang dimasukkan salah.'),
+          SnackBar(
+            content: Text(response.message ?? 'Gagal mengubah kata sandi.'),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
@@ -98,18 +84,6 @@ class _ChangePasswordPanelState extends ConsumerState<ChangePasswordPanel> {
         return;
       }
 
-      // Update password via update_auth_user_password RPC
-      final response = await client.rpc('update_auth_user_password', params: {
-        'p_user_id': profileId,
-        'p_new_password': newPwd,
-        'p_caller_id': profileId,
-      });
-
-      if (response is Map && response['success'] == false) {
-        throw Exception(response['error'] ?? 'Gagal mengubah kata sandi');
-      }
-
-      if (!mounted) return;
       nav.pop(); // close dialog
       AppToast.showSuccess(
         context,

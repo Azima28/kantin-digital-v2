@@ -8,8 +8,7 @@ import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/nebula_effects.dart';
-import 'package:kantin_digital/core/models/models.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/parent/widgets/parent_topup_form.dart';
 
 class ParentTopUpScreen extends ConsumerStatefulWidget {
@@ -32,29 +31,16 @@ class _ParentTopUpScreenState extends ConsumerState<ParentTopUpScreen> {
 
   Future<void> _loadStudentInfo() async {
     try {
-      final client = ref.read(supabaseClientProvider);
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient.get('/student/lookup', queryParams: {'id': widget.studentId});
 
-      // Fetch profile
-      final profile = await client.from('profiles').select('full_name').eq('id', widget.studentId).maybeSingle();
-      // Fetch student
-      final student = await client.from('students').select().eq('id', widget.studentId).maybeSingle();
-
-      if (profile == null || student == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text(AppStrings.errorStudentNotFound)),
-          );
-        }
-        return;
+      if (response.success && response.data != null) {
+        final profile = response.data as Map<String, dynamic>;
+        setState(() {
+          _studentName = profile['full_name']?.toString() ?? AppStrings.adminStudents;
+          _studentClass = profile['class']?.toString() ?? '';
+        });
       }
-
-      final profileModel = UserProfile.fromJson(profile);
-      final studentModel = Student.fromJson(student);
-
-      setState(() {
-        _studentName = profileModel.fullName ?? AppStrings.adminStudents;
-        _studentClass = studentModel.class_ ?? '';
-      });
     } catch (_) {
       // Keep defaults
     }

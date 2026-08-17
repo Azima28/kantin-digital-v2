@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
@@ -118,49 +119,32 @@ class _CancelOrderModalState extends ConsumerState<CancelOrderModal> {
         : _selectedReason!;
 
     try {
-      final client = ref.read(supabaseClientProvider);
-      
-      // 1. Dapatkan status terkini pesanan
-      final orderData = await client
-          .from('orders')
-          .select('status')
-          .eq('id', widget.orderId)
-          .maybeSingle();
-
-      final currentStatus = orderData?['status'] as String?;
+      final apiClient = ref.read(apiClientProvider);
 
       final authState = ref.read(authNotifierProvider);
       final role = authState.profile?['role']?.toString();
       final bool isStudent = role == 'student';
 
-      final bool requiresConfirmation = currentStatus == 'Sedang Dimasak' ||
-          currentStatus == 'Siap Diambil' ||
-          currentStatus == 'Siap Diantar';
-
-      if (requiresConfirmation) {
-        final String pendingStatus = isStudent ? 'Menunggu Pembatalan' : 'Menunggu Persetujuan Murid';
-        await client.from('orders').update({
-          'status': pendingStatus,
+      final String status = isStudent ? 'Menunggu Pembatalan' : 'Dibatalkan';
+      final response = await apiClient.patch(
+        '/orders/${widget.orderId}/status',
+        body: {
+          'status': status,
           'cancel_request_reason': finalReason,
-        }).eq('id', widget.orderId);
-      } else {
-        // Jika status baru/lainnya, lakukan pembatalan langsung (refund saldo)
-        await client.rpc(
-          'cancel_order',
-          params: {
-            'p_order_id': widget.orderId,
-            'p_reason': finalReason,
-          },
-        );
-        // Invalidate providers so refunded student balance & updated order list refresh immediately
-        ref.invalidate(siswaStudentProvider);
-        ref.invalidate(siswaTransactionsProvider);
-        ref.invalidate(siswaActiveOrdersProvider);
-        ref.invalidate(canteenOrdersProvider);
+        },
+      );
 
-        if (widget.onSuccess != null) {
-          widget.onSuccess!();
-        }
+      if (!response.success) {
+        throw Exception(response.message ?? 'Gagal memproses pembatalan');
+      }
+
+      ref.invalidate(siswaStudentProvider);
+      ref.invalidate(siswaTransactionsProvider);
+      ref.invalidate(siswaActiveOrdersProvider);
+      ref.invalidate(canteenOrdersProvider);
+
+      if (widget.onSuccess != null) {
+        widget.onSuccess!();
       }
 
       if (mounted) {

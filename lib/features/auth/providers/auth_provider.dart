@@ -1,14 +1,10 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kantin_digital/core/services/secure_session_service.dart';
+import 'package:kantin_digital/core/services/api_client.dart';
 import 'package:kantin_digital/features/auth/services/auth_service.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
-
-// Re-export supabaseClientProvider for backward compatibility
-export 'package:kantin_digital/core/providers/shared_providers.dart'
-    show supabaseClientProvider;
 
 /// Role string constants used across auth logic.
 class AuthRoles {
@@ -23,8 +19,8 @@ class AuthRoles {
 final Provider<AuthService> authServiceProvider = Provider<AuthService>((
   Ref ref,
 ) {
-  final SupabaseClient client = ref.watch(supabaseClientProvider);
-  return AuthService(client);
+  final ApiClient apiClient = ref.watch(apiClientProvider);
+  return AuthService(apiClient);
 });
 
 // Model State untuk Autentikasi
@@ -33,8 +29,6 @@ class AuthState {
   final bool isAuthenticated;
   final Map<String, dynamic>? profile;
   final String? errorMessage;
-  /// Plaintext session token returned by `create_user_session` RPC.
-  /// Only the authenticated client holds this — the DB stores only the SHA-256 hash.
   final String? sessionToken;
   final bool isInitialized;
 
@@ -59,7 +53,7 @@ class AuthState {
       isLoading: isLoading ?? this.isLoading,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       profile: profile ?? this.profile,
-      errorMessage: errorMessage, // We allow setting it to null
+      errorMessage: errorMessage,
       sessionToken: sessionToken ?? this.sessionToken,
       isInitialized: isInitialized ?? this.isInitialized,
     );
@@ -69,9 +63,10 @@ class AuthState {
 // StateNotifier untuk mengelola aksi & state autentikasi
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
+  final ApiClient _apiClient;
   StreamSubscription<dynamic>? _authSubscription;
 
-  AuthNotifier(this._authService) : super(const AuthState()) {
+  AuthNotifier(this._authService, this._apiClient) : super(const AuthState()) {
     _initAuthListener();
   }
 
@@ -88,6 +83,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (cachedSession != null) {
         final Map<String, dynamic> profile = cachedSession['profile'] as Map<String, dynamic>;
         final String? sessionToken = cachedSession['session_token'] as String?;
+        if (sessionToken != null && sessionToken.isNotEmpty) {
+          _apiClient.setAuthToken(sessionToken);
+        }
         state = AuthState(
           isAuthenticated: true,
           profile: profile,
@@ -101,69 +99,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
 
     // Safety fallback timeout to prevent stuck splash screen on slow network initialization
-    Future.delayed(const Duration(seconds: 3), () {
+    Future.delayed(const Duration(seconds: 2), () {
       if (!state.isInitialized && mounted) {
         state = state.copyWith(isInitialized: true, isLoading: false);
       }
     });
 
-    _authSubscription = _authService.onAuthStateChange.listen((data) async {
-      final session = data.session;
-      if (session != null) {
-        // If already authenticated with the same user ID, no need to refresh or fetch again
-        final String? currentUserId = state.profile?['id'];
-        if (state.isAuthenticated && currentUserId == session.user.id) {
-          if (!state.isInitialized) {
-            state = state.copyWith(isInitialized: true, isLoading: false);
-          }
-          return;
-        }
-
-        try {
-          final Map<String, dynamic>? profile = await _authService.getCurrentProfile();
-          if (profile != null && (profile['role'] == AuthRoles.canteen ||
-              profile['role'] == AuthRoles.student ||
-              profile['role'] == AuthRoles.parent ||
-              profile['role'] == AuthRoles.superAdmin ||
-              profile['role'] == AuthRoles.keuangan)) {
-            await SecureSessionService.saveSessionData(
-              profile: profile,
-              sessionToken: state.sessionToken,
-            );
-            state = AuthState(
-              isAuthenticated: true,
-              profile: profile,
-              isInitialized: true,
-              isLoading: false,
-              sessionToken: state.sessionToken,
-            );
-            return;
-          }
-        } catch (_) {
-          // Fall through on error
-        }
+    _authSubscription = _authService.onAuthStateChange.listen((profile) async {
+      if (profile != null) {
+        state = AuthState(
+          isAuthenticated: true,
+          profile: profile,
+          sessionToken: state.sessionToken,
+          isInitialized: true,
+          isLoading: false,
+        );
+      } else {
+        state = const AuthState(isAuthenticated: false, isInitialized: true, isLoading: false);
       }
-
-      // Check if valid 7-day cached session exists before logging out
-      final activeSession = await SecureSessionService.getValidSessionData();
-      if (activeSession != null) {
-        final Map<String, dynamic> profile = activeSession['profile'] as Map<String, dynamic>;
-        final String? sessionToken = activeSession['session_token'] as String?;
-        if (!state.isAuthenticated || state.profile?['id'] != profile['id']) {
-          state = AuthState(
-            isAuthenticated: true,
-            profile: profile,
-            sessionToken: sessionToken,
-            isInitialized: true,
-            isLoading: false,
-          );
-        } else if (!state.isInitialized) {
-          state = state.copyWith(isInitialized: true, isLoading: false);
-        }
-        return;
-      }
-
-      state = const AuthState(isAuthenticated: false, isInitialized: true, isLoading: false);
     });
   }
 
@@ -178,6 +131,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       final Map<String, dynamic> profile = result['profile'] as Map<String, dynamic>;
       final String? sessionToken = result['session_token'] as String?;
+
+      if (sessionToken != null && sessionToken.isNotEmpty) {
+        _apiClient.setAuthToken(sessionToken);
+      }
 
       // Persist to 7-day local storage
       await SecureSessionService.saveSessionData(
@@ -201,6 +158,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  // Update avatar URL in local profile state & persistent storage
+  Future<void> updateProfileAvatar(String avatarUrl) async {
+    if (state.profile != null) {
+      final updatedProfile = Map<String, dynamic>.from(state.profile!);
+      updatedProfile['avatar_url'] = avatarUrl;
+      await SecureSessionService.saveSessionData(
+        profile: updatedProfile,
+        sessionToken: state.sessionToken,
+      );
+      state = state.copyWith(profile: updatedProfile);
+    }
+  }
+
   // Fungsi Logout Kasir / User
   Future<void> logout() async {
     state = state.copyWith(isLoading: true);
@@ -210,10 +180,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 }
 
-
 // Provider untuk StateNotifier
 final StateNotifierProvider<AuthNotifier, AuthState> authNotifierProvider =
     StateNotifierProvider<AuthNotifier, AuthState>((Ref ref) {
       final AuthService service = ref.watch(authServiceProvider);
-      return AuthNotifier(service);
+      final ApiClient apiClient = ref.watch(apiClientProvider);
+      return AuthNotifier(service, apiClient);
     });

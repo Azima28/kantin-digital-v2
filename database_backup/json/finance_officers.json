@@ -1,0 +1,46 @@
+[
+  {
+    "id": "dbe4f12d-a2f2-45e0-94e8-8888bdf12345",
+    "assigned_school": "SMP Terpadu",
+    "authority_level": "L1",
+    "features": [
+      "topup",
+      "withdrawal",
+      "correction"
+    ],
+    "created_at": "2026-06-17T04:41:33.797819+00:00"
+  },
+  {
+    "id": "f0c16eec-fe34-4ebf-91d5-bcd5a8183d91",
+    "assigned_school": "SMP Terpadu",
+    "authority_level": "L1",
+    "features": [
+      "topup",
+      "withdrawal",
+      "correction"
+    ],
+    "created_at": "2026-06-19T09:19:52.032831+00:00"
+  },
+  {
+    "id": "33abd902-172f-4ab8-b560-c901120e2981",
+    "assigned_school": "SMP Terpadu",
+    "authority_level": "L2",
+    "features": [
+      "topup",
+      "withdrawal",
+      "correction"
+    ],
+    "created_at": "2026-06-19T09:19:52.532288+00:00"
+  },
+  {
+    "id": "f1e4f12d-a2f2-45e0-94e8-9999cdf99999",
+    "assigned_school": "SMP Terpadu",
+    "authority_level": "L1",
+    "features": [
+      "topup",
+      "withdrawal",
+      "correction"
+    ],
+    "created_at": "2026-06-22T04:54:11.247001+00:00"
+  }
+]

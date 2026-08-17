@@ -12,6 +12,7 @@ import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/utils/responsive.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/features/public/providers/public_providers.dart';
 import 'package:kantin_digital/features/siswa/providers/student_cart_provider.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
@@ -313,6 +314,8 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
           String stanAvatar = '🍔';
           bool isDeliveryEnabled = true;
           int deliveryFee = 2000;
+          double stallRating = 0.0;
+          bool hasStallRating = false;
 
           canteensAsync.whenData((stalls) {
             final match = stalls.where((s) => s.id == stanId).firstOrNull;
@@ -320,6 +323,8 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
               stanName = match.canteenName;
               isDeliveryEnabled = match.isDeliveryEnabled;
               deliveryFee = match.deliveryFee;
+              stallRating = match.rating;
+              hasStallRating = match.hasRating;
             }
           });
 
@@ -392,7 +397,7 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Column(
                           children: [
-                            _buildStoreInfoCard(stanName, stanAvatar, isDeliveryEnabled, deliveryFee),
+                            _buildStoreInfoCard(stanName, stanAvatar, isDeliveryEnabled, deliveryFee, stallRating, hasStallRating),
                             const SizedBox(height: 14),
 
                             // Highlighted Selected Product Card with Green Pulse
@@ -532,7 +537,7 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
   }
 
   // ─── 2. STORE INFO CARD DENGAN ANIMASI GESER DELIVERY/PICKUP & STATUS STAN ───
-  Widget _buildStoreInfoCard(String stanName, String stanAvatar, bool isDeliveryEnabled, int deliveryFee) {
+  Widget _buildStoreInfoCard(String stanName, String stanAvatar, bool isDeliveryEnabled, int deliveryFee, double stallRating, bool hasStallRating) {
     final String formattedFee = deliveryFee
         .toStringAsFixed(0)
         .replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
@@ -575,35 +580,62 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
           ),
           const SizedBox(height: 8),
 
-          // Rating, Reviews & Service Badge
+          // Operational Status & Store Rating
           Row(
             children: [
+              if (hasStallRating) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.star, size: 11, color: Colors.white),
+                      const SizedBox(width: 2.5),
+                      Text(
+                        stallRating.toStringAsFixed(1),
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Rating',
+                  style: GoogleFonts.inter(fontSize: 11.5, color: context.textSecondary, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(width: 8),
+                const Text('•', style: TextStyle(color: Colors.grey)),
+                const SizedBox(width: 8),
+              ],
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10B981),
-                  borderRadius: BorderRadius.circular(4),
+                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.star, size: 12, color: Colors.white),
-                    SizedBox(width: 3),
+                  children: [
+                    const Icon(Icons.storefront_rounded, size: 12, color: Color(0xFF10B981)),
+                    const SizedBox(width: 4),
                     Text(
-                      '4.8',
-                      style: TextStyle(
+                      'Buka',
+                      style: GoogleFonts.inter(
                         fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF10B981),
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '(250+)',
-                style: GoogleFonts.inter(fontSize: 12, color: context.textSecondary),
               ),
               const SizedBox(width: 8),
               const Text('•', style: TextStyle(color: Colors.grey)),
@@ -818,7 +850,11 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
                         ? CachedNetworkImage(
                             imageUrl: product.imageUrl!,
                             fit: BoxFit.cover,
-                            placeholder: (_, __) => const Center(child: CupertinoActivityIndicator()),
+                            placeholder: (_, __) => const ShimmerRect(
+                              width: 58,
+                              height: 58,
+                              borderRadius: 8,
+                            ),
                             errorWidget: (_, __, ___) => const Icon(Icons.restaurant, color: Nebula.teal),
                           )
                         : const Icon(Icons.restaurant, color: Nebula.teal),
@@ -1010,7 +1046,11 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
                                   ? CachedNetworkImage(
                                       imageUrl: product.imageUrl!,
                                       fit: BoxFit.cover,
-                                      placeholder: (_, __) => const Center(child: CupertinoActivityIndicator()),
+                                      placeholder: (_, __) => const ShimmerRect(
+                                        width: 145,
+                                        height: 110,
+                                        borderRadius: 8,
+                                      ),
                                       errorWidget: (_, __, ___) => const Icon(Icons.restaurant, color: Nebula.teal),
                                     )
                                   : const Icon(Icons.restaurant, color: Nebula.teal),
@@ -1285,7 +1325,11 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
                       ? CachedNetworkImage(
                           imageUrl: product.imageUrl!,
                           fit: BoxFit.cover,
-                          placeholder: (_, __) => const Center(child: CupertinoActivityIndicator()),
+                          placeholder: (_, __) => const ShimmerRect(
+                            width: 64,
+                            height: 64,
+                            borderRadius: 10,
+                          ),
                           errorWidget: (_, __, ___) => const Icon(Icons.restaurant, color: Nebula.teal),
                         )
                       : const Icon(Icons.restaurant, color: Nebula.teal),
@@ -1570,11 +1614,10 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
                                           ? CachedNetworkImage(
                                               imageUrl: item.imageUrl!,
                                               fit: BoxFit.cover,
-                                              placeholder: (context, url) => Container(
-                                                color: const Color(0xFF10B981).withValues(alpha: 0.08),
-                                                child: const Center(
-                                                  child: CupertinoActivityIndicator(radius: 6),
-                                                ),
+                                              placeholder: (context, url) => const ShimmerRect(
+                                                width: 44,
+                                                height: 44,
+                                                borderRadius: 10,
                                               ),
                                               errorWidget: (context, url, error) => Container(
                                                 color: const Color(0xFF10B981).withValues(alpha: 0.08),

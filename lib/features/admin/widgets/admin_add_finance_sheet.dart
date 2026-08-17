@@ -5,11 +5,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_dropdown_row.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_form_text_field.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_section_label.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 Future<void> showAddFinanceSheet(BuildContext context, WidgetRef ref) async {
   final nameCtrl = TextEditingController();
@@ -132,47 +132,23 @@ Future<void> showAddFinanceSheet(BuildContext context, WidgetRef ref) async {
                           }
                           setLocal(() => isSaving = true);
                           try {
-                            final client = ref.read(supabaseClientProvider);
-                            final email = emailCtrl.text.trim().isEmpty
-                                ? '${usernameCtrl.text.trim()}@sekolah.sch.id'
-                                : emailCtrl.text.trim();
+                            final apiClient = ref.read(apiClientProvider);
+                            final email = emailCtrl.text.trim().isNotEmpty
+                                ? emailCtrl.text.trim()
+                                : '${usernameCtrl.text.trim()}@sekolah.sch.id';
 
-                            final newProfile = await client.rpc('create_user_account', params: {
-                              'p_email': email,
-                              'p_password': passCtrl.text.trim(),
-                              'p_full_name': nameCtrl.text.trim(),
-                              'p_role': 'petugas_keuangan',
-                              'p_username': usernameCtrl.text.trim(),
-                              'p_is_active': true,
-                            });
-
-                            final officerId = newProfile['id'];
-                            await client.from('finance_officers').update({
+                            final response = await apiClient.post('/admin/finance-officers', body: {
+                              'email': email,
+                              'password': passCtrl.text.trim(),
+                              'full_name': nameCtrl.text.trim(),
+                              'username': usernameCtrl.text.trim(),
                               'assigned_school': school,
                               'authority_level': authLevel,
-                            }).eq('id', officerId);
+                            });
 
-                            // Write to audit logs
-                            try {
-                              final authProfile = ref.read(authNotifierProvider).profile;
-                              final actorName = authProfile?['full_name'] ?? 'Super Admin';
-                              final actorId = authProfile?['id'];
-
-                              await client.from('audit_logs').insert({
-                                'actor_id': actorId,
-                                'actor_name': actorName,
-                                'action_type': 'TAMBAH_PENGGUNA',
-                                'description': 'Super Admin menambahkan admin keuangan baru secara manual: ${nameCtrl.text.trim()}',
-                                'target_id': officerId,
-                                'new_value': {
-                                  'full_name': nameCtrl.text.trim(),
-                                  'username': usernameCtrl.text.trim(),
-                                  'role': 'petugas_keuangan',
-                                  'assigned_school': school,
-                                  'authority_level': authLevel,
-                                },
-                              });
-                            } catch (_) {}
+                            if (!response.success) {
+                              throw Exception(response.message ?? 'Gagal menambahkan admin keuangan');
+                            }
 
                             ref.invalidate(adminUsersProvider);
                             if (ctx.mounted) Navigator.pop(ctx);
@@ -191,7 +167,7 @@ Future<void> showAddFinanceSheet(BuildContext context, WidgetRef ref) async {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('${AppStrings.labelFailed} menyimpan'),
+                                  content: Text('${AppStrings.labelFailed} menyimpan: $e'),
                                   backgroundColor: Nebula.rose,
                                 ),
                               );

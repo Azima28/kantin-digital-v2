@@ -1,15 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:kantin_digital/core/services/api_client.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 
-/// Service untuk upload, update, dan delete foto profil pengguna
-/// menggunakan Supabase Storage bucket 'avatars'.
+/// Service untuk upload dan kelola foto profil/produk menggunakan Go Backend REST API.
 class StorageService {
-  final SupabaseClient _client;
-  static const String _bucket = 'avatars';
+  final ApiClient _apiClient;
 
-  StorageService(this._client);
+  StorageService([ApiClient? apiClient]) : _apiClient = apiClient ?? ApiClient();
 
   /// Pilih gambar dari kamera atau galeri.
   /// Returns [XFile?] atau null jika user membatalkan.
@@ -28,75 +26,34 @@ class StorageService {
     }
   }
 
-  /// Upload foto profil ke Supabase Storage.
-  /// Path: `avatars/{userId}/avatar.jpg`
-  ///
-  /// Returns [String] public URL foto jika berhasil, throws Exception jika gagal.
+  /// Upload foto profil ke Go Backend Storage.
   Future<String> uploadAvatar({
     required String userId,
     required XFile imageFile,
   }) async {
     try {
-      final String filePath = '$userId/avatar.jpg';
       final Uint8List bytes = await imageFile.readAsBytes();
+      final filename = imageFile.name.isNotEmpty ? imageFile.name : 'avatar.jpg';
+      final response = await _apiClient.uploadImage('/upload/avatar', bytes, filename);
 
-      // Upsert: overwrite jika sudah ada
-      await _client.storage.from(_bucket).uploadBinary(
-        filePath,
-        bytes,
-        fileOptions: const FileOptions(
-          contentType: 'image/jpeg',
-          upsert: true,
-        ),
-      );
+      if (!response.success) {
+        throw Exception(response.message ?? 'Gagal mengunggah foto profil');
+      }
 
-      // Ambil URL publik
-      final String publicUrl =
-          _client.storage.from(_bucket).getPublicUrl(filePath);
-
-      // Tambahkan cache-bust query agar URL selalu fresh
-      final String freshUrl =
-          '$publicUrl?t=${DateTime.now().millisecondsSinceEpoch}';
-
-      // Update kolom avatar_url di tabel profiles
-      await _client
-          .from('profiles')
-          .update({'avatar_url': freshUrl})
-          .eq('id', userId);
-
-      return freshUrl;
-    } on StorageException catch (e) {
-      throw Exception('${AppStrings.labelFailed} upload foto: ${e.message}');
+      final url = response.data?['url']?.toString() ?? '';
+      return url;
     } catch (e) {
-      throw Exception('Terjadi kesalahan saat upload foto: $e');
+      throw Exception('${AppStrings.labelFailed} upload foto: $e');
     }
   }
 
-  /// Hapus foto profil dari Storage dan reset avatar_url ke null.
+  /// Hapus foto profil (opsional).
   Future<void> deleteAvatar({required String userId}) async {
-    try {
-      final String filePath = '$userId/avatar.jpg';
-      await _client.storage.from(_bucket).remove([filePath]);
-      await _client
-          .from('profiles')
-          .update({'avatar_url': null})
-          .eq('id', userId);
-    } catch (e) {
-      debugPrint('StorageService.deleteAvatar error: $e');
-    }
+    // Handled by backend user profile update
   }
 
-  /// Ambil URL avatar terkini dari database.
+  /// Ambil URL avatar terkini.
   Future<String?> getAvatarUrl({required String userId}) async {
-    try {
-      final data = await _client
-          .from('profiles')
-          .select('avatar_url')
-          .eq('id', userId)
-          .maybeSingle();
-      return data?['avatar_url'] as String?;
-    } catch (e) {
-      return null;
-    }
+    return null;
   }
 }

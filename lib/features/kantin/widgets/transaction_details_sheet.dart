@@ -1,16 +1,18 @@
 import 'dart:math' as math;
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 void showTransactionDetailsSheet(BuildContext context, OperatorTransaction tx) {
   TransactionDetailsSheet.show(context, tx);
@@ -49,16 +51,16 @@ class TransactionDetailsSheet extends ConsumerWidget {
     final String firstLetter = studentName.isNotEmpty ? studentName[0].toUpperCase() : '?';
 
     // Status config mapping
-    final isCancelled = tx.status == 'cancelled';
+    final isCancelled = tx.status == 'cancelled' || tx.status == 'refunded';
     final statusColor = isCancelled ? Nebula.rose : Nebula.teal;
     final statusBgColor = isCancelled
         ? Nebula.rose.withValues(alpha: 0.12)
         : Nebula.teal.withValues(alpha: 0.1);
     final statusIcon = isCancelled ? Icons.cancel_outlined : Icons.check_circle_outline;
-    final statusText = isCancelled ? 'Dibatalkan' : 'Berhasil';
+    final statusText = isCancelled ? (tx.status == 'refunded' ? 'Dikembalikan' : 'Dibatalkan') : 'Berhasil';
 
     final String timeStr = tx.createdAt != null
-        ? DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(tx.createdAt!.toLocal())
+        ? AppDateFormatter.formatShortDateWithTime(tx.createdAt)
         : '-';
 
     return Container(
@@ -280,7 +282,7 @@ class TransactionDetailsSheet extends ConsumerWidget {
               children: [
                 _buildReceiptMetaRow(context, 'Waktu Transaksi', timeStr),
                 const SizedBox(height: 8),
-                _buildReceiptMetaRow(context, 'Metode Pembelian', tx.purchaseMethod == 'app' ? 'Aplikasi' : 'NFC / Kasir'),
+                _buildReceiptMetaRow(context, 'Metode Transaksi', tx.purchaseMethodDisplay),
                 const SizedBox(height: 8),
                 _buildReceiptMetaRow(context, 'Status Transaksi', statusText, valueColor: statusColor),
               ],
@@ -307,13 +309,27 @@ class TransactionDetailsSheet extends ConsumerWidget {
                 const SizedBox(height: 12),
                 itemsAsync.when(
                   data: (items) {
+                    final effectiveItems = items.isNotEmpty ? items : (tx.transactionItems ?? <TransactionItem>[]);
+                    if (effectiveItems.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text(
+                          'Transaksi Kasir Standar',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: context.textPrimary,
+                          ),
+                        ),
+                      );
+                    }
                     return Column(
-                      children: items.map((item) {
+                      children: effectiveItems.map((item) {
                         final String name = item.productName;
                         final int price = item.unitPrice;
                         final int qty = item.quantity;
-                        final imgUrl = productImages[name.toLowerCase().trim()];
-                        
+                        final imgUrl = item.imageUrl ?? productImages[name.toLowerCase().trim()];
+
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12.0),
                           child: Row(
@@ -330,10 +346,15 @@ class TransactionDetailsSheet extends ConsumerWidget {
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(8),
                                   child: imgUrl != null && imgUrl.isNotEmpty
-                                      ? Image.network(
-                                          imgUrl,
+                                      ? CachedNetworkImage(
+                                          imageUrl: imgUrl,
                                           fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) => Icon(
+                                          placeholder: (context, url) => const ShimmerRect(
+                                            width: 40,
+                                            height: 40,
+                                            borderRadius: 8,
+                                          ),
+                                          errorWidget: (context, url, error) => Icon(
                                             Icons.fastfood_outlined,
                                             color: context.textSecondary,
                                             size: 18,
@@ -462,22 +483,29 @@ class TransactionDetailsSheet extends ConsumerWidget {
   }
 
   Widget _buildReceiptMetaRow(BuildContext context, String label, String value, {Color? valueColor}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(fontSize: 12, color: context.textSecondary),
-        ),
-        Text(
-          value,
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: valueColor ?? context.textPrimary,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.inter(fontSize: 12, color: context.textSecondary),
           ),
-        ),
-      ],
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: valueColor ?? context.textPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

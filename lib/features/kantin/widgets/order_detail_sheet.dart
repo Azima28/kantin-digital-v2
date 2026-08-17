@@ -3,10 +3,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/kantin/models/order_item.dart';
+import 'package:kantin_digital/features/kantin/providers/order_chat_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
+import 'package:kantin_digital/features/kantin/widgets/pos_order_chat_sheet.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 class OrderDetailSheet extends ConsumerWidget {
@@ -184,7 +186,7 @@ class OrderDetailSheet extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,6 +198,8 @@ class OrderDetailSheet extends ConsumerWidget {
                     fontWeight: FontWeight.w700,
                     color: context.textPrimary,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -213,11 +217,12 @@ class OrderDetailSheet extends ConsumerWidget {
     );
   }
 
-  // Interactive stepper track
+  // Interactive stepper track with specific icons per status
   Widget _buildStatusStepper(BuildContext context) {
     final List<String> statuses = ['Baru', 'Sedang Dimasak', 'Siap Diambil', 'Selesai'];
     int currentIndex = statuses.indexOf(order.status);
-    
+    final bool isDelivery = order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty;
+
     // Handle specific cases (like Siap Diantar being group 2)
     if (order.status == 'Siap Diantar') currentIndex = 2;
     if (order.status == 'Menunggu Pembatalan') currentIndex = 1;
@@ -236,25 +241,45 @@ class OrderDetailSheet extends ConsumerWidget {
           final isCompleted = currentIndex >= index;
           final isCurrent = currentIndex == index;
           final isBatal = order.status == 'Dibatalkan';
-          
+
           Color circleColor;
-          IconData icon;
           if (isBatal) {
             circleColor = Nebula.rose;
-            icon = Icons.cancel;
           } else if (order.status == 'Menunggu Pembatalan' && index == 1) {
             circleColor = Nebula.rose;
-            icon = Icons.warning_amber_rounded;
           } else if (isCompleted) {
             circleColor = Nebula.teal;
-            icon = Icons.check;
           } else {
             circleColor = context.textSecondary.withValues(alpha: 0.4);
-            icon = Icons.circle;
+          }
+
+          // Specific icon per status
+          IconData icon;
+          if (isBatal) {
+            icon = Icons.cancel_rounded;
+          } else if (order.status == 'Menunggu Pembatalan' && index == 1) {
+            icon = Icons.warning_amber_rounded;
+          } else {
+            switch (index) {
+              case 0:
+                icon = Icons.receipt_long_rounded;
+                break;
+              case 1:
+                icon = Icons.soup_kitchen_rounded;
+                break;
+              case 2:
+                icon = isDelivery ? Icons.local_shipping_rounded : Icons.shopping_bag_rounded;
+                break;
+              case 3:
+                icon = Icons.check_circle_rounded;
+                break;
+              default:
+                icon = Icons.circle;
+            }
           }
 
           String stepLabel = statuses[index];
-          if (index == 2 && order.status == 'Siap Diantar') {
+          if (index == 2 && isDelivery) {
             stepLabel = 'Siap Diantar';
           }
 
@@ -263,12 +288,12 @@ class OrderDetailSheet extends ConsumerWidget {
             children: [
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
-                width: 32,
-                height: 32,
+                width: 34,
+                height: 34,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isCurrent ? Colors.white : circleColor,
-                  border: isCurrent ? Border.all(color: circleColor, width: 4) : null,
+                  border: isCurrent ? Border.all(color: circleColor, width: 3.5) : null,
                   boxShadow: isCurrent
                       ? [
                           BoxShadow(
@@ -281,8 +306,8 @@ class OrderDetailSheet extends ConsumerWidget {
                 ),
                 child: Center(
                   child: Icon(
-                    isCurrent ? Icons.play_arrow : icon,
-                    size: 14,
+                    icon,
+                    size: 16,
                     color: isCurrent ? circleColor : Colors.white,
                   ),
                 ),
@@ -511,94 +536,98 @@ class OrderDetailSheet extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                ...order.items.map((item) {
-                  final imgUrl = productImages[item.name.toLowerCase().trim()];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12.0),
-                    child: Row(
-                      children: [
-                        // Product photo thumbnail
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: context.surfaceBg,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: context.borderLight, width: 0.5),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: imgUrl != null && imgUrl.isNotEmpty
-                                ? Image.network(
-                                    imgUrl,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) => Icon(
+                ...(() {
+                  final sortedItems = List<OrderSubItem>.from(order.items)
+                    ..sort((a, b) => (b.price * b.qty).compareTo(a.price * a.qty));
+                  return sortedItems.map((item) {
+                    final imgUrl = productImages[item.name.toLowerCase().trim()];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: Row(
+                        children: [
+                          // Product photo thumbnail
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: context.surfaceBg,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: context.borderLight, width: 0.5),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: imgUrl != null && imgUrl.isNotEmpty
+                                  ? Image.network(
+                                      imgUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) => Icon(
+                                        Icons.fastfood_outlined,
+                                        color: context.textSecondary,
+                                        size: 18,
+                                      ),
+                                    )
+                                  : Icon(
                                       Icons.fastfood_outlined,
                                       color: context.textSecondary,
                                       size: 18,
                                     ),
-                                  )
-                                : Icon(
-                                    Icons.fastfood_outlined,
-                                    color: context.textSecondary,
-                                    size: 18,
-                                  ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
+                          const SizedBox(width: 12),
 
-                        // Name & Price
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          // Name & Price
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item.name,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: context.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '@ ${CurrencyFormatter.format(item.price)}',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    color: context.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Quantity & Subtotal
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                item.name,
+                                'x${item.qty}',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: context.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                CurrencyFormatter.format(item.price * item.qty),
                                 style: GoogleFonts.inter(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                   color: context.textPrimary,
                                 ),
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '@ Rp ${NumberFormat('#,###', 'id_ID').format(item.price)}',
-                                style: GoogleFonts.inter(
-                                  fontSize: 11,
-                                  color: context.textSecondary,
-                                ),
-                              ),
                             ],
                           ),
-                        ),
-
-                        // Quantity & Subtotal
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              'x${item.qty}',
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: context.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Rp ${NumberFormat('#,###', 'id_ID').format(item.price * item.qty)}',
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: context.textPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                }),
+                        ],
+                      ),
+                    );
+                  });
+                })(),
               ],
             ),
           ),
@@ -626,7 +655,7 @@ class OrderDetailSheet extends ConsumerWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Rp ${NumberFormat('#,###', 'id_ID').format(order.totalAmount)}',
+                  CurrencyFormatter.format(order.totalAmount),
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
@@ -649,9 +678,15 @@ class OrderDetailSheet extends ConsumerWidget {
           label,
           style: GoogleFonts.inter(fontSize: 12, color: context.textSecondary),
         ),
-        Text(
-          value,
-          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: context.textPrimary),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: context.textPrimary),
+          ),
         ),
       ],
     );
@@ -678,10 +713,64 @@ class OrderDetailSheet extends ConsumerWidget {
   Widget _buildBottomActionButtons(BuildContext context, WidgetRef ref) {
     final isBatal = order.status == 'Dibatalkan';
     final isSelesai = order.status == 'Selesai';
-    
+    final isMerchantCancelRequest = order.status == 'Menunggu Persetujuan Murid';
+
+    final chatAsync = ref.watch(orderChatStreamProvider(order.id));
+    final int unreadCount = chatAsync.maybeWhen(
+      data: (messages) => messages.where((m) => m.senderRole != 'canteen_operator' && !m.isRead).length,
+      orElse: () => 0,
+    );
+
+    Widget buildChatButton({bool isFullWidth = false}) {
+      return OutlinedButton(
+        onPressed: () {
+          Navigator.pop(context);
+          PosOrderChatSheet.show(context, order: order);
+        },
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: Nebula.teal.withValues(alpha: 0.5), width: 1.2),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(CupertinoIcons.chat_bubble_2_fill, size: 15, color: Nebula.teal),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                'Chat Siswa',
+                style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13, color: Nebula.teal),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (unreadCount > 0) ...[
+              const SizedBox(width: 5),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEF4444),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                child: Center(
+                  child: Text(
+                    unreadCount > 9 ? '9+' : '$unreadCount',
+                    style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold, height: 1.0),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
     if (order.status == 'Menunggu Pembatalan') {
       return Container(
-        padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).padding.bottom + 16),
+        padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
         decoration: BoxDecoration(
           color: context.cardBg,
           boxShadow: [
@@ -692,46 +781,84 @@ class OrderDetailSheet extends ConsumerWidget {
             ),
           ],
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Reject Cancellation (Tolak)
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  onStatusChanged(order.id, 'Sedang Dimasak', order.studentId);
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: context.textSecondary,
-                  side: BorderSide(color: context.dividerCol),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: Text(
-                  'Tolak Pembatalan',
-                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14),
-                ),
-              ),
+            SizedBox(
+              width: double.infinity,
+              child: buildChatButton(isFullWidth: true),
             ),
-            const SizedBox(width: 16),
-            // Approve Cancellation (Setujui)
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  onStatusChanged(order.id, 'Dibatalkan', order.studentId);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Nebula.rose,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                // Reject Cancellation (Tolak)
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      onStatusChanged(order.id, 'Sedang Dimasak', order.studentId);
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: context.textSecondary,
+                      side: BorderSide(color: context.dividerCol),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text(
+                      'Tolak Batal',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Approve Cancellation (Setujui)
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      onStatusChanged(order.id, 'Dibatalkan', order.studentId);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Nebula.rose,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'Setujui Batal',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (isBatal || isSelesai || isMerchantCancelRequest) {
+      return Container(
+        padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
+        color: context.surfaceBg,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: buildChatButton(isFullWidth: true),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
                 ),
-                child: Text(
-                  'Setujui Pembatalan',
-                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14),
-                ),
+                child: Text(isMerchantCancelRequest ? 'Menunggu Konfirmasi Murid' : 'Tutup Rincian'),
               ),
             ),
           ],
@@ -739,28 +866,8 @@ class OrderDetailSheet extends ConsumerWidget {
       );
     }
 
-    final isMerchantCancelRequest = order.status == 'Menunggu Persetujuan Murid';
-
-    if (isBatal || isSelesai || isMerchantCancelRequest) {
-      return Container(
-        padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).padding.bottom + 16),
-        color: context.surfaceBg,
-        child: SizedBox(
-          width: double.infinity,
-          child: OutlinedButton(
-            onPressed: () => Navigator.pop(context),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: Text(isMerchantCancelRequest ? 'Menunggu Konfirmasi Murid' : 'Tutup Rincian'),
-          ),
-        ),
-      );
-    }
-
     return Container(
-      padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).padding.bottom + 16),
+      padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
       decoration: BoxDecoration(
         color: context.cardBg,
         boxShadow: [
@@ -771,66 +878,93 @@ class OrderDetailSheet extends ConsumerWidget {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Cancel Action button
-          Expanded(
-            child: OutlinedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                onStatusChanged(order.id, 'Dibatalkan', order.studentId);
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Nebula.rose,
-                side: const BorderSide(color: Nebula.rose),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: Text(
-                'Batalkan',
-                style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14),
-              ),
-            ),
-          ),
-          SizedBox(width: 16),
-
-          // Primary flow action button
-          Expanded(
-            flex: 2,
-            child: ElevatedButton(
+          // 1. Primary Status Action Button on TOP (Full Width)
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
               onPressed: () {
                 Navigator.pop(context);
                 String nextStatus = 'Sedang Dimasak';
                 if (order.status == 'Sedang Dimasak') {
-                  nextStatus = order.deliveryLocation != null ? 'Siap Diantar' : 'Siap Diambil';
+                  nextStatus = (order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty)
+                      ? 'Siap Diantar'
+                      : 'Siap Diambil';
                 } else if (order.status == 'Siap Diambil' || order.status == 'Siap Diantar') {
                   nextStatus = 'Selesai';
                 }
                 onStatusChanged(order.id, nextStatus, order.studentId);
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Nebula.teal,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 0,
-              ),
-              child: Text(
+              icon: Icon(_getNextActionIcon(), size: 17),
+              label: Text(
                 _getNextActionLabel(),
                 style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14),
               ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Nebula.teal,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
+              ),
             ),
+          ),
+          const SizedBox(height: 10),
+
+          // 2. Secondary Row below: [ Batalkan ] and [ Chat Siswa + Unread Badge ]
+          Row(
+            children: [
+              // Cancel Action button
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    onStatusChanged(order.id, 'Dibatalkan', order.studentId);
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Nebula.rose,
+                    side: const BorderSide(color: Nebula.rose, width: 1.2),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: Text(
+                    'Batalkan',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Chat Button with Badge
+              Expanded(
+                child: buildChatButton(),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
+  IconData _getNextActionIcon() {
+    if (order.status == 'Baru') {
+      return Icons.soup_kitchen_rounded;
+    } else if (order.status == 'Sedang Dimasak') {
+      return (order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty)
+          ? Icons.local_shipping_rounded
+          : Icons.shopping_bag_rounded;
+    } else {
+      return Icons.check_circle_rounded;
+    }
+  }
+
   String _getNextActionLabel() {
     if (order.status == 'Baru') {
       return 'Terima & Masak';
     } else if (order.status == 'Sedang Dimasak') {
-      return order.deliveryLocation != null ? 'Siap Diantar' : 'Siap Diambil';
+      return (order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty) ? 'Siap Diantar' : 'Siap Diambil';
     } else if (order.status == 'Siap Diambil' || order.status == 'Siap Diantar') {
       return 'Selesai';
     }

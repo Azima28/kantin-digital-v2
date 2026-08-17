@@ -5,8 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 /// Shows the Import Users from CSV dialog.
 /// This dialog is role-aware and adapts the CSV format based on [roleFilter].
@@ -128,7 +128,7 @@ void showImportUsersDialog(BuildContext context, WidgetRef ref, String roleFilte
                         isProcessing = true;
                       });
 
-                      final client = ref.read(supabaseClientProvider);
+                      final apiClient = ref.read(apiClientProvider);
                       final lines = text.split('\n');
                       int successCount = 0;
                       int failCount = 0;
@@ -170,17 +170,20 @@ void showImportUsersDialog(BuildContext context, WidgetRef ref, String roleFilte
 
                           try {
                             final username = 'student_$nisn';
-                            await client.rpc('create_user_account', params: {
-                              'p_email': email,
-                              'p_password': password,
-                              'p_full_name': name,
-                              'p_role': 'student',
-                              'p_username': username,
-                              'p_nisn': nisn,
-                              'p_class': sClass,
-                              'p_is_active': false,
+                            final resp = await apiClient.post('/admin/students', body: {
+                              'email': email,
+                              'password': password,
+                              'full_name': name,
+                              'username': username,
+                              'nisn': nisn,
+                              'class': sClass,
                             });
-                            successCount++;
+                            if (resp.success) {
+                              successCount++;
+                            } else {
+                              failCount++;
+                              errors.add('Error $name: ${resp.message}');
+                            }
                           } catch (e) {
                             failCount++;
                             errors.add('Error $name: $e');
@@ -210,34 +213,22 @@ void showImportUsersDialog(BuildContext context, WidgetRef ref, String roleFilte
                           }
 
                           try {
-                            final newProfile = await client.rpc(
-                                'create_user_account', params: {
-                              'p_email': email,
-                              'p_password': password,
-                              'p_full_name': name,
-                              'p_role': 'parent',
-                              'p_phone_number': phone,
-                              'p_relation': relation,
-                              'p_is_active': true,
+                            final resp = await apiClient.post('/admin/users', body: {
+                              'email': email,
+                              'password': password,
+                              'full_name': name,
+                              'role': 'parent',
+                              'phone_number': phone,
+                              'relation': relation,
+                              'student_nisn': childNisn,
                             });
 
-                            final parentId = newProfile['id'];
-                            final student = await client
-                                .from('profiles')
-                                .select('id')
-                                .eq('nisn', childNisn)
-                                .eq('role', 'student')
-                                .maybeSingle();
-
-                            if (student != null) {
-                              final studentId = student['id'];
-                              await client.from('parent_students').insert({
-                                'parent_id': parentId,
-                                'student_id': studentId,
-                              });
+                            if (resp.success) {
+                              successCount++;
+                            } else {
+                              failCount++;
+                              errors.add('Error $name: ${resp.message}');
                             }
-
-                            successCount++;
                           } catch (e) {
                             failCount++;
                             errors.add('Error $name: $e');
@@ -265,17 +256,19 @@ void showImportUsersDialog(BuildContext context, WidgetRef ref, String roleFilte
                           }
 
                           try {
-                            await client.rpc('create_user_account', params: {
-                              'p_email': email,
-                              'p_password': password,
-                              'p_full_name': name,
-                              'p_role': 'petugas_kantin',
-                              'p_phone_number': null,
-                              'p_username': username,
-                              'p_canteen_name': canteenName,
-                              'p_is_active': true,
+                            final resp = await apiClient.post('/admin/canteen-operators', body: {
+                              'email': email,
+                              'password': password,
+                              'full_name': name,
+                              'username': username,
+                              'canteen_name': canteenName,
                             });
-                            successCount++;
+                            if (resp.success) {
+                              successCount++;
+                            } else {
+                              failCount++;
+                              errors.add('Error $name: ${resp.message}');
+                            }
                           } catch (e) {
                             failCount++;
                             errors.add('Error $name: $e');
@@ -303,57 +296,25 @@ void showImportUsersDialog(BuildContext context, WidgetRef ref, String roleFilte
                           }
 
                           try {
-                            final newProfile = await client.rpc(
-                                'create_user_account', params: {
-                              'p_email': email,
-                              'p_password': password,
-                              'p_full_name': name,
-                              'p_role': 'petugas_keuangan',
-                              'p_is_active': true,
-                            });
-
-                            final officerId = newProfile['id'];
-                            await client
-                                .from('finance_officers')
-                                .update({
+                            final resp = await apiClient.post('/admin/finance-officers', body: {
+                              'email': email,
+                              'password': password,
+                              'full_name': name,
                               'assigned_school': school,
                               'authority_level': authLevel,
-                            }).eq('id', officerId);
+                            });
 
-                            successCount++;
+                            if (resp.success) {
+                              successCount++;
+                            } else {
+                              failCount++;
+                              errors.add('Error $name: ${resp.message}');
+                            }
                           } catch (e) {
                             failCount++;
                             errors.add('Error $name: $e');
                           }
                         }
-                      }
-
-                      // Write to Audit Log if successCount > 0
-                      if (successCount > 0) {
-                        try {
-                          final authProfile =
-                              ref.read(authNotifierProvider).profile;
-                          final actorName =
-                              authProfile?['full_name'] ?? 'Super Admin';
-                          final actorId = authProfile?['id'];
-
-                          final String actionType = roleFilter == 'Siswa'
-                              ? 'IMPORT_SISWA'
-                              : roleFilter == 'Orang Tua'
-                                  ? 'IMPORT_WALI'
-                                  : roleFilter == 'Kantin'
-                                      ? 'IMPORT_KANTIN'
-                                      : 'IMPORT_KEUANGAN';
-
-                          await client.from('audit_logs').insert({
-                            'actor_id': actorId,
-                            'actor_name': actorName,
-                            'action_type': actionType,
-                            'description':
-                                'Berhasil mengimport $successCount $roleFilter secara massal dari CSV.',
-                            'new_value': {'imported_count': successCount},
-                          });
-                        } catch (_) {}
                       }
 
                       // Refresh list

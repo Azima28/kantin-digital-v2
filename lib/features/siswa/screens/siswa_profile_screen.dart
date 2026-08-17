@@ -14,6 +14,7 @@ import 'package:kantin_digital/core/widgets/change_password_panel.dart';
 import 'package:kantin_digital/core/widgets/theme_toggle_tile.dart';
 import 'package:kantin_digital/core/widgets/app_toast.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 import 'package:kantin_digital/features/siswa/widgets/siswa_profile_header.dart';
@@ -199,8 +200,8 @@ class SiswaProfileScreen extends ConsumerWidget {
     final String? userId = authState.profile?['id'];
     if (userId == null) return;
 
-    final client = ref.read(supabaseClientProvider);
-    final storageService = StorageService(client);
+    final apiClient = ref.read(apiClientProvider);
+    final storageService = StorageService(apiClient);
 
     final imageFile = await storageService.pickImage(source: source);
     if (imageFile == null) return;
@@ -335,11 +336,15 @@ class SiswaProfileScreen extends ConsumerWidget {
                       // Keamanan & Akses
                       buildSectionHeader(context, 'KEAMANAN & AKSES'),
                       const SizedBox(height: 8),
-                      buildProfileCard(context, 
+                      buildProfileCard(context,
                         child: Column(
                           children: [
-                            const ThemeToggleTile(showDivider: true),
-                            buildIconActionRow(context, 
+                            const ThemeToggleTile(
+                              showDivider: true,
+                              useCircleIcon: false,
+                              padding: EdgeInsets.symmetric(vertical: 4),
+                            ),
+                            buildIconActionRow(context,
                               icon: CupertinoIcons.lock,
                               iconColor: context.textSecondary,
                               label: 'Ubah Sandi Akun',
@@ -347,7 +352,7 @@ class SiswaProfileScreen extends ConsumerWidget {
                                   _showChangePasswordPanel(context, ref),
                               showDivider: true,
                             ),
-                            buildIconActionRow(context, 
+                            buildIconActionRow(context,
                               icon: CupertinoIcons.square_arrow_right,
                               iconColor: Nebula.rose,
                               label: 'Keluar dari Akun',

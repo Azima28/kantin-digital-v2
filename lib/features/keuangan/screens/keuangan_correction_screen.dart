@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/models/models.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 
@@ -91,27 +90,23 @@ class _KeuanganCorrectionScreenState
     });
 
     try {
-      final client = ref.read(supabaseClientProvider);
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient.get('/student/lookup', queryParams: {'search': query});
 
-      // Query profiles for student matching NISN or name (fuzzy search)
-      final List<dynamic> res = await client
-          .from('profiles')
-          .select(
-            'id, full_name, nisn, is_active, students:students!students_id_fkey(balance, rfid_uid, classes:classes(name))',
-          )
-          .eq('role', 'student')
-          .or('nisn.ilike."%$query%",full_name.ilike."%$query%"')
-          .limit(5);
-
-      setState(() {
-        _searchResults = res
-            .map(
-              (e) =>
-                  StudentWithProfile.fromJoinedJson(e as Map<String, dynamic>),
-            )
-            .toList();
-        _hasSearched = true;
-      });
+      if (response.success && response.data != null) {
+        final list = response.data as List<dynamic>;
+        setState(() {
+          _searchResults = list
+              .map((e) => StudentWithProfile.fromJoinedJson(e as Map<String, dynamic>))
+              .toList();
+          _hasSearched = true;
+        });
+      } else {
+        setState(() {
+          _searchResults = [];
+          _hasSearched = true;
+        });
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -166,10 +161,7 @@ class _KeuanganCorrectionScreenState
     });
 
     try {
-      final client = ref.read(supabaseClientProvider);
-      final authState = ref.read(authNotifierProvider);
-      final sessionToken = authState.sessionToken;
-
+      final apiClient = ref.read(apiClientProvider);
       final studentId = _selectedStudent!.id;
       final int amount = _storedAmount;
       final int finalNewBalance = _storedIsAddition
@@ -177,17 +169,15 @@ class _KeuanganCorrectionScreenState
           : _studentBalance - amount;
       final String reason = _storedReason;
 
-      if (sessionToken == null || sessionToken.isEmpty) {
-        throw Exception('Sesi tidak valid. Silakan keluar dan masuk kembali.');
-      }
-
-      // Call RPC process_correction (handles balance update, audit log, notification)
-      await client.rpc('process_correction', params: {
-        'p_student_id': studentId,
-        'p_new_balance': finalNewBalance,
-        'p_session_token': sessionToken,
-        'p_reason': reason,
+      final response = await apiClient.post('/finance/correction', body: {
+        'student_id': studentId,
+        'new_balance': finalNewBalance,
+        'reason': reason,
       });
+
+      if (!response.success) {
+        throw Exception(response.message ?? 'Koreksi saldo gagal');
+      }
 
       // Invalidate providers
       ref.invalidate(keuanganDashboardProvider);

@@ -12,6 +12,7 @@ import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/parent/providers/parent_providers.dart';
 import 'package:kantin_digital/features/parent/widgets/parent_action_grid.dart';
@@ -87,42 +88,21 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
     });
 
     try {
-      final client = ref.read(supabaseClientProvider);
-      final ParentDashboardData? oldData = ref.read(parentDashboardProvider(widget.studentId)).value;
-      final bool oldIsActive = oldData?.student.isActive ?? true;
-
-      final double? newLimit = _dailyLimitActive 
+      final apiClient = ref.read(apiClientProvider);
+      final double? newLimit = _dailyLimitActive
           ? double.tryParse(_limitController.text.trim()) ?? 0.0
           : null;
       final bool newIsActive = !_cardFrozen;
       final bool newWaEnabled = _waAlertsActive;
       final String newParentPhone = _phoneController.text.trim();
 
-      await client.from('students').update({
+      await apiClient.patch('/student/settings', body: {
+        'student_id': widget.studentId,
         'daily_limit': newLimit,
         'is_active': newIsActive,
         'wa_notifications_enabled': newWaEnabled,
         'parent_phone': newParentPhone.isNotEmpty ? newParentPhone : null,
-      }).eq('id', widget.studentId);
-
-      // Audit Log for freeze/unfreeze card by Parent
-      if (oldIsActive != newIsActive) {
-        try {
-          final authProfile = ref.read(authNotifierProvider).profile;
-          final actorName = authProfile?['full_name'] ?? 'Orang Tua';
-          final actorId = authProfile?['id'];
-
-          await client.from('audit_logs').insert({
-            'actor_id': actorId,
-            'actor_name': actorName,
-            'action_type': newIsActive ? 'AKTIFKAN_KARTU' : 'BLOKIR_KARTU',
-            'description': 'Orang Tua ${newIsActive ? "mengaktifkan" : "membekukan"} kartu RFID anak: ${oldData?.profile.fullName ?? widget.studentId}',
-            'target_id': widget.studentId,
-            'old_value': {'is_active': oldIsActive},
-            'new_value': {'is_active': newIsActive},
-          });
-        } catch (_) {}
-      }
+      });
 
       ref.invalidate(parentDashboardProvider(widget.studentId));
       ref.invalidate(siswaStudentProvider);
@@ -300,12 +280,27 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
             if (val == 'Kustom') {
               final range = await showDateRangePicker(
                 context: context,
-                firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                lastDate: DateTime.now(),
+                firstDate: DateTime(2000, 1, 1),
+                lastDate: DateTime(2100, 12, 31),
                 builder: (context, child) {
                   return Theme(
                     data: Theme.of(context).copyWith(
-                      colorScheme: const ColorScheme.light(primary: Nebula.teal),
+                      colorScheme: Theme.of(context).colorScheme.copyWith(
+                            primary: Nebula.teal,
+                            onPrimary: Colors.white,
+                            surface: context.isDark ? const Color(0xFF1E293B) : Colors.white,
+                            surfaceTint: Colors.transparent,
+                          ),
+                      dialogTheme: DialogThemeData(
+                        backgroundColor: context.isDark ? const Color(0xFF1E293B) : Colors.white,
+                        surfaceTintColor: Colors.transparent,
+                      ),
+                      datePickerTheme: DatePickerThemeData(
+                        backgroundColor: context.isDark ? const Color(0xFF1E293B) : Colors.white,
+                        surfaceTintColor: Colors.transparent,
+                        headerBackgroundColor: context.isDark ? const Color(0xFF1E293B) : Colors.white,
+                        headerForegroundColor: context.isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
                     ),
                     child: child!,
                   );

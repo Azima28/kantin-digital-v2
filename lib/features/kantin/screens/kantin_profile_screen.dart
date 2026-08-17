@@ -1,13 +1,18 @@
+import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/services/storage_service.dart';
 import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 import 'package:kantin_digital/core/widgets/change_password_panel.dart';
 import 'package:kantin_digital/core/widgets/theme_toggle_tile.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
 import 'package:kantin_digital/features/public/providers/public_providers.dart';
@@ -25,9 +30,11 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
   bool _isDeliveryEnabled = true;
   bool _isDeliveryInitialized = false;
   bool _isSavingDelivery = false;
+  Timer? _deliveryDebounce;
 
   @override
   void dispose() {
+    _deliveryDebounce?.cancel();
     _deliveryFeeController.dispose();
     super.dispose();
   }
@@ -73,46 +80,124 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
     );
   }
 
-  Future<void> _saveDeliverySettings() async {
+  Future<void> _autoSaveDelivery({bool? enabled, int? fee}) async {
     final operatorId = ref.read(authNotifierProvider).profile?['id'];
     if (operatorId == null) return;
 
-    final int fee = int.tryParse(_deliveryFeeController.text.replaceAll('.', '').trim()) ?? 2000;
+    final targetEnabled = enabled ?? _isDeliveryEnabled;
+    final targetFee = fee ?? (int.tryParse(_deliveryFeeController.text.replaceAll('.', '').trim()) ?? 2000);
 
     setState(() => _isSavingDelivery = true);
 
     try {
-      final client = ref.read(supabaseClientProvider);
-      await client.from('canteen_operators').update({
-        'is_delivery_enabled': _isDeliveryEnabled,
-        'delivery_fee': fee,
-      }).eq('id', operatorId);
+      final apiClient = ref.read(apiClientProvider);
+      await apiClient.patch('/pos/delivery-settings', body: {
+        'is_delivery_enabled': targetEnabled,
+        'delivery_fee': targetFee,
+      });
 
+      ref.invalidate(canteenOperatorProvider);
+      ref.invalidate(publicCanteensProvider);
+    } catch (_) {
+    } finally {
+      if (mounted) {
+        setState(() => _isSavingDelivery = false);
+      }
+    }
+  }
+
+  void _onFeeChanged(String val) {
+    _deliveryDebounce?.cancel();
+    _deliveryDebounce = Timer(const Duration(milliseconds: 600), () {
+      final fee = int.tryParse(val.replaceAll('.', '').trim());
+      if (fee != null) {
+        _autoSaveDelivery(fee: fee);
+      }
+    });
+  }
+
+  Future<void> _handleAvatarChange() async {
+    await showCupertinoModalPopup<void>(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        title: const Text('Ubah Foto Profil Stan'),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _uploadAvatar(ImageSource.camera);
+            },
+            child: const Text('Ambil Foto dari Kamera'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _uploadAvatar(ImageSource.gallery);
+            },
+            child: const Text('Pilih dari Galeri'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDestructiveAction: true,
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _uploadAvatar(ImageSource source) async {
+    final authState = ref.read(authNotifierProvider);
+    final String? userId = authState.profile?['id'];
+    if (userId == null) return;
+
+    final apiClient = ref.read(apiClientProvider);
+    final storageService = StorageService(apiClient);
+
+    final imageFile = await storageService.pickImage(source: source);
+    if (imageFile == null) return;
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mengupload foto profil stan...'),
+          duration: Duration(seconds: 60),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+
+    try {
+      final avatarUrl = await storageService.uploadAvatar(
+        userId: userId,
+        imageFile: imageFile,
+      );
+
+      await ref.read(authNotifierProvider.notifier).updateProfileAvatar(avatarUrl);
       ref.invalidate(canteenOperatorProvider);
       ref.invalidate(publicCanteensProvider);
 
       if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Pengaturan layanan antar (delivery) berhasil disimpan!'),
-            backgroundColor: Color(0xFF10B981),
+            content: Text('Foto profil stan berhasil diperbarui!'),
+            backgroundColor: Nebula.teal,
             behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal menyimpan pengaturan: $e'),
+            content: Text('Gagal mengupload foto: $e'),
             backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isSavingDelivery = false);
       }
     }
   }
@@ -145,17 +230,23 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
       }
     });
 
+    final String? avatarUrl = authState.profile?['avatar_url'] as String?;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
+        toolbarHeight: 56,
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
-        centerTitle: false,
+        centerTitle: true,
+        shape: Border(
+          bottom: BorderSide(color: context.dividerCol, width: 0.5),
+        ),
         title: Text(
           'Akun Saya',
-          style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Nebula.teal, fontSize: 18),
+          style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.textPrimary, fontSize: 18),
         ),
       ),
       body: SafeArea(
@@ -167,14 +258,14 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
               // Bento Profile Card
               Container(
                 width: double.infinity,
-                padding: EdgeInsets.all(24),
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
                       Nebula.teal,
-                      Nebula.teal,
+                      Nebula.tealDark,
                     ],
                   ),
                   borderRadius: BorderRadius.circular(24),
@@ -192,16 +283,73 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
                 ),
                 child: Column(
                   children: [
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundColor: Colors.transparent.withValues(alpha: 0.15),
-                      child: Text(
-                        canteenName.isNotEmpty ? canteenName[0].toUpperCase() : 'K',
-                        style: GoogleFonts.inter(
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                          color: context.cardBg,
-                        ),
+                    // Editable Profile Avatar with Camera Button
+                    GestureDetector(
+                      onTap: _handleAvatarChange,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: 84,
+                            height: 84,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.2),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 2),
+                            ),
+                            child: ClipOval(
+                              child: (avatarUrl != null && avatarUrl.isNotEmpty)
+                                  ? CachedNetworkImage(
+                                      imageUrl: avatarUrl,
+                                      fit: BoxFit.cover,
+                                      placeholder: (_, __) => const Center(child: CupertinoActivityIndicator(color: Colors.white)),
+                                      errorWidget: (_, __, ___) => Center(
+                                        child: Text(
+                                          canteenName.isNotEmpty ? canteenName[0].toUpperCase() : 'K',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 34,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : Center(
+                                      child: Text(
+                                        canteenName.isNotEmpty ? canteenName[0].toUpperCase() : 'K',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 34,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: -2,
+                            right: -2,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.25),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                CupertinoIcons.camera_fill,
+                                size: 14,
+                                color: Nebula.teal,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -256,7 +404,7 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
               _buildDeliverySettingsCard(context),
               const SizedBox(height: 16),
 
-              // Keamanan Card
+              // Preferensi & Keamanan Card
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -278,24 +426,28 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: EdgeInsets.only(left: 20, top: 16, right: 20, bottom: 8),
+                      padding: const EdgeInsets.only(left: 20, top: 16, right: 20, bottom: 6),
                       child: Row(
                         children: [
-                          Icon(CupertinoIcons.lock_shield, color: Nebula.teal, size: 18),
-                          SizedBox(width: 8),
+                          Icon(CupertinoIcons.settings, color: Nebula.teal, size: 18),
+                          const SizedBox(width: 8),
                           Text(
-                            'Keamanan',
-                            style: TextStyle(
+                            'Preferensi & Keamanan',
+                            style: GoogleFonts.inter(
                               fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                              fontSize: 14.5,
                               color: context.textPrimary,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const ThemeToggleTile(showDivider: true),
+                    const ThemeToggleTile(
+                      showDivider: true,
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    ),
                     ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                       leading: CircleAvatar(
                         radius: 18,
                         backgroundColor: Nebula.teal.withValues(alpha: 0.08),
@@ -303,15 +455,15 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
                       ),
                       title: Text(
                         AppStrings.adminChangePassword,
-                        style: TextStyle(
+                        style: GoogleFonts.inter(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
                           color: context.textPrimary,
                         ),
                       ),
                       subtitle: Text(
-                        'Terakhir diubah: belum pernah',
-                        style: TextStyle(
+                        'Kelola kata sandi akun kasir Anda',
+                        style: GoogleFonts.inter(
                           fontSize: 11,
                           color: context.textSecondary,
                         ),
@@ -380,17 +532,54 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Icon(CupertinoIcons.car_detailed, color: Color(0xFF10B981), size: 20),
-              const SizedBox(width: 8),
-              Text(
-                'Layanan Antar (Delivery)',
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  color: context.textPrimary,
+              Expanded(
+                child: Row(
+                  children: [
+                    const Icon(Icons.delivery_dining_rounded, color: Color(0xFF10B981), size: 22),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'Layanan Antar (Delivery)',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14.5,
+                          color: context.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              const SizedBox(width: 8),
+              if (_isSavingDelivery)
+                const CupertinoActivityIndicator(radius: 8)
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.check_circle_rounded, size: 11, color: Color(0xFF10B981)),
+                      const SizedBox(width: 3),
+                      Text(
+                        'Tersimpan',
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF10B981),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 14),
@@ -429,14 +618,15 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
                 activeTrackColor: const Color(0xFF10B981),
                 onChanged: (val) {
                   setState(() => _isDeliveryEnabled = val);
+                  _autoSaveDelivery(enabled: val);
                 },
               ),
             ],
           ),
-          const SizedBox(height: 14),
 
           // Ongkir Input
           if (_isDeliveryEnabled) ...[
+            const SizedBox(height: 14),
             Text(
               'Tarif Ongkos Kirim (Delivery Fee)',
               style: GoogleFonts.inter(
@@ -454,6 +644,8 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
                 fontWeight: FontWeight.w700,
                 color: context.textPrimary,
               ),
+              onChanged: _onFeeChanged,
+              onSubmitted: (val) => _autoSaveDelivery(),
               decoration: InputDecoration(
                 prefixText: 'Rp ',
                 prefixStyle: GoogleFonts.inter(
@@ -475,34 +667,7 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 14),
           ],
-
-          // Save Button
-          SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: ElevatedButton(
-              onPressed: _isSavingDelivery ? null : _saveDeliverySettings,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-              child: _isSavingDelivery
-                  ? const CupertinoActivityIndicator(color: Colors.white)
-                  : Text(
-                      'Simpan Pengaturan Delivery',
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-            ),
-          ),
         ],
       ),
     );

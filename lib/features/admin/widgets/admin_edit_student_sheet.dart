@@ -5,8 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
 
 /// Bottom sheet for editing an existing student user's profile and data.
@@ -214,70 +214,27 @@ void showEditStudentSheet(
 
                             setLocal(() => isSaving = true);
                             try {
-                              final client = ref.read(supabaseClientProvider);
+                              final apiClient = ref.read(apiClientProvider);
                               final int parsedLimit = int.tryParse(limitText) ?? 0;
                               final rfidVal = rfid.isNotEmpty ? rfid : null;
 
-                              // 1. Update profiles table
-                              await client.from('profiles').update({
-                                'full_name': name,
-                                'email': email,
-                                'username': username,
-                                'nisn': nisn,
-                                'phone_number': phone.isEmpty ? null : phone,
-                              }).eq('id', profile.id);
-
-                              // 2. Update students table core fields
-                              await client.from('students').update({
-                                'daily_limit': parsedLimit,
-                                'rfid_uid': rfidVal,
-                                'parent_phone': phone.isEmpty ? null : phone,
-                              }).eq('id', profile.id);
-
-                              // 3. Update students class field safely if present
-                              try {
-                                await client.from('students').update({
+                              final response = await apiClient.put(
+                                '/admin/students/${profile.id}',
+                                body: {
+                                  'full_name': name,
+                                  'email': email,
+                                  'username': username,
+                                  'nisn': nisn,
+                                  'phone_number': phone.isEmpty ? null : phone,
+                                  'daily_limit': parsedLimit,
+                                  'rfid_uid': rfidVal,
                                   'class': selectedClass,
-                                }).eq('id', profile.id);
-                              } catch (_) {}
+                                },
+                              );
 
-                              // 4. Write audit log
-                              try {
-                                final authProfile =
-                                    ref.read(authNotifierProvider).profile;
-                                final actorName =
-                                    authProfile?['full_name'] ?? 'Super Admin';
-                                final actorId = authProfile?['id'];
-
-                                await client.from('audit_logs').insert({
-                                  'actor_id': actorId,
-                                  'actor_name': actorName,
-                                  'action_type': 'EDIT_PENGGUNA',
-                                  'description':
-                                      'Super Admin mengedit profil siswa: $name (NISN: $nisn)',
-                                  'target_id': profile.id,
-                                  'old_value': {
-                                    'full_name': profile.fullName,
-                                    'email': profile.email,
-                                    'username': profile.username,
-                                    'phone_number': profile.phoneNumber,
-                                    'nisn': profile.nisn,
-                                    'class': student.class_,
-                                    'daily_limit': student.dailyLimit,
-                                    'rfid_uid': student.rfidUid,
-                                  },
-                                  'new_value': {
-                                    'full_name': name,
-                                    'email': email,
-                                    'username': username,
-                                    'phone_number': phone,
-                                    'nisn': nisn,
-                                    'class': selectedClass,
-                                    'daily_limit': parsedLimit,
-                                    'rfid_uid': rfidVal,
-                                  },
-                                });
-                              } catch (_) {}
+                              if (!response.success) {
+                                throw Exception(response.message ?? 'Gagal memperbarui profil siswa');
+                              }
 
                               // Invalidate details and user list providers
                               ref.invalidate(

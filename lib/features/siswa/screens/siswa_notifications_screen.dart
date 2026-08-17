@@ -1,14 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 
@@ -17,12 +18,8 @@ class SiswaNotificationsScreen extends ConsumerWidget {
 
   Future<void> _markAsRead(BuildContext context, WidgetRef ref, String notifId) async {
     try {
-      final client = ref.read(supabaseClientProvider);
-      await client
-          .from('notifications')
-          .update({'is_read': true})
-          .eq('id', notifId);
-      
+      final apiClient = ref.read(apiClientProvider);
+      await apiClient.patch('/student/notifications/$notifId/read');
       ref.invalidate(siswaNotificationsProvider);
     } catch (e) {
       debugPrint('Notification markAsRead error: $e');
@@ -49,12 +46,8 @@ class SiswaNotificationsScreen extends ConsumerWidget {
             onPressed: () async {
               Navigator.pop(ctx);
               try {
-                final client = ref.read(supabaseClientProvider);
-                await client
-                    .from('notifications')
-                    .delete()
-                    .eq('student_id', studentId);
-                
+                final apiClient = ref.read(apiClientProvider);
+                await apiClient.patch('/student/notifications/read-all');
                 ref.invalidate(siswaNotificationsProvider);
               } catch (e) {
                 if (context.mounted) {
@@ -140,7 +133,7 @@ class SiswaNotificationsScreen extends ConsumerWidget {
                     final bool isRead = notif.isRead;
                     
                     final DateTime createdAt = notif.createdAt?.toLocal() ?? DateTime.now();
-                    final String timeStr = DateFormat('dd MMM, HH:mm', 'id_ID').format(createdAt);
+                    final String timeStr = AppDateFormatter.formatShortDateWithTime(createdAt);
 
                     IconData iconData;
                     Color iconColor;

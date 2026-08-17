@@ -23,7 +23,7 @@ class _DailyTrendChartDialogState extends ConsumerState<DailyTrendChartDialog> {
   @override
   Widget build(BuildContext context) {
     final currencyFmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
-    final trendAsync = ref.watch(dailyTrendChartRealtimeProvider(widget.filterParam));
+    final trendAsync = ref.watch(dailyTrendChartProvider);
 
     final periodTitle = widget.filterParam != null ? widget.filterParam!.formattedPeriodLabel : 'Harian';
 
@@ -166,7 +166,7 @@ class _DailyTrendChartDialogState extends ConsumerState<DailyTrendChartDialog> {
                                   final stepX = points.length > 1 ? chartWidth / (points.length - 1) : 0.0;
 
                                   final touchX = details.localPosition.dx - leftPadding;
-                                  int closestIdx = stepX > 0 ? (touchX / stepX).round().clamp(0, points.length - 1) : 0;
+                                  int closestIdx = stepX > 0 ? (touchX / stepX).round().clamp(0, points.length - 1).toInt() : 0;
                                   setState(() {
                                     _selectedIndex = closestIdx;
                                   });

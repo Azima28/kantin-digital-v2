@@ -6,11 +6,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_import_csv_dialog.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_user_list_tile.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_user_search_filter.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 class AdminUsersScreen extends ConsumerStatefulWidget {
@@ -51,35 +51,11 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
   }
 
   Future<void> _toggleUserStatus(String profileId, String role, bool currentStatus) async {
-    final client = ref.read(supabaseClientProvider);
     final bool newStatus = !currentStatus;
 
     try {
-      // 1. Update profiles table
-      await client.from('profiles').update({'is_active': newStatus}).eq('id', profileId);
-
-      // 2. If student, update students table as well
-      if (role == 'student') {
-        await client.from('students').update({'is_active': newStatus}).eq('id', profileId);
-      }
-
-      // Write to audit logs
-      try {
-        final authProfile = ref.read(authNotifierProvider).profile;
-        final actorName = authProfile?['full_name'] ?? 'Super Admin';
-        final actorId = authProfile?['id'];
-
-        await client.from('audit_logs').insert({
-          'actor_id': actorId,
-          'actor_name': actorName,
-          'action_type': newStatus ? 'AKTIFKAN_AKUN' : 'BLOKIR_AKUN',
-          'description':
-              'Super Admin ${newStatus ? "mengaktifkan" : "memblokir"} akun dengan ID: $profileId (Role: $role)',
-          'target_id': profileId,
-          'old_value': {'is_active': currentStatus},
-          'new_value': {'is_active': newStatus},
-        });
-      } catch (_) {}
+      final apiClient = ref.read(apiClientProvider);
+      await apiClient.patch('/users/$profileId/status', body: {'is_active': newStatus});
 
       // Refresh list
       ref.invalidate(adminUsersProvider);

@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/services/nfc_service.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/kantin/widgets/card_check_result_panel.dart';
 import 'package:kantin_digital/features/kantin/widgets/card_check_simulator.dart';
 
@@ -76,17 +76,11 @@ class _CheckCardScreenState extends ConsumerState<CheckCardScreen> {
     });
 
     try {
-      final client = ref.read(supabaseClientProvider);
+      final apiClient = ref.read(apiClientProvider);
 
-      // Query student profiles
-      final Map<String, dynamic>? studentJson = await client
-          .from('students')
-          .select(
-              'id, balance, is_active, classes:classes(name), profiles:profiles!students_id_fkey(full_name, email)')
-          .eq('rfid_uid', rfidUid)
-          .maybeSingle();
+      final response = await apiClient.get('/pos/scan-card', queryParams: {'rfid': rfidUid});
 
-      if (studentJson == null) {
+      if (!response.success || response.data == null) {
         setState(() {
           _errorMessage =
               'Kartu dengan UID $rfidUid tidak terdaftar di sistem Kantin Digital.';
@@ -95,30 +89,17 @@ class _CheckCardScreenState extends ConsumerState<CheckCardScreen> {
         return;
       }
 
+      final studentJson = response.data as Map<String, dynamic>;
       final student = Student.fromJson(studentJson);
-      final profilesData = studentJson['profiles'] as Map<String, dynamic>?;
-      final studentName =
-          profilesData?['full_name'] as String? ?? AppStrings.adminStudents;
-      final studentEmail = profilesData?['email'] as String? ?? '';
-
-      // Query recent transactions
-      final List<dynamic> txList = await client
-          .from('transactions')
-          .select('*, items:transaction_items(*)')
-          .eq('student_id', student.id)
-          .order('created_at', ascending: false)
-          .limit(5);
-
-      final transactions = txList
-          .map((tx) => OperatorTransaction.fromSiswaJson(tx as Map<String, dynamic>))
-          .toList();
+      final studentName = studentJson['full_name']?.toString() ?? studentJson['name']?.toString() ?? AppStrings.adminStudents;
+      final studentEmail = studentJson['email']?.toString() ?? '';
 
       if (mounted) {
         setState(() {
           _student = student;
           _studentName = studentName;
           _studentEmail = studentEmail;
-          _transactions = transactions;
+          _transactions = [];
           _isLoading = false;
         });
       }

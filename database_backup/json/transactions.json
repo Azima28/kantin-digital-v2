@@ -1,0 +1,692 @@
+[
+  {
+    "id": "6a824fec-f08e-4227-a5ac-e487f77b22fd",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 10000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-15T05:39:05.285815+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "9583ff88-a948-4cb5-a71f-61d9fb7fcf22",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 50000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-17T07:34:46.666139+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "838a5981-a945-4498-8c33-0c0be48db0a9",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 500000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-17T09:42:05.492171+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "79d7ced8-dae9-4f8b-a48a-591127dd2890",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 500000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-17T09:42:12.968463+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "4e0bcde2-5ea6-43c5-82bb-41678d480174",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 500000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-17T09:42:35.221497+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "cd09ab77-0314-4848-af3a-1476659051fe",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 500000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-17T09:44:10.759313+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "1e381bc0-6de2-4b70-9f89-4a1e12546894",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 50000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-19T02:57:31.709772+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "45181373-e92e-4f0b-97a8-041528379a30",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 18500.0,
+    "type": "purchase",
+    "status": "success",
+    "created_at": "2026-06-24T04:55:37.779002+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "fd020f30-cee1-4b31-a9b9-5d1b2bbdf8f2",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 20000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-29T07:54:15.732268+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "c10a984d-4a58-49c5-8d73-c23942470fac",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 20000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-29T08:21:05.291051+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "05399dd3-da4e-4711-be11-4f776ae20d9e",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 20000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-29T08:21:22.841848+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "e2c367e5-99ba-4a18-9de9-275cab61dba9",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 20000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-29T08:21:35.881579+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "28eb36ec-b11c-4c92-8897-c859d9d2893c",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 20000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-29T08:24:38.540967+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "c837fade-f1d9-4227-89f9-d349748c31f6",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 20000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-29T08:24:49.375671+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "c8180060-e375-440f-8e45-1834bbbd64eb",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 20000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-29T08:27:47.700078+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "2c21675e-29d6-48fb-859c-c07ba8f3c5d2",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 20000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-29T08:28:00.131241+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "223d5b90-2488-43b0-aa5c-c77bfffa53c8",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 20000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-29T08:28:10.298204+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "c179a99f-ea61-4c5f-a4a9-4c3c6eb1ca2f",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 20000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-29T08:33:45.314516+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "01934cd5-5ccf-4380-ac67-38da2c35b10b",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 20000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-29T08:52:14.09688+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "f0fcf24e-c100-4f23-996d-63850e40882b",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 20000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-29T08:52:14.096706+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "734f3326-74b0-471b-9cba-520a90ce341a",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 20000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-29T09:00:31.274331+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "469a4168-ed17-4f1e-88ff-8521c8ccb60a",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 20000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-29T09:00:41.631568+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "1d80635f-e989-49d0-80d4-f8f590fc53ac",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 20000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-29T09:00:55.97367+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "bde1531c-3c18-4055-8925-125e9af5f828",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 20000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-29T09:09:47.926406+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "5735bd40-0918-4108-bb8f-2e675654ae00",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 10000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-29T09:29:42.738759+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "2ce026ba-3afd-4f85-8edd-b68c1e912d56",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 100000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-29T09:37:05.086685+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "d9ee7980-713d-49f1-aab9-3fe68c3399d8",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 100000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-29T09:37:46.271542+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "612b94b0-6cdb-4103-b7ff-e9433ec65c4a",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 100000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-06-29T09:42:18.396683+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "80a92961-f006-4cbc-85c4-acf1438ee283",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 24000.0,
+    "type": "purchase",
+    "status": "success",
+    "created_at": "2026-07-01T04:29:49.026315+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "34cfd397-23a9-4491-b7cc-b191bbb241d4",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 12000.0,
+    "type": "purchase",
+    "status": "success",
+    "created_at": "2026-07-01T04:46:50.453241+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "435ef550-5b4b-4803-aebf-4540b0eb4efe",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 12000.0,
+    "type": "purchase",
+    "status": "success",
+    "created_at": "2026-07-01T07:48:17.85654+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "d682e474-fbfb-4ef9-b3f1-5e1003b2df1a",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 12000.0,
+    "type": "purchase",
+    "status": "success",
+    "created_at": "2026-07-02T02:48:54.49125+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "4d6fa1ff-1874-4f74-a0ac-c00230a26172",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 12000.0,
+    "type": "purchase",
+    "status": "success",
+    "created_at": "2026-07-02T03:40:45.96988+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "b12f28df-c45d-4cd6-aa48-1d8f13ff2216",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 24000.0,
+    "type": "purchase",
+    "status": "success",
+    "created_at": "2026-07-02T09:16:41.27638+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "c2eeb855-ac6a-41a2-a6aa-433c5f542808",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 100000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-07-03T02:49:31.078666+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "5ab2fd99-7f84-4388-b53a-522d1623fc22",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 12000.0,
+    "type": "purchase",
+    "status": "success",
+    "created_at": "2026-07-03T02:49:53.197983+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "13d0b1bb-bc1f-4af5-aacd-77aad82171c3",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 12000.0,
+    "type": "purchase",
+    "status": "cancelled",
+    "created_at": "2026-07-03T07:45:45.184588+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "455ccf02-bace-4ab7-b8d4-07e25277bcef",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 12000.0,
+    "type": "purchase",
+    "status": "success",
+    "created_at": "2026-07-06T03:04:30.703476+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "b0860249-5a01-4b28-97db-2a8243677e9f",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 1000000000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-07-06T03:05:19.856877+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "4460e3d8-01d4-4fa4-83bb-90771111cc2e",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 1000000000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-07-06T03:05:45.251923+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "e2553ed9-ff68-4d26-9879-d2b7bb9a649a",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 12000.0,
+    "type": "purchase",
+    "status": "cancelled",
+    "created_at": "2026-07-07T07:45:56.027844+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "db1526b7-68db-4e76-9cf5-eca1aa593de6",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 12000.0,
+    "type": "purchase",
+    "status": "cancelled",
+    "created_at": "2026-07-07T07:51:40.064711+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "d6fe73d7-7d66-4e26-8794-472a74dacdbf",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 1111.0,
+    "type": "purchase",
+    "status": "cancelled",
+    "created_at": "2026-07-07T09:33:07.790661+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "3fbaca9a-b757-4a33-8df7-ddaea00a2e86",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 1111.0,
+    "type": "purchase",
+    "status": "cancelled",
+    "created_at": "2026-07-07T09:27:25.740198+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "6ef66429-06f0-4f86-8e0f-eb117c60231d",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 1111.0,
+    "type": "purchase",
+    "status": "cancelled",
+    "created_at": "2026-07-07T08:29:25.131768+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "69c8f1d5-6009-47b4-8d32-ad52c44e6ce9",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 12000.0,
+    "type": "purchase",
+    "status": "cancelled",
+    "created_at": "2026-07-07T08:12:20.723069+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "0a82b974-b4f1-49d7-8389-54db100ee109",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 1111.0,
+    "type": "purchase",
+    "status": "cancelled",
+    "created_at": "2026-07-07T08:15:17.477258+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "2d0ec55f-fb5e-4707-81ad-8989fddeef45",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 1111.0,
+    "type": "purchase",
+    "status": "cancelled",
+    "created_at": "2026-07-08T06:30:15.09517+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "a1d28100-5fe0-4d4b-8608-6cdd0f5986fc",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 1111.0,
+    "type": "purchase",
+    "status": "cancelled",
+    "created_at": "2026-07-08T06:26:54.326418+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "0e08ce1a-bcab-4bb1-a1e7-de7342c56797",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 1111.0,
+    "type": "purchase",
+    "status": "cancelled",
+    "created_at": "2026-07-08T04:59:23.949295+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "cf0a539b-2a11-4f93-9209-8d334b67c00b",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 1111.0,
+    "type": "purchase",
+    "status": "cancelled",
+    "created_at": "2026-07-08T04:39:46.003131+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "35efdafd-6d04-4dba-8995-d0fd4929933f",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 1111.0,
+    "type": "purchase",
+    "status": "cancelled",
+    "created_at": "2026-07-08T04:17:35.392654+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "8297988e-933d-4b6a-b463-db0ad5f3f3ea",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 1111.0,
+    "type": "purchase",
+    "status": "cancelled",
+    "created_at": "2026-07-09T02:26:18.066069+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "4c17a6e2-ebba-4872-861b-c215b06f4ae1",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 1111.0,
+    "type": "purchase",
+    "status": "cancelled",
+    "created_at": "2026-07-09T02:15:57.229263+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "2cd397a6-a024-4a58-8938-6c4be7892504",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 1111.0,
+    "type": "purchase",
+    "status": "cancelled",
+    "created_at": "2026-07-09T02:14:20.286585+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "964aef43-f1e4-4117-90be-0a0af971b1ff",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 1000000000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-07-13T03:28:45.703667+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "ba707f27-f026-46a7-9db1-711da7db9da3",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 55000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-07-13T04:15:20.404172+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "13e42591-1368-4f2f-a236-6fca3d7a6bb5",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 50000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-07-13T04:16:13.44407+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "39da234c-26d8-4163-a77b-453c9548947c",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 20000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-07-15T02:28:10.267089+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "b813dd1e-1a8e-4272-90b1-740e6a2b4868",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 20000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-07-15T07:40:38.86484+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "43f147df-07c0-4f53-8ae2-db73066fc57c",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 20000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-07-21T02:51:49.512938+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "83b030be-bdb0-4030-a10e-1bb45c60bd5b",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 20000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-07-21T03:06:22.193094+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "f876126c-bb0b-403e-a587-3a764faf6dd2",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 100000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-07-21T04:01:01.386707+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "e1978a69-a849-408f-80ea-77f3a986d7ca",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 111100.0,
+    "type": "purchase",
+    "status": "cancelled",
+    "created_at": "2026-07-29T03:22:51.371182+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "783d1240-ee3e-4bb6-b86a-bb101dd9aba0",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 285000.0,
+    "type": "purchase",
+    "status": "success",
+    "created_at": "2026-07-29T03:25:09.456549+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "677e0731-bc81-4d58-811c-9e8932fd141c",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3",
+    "total_amount": 500000.0,
+    "type": "topup",
+    "status": "success",
+    "created_at": "2026-07-29T03:29:55.699935+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "5c4bc07e-2382-41b1-aa4c-6dba7f99af28",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 1111.0,
+    "type": "purchase",
+    "status": "pending",
+    "created_at": "2026-08-13T07:25:40.604606+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "885ad17c-0f3c-4e46-aca2-a0bd483790ce",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 10231.0,
+    "type": "purchase",
+    "status": "pending",
+    "created_at": "2026-08-13T08:09:05.263681+00:00",
+    "purchase_method": "rfid"
+  },
+  {
+    "id": "ecf926b2-1141-4f6c-a7ed-0d3d93b95ded",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "operator_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c",
+    "total_amount": 3111.0,
+    "type": "purchase",
+    "status": "pending",
+    "created_at": "2026-08-16T04:36:43.985246+00:00",
+    "purchase_method": "rfid"
+  }
+]

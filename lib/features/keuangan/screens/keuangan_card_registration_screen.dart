@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
@@ -51,21 +51,23 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
       _isLoading = true;
     });
     try {
-      final client = ref.read(supabaseClientProvider);
-      final profile = await client.from('profiles').select().eq('id', widget.studentId).maybeSingle();
-      final student = await client.from('students').select().eq('id', widget.studentId).maybeSingle();
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient.get('/student/lookup', queryParams: {'id': widget.studentId});
 
-      setState(() {
-        _fullName = profile?['full_name'] ?? '';
-        _nisn = profile?['nisn'] ?? '';
-        _class = student?['class'] ?? '';
-        _oldRfid = student?['rfid_uid'];
-      });
+      if (response.success && response.data != null) {
+        final profile = response.data as Map<String, dynamic>;
+        setState(() {
+          _fullName = profile['full_name']?.toString() ?? '';
+          _nisn = profile['nisn']?.toString() ?? '';
+          _class = profile['class']?.toString() ?? '';
+          _oldRfid = profile['rfid_uid']?.toString();
+        });
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppStrings.labelFailed} memuat profil'),
+            content: Text('${AppStrings.labelFailed} memuat profil: $e'),
             backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
@@ -81,7 +83,6 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
   }
 
   void _simulateNfcScan() {
-    // Generate a random 4-byte HEX UID like 04:F8:A1:22
     final random = Random();
     final parts = List.generate(4, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0').toUpperCase());
     final mockUid = parts.join(':');
@@ -120,23 +121,10 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
               });
 
               try {
-                final client = ref.read(supabaseClientProvider);
-                final profile = ref.read(authNotifierProvider).profile;
-                final actorName = profile?['full_name'] ?? 'Admin Keuangan';
-                final actorId = profile?['id'];
-
-                // 1. Update students table rfid_uid to null
-                await client.from('students').update({'rfid_uid': null}).eq('id', widget.studentId);
-
-                // 2. Write to audit logs
-                await client.from('audit_logs').insert({
-                  'actor_id': actorId,
-                  'actor_name': actorName,
-                  'action_type': 'UNLINK_KARTU',
-                  'description': 'Menghapus tautan kartu RFID dari siswa: $_fullName',
-                  'target_id': widget.studentId,
-                  'old_value': {'rfid_uid': _oldRfid},
-                  'new_value': {'rfid_uid': null},
+                final apiClient = ref.read(apiClientProvider);
+                await apiClient.patch('/student/card-status', body: {
+                  'student_id': widget.studentId,
+                  'rfid_uid': null,
                 });
 
                 // Update detail provider
@@ -198,45 +186,11 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
     });
 
     try {
-      final client = ref.read(supabaseClientProvider);
-      final profile = ref.read(authNotifierProvider).profile;
-      final actorName = profile?['full_name'] ?? 'Admin Keuangan';
-      final actorId = profile?['id'];
-
-      // 1. Check if UID is already used by another student
-      final List<dynamic> check = await client
-          .from('students')
-          .select('id, profiles:profiles!students_id_fkey(full_name)')
-          .eq('rfid_uid', uid);
-
-      if (check.isNotEmpty) {
-        final otherId = check.first['id'];
-        if (otherId != widget.studentId) {
-          final otherName = check.first['profiles']?['full_name'] ?? 'Siswa Lain';
-          throw Exception('Kartu dengan UID ini sudah digunakan oleh $otherName');
-        }
-      }
-
-      // 2. Update students table rfid_uid and set active
-      await client.from('students').update({
+      final apiClient = ref.read(apiClientProvider);
+      await apiClient.patch('/student/card-status', body: {
+        'student_id': widget.studentId,
         'rfid_uid': uid,
         'is_active': true,
-      }).eq('id', widget.studentId);
-
-      // 2b. Update profiles table is_active to true
-      await client.from('profiles').update({
-        'is_active': true,
-      }).eq('id', widget.studentId);
-
-      // 3. Write to audit logs
-      await client.from('audit_logs').insert({
-        'actor_id': actorId,
-        'actor_name': actorName,
-        'action_type': 'REGISTRASI_KARTU',
-        'description': 'Menautkan kartu RFID ($uid) dan mengaktifkan siswa: $_fullName',
-        'target_id': widget.studentId,
-        'old_value': {'rfid_uid': _oldRfid, 'is_active': false},
-        'new_value': {'rfid_uid': uid, 'is_active': true},
       });
 
       // Update details
@@ -260,7 +214,7 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppStrings.labelFailed} menghubungkan kartu'),
+            content: Text('${AppStrings.labelFailed} mendaftarkan kartu: $e'),
             backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
@@ -278,7 +232,7 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
   @override
   Widget build(BuildContext context) {
     if (_isLoading && _fullName.isEmpty) {
-      return Scaffold(
+      return const Scaffold(
         body: Center(
           child: CupertinoActivityIndicator(color: Nebula.teal),
         ),
@@ -318,33 +272,33 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-              Text(
-                'Siswa: $_fullName (NISN: $_nisn)',
-                style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: context.textPrimary),
+                  Text(
+                    'Siswa: $_fullName (NISN: $_nisn)',
+                    style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: context.textPrimary),
+                  ),
+                  Text(
+                    'Kelas: $_class · SMP Terpadu',
+                    style: GoogleFonts.inter(
+                        fontSize: 13, color: context.textSecondary),
+                  ),
+                  const SizedBox(height: 20),
+                  KeuanganCardRegistrationForm(
+                    uidController: _uidController,
+                    oldRfid: _oldRfid,
+                    isLoading: _isLoading,
+                    onSimulateNfcScan: _simulateNfcScan,
+                    onLinkCard: _linkCard,
+                    onUnlinkCard: _unlinkCard,
+                  ),
+                ],
               ),
-              Text(
-                'Kelas: $_class · SMP Terpadu',
-                style: GoogleFonts.inter(
-                    fontSize: 13, color: context.textSecondary),
-              ),
-              const SizedBox(height: 20),
-              KeuanganCardRegistrationForm(
-                uidController: _uidController,
-                oldRfid: _oldRfid,
-                isLoading: _isLoading,
-                onSimulateNfcScan: _simulateNfcScan,
-                onLinkCard: _linkCard,
-                onUnlinkCard: _unlinkCard,
-              ),
-            ],
+            ),
           ),
         ),
       ),
-    ),
-  ),
-);
+    );
   }
 }

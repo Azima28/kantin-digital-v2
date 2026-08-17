@@ -5,11 +5,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_dropdown_row.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_form_text_field.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_section_label.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
 
 /// Bottom sheet for editing an existing parent user profile and their linked children relationships.
@@ -136,95 +136,29 @@ void showEditParentSheet(
 
                           setLocal(() => isSaving = true);
                           try {
-                            final client = ref.read(supabaseClientProvider);
+                            final apiClient = ref.read(apiClientProvider);
 
-                            // Parse and validate children NISNs
                             final List<String> inputNisns = rawNisns
                                 .split(',')
                                 .map((e) => e.trim())
                                 .where((e) => e.isNotEmpty)
                                 .toList();
 
-                            final List<String> validStudentIds = [];
-                            if (inputNisns.isNotEmpty) {
-                              final List<dynamic> studentsRes = await client
-                                  .from('profiles')
-                                  .select('id, nisn')
-                                  .eq('role', 'student')
-                                  .inFilter('nisn', inputNisns);
+                            final response = await apiClient.put(
+                              '/admin/parents/${profile.id}',
+                              body: {
+                                'full_name': name,
+                                'email': email,
+                                'username': username,
+                                'phone_number': phone,
+                                'relation': relation,
+                                'linked_nisns': inputNisns,
+                              },
+                            );
 
-                              final Map<String, String> nisnToId = {
-                                for (var item in studentsRes)
-                                  (item['nisn'] ?? '').toString(): (item['id'] ?? '').toString()
-                              };
-
-                              final List<String> invalidNisns = inputNisns
-                                  .where((n) => !nisnToId.containsKey(n))
-                                  .toList();
-
-                              if (invalidNisns.isNotEmpty) {
-                                throw Exception('NISN Anak berikut tidak valid/tidak ditemukan: ${invalidNisns.join(", ")}');
-                              }
-
-                              for (var nisn in inputNisns) {
-                                final id = nisnToId[nisn];
-                                if (id != null) {
-                                  validStudentIds.add(id);
-                                }
-                              }
+                            if (!response.success) {
+                              throw Exception(response.message ?? 'Gagal memperbarui profil orang tua');
                             }
-
-                            // 1. Update profiles table for parent
-                            await client.from('profiles').update({
-                              'full_name': name,
-                              'email': email,
-                              'username': username,
-                              'phone_number': phone,
-                              'relation': relation,
-                            }).eq('id', profile.id);
-
-                            // 2. Update parent_students relation mapping
-                            // Delete old mappings
-                            await client.from('parent_students').delete().eq('parent_id', profile.id);
-                            
-                            // Insert new mappings
-                            for (var childId in validStudentIds) {
-                              await client.from('parent_students').insert({
-                                'parent_id': profile.id,
-                                'student_id': childId,
-                              });
-                            }
-
-                            // 3. Write audit log
-                            try {
-                              final authProfile = ref.read(authNotifierProvider).profile;
-                              final actorName = authProfile?['full_name'] ?? 'Super Admin';
-                              final actorId = authProfile?['id'];
-
-                              await client.from('audit_logs').insert({
-                                'actor_id': actorId,
-                                'actor_name': actorName,
-                                'action_type': 'EDIT_PENGGUNA',
-                                'description': 'Super Admin mengedit profil orang tua/wali: $name (Menghubungkan ke ${validStudentIds.length} anak)',
-                                'target_id': profile.id,
-                                'old_value': {
-                                  'full_name': profile.fullName,
-                                  'email': profile.email,
-                                  'username': profile.username,
-                                  'phone_number': profile.phoneNumber,
-                                  'relation': profile.relation,
-                                  'linked_nisns': initialNisns,
-                                },
-                                'new_value': {
-                                  'full_name': name,
-                                  'email': email,
-                                  'username': username,
-                                  'phone_number': phone,
-                                  'relation': relation,
-                                  'linked_nisns': inputNisns,
-                                },
-                              });
-                            } catch (_) {}
 
                             // Invalidate details and user list providers
                             ref.invalidate(adminParentDetailProvider(profile.id));

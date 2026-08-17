@@ -96,10 +96,16 @@ class ParentReceiptBottomSheet extends ConsumerWidget {
             const SizedBox(height: 12),
             _buildReceiptRow(
               context,
-              'Lokasi / Metode',
+              'Merchant / Stan',
+              isTopup ? 'Koperasi Sekolah' : canteen,
+            ),
+            const SizedBox(height: 12),
+            _buildReceiptRow(
+              context,
+              'Metode Transaksi',
               isTopup
-                  ? 'Top-up Transfer Bank'
-                  : '$canteen (${transaction.purchaseMethod == 'app' ? 'Aplikasi' : 'RFID/NFC'})',
+                  ? 'Transfer Bank / Kasir'
+                  : transaction.purchaseMethodDisplay,
             ),
             const SizedBox(height: 16),
 

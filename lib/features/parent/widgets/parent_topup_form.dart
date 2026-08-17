@@ -78,20 +78,16 @@ class _ParentTopUpFormState extends ConsumerState<ParentTopUpForm> {
 
 
     try {
-      final client = ref.read(supabaseClientProvider);
+      final apiClient = ref.read(apiClientProvider);
 
-      final sessionToken = ref.read(authNotifierProvider).sessionToken;
-      final callerId = ref.read(authNotifierProvider).profile?['id'] as String?;
-
-      // Use RPC for atomic topup
-      await client.rpc('process_topup', params: {
-        'p_student_id': widget.studentId,
-        'p_amount': amount.toInt(),
-        'p_session_token': sessionToken,
-        'p_method': 'transfer',
-        'p_notes': 'Top-up oleh orang tua',
-        'p_caller_id': callerId,
+      final response = await apiClient.post('/finance/topup', body: {
+        'student_id': widget.studentId,
+        'amount': amount.toInt(),
       });
+
+      if (!response.success) {
+        throw Exception(response.message ?? 'Top-up gagal');
+      }
 
       // Invalidate dashboard provider so that it updates
       ref.invalidate(siswaStudentProvider);

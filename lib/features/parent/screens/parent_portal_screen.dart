@@ -1,16 +1,15 @@
 /* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 */
-import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/theme/hallmark_color_scheme.dart';
 import 'package:kantin_digital/core/theme/hallmark_typography.dart';
 import 'package:kantin_digital/core/widgets/hallmark_button.dart';
 import 'package:kantin_digital/core/widgets/hallmark_card.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 /// Hallmark Parent Portal Screen — Editorial Bento Grid Entry Screen
 class ParentPortalScreen extends ConsumerStatefulWidget {
@@ -42,38 +41,19 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
     });
 
     try {
-      final client = ref.read(supabaseClientProvider);
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient.get('/student/lookup', queryParams: {'nisn': nisInput});
 
-      final response = await client.rpc('get_student_by_nisn', params: {
-        'p_nisn': nisInput,
-      });
-
-      Map<String, dynamic> result;
-      if (response is Map<String, dynamic>) {
-        result = response;
-      } else if (response is String) {
-        result = jsonDecode(response) as Map<String, dynamic>;
-      } else {
-        result = {};
-      }
-
-      if (result['found'] == false) {
+      if (!response.success || response.data == null) {
         setState(() {
-          _errorMessage = 'NIS / Kode Unik Siswa tidak ditemukan';
+          _errorMessage = response.message ?? 'NIS / Kode Unik Siswa tidak ditemukan';
+          _isLoading = false;
         });
         return;
       }
 
-      final profile = result;
-      final String role = profile['role'] ?? '';
-      final String studentId = profile['id'];
-
-      if (role != 'student') {
-        setState(() {
-          _errorMessage = 'Kode yang dimasukkan bukan milik siswa';
-        });
-        return;
-      }
+      final profile = response.data as Map<String, dynamic>;
+      final String studentId = profile['id']?.toString() ?? '';
 
       if (mounted) {
         context.go('/parent/dashboard/$studentId');
@@ -81,6 +61,7 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
     } catch (e) {
       setState(() {
         _errorMessage = 'Terjadi kesalahan saat memeriksa data: $e';
+        _isLoading = false;
       });
     } finally {
       if (mounted) {

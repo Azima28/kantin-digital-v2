@@ -9,8 +9,8 @@ import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/nebula_components.dart';
 import 'package:kantin_digital/core/widgets/nebula_effects.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_edit_parent_sheet.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
@@ -37,20 +37,19 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
     final String password = _passwordController.text.trim();
     if (password.isEmpty) return;
 
-    final client = ref.read(supabaseClientProvider);
     try {
-      // Client-side role check before RPC call
-      final currentUserRole = ref.read(authNotifierProvider).profile?['role'];
-      if (currentUserRole != 'super_admin' && currentUserRole != 'admin' && currentUserRole != 'petugas_keuangan') {
-        throw Exception('Tidak memiliki izin untuk mengubah password');
-      }
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient.post(
+        '/admin/users/password',
+        body: {
+          'user_id': profileId,
+          'new_password': password,
+        },
+      );
 
-      final currentUserId = ref.read(authNotifierProvider).profile?['id'];
-      await client.rpc('update_auth_user_password', params: {
-        'p_user_id': profileId,
-        'p_new_password': password,
-        'p_caller_id': currentUserId,
-      });
+      if (!response.success) {
+        throw Exception(response.message ?? 'Gagal mengubah kata sandi');
+      }
 
       if (mounted) {
         Navigator.pop(context); // Close dialog
@@ -67,7 +66,7 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppStrings.labelFailed} mengubah kata sandi'),
+            content: Text('${AppStrings.labelFailed} mengubah kata sandi: $e'),
             backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
@@ -77,11 +76,11 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
   }
 
   Future<void> _toggleDisableParentAccount(String profileId, bool currentStatus) async {
-    final client = ref.read(supabaseClientProvider);
     final bool newStatus = !currentStatus;
 
     try {
-      await client.from('profiles').update({'is_active': newStatus}).eq('id', profileId);
+      final apiClient = ref.read(apiClientProvider);
+      await apiClient.patch('/users/$profileId/status', body: {'is_active': newStatus});
       ref.invalidate(adminParentDetailProvider(widget.parentId));
 
       if (mounted) {

@@ -4,12 +4,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/date_filter_modal.dart';
 import 'package:kantin_digital/core/widgets/nebula_effects.dart';
+import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/admin/widgets/audit_log_action_filter.dart';
 import 'package:kantin_digital/features/admin/widgets/audit_log_detail_sheet.dart';
 import 'package:kantin_digital/features/admin/widgets/audit_log_tile.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 
 class AdminAuditLogScreen extends ConsumerStatefulWidget {
   const AdminAuditLogScreen({super.key});
@@ -21,6 +24,7 @@ class AdminAuditLogScreen extends ConsumerStatefulWidget {
 
 class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
   String _selectedAction = 'Semua Aksi';
+  AppDateFilterParam? _dateFilter;
 
   final List<String> _actions = [
     'Semua Aksi',
@@ -80,6 +84,41 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
     }
   }
 
+  Widget _buildDateHeader(BuildContext context, String dateStr) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 12, bottom: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 16,
+            decoration: BoxDecoration(
+              color: Nebula.teal,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            dateStr,
+            style: GoogleFonts.inter(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
+              color: Nebula.teal,
+              letterSpacing: 0.3,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Divider(
+              color: context.borderLight,
+              thickness: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final logsAsync = ref.watch(adminAuditLogsProvider);
@@ -118,14 +157,29 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
             horizontal: 20.0,
             vertical: 8.0,
           ),
-          child: AuditLogActionFilter(
-            selectedAction: _selectedAction,
-            actions: _actions,
-            onChanged: (val) {
-              setState(() {
-                _selectedAction = val;
-              });
-            },
+          child: Row(
+            children: [
+              Expanded(
+                child: AuditLogActionFilter(
+                  selectedAction: _selectedAction,
+                  actions: _actions,
+                  onChanged: (val) {
+                    setState(() {
+                      _selectedAction = val;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+              DateFilterPillButton(
+                activeFilter: _dateFilter,
+                onFilterChanged: (param) {
+                  setState(() {
+                    _dateFilter = param;
+                  });
+                },
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 8),
@@ -142,6 +196,12 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                 final dbActionKey = _mapActionTypeToFilter(_selectedAction);
                 filtered = filtered
                     .where((l) => l.actionType == dbActionKey)
+                    .toList();
+              }
+
+              if (_dateFilter != null && !_dateFilter!.isAllTime) {
+                filtered = filtered
+                    .where((l) => _dateFilter!.matches(l.createdAt))
                     .toList();
               }
 
@@ -165,6 +225,22 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                 );
               }
 
+              // Group and flatten logs by date
+              final List<dynamic> listItems = [];
+              DateTime? lastDate;
+              for (final log in filtered) {
+                final DateTime createdAt = log.createdAt?.toLocal() ?? DateTime.now();
+                if (lastDate == null ||
+                    lastDate.year != createdAt.year ||
+                    lastDate.month != createdAt.month ||
+                    lastDate.day != createdAt.day) {
+                  final String dateHeaderStr = AppDateFormatter.formatDayFullDate(createdAt);
+                  listItems.add(dateHeaderStr);
+                  lastDate = createdAt;
+                }
+                listItems.add(log);
+              }
+
               return RefreshIndicator(
                 onRefresh: () async {
                   ref.invalidate(adminAuditLogsProvider);
@@ -175,9 +251,14 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                     horizontal: 20,
                     vertical: 12,
                   ),
-                  itemCount: filtered.length,
+                  itemCount: listItems.length,
                   itemBuilder: (context, index) {
-                    final log = filtered[index];
+                    final item = listItems[index];
+                    if (item is String) {
+                      return _buildDateHeader(context, item);
+                    }
+
+                    final log = item as AuditLog;
                     return AuditLogTile(
                       log: log,
                       onDetailTap: () {

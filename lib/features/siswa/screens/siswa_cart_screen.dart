@@ -7,9 +7,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/core/widgets/nebula_components.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/theme/nebula_tokens.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 import 'package:kantin_digital/features/siswa/providers/student_cart_provider.dart';
@@ -152,11 +154,10 @@ class _SiswaCartScreenState extends ConsumerState<SiswaCartScreen> {
                   ? CachedNetworkImage(
                       imageUrl: item.imageUrl!,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: Nebula.teal.withValues(alpha: 0.08),
-                        child: const Center(
-                          child: CupertinoActivityIndicator(radius: 8),
-                        ),
+                      placeholder: (context, url) => const ShimmerRect(
+                        width: 54,
+                        height: 54,
+                        borderRadius: 12,
                       ),
                       errorWidget: (context, url, error) => Container(
                         color: Nebula.teal.withValues(alpha: 0.08),
@@ -509,7 +510,7 @@ class _StudentPinPaymentModalState extends ConsumerState<StudentPinPaymentModal>
     });
 
     try {
-      final client = ref.read(supabaseClientProvider);
+      final apiClient = ref.read(apiClientProvider);
       final authState = ref.read(authNotifierProvider);
       final studentId = authState.profile?['id'];
       final studentName = authState.profile?['full_name'] ?? 'Siswa';
@@ -518,78 +519,17 @@ class _StudentPinPaymentModalState extends ConsumerState<StudentPinPaymentModal>
         throw Exception('User tidak terautentikasi.');
       }
 
-      // Fetch student info
-      final studentData = await client
-          .from('students')
-          .select('balance, rfid_uid, is_active')
-          .eq('id', studentId)
-          .single();
-
-      final String? profileRfid = studentData['rfid_uid'];
-      final double balance = (studentData['balance'] as num).toDouble();
-      final bool isActive = studentData['is_active'] as bool;
-
-      if (!isActive) {
-        throw Exception('Kartu/akun Anda dalam status dibekukan.');
-      }
-
-      // Verify PIN logic
-      final String inputPin = pin.trim();
-      final bool isValidPin = inputPin == '123456' ||
-          inputPin == '654321' ||
-          (profileRfid != null && profileRfid.trim().toLowerCase() == inputPin.toLowerCase()) ||
-          inputPin.length >= 4;
-
-      if (!isValidPin) {
-        throw Exception('PIN Kartu tidak valid. Silakan coba lagi (PIN Default: 123456).');
-      }
-
-      if (balance < widget.totalAmount) {
-        throw Exception('Saldo tidak mencukupi. Saldo Anda: ${CurrencyFormatter.format(balance.toInt())}');
-      }
-
       setState(() {
         _statusText = 'Memproses Pembayaran...';
       });
-
-      // Deduct student balance
-      await client
-          .from('students')
-          .update({'balance': balance - widget.totalAmount})
-          .eq('id', studentId);
-
-      // Resolve operator
-      String? resolvedOperatorId = cartState.canteenId;
-      if (resolvedOperatorId == null && cartSnapshot.isNotEmpty) {
-        final productData = await client
-            .from('products')
-            .select('operator_id')
-            .eq('id', cartSnapshot.first.productId)
-            .maybeSingle();
-        resolvedOperatorId = productData?['operator_id'] as String?;
-      }
-      final String operatorId = resolvedOperatorId ?? studentId;
 
       final String loc = cartState.deliveryLocation.trim();
       final String deliveryLocation = cartState.deliveryMethod == 'delivery'
           ? (loc.isNotEmpty ? 'Diantar: $loc' : 'Diantar')
           : 'Ambil Sendiri (Pickup)';
 
-      // Create Order
-      final orderRes = await client.from('orders').insert({
-        'student_id': studentId,
-        'student_name': studentName,
-        'status': 'Baru',
-        'total_amount': widget.totalAmount,
-        'operator_id': operatorId,
-        'delivery_location': deliveryLocation,
-      }).select('id').single();
-
-      final String orderId = orderRes['id'];
-
       final List<Map<String, dynamic>> orderItems = cartSnapshot.map((item) {
         return {
-          'order_id': orderId,
           'product_name': item.name,
           'quantity': item.quantity,
           'price': item.price,
@@ -597,47 +537,21 @@ class _StudentPinPaymentModalState extends ConsumerState<StudentPinPaymentModal>
         };
       }).toList();
 
-      await client.from('order_items').insert(orderItems);
+      final response = await apiClient.post(
+        '/orders',
+        body: {
+          'student_id': studentId,
+          'student_name': studentName,
+          'operator_id': cartState.canteenId,
+          'delivery_location': deliveryLocation,
+          'total_amount': widget.totalAmount,
+          'items': orderItems,
+        },
+      );
 
-      // Record transaction with status 'pending'
-      final txRes = await client.from('transactions').insert({
-        'student_id': studentId,
-        'operator_id': operatorId,
-        'total_amount': widget.totalAmount,
-        'type': 'purchase',
-        'status': 'pending',
-      }).select('id').single();
-
-      final String txId = txRes['id'];
-
-      // Add transaction items
-      try {
-        final isUuidRegExp = RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
-        final List<Map<String, dynamic>> txItems = [];
-        for (final item in cartSnapshot) {
-          if (isUuidRegExp.hasMatch(item.productId)) {
-            txItems.add({
-              'transaction_id': txId,
-              'product_id': item.productId,
-              'quantity': item.quantity,
-              'unit_price': item.price,
-            });
-          }
-        }
-        if (txItems.isNotEmpty) {
-          await client.from('transaction_items').insert(txItems);
-        }
-      } catch (e) {
-        debugPrint('Optional transaction_items insert skipped: $e');
+      if (!response.success) {
+        throw Exception(response.message ?? 'Gagal membuat pesanan');
       }
-
-      // Add notification
-      await client.from('notifications').insert({
-        'student_id': studentId,
-        'title': 'Pesanan Berhasil Disimpan! 🛒',
-        'message': 'Pesanan Anda senilai ${CurrencyFormatter.format(widget.totalAmount)} ($deliveryLocation) telah dikirim ke kantin.',
-        'type': 'purchase',
-      });
 
       // Invalidate student providers
       ref.invalidate(siswaStudentProvider);

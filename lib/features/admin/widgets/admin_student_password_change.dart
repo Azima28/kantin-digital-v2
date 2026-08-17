@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 
 /// Helper class to show a password change dialog for a student profile.
 /// Used inside the admin student detail screen.
@@ -78,47 +78,19 @@ class _PasswordChangeDialogState extends ConsumerState<_PasswordChangeDialog> {
     final String password = widget.passwordController.text.trim();
     if (password.isEmpty) return;
 
-    final client = widget.ref.read(supabaseClientProvider);
     try {
-      // Client-side role check before RPC call
-      final currentUserRole =
-          widget.ref.read(authNotifierProvider).profile?['role'];
-      if (currentUserRole != 'super_admin' &&
-          currentUserRole != 'admin' &&
-          currentUserRole != 'petugas_keuangan') {
-        throw Exception('Tidak memiliki izin untuk mengubah password');
-      }
-
-      // Update encrypted_password in auth.users via RPC
-      final currentUserId =
-          widget.ref.read(authNotifierProvider).profile?['id'];
-      final response = await client.rpc(
-        'update_auth_user_password',
-        params: {
-          'p_user_id': widget.profileId,
-          'p_new_password': password,
-          'p_caller_id': currentUserId,
+      final apiClient = widget.ref.read(apiClientProvider);
+      final response = await apiClient.post(
+        '/admin/users/password',
+        body: {
+          'user_id': widget.profileId,
+          'new_password': password,
         },
       );
-      if (response is Map && response['success'] == false) {
-        throw Exception(response['error'] ?? 'Gagal mengubah kata sandi');
+
+      if (!response.success) {
+        throw Exception(response.message ?? 'Gagal mengubah kata sandi');
       }
-
-      // Write to audit logs
-      try {
-        final authProfile = widget.ref.read(authNotifierProvider).profile;
-        final actorName = authProfile?['full_name'] ?? 'Super Admin';
-        final actorId = authProfile?['id'];
-
-        await client.from('audit_logs').insert({
-          'actor_id': actorId,
-          'actor_name': actorName,
-          'action_type': 'UBAH_PASSWORD',
-          'description':
-              'Super Admin mengubah kata sandi siswa dengan ID: ${widget.profileId}',
-          'target_id': widget.profileId,
-        });
-      } catch (_) {}
 
       if (mounted) {
         Navigator.pop(context); // Close dialog
@@ -135,7 +107,7 @@ class _PasswordChangeDialogState extends ConsumerState<_PasswordChangeDialog> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppStrings.labelFailed} mengubah kata sandi'),
+            content: Text('${AppStrings.labelFailed} mengubah kata sandi: $e'),
             backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),

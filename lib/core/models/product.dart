@@ -11,6 +11,12 @@ class Product {
   final String? imageUrl;
   final DateTime? createdAt;
   final List<String> customizableOptions;
+  final String? canteenName;
+  final bool isDeliveryEnabled;
+  final int deliveryFee;
+  final double rating;
+  final int totalReviews;
+  final int totalSold;
 
   const Product({
     required this.id,
@@ -22,6 +28,12 @@ class Product {
     this.imageUrl,
     this.createdAt,
     this.customizableOptions = const <String>[],
+    this.canteenName,
+    this.isDeliveryEnabled = true,
+    this.deliveryFee = 2000,
+    this.rating = 0.0,
+    this.totalReviews = 0,
+    this.totalSold = 0,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -40,6 +52,15 @@ class Product {
               ?.map((e) => e.toString())
               .toList() ??
           const <String>[],
+      canteenName: json['canteen_name']?.toString(),
+      isDeliveryEnabled: json['is_delivery_enabled'] as bool? ?? true,
+      deliveryFee: (json['delivery_fee'] as num?)?.toInt() ?? 2000,
+      rating: (double.tryParse(json['rating']?.toString() ?? '0') ?? 0.0),
+      totalReviews: (json['total_reviews'] as num?)?.toInt() ?? 0,
+      totalSold: (json['total_sold'] as num?)?.toInt() ??
+          (json['sold_count'] as num?)?.toInt() ??
+          (json['terjual'] as num?)?.toInt() ??
+          0,
     );
   }
 
@@ -53,6 +74,12 @@ class Product {
     'image_url': imageUrl,
     'created_at': createdAt?.toIso8601String(),
     'customizable_options': customizableOptions,
+    'canteen_name': canteenName,
+    'is_delivery_enabled': isDeliveryEnabled,
+    'delivery_fee': deliveryFee,
+    'rating': rating,
+    'total_reviews': totalReviews,
+    'total_sold': totalSold,
   };
 
   Product copyWith({
@@ -65,6 +92,12 @@ class Product {
     String? imageUrl,
     DateTime? createdAt,
     List<String>? customizableOptions,
+    String? canteenName,
+    bool? isDeliveryEnabled,
+    int? deliveryFee,
+    double? rating,
+    int? totalReviews,
+    int? totalSold,
   }) {
     return Product(
       id: id ?? this.id,
@@ -76,11 +109,18 @@ class Product {
       imageUrl: imageUrl ?? this.imageUrl,
       createdAt: createdAt ?? this.createdAt,
       customizableOptions: customizableOptions ?? this.customizableOptions,
+      canteenName: canteenName ?? this.canteenName,
+      isDeliveryEnabled: isDeliveryEnabled ?? this.isDeliveryEnabled,
+      deliveryFee: deliveryFee ?? this.deliveryFee,
+      rating: rating ?? this.rating,
+      totalReviews: totalReviews ?? this.totalReviews,
+      totalSold: totalSold ?? this.totalSold,
     );
   }
 
   bool get isMakanan => category == 'makanan';
   bool get isMinuman => category == 'minuman';
+  bool get hasRating => totalReviews > 0 && rating > 0;
 
   @override
   String toString() =>

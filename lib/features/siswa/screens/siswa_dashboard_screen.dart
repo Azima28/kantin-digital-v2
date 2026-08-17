@@ -391,6 +391,8 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
 
                   // Transactions List Stack
                   transactionsAsync.when(
+                    skipLoadingOnRefresh: true,
+                    skipLoadingOnReload: true,
                     data: (transactions) {
                       if (transactions.isEmpty) {
                         return HallmarkCard(
@@ -630,7 +632,11 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
                 ? CachedNetworkImage(
                     imageUrl: item.product.imageUrl!,
                     fit: BoxFit.cover,
-                    placeholder: (_, __) => const Center(child: CupertinoActivityIndicator()),
+                    placeholder: (_, __) => const ShimmerRect(
+                      width: double.infinity,
+                      height: double.infinity,
+                      borderRadius: 16,
+                    ),
                     errorWidget: (_, __, ___) => _buildPromoFallbackContent(colors, item),
                   )
                 : _buildPromoFallbackContent(colors, item),

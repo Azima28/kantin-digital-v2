@@ -1,18 +1,22 @@
-﻿import 'package:flutter/cupertino.dart';
+﻿import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/services/storage_service.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 import 'package:kantin_digital/core/utils/responsive.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
+import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/admin/widgets/setting_section_widget.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_settings_broadcast_section.dart';
 import 'package:kantin_digital/features/admin/widgets/setting_tile_widget.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 class AdminSettingsScreen extends ConsumerStatefulWidget {
@@ -64,20 +68,16 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
       _isSaving = true;
     });
 
-    final client = ref.read(supabaseClientProvider);
     try {
-      final profile = ref.read(authNotifierProvider).profile;
-      final profileId = profile?['id'];
-
-      final response = await client.rpc('send_broadcast_notifications', params: {
-        'p_audience': _selectedAudience,
-        'p_title': 'Pengumuman Admin',
-        'p_message': msg,
-        'p_caller_id': profileId,
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient.post('/admin/broadcast', body: {
+        'audience': _selectedAudience,
+        'title': 'Pengumuman Admin',
+        'message': msg,
       });
 
-      if (response is Map && response['success'] == false) {
-        throw Exception(response['error'] ?? 'Gagal mengirim broadcast');
+      if (!response.success) {
+        throw Exception(response.message ?? 'Gagal mengirim broadcast');
       }
 
       if (mounted) {
@@ -94,7 +94,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppStrings.labelFailed} mengirim broadcast'),
+            content: Text('${AppStrings.labelFailed} mengirim broadcast: $e'),
             backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
@@ -114,8 +114,8 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
       _isSaving = true;
     });
 
-    final client = ref.read(supabaseClientProvider);
     try {
+      final apiClient = ref.read(apiClientProvider);
       final String mode = _isSandbox ? 'sandbox' : 'production';
       final String clientKey = _isSandbox ? _mockClientKey : _mockProdKey;
 
@@ -125,29 +125,9 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
         'is_active': true,
       };
 
-      // 1. Save Maintenance Mode
-      await client.from('system_settings').update({
-        'value': _isMaintenanceMode,
-      }).eq('key', 'maintenance_mode');
-
-      // 2. Save Midtrans Config
-      await client.from('system_settings').update({
-        'value': newMidtrans,
-      }).eq('key', 'midtrans_config');
-
-      // 3. Log Audit
-      await client.from('audit_logs').insert({
-        'actor_name': 'Super Admin',
-        'action_type': 'UBAH_SETELAN',
-        'description': 'Super Admin memperbarui setelan global platform (Pemeliharaan & API)',
-        'old_value': {
-          'maintenance_mode': oldSettings['maintenance_mode'],
-          'midtrans_config': oldSettings['midtrans_config'],
-        },
-        'new_value': {
-          'maintenance_mode': _isMaintenanceMode,
-          'midtrans_config': newMidtrans,
-        },
+      await apiClient.post('/admin/settings', body: {
+        'maintenance_mode': _isMaintenanceMode,
+        'midtrans_config': newMidtrans,
       });
 
       ref.invalidate(adminSettingsProvider);
@@ -181,30 +161,238 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
   }
 
 
+  Future<void> _handleAvatarChange() async {
+    await showCupertinoModalPopup<void>(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        title: const Text('Ubah Foto Profil Admin'),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _uploadAvatar(ImageSource.camera);
+            },
+            child: const Text('Ambil Foto dari Kamera'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _uploadAvatar(ImageSource.gallery);
+            },
+            child: const Text('Pilih dari Galeri'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDestructiveAction: true,
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _uploadAvatar(ImageSource source) async {
+    final authState = ref.read(authNotifierProvider);
+    final String? userId = authState.profile?['id'];
+    if (userId == null) return;
+
+    final apiClient = ref.read(apiClientProvider);
+    final storageService = StorageService(apiClient);
+
+    final imageFile = await storageService.pickImage(source: source);
+    if (imageFile == null) return;
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mengupload foto profil admin...'),
+          duration: Duration(seconds: 60),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+
+    try {
+      final avatarUrl = await storageService.uploadAvatar(
+        userId: userId,
+        imageFile: imageFile,
+      );
+
+      await ref.read(authNotifierProvider.notifier).updateProfileAvatar(avatarUrl);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Foto profil admin berhasil diperbarui!'),
+            backgroundColor: Nebula.teal,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mengupload foto: $e'),
+            backgroundColor: Nebula.rose,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final settingsAsync = ref.watch(adminSettingsProvider);
+    final authState = ref.watch(authNotifierProvider);
+    final String adminName = authState.profile?['full_name'] ?? 'Super Admin';
+    final String adminEmail = authState.profile?['email'] ?? 'admin@sekolah.sch.id';
+    final String? avatarUrl = authState.profile?['avatar_url'] as String?;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
+        toolbarHeight: 56,
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
-        centerTitle: false,
+        centerTitle: true,
+        shape: Border(
+          bottom: BorderSide(color: context.dividerCol, width: 0.5),
+        ),
         title: Text(
           'Setelan Sistem',
           style: GoogleFonts.inter(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Nebula.teal,
+            color: context.textPrimary,
           ),
         ),
       ),
       body: settingsAsync.when(
         data: (settings) {
           _loadSettings(settings);
+
+          final Widget adminProfileCard = Container(
+            padding: const EdgeInsets.all(20),
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: context.cardBg,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: context.cardBorder, width: 1.0),
+              boxShadow: [
+                BoxShadow(
+                  color: context.shadowColor,
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: _handleAvatarChange,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Nebula.teal.withValues(alpha: 0.1),
+                          border: Border.all(color: Nebula.teal.withValues(alpha: 0.3), width: 2),
+                        ),
+                        child: ClipOval(
+                          child: (avatarUrl != null && avatarUrl.isNotEmpty)
+                              ? CachedNetworkImage(
+                                  imageUrl: avatarUrl,
+                                  fit: BoxFit.cover,
+                                  placeholder: (_, __) => const Center(child: CupertinoActivityIndicator()),
+                                  errorWidget: (_, __, ___) => const Center(
+                                    child: Icon(Icons.shield_rounded, size: 28, color: Nebula.teal),
+                                  ),
+                                )
+                              : const Center(
+                                  child: Icon(Icons.shield_rounded, size: 28, color: Nebula.teal),
+                                ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: -2,
+                        right: -2,
+                        child: Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: context.cardBg,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: context.borderLight, width: 1),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.15),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            CupertinoIcons.camera_fill,
+                            size: 12,
+                            color: Nebula.teal,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        adminName,
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: context.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        adminEmail,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: context.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Nebula.teal.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'Super Administrator',
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Nebula.teal,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
 
           final Widget paymentApiCard = SettingSectionWidget(
             icon: CupertinoIcons.link,
@@ -369,6 +557,9 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // ── Admin Profile Card with Avatar Upload ──
+                adminProfileCard,
+
                 // Top subtitle
                 Text(
                   'Kontrol dan konfigurasi platform global.',

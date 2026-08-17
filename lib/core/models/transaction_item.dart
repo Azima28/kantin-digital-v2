@@ -9,7 +9,7 @@ class TransactionItem {
   final int unitPrice;
   final String? customNotes;
 
-  /// Nested object dari join Supabase (opsional).
+  /// Nested object produk (opsional).
   final Map<String, dynamic>? product;
 
   const TransactionItem({
@@ -23,6 +23,13 @@ class TransactionItem {
   });
 
   factory TransactionItem.fromJson(Map<String, dynamic> json) {
+    Map<String, dynamic>? prod = (json['product'] ?? json['products']) as Map<String, dynamic>?;
+    if (prod == null && (json['product_name'] != null || json['image_url'] != null || json['name'] != null)) {
+      prod = {
+        'name': json['product_name'] ?? json['name'],
+        'image_url': json['image_url'],
+      };
+    }
     return TransactionItem(
       id: json['id']?.toString() ?? '',
       transactionId: json['transaction_id']?.toString() ?? '',
@@ -31,7 +38,7 @@ class TransactionItem {
       unitPrice:
           (double.tryParse(json['unit_price']?.toString() ?? '0') ?? 0.0).toInt(),
       customNotes: json['custom_notes'] as String?,
-      product: (json['product'] ?? json['products']) as Map<String, dynamic>?,
+      product: prod,
     );
   }
 
@@ -47,10 +54,18 @@ class TransactionItem {
   /// Total harga item = quantity × unitPrice
   int get totalPrice => quantity * unitPrice;
 
+  /// URL Gambar thumbnail produk
+  String? get imageUrl {
+    if (product != null && product!['image_url'] != null) {
+      return product!['image_url']?.toString();
+    }
+    return null;
+  }
+
   /// Nama produk dari join data.
   String get productName {
     if (product != null) {
-      return product!['name'] as String? ?? '-';
+      return product!['name'] as String? ?? product!['product_name'] as String? ?? '-';
     }
     return '-';
   }

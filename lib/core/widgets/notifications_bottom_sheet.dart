@@ -2,14 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
@@ -31,6 +30,8 @@ class NotificationsBottomSheet extends ConsumerStatefulWidget {
 }
 
 class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSheet> {
+  int _selectedCategoryIndex = 0; // 0: Semua, 1: Pesanan, 2: Ulasan, 3: Info
+
   @override
   void initState() {
     super.initState();
@@ -39,18 +40,8 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
 
   Future<void> _markAllAsRead() async {
     try {
-      final client = ref.read(supabaseClientProvider);
-      final authState = ref.read(authNotifierProvider);
-      final String? userId = authState.profile?['id']?.toString() ?? client.auth.currentUser?.id;
-      if (userId == null) return;
-
-      // Update all unread notifications to read
-      await client
-          .from('notifications')
-          .update({'is_read': true})
-          .eq('user_id', userId)
-          .eq('is_read', false);
-
+      final apiClient = ref.read(apiClientProvider);
+      await apiClient.patch('/student/notifications/read-all');
       ref.invalidate(userNotificationsProvider);
     } catch (e) {
       debugPrint('Notification markAllAsRead error: $e');
@@ -59,12 +50,8 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
 
   Future<void> _markAsRead(BuildContext context, String notifId) async {
     try {
-      final client = ref.read(supabaseClientProvider);
-      await client
-          .from('notifications')
-          .update({'is_read': true})
-          .eq('id', notifId);
-      
+      final apiClient = ref.read(apiClientProvider);
+      await apiClient.patch('/student/notifications/$notifId/read');
       ref.invalidate(userNotificationsProvider);
     } catch (e) {
       debugPrint('Notification markAsRead error: $e');
@@ -72,11 +59,6 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
   }
 
   Future<void> _clearAllNotifications(BuildContext context) async {
-    final client = ref.read(supabaseClientProvider);
-    final authState = ref.read(authNotifierProvider);
-    final String? userId = authState.profile?['id']?.toString() ?? client.auth.currentUser?.id;
-    if (userId == null) return;
-
     showDialog(
       context: context,
       builder: (BuildContext ctx) => Dialog(
@@ -118,7 +100,7 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
                         'Hapus Semua Notifikasi',
                         style: GoogleFonts.inter(
                           fontSize: 18,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.bold,
                           color: context.textPrimary,
                         ),
                       ),
@@ -127,9 +109,9 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Apakah Anda yakin ingin menghapus semua notifikasi dari kotak masuk Anda?',
+                  'Apakah Anda yakin ingin menghapus seluruh riwayat notifikasi Anda? Tindakan ini tidak dapat dibatalkan.',
                   style: GoogleFonts.inter(
-                    fontSize: 14,
+                    fontSize: 13,
                     color: context.textSecondary,
                     height: 1.4,
                   ),
@@ -138,18 +120,19 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
                 Row(
                   children: [
                     Expanded(
-                      child: TextButton(
+                      child: OutlinedButton(
                         onPressed: () => Navigator.pop(ctx),
-                        style: TextButton.styleFrom(
+                        style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: BorderSide(color: context.dividerCol),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
                         child: Text(
-                          AppStrings.buttonCancel,
-                          style: GoogleFonts.inter(
-                            color: context.textSecondary,
+                          'Batal',
+                          style: TextStyle(
+                            color: context.textPrimary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -161,12 +144,20 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
                         onTap: () async {
                           Navigator.pop(ctx);
                           try {
-                            await client
-                                .from('notifications')
-                                .delete()
-                                .eq('user_id', userId);
-                            
-                            ref.invalidate(userNotificationsProvider);
+                            final apiClient = ref.read(apiClientProvider);
+                            final res = await apiClient.delete('/student/notifications');
+                            if (res.success) {
+                              ref.invalidate(userNotificationsProvider);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Semua notifikasi berhasil dihapus'),
+                                    backgroundColor: Nebula.teal,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            }
                           } catch (e) {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -205,6 +196,120 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  bool _isPesanan(String? type) {
+    if (type == null) return false;
+    final t = type.toLowerCase();
+    return t == 'purchase' || t == 'order' || t == 'refund' || t == 'topup';
+  }
+
+  bool _isUlasan(String? type) {
+    if (type == null) return false;
+    final t = type.toLowerCase();
+    return t == 'review' || t == 'ulasan';
+  }
+
+  bool _isInfo(String? type) {
+    if (type == null) return false;
+    final t = type.toLowerCase();
+    return t == 'system' || t == 'info' || t == 'broadcast';
+  }
+
+  Widget _buildCategoryTabs(BuildContext context, List<AppNotification> allNotifs) {
+    final int countPesanan = allNotifs.where((n) => _isPesanan(n.type)).length;
+    final int countUlasan = allNotifs.where((n) => _isUlasan(n.type)).length;
+    final int countInfo = allNotifs.where((n) => _isInfo(n.type)).length;
+
+    final List<Map<String, dynamic>> tabs = [
+      {'index': 0, 'label': 'Semua', 'count': allNotifs.length},
+      {'index': 1, 'label': 'Pesanan', 'count': countPesanan},
+      {'index': 2, 'label': 'Ulasan', 'count': countUlasan},
+      {'index': 3, 'label': 'Info', 'count': countInfo},
+    ];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: tabs.map((tab) {
+          final int index = tab['index'];
+          final String label = tab['label'];
+          final int count = tab['count'];
+          final bool isSelected = index == _selectedCategoryIndex;
+
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  setState(() {
+                    _selectedCategoryIndex = index;
+                  });
+                },
+                borderRadius: BorderRadius.circular(20),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isSelected ? Nebula.teal : context.surfaceBg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isSelected ? Nebula.teal : context.borderLight,
+                      width: isSelected ? 1.0 : 0.8,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: Nebula.teal.withValues(alpha: 0.25),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : [],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        label,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                          color: isSelected ? Colors.white : context.textPrimary,
+                        ),
+                      ),
+                      if (count > 0) ...[
+                        const SizedBox(width: 5),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? Colors.white.withValues(alpha: 0.25)
+                                : Nebula.teal.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '$count',
+                            style: GoogleFonts.inter(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                              color: isSelected ? Colors.white : Nebula.teal,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -273,6 +378,12 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
           ),
           Divider(height: 1, thickness: 0.5, color: context.borderLight),
 
+          // Category Filter Chips
+          notificationsAsync.maybeWhen(
+            data: (allNotifs) => _buildCategoryTabs(context, allNotifs),
+            orElse: () => const SizedBox.shrink(),
+          ),
+
           // Notifications List
           Expanded(
             child: RefreshIndicator(
@@ -280,25 +391,32 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
                 ref.invalidate(userNotificationsProvider);
               },
               child: notificationsAsync.when(
-                data: (List<AppNotification> notifs) {
+                data: (List<AppNotification> allNotifs) {
+                  final notifs = allNotifs.where((n) {
+                    if (_selectedCategoryIndex == 1 && !_isPesanan(n.type)) return false;
+                    if (_selectedCategoryIndex == 2 && !_isUlasan(n.type)) return false;
+                    if (_selectedCategoryIndex == 3 && !_isInfo(n.type)) return false;
+                    return true;
+                  }).toList();
+
                   if (notifs.isEmpty) {
                     return ListView(
-                      physics: AlwaysScrollableScrollPhysics(),
+                      physics: const AlwaysScrollableScrollPhysics(),
                       children: [
-                        SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.15),
                         Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(CupertinoIcons.bell_slash, size: 48, color: context.textSecondary),
-                              SizedBox(height: 12),
+                              const SizedBox(height: 12),
                               Text(
                                 'Kotak masuk kosong',
                                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: context.textPrimary),
                               ),
-                              SizedBox(height: 4),
+                              const SizedBox(height: 4),
                               Text(
-                                'Pemberitahuan transaksi atau broadcast akan muncul di sini.',
+                                'Pemberitahuan transaksi, ulasan, atau broadcast akan muncul di sini.',
                                 style: TextStyle(color: context.textSecondary, fontSize: 12),
                               ),
                             ],
@@ -309,19 +427,19 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                     physics: const AlwaysScrollableScrollPhysics(),
                     itemCount: notifs.length,
                     itemBuilder: (context, index) {
                       final notif = notifs[index];
                       final DateTime createdAt = notif.createdAt?.toLocal() ?? DateTime.now();
-                      final String timeStr = DateFormat('dd MMM, HH:mm', 'id_ID').format(createdAt);
+                      final String timeStr = AppDateFormatter.formatShortDateWithTime(createdAt);
 
                       IconData iconData;
                       Color iconColor;
                       Color bgColor;
 
-                      if (notif.type == 'purchase') {
+                      if (notif.type == 'purchase' || notif.type == 'order') {
                         iconData = CupertinoIcons.cart;
                         iconColor = AppColors.primary;
                         bgColor = AppColors.primaryLight;
@@ -329,6 +447,10 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
                         iconData = CupertinoIcons.square_arrow_down;
                         iconColor = AppColors.primary;
                         bgColor = AppColors.primaryLight;
+                      } else if (notif.type == 'review' || notif.type == 'ulasan') {
+                        iconData = Icons.star_rounded;
+                        iconColor = const Color(0xFFFFC107);
+                        bgColor = const Color(0xFFFFC107).withValues(alpha: 0.15);
                       } else {
                         iconData = CupertinoIcons.bell;
                         iconColor = AppColors.accentOrange;
@@ -342,11 +464,11 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
                           }
                         },
                         child: Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.all(16),
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
                             color: context.cardBg,
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: context.borderLight,
                               width: 0.5,
@@ -366,7 +488,7 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
                                 child: Icon(
                                   iconData,
                                   color: iconColor,
-                                  size: 18,
+                                  size: 20,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -383,7 +505,7 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
                                           child: Text(
                                             notif.title,
                                             style: TextStyle(
-                                              fontSize: 14,
+                                              fontSize: 13.5,
                                               fontWeight: FontWeight.w600,
                                               color: context.textPrimary,
                                             ),
@@ -391,7 +513,7 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 4),
+                                    const SizedBox(height: 3),
                                     Text(
                                       notif.message,
                                       style: TextStyle(
@@ -400,17 +522,28 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
                                         height: 1.3,
                                       ),
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 6),
                                     Text(
                                       timeStr,
                                       style: TextStyle(
-                                        fontSize: 10,
-                                        color: context.textSecondary,
+                                        fontSize: 10.5,
+                                        color: context.textSecondary.withValues(alpha: 0.7),
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
+
+                              if (!notif.isRead)
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  margin: const EdgeInsets.only(top: 4, left: 4),
+                                  decoration: const BoxDecoration(
+                                    color: Nebula.teal,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
                             ],
                           ),
                         ),
@@ -418,24 +551,33 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
                     },
                   );
                 },
-                loading: () => ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  itemCount: 4,
-                  itemBuilder: (context, index) => const SkeletonListTile(),
+                loading: () => Shimmer(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: 4,
+                    itemBuilder: (context, index) => const Padding(
+                      padding: EdgeInsets.only(bottom: 12),
+                      child: SkeletonListTile(),
+                    ),
+                  ),
                 ),
                 error: (err, stack) => Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.error_outline, size: 48, color: AppColors.error),
-                      const SizedBox(height: 12),
-                      const Text('Gagal memuat notifikasi'),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: () => ref.invalidate(userNotificationsProvider),
-                        child: const Text(AppStrings.buttonRetry),
-                      ),
-                    ],
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${AppStrings.labelFailed} memuat notifikasi',
+                          style: TextStyle(color: context.errorColor, fontSize: 13),
+                        ),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: () => ref.invalidate(userNotificationsProvider),
+                          child: const Text(AppStrings.buttonRetry),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

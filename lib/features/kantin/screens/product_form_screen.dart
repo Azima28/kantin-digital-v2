@@ -1,4 +1,4 @@
-import 'dart:io' show File; // TODO: Replace with cross-platform file picker for web
+import 'dart:io' show File;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -6,15 +6,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/core/widgets/nebula_components.dart';
 import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 import 'package:kantin_digital/core/widgets/app_toast.dart';
@@ -598,7 +599,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           width: 40,
                           height: 40,
                           fit: BoxFit.cover,
-                          placeholder: (_, __) => const Center(child: CupertinoActivityIndicator(radius: 8)),
+                          placeholder: (_, __) => const ShimmerRect(
+                            width: 40,
+                            height: 40,
+                            borderRadius: 8,
+                          ),
                           errorWidget: (_, __, ___) => const Icon(Icons.broken_image, size: 20, color: Colors.grey),
                         ),
                       )
@@ -1063,38 +1068,18 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
       setUploadingState(true);
 
-      final client = ref.read(supabaseClientProvider);
+      final apiClient = ref.read(apiClientProvider);
       final bytes = await pickedFile.readAsBytes();
       final fileExt = pickedFile.name.split('.').last;
       final fileName = 'topping_${DateTime.now().millisecondsSinceEpoch}.${fileExt.isEmpty ? 'jpg' : fileExt}';
 
-      try {
-        await client.storage.from('products').uploadBinary(
-          fileName,
-          bytes,
-          fileOptions: const FileOptions(contentType: 'image/jpeg', cacheControl: '3600'),
-        );
-      } catch (_) {
-        try {
-          await client.storage.createBucket('products', const BucketOptions(public: true));
-          await client.storage.from('products').uploadBinary(
-            fileName,
-            bytes,
-            fileOptions: const FileOptions(contentType: 'image/jpeg', cacheControl: '3600'),
-          );
-        } catch (createErr) {
-          setUploadingState(false);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Gagal mengunggah foto toping: $createErr'), backgroundColor: Nebula.rose),
-            );
-          }
-          return null;
-        }
-      }
+      final response = await apiClient.uploadImage('/upload/product-image', bytes, fileName);
 
       setUploadingState(false);
-      return client.storage.from('products').getPublicUrl(fileName);
+      if (response.success && response.data != null) {
+        return response.data!['url']?.toString();
+      }
+      return null;
     } catch (e) {
       setUploadingState(false);
       debugPrint('Upload topping image error: $e');
@@ -1274,7 +1259,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                   child: CachedNetworkImage(
                                     imageUrl: toppingImageUrl!,
                                     fit: BoxFit.cover,
-                                    placeholder: (_, __) => const Center(child: CupertinoActivityIndicator()),
+                                    placeholder: (_, __) => const ShimmerRect(
+                                      width: double.infinity,
+                                      height: 130,
+                                      borderRadius: 16,
+                                    ),
                                     errorWidget: (_, __, ___) => const Center(child: Icon(Icons.broken_image, size: 36)),
                                   ),
                                 ),
@@ -1527,7 +1516,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                               child: CachedNetworkImage(
                                 imageUrl: toppingImageUrl!,
                                 fit: BoxFit.cover,
-                                placeholder: (_, __) => const Center(child: CupertinoActivityIndicator()),
+                                placeholder: (_, __) => const ShimmerRect(
+                                  width: double.infinity,
+                                  height: 130,
+                                  borderRadius: 16,
+                                ),
                                 errorWidget: (_, __, ___) => const Center(child: Icon(Icons.broken_image, size: 36)),
                               ),
                             ),
@@ -1770,38 +1763,22 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     }
 
     try {
-      final client = ref.read(supabaseClientProvider);
+      final apiClient = ref.read(apiClientProvider);
 
       if (_imageFile != null) {
         final bytes = await _imageFile!.readAsBytes();
         final fileExt = _imageFile!.name.split('.').last;
         final fileName = 'product_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
-        
-        try {
-          await client.storage.from('products').uploadBinary(
-            fileName,
-            bytes,
-            fileOptions: const FileOptions(contentType: 'image/jpeg', cacheControl: '3600'),
-          );
-        } catch (storageErr) {
-          try {
-            await client.storage.createBucket('products', const BucketOptions(public: true));
-            await client.storage.from('products').uploadBinary(
-              fileName,
-              bytes,
-              fileOptions: const FileOptions(contentType: 'image/jpeg', cacheControl: '3600'),
-            );
-          } catch (createErr) {
-            throw Exception('${AppStrings.labelFailed} mengunggah gambar. Pastikan bucket "products" sudah dibuat di Supabase Storage Anda. Detail: $storageErr');
-          }
+
+        final uploadRes = await apiClient.uploadImage('/upload/product-image', bytes, fileName);
+        if (uploadRes.success && uploadRes.data != null) {
+          finalImageUrl = uploadRes.data!['url']?.toString();
         }
-        
-        finalImageUrl = client.storage.from('products').getPublicUrl(fileName);
       }
-      
+
       final Map<String, dynamic> data = {
         'name': name,
-        'price': price,
+        'price': price.toInt(),
         'category': _selectedCategory,
         'image_url': finalImageUrl,
         'customizable_options': _customizableOptions,
@@ -1809,26 +1786,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
       if (isEdit) {
         final String productId = widget.initialProduct!.id;
-        await client.from('products').update(data).eq('id', productId);
+        await apiClient.put('/pos/products/$productId', body: data);
       } else {
         data['operator_id'] = operatorId;
         data['is_available'] = true;
-        await client.from('products').insert(data);
+        await apiClient.post('/pos/products', body: data);
       }
-
-      // Write to audit logs
-      try {
-        final actorName = authState.profile?['full_name'] ?? 'Petugas Kantin';
-        await client.from('audit_logs').insert({
-          'actor_id': operatorId,
-          'actor_name': actorName,
-          'action_type': isEdit ? 'UBAH_PRODUK' : 'TAMBAH_PRODUK',
-          'description': isEdit
-              ? 'Mengubah data produk jajanan: $name'
-              : 'Menambahkan produk jajanan baru: $name',
-          'new_value': data,
-        });
-      } catch (_) {}
 
       // Refresh list providers
       ref.invalidate(posProductsProvider);
@@ -2030,7 +1993,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                     ? CachedNetworkImage(
                                         imageUrl: _imageFile!.path,
                                         fit: BoxFit.cover,
-                                        placeholder: (c, i) => const Center(child: CupertinoActivityIndicator()),
+                                        placeholder: (c, i) => const ShimmerRect(
+                                          width: double.infinity,
+                                          height: 180,
+                                          borderRadius: 16,
+                                        ),
                                       )
                                     : Image.file(
                                         File(_imageFile!.path),
@@ -2043,7 +2010,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                     child: CachedNetworkImage(
                                       imageUrl: widget.initialProduct!.imageUrl!,
                                       fit: BoxFit.cover,
-                                      placeholder: (c, i) => const Center(child: CupertinoActivityIndicator()),
+                                      placeholder: (c, i) => const ShimmerRect(
+                                        width: double.infinity,
+                                        height: 180,
+                                        borderRadius: 16,
+                                      ),
                                       errorWidget: (c, i, e) => _buildUploadPlaceholder(),
                                     ),
                                   )

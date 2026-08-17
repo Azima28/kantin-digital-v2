@@ -1,10 +1,14 @@
-﻿import 'package:flutter/cupertino.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:kantin_digital/core/services/storage_service.dart';
 import 'package:kantin_digital/core/widgets/change_password_panel.dart';
 import 'package:kantin_digital/core/widgets/theme_toggle_tile.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
@@ -19,6 +23,90 @@ class KeuanganProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
+
+  Future<void> _handleAvatarChange() async {
+    await showCupertinoModalPopup<void>(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        title: const Text('Ubah Foto Profil Petugas'),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _uploadAvatar(ImageSource.camera);
+            },
+            child: const Text('Ambil Foto dari Kamera'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _uploadAvatar(ImageSource.gallery);
+            },
+            child: const Text('Pilih dari Galeri'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDestructiveAction: true,
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _uploadAvatar(ImageSource source) async {
+    final authState = ref.read(authNotifierProvider);
+    final String? userId = authState.profile?['id'];
+    if (userId == null) return;
+
+    final apiClient = ref.read(apiClientProvider);
+    final storageService = StorageService(apiClient);
+
+    final imageFile = await storageService.pickImage(source: source);
+    if (imageFile == null) return;
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mengupload foto profil...'),
+          duration: Duration(seconds: 60),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+
+    try {
+      final avatarUrl = await storageService.uploadAvatar(
+        userId: userId,
+        imageFile: imageFile,
+      );
+
+      await ref.read(authNotifierProvider.notifier).updateProfileAvatar(avatarUrl);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Foto profil berhasil diperbarui!'),
+            backgroundColor: Nebula.teal,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mengupload foto: $e'),
+            backgroundColor: Nebula.rose,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
 
   void _showChangePasswordDialog() {
     showGeneralDialog(
@@ -94,16 +182,22 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
     final email = profile?['email'] ?? '-';
     final username = profile?['username'] ?? 'budi_fin';
     final school = profile?['assigned_school'] ?? 'SMP Terpadu';
+    final String? avatarUrl = profile?['avatar_url'] as String?;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
+        toolbarHeight: 56,
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
+        centerTitle: true,
+        shape: Border(
+          bottom: BorderSide(color: context.dividerCol, width: 0.5),
+        ),
         title: Text(
           'Profil Saya',
-          style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Nebula.teal, fontSize: 18),
+          style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.textPrimary, fontSize: 18),
         ),
       ),
       body: SafeArea(
@@ -112,7 +206,7 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ─── Header Avatar Bento Card ───
+              // ─── Header Avatar Bento Card with Camera Button ───
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(24),
@@ -133,16 +227,73 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
                 ),
                 child: Column(
                   children: [
-                    CircleAvatar(
-                      radius: 36,
-                      backgroundColor: Nebula.teal.withValues(alpha: 0.08),
-                      child: Text(
-                        fullName.isNotEmpty ? fullName[0].toUpperCase() : 'A',
-                        style: GoogleFonts.inter(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Nebula.teal,
-                        ),
+                    GestureDetector(
+                      onTap: _handleAvatarChange,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Nebula.teal.withValues(alpha: 0.1),
+                              border: Border.all(color: Nebula.teal.withValues(alpha: 0.3), width: 2),
+                            ),
+                            child: ClipOval(
+                              child: (avatarUrl != null && avatarUrl.isNotEmpty)
+                                  ? CachedNetworkImage(
+                                      imageUrl: avatarUrl,
+                                      fit: BoxFit.cover,
+                                      placeholder: (_, __) => const Center(child: CupertinoActivityIndicator()),
+                                      errorWidget: (_, __, ___) => Center(
+                                        child: Text(
+                                          fullName.isNotEmpty ? fullName[0].toUpperCase() : 'A',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 32,
+                                            fontWeight: FontWeight.bold,
+                                            color: Nebula.teal,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : Center(
+                                      child: Text(
+                                        fullName.isNotEmpty ? fullName[0].toUpperCase() : 'A',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.bold,
+                                          color: Nebula.teal,
+                                        ),
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: -2,
+                            right: -2,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: context.cardBg,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: context.borderLight, width: 1),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.15),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                CupertinoIcons.camera_fill,
+                                size: 14,
+                                color: Nebula.teal,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -189,32 +340,25 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
                   ],
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Informasi Akun',
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: context.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildInfoRow('Email', email),
-                    Divider(height: 16, thickness: 0.5, color: context.dividerCol),
-                    _buildInfoRow('Username', username),
-                    Divider(height: 16, thickness: 0.5, color: context.dividerCol),
-                    _buildInfoRow('Level Otoritas', 'L1 (Operator)'),
-                    Divider(height: 16, thickness: 0.5, color: context.dividerCol),
-                    _buildInfoRow('Sekolah Asal', school),
+                    _buildInfoTile('Username', username, context),
+                    _buildDivider(context),
+                    _buildInfoTile('Email', email, context),
+                    _buildDivider(context),
+                    _buildInfoTile('Unit Sekolah', school, context),
                   ],
                 ),
               ),
               const SizedBox(height: 16),
 
-              // ─── Security Options Card ───
+              // ─── Display Mode Toggle Tile ───
+              const ThemeToggleTile(),
+              const SizedBox(height: 16),
+
+              // ─── Actions & Security Card ───
               Container(
                 width: double.infinity,
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: context.cardBg,
                   borderRadius: BorderRadius.circular(24),
@@ -231,69 +375,24 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
                   ],
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 20, top: 16, right: 20, bottom: 8),
-                      child: Text(
-                        'Pengaturan Keamanan',
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: context.textPrimary,
-                        ),
-                      ),
-                    ),
-                    ThemeToggleTile(showDivider: true),
-                    ListTile(
-                      leading: CircleAvatar(
-                        radius: 18,
-                        backgroundColor: Nebula.teal.withValues(alpha: 0.08),
-                        child: Icon(CupertinoIcons.lock_shield, color: Nebula.teal, size: 20),
-                      ),
-                      title: Text(
-                        AppStrings.adminChangePassword,
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                          color: context.textPrimary,
-                        ),
-                      ),
-                      trailing: Icon(CupertinoIcons.chevron_forward, size: 16, color: context.textSecondary),
+                    _buildActionItem(
+                      icon: CupertinoIcons.lock_shield,
+                      title: 'Ubah Kata Sandi',
                       onTap: _showChangePasswordDialog,
+                      context: context,
+                    ),
+                    _buildDivider(context),
+                    _buildActionItem(
+                      icon: CupertinoIcons.square_arrow_right,
+                      title: 'Keluar',
+                      isDestructive: true,
+                      onTap: _handleLogout,
+                      context: context,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
-
-              // ─── Logout Button ───
-              SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  onPressed: _handleLogout,
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: Nebula.rose.withValues(alpha: 0.08),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: BorderSide(
-                        color: Nebula.rose.withValues(alpha: 0.2),
-                      ),
-                    ),
-                  ),
-                  child: Text(
-                    '🚪 KELUAR DARI AKUN',
-                    style: GoogleFonts.inter(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: Nebula.rose,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
             ],
           ),
         ),
@@ -301,23 +400,70 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(color: context.textSecondary, fontSize: 13),
-        ),
-        Text(
-          value,
-          style: GoogleFonts.inter(
-            fontWeight: FontWeight.bold,
-            color: context.textPrimary,
-            fontSize: 13,
+  Widget _buildInfoTile(String label, String value, BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: context.textSecondary,
+            ),
           ),
+          Text(
+            value,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: context.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    required BuildContext context,
+    bool isDestructive = false,
+  }) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: isDestructive ? Nebula.rose : Nebula.teal,
+        size: 22,
+      ),
+      title: Text(
+        title,
+        style: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: isDestructive ? Nebula.rose : context.textPrimary,
         ),
-      ],
+      ),
+      trailing: Icon(
+        CupertinoIcons.chevron_right,
+        size: 16,
+        color: context.textSecondary,
+      ),
+      onTap: onTap,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+    );
+  }
+
+  Widget _buildDivider(BuildContext context) {
+    return Divider(
+      height: 1,
+      thickness: 0.5,
+      color: context.dividerCol,
     );
   }
 }

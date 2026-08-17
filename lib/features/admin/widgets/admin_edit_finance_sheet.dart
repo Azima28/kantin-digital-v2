@@ -5,11 +5,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_dropdown_row.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_form_text_field.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_section_label.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
 
 /// Bottom sheet for editing an existing finance officer profile and data.
@@ -129,52 +129,23 @@ void showEditFinanceSheet(
 
                           setLocal(() => isSaving = true);
                           try {
-                            final client = ref.read(supabaseClientProvider);
+                            final apiClient = ref.read(apiClientProvider);
 
-                            // 1. Update profiles table
-                            await client.from('profiles').update({
-                              'full_name': name,
-                              'email': email,
-                              'username': username,
-                              'phone_number': phone,
-                            }).eq('id', profile.id);
+                            final response = await apiClient.put(
+                              '/admin/finance-officers/${profile.id}',
+                              body: {
+                                'full_name': name,
+                                'email': email,
+                                'username': username,
+                                'phone_number': phone,
+                                'assigned_school': school,
+                                'authority_level': authLevel,
+                              },
+                            );
 
-                            // 2. Update finance_officers table
-                            await client.from('finance_officers').update({
-                              'assigned_school': school,
-                              'authority_level': authLevel,
-                            }).eq('id', profile.id);
-
-                            // 3. Write audit log
-                            try {
-                              final authProfile = ref.read(authNotifierProvider).profile;
-                              final actorName = authProfile?['full_name'] ?? 'Super Admin';
-                              final actorId = authProfile?['id'];
-
-                              await client.from('audit_logs').insert({
-                                'actor_id': actorId,
-                                'actor_name': actorName,
-                                'action_type': 'EDIT_PENGGUNA',
-                                'description': 'Super Admin mengedit profil admin keuangan: $name',
-                                'target_id': profile.id,
-                                'old_value': {
-                                  'full_name': profile.fullName,
-                                  'email': profile.email,
-                                  'username': profile.username,
-                                  'phone_number': profile.phoneNumber,
-                                  'assigned_school': officer.assignedSchool,
-                                  'authority_level': officer.authorityLevel,
-                                },
-                                'new_value': {
-                                  'full_name': name,
-                                  'email': email,
-                                  'username': username,
-                                  'phone_number': phone,
-                                  'assigned_school': school,
-                                  'authority_level': authLevel,
-                                },
-                              });
-                            } catch (_) {}
+                            if (!response.success) {
+                              throw Exception(response.message ?? 'Gagal memperbarui profil admin keuangan');
+                            }
 
                             // Invalidate details and user list providers
                             ref.invalidate(adminFinanceDetailProvider(profile.id));

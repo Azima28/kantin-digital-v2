@@ -101,7 +101,7 @@ class AuditLog {
   @override
   int get hashCode => id.hashCode;
 
-  /// Parse JSONB value from Supabase — handles Map, String (JSON), or null.
+  /// Parse JSONB value from database — handles Map, String (JSON), or null.
   static Map<String, dynamic> _parseJsonb(dynamic value) {
     if (value is Map<String, dynamic>) return value;
     if (value is Map) return Map<String, dynamic>.from(value);

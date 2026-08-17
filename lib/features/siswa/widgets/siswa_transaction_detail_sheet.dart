@@ -108,10 +108,16 @@ void showTransactionDetailSheet(
                   const Divider(height: 20),
                   _buildDataRow(
                     context,
-                    'Metode/Lokasi',
+                    'Merchant / Lokasi',
+                    type == 'topup' ? 'Koperasi Sekolah' : canteenName,
+                  ),
+                  const Divider(height: 20),
+                  _buildDataRow(
+                    context,
+                    'Metode Transaksi',
                     type == 'topup'
-                        ? 'QRIS / Koperasi'
-                        : '$canteenName (${tx.purchaseMethod == 'app' ? 'Aplikasi' : 'RFID/NFC'})',
+                        ? 'Kasir Keuangan'
+                        : tx.purchaseMethodDisplay,
                   ),
 
                   if (type == 'purchase') ...[

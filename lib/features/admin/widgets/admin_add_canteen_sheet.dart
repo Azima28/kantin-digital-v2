@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/widgets/app_toast.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 
 /// Shows a bottom sheet to add a new canteen operator (petugas kantin).
@@ -125,46 +125,23 @@ void showAddCanteenSheet(BuildContext context, WidgetRef ref) {
                           }
                           setLocal(() => isSaving = true);
                           try {
-                            final client = ref.read(supabaseClientProvider);
+                            final apiClient = ref.read(apiClientProvider);
                             final email = emailCtrl.text.trim().isEmpty
                                 ? '${usernameCtrl.text.trim()}@sekolah.sch.id'
                                 : emailCtrl.text.trim();
 
-                            final newProfile = await client.rpc(
-                                'create_user_account', params: {
-                              'p_email': email,
-                              'p_password': passCtrl.text.trim(),
-                              'p_full_name': nameCtrl.text.trim(),
-                              'p_role': 'petugas_kantin',
-                              'p_phone_number': phoneCtrl.text.trim(),
-                              'p_username': usernameCtrl.text.trim(),
-                              'p_canteen_name': canteenCtrl.text.trim(),
-                              'p_is_active': true,
+                            final response = await apiClient.post('/admin/canteen-operators', body: {
+                              'email': email,
+                              'password': passCtrl.text.trim(),
+                              'full_name': nameCtrl.text.trim(),
+                              'phone_number': phoneCtrl.text.trim(),
+                              'username': usernameCtrl.text.trim(),
+                              'canteen_name': canteenCtrl.text.trim(),
                             });
 
-                            // Write to audit logs
-                            try {
-                              final staffId = newProfile['id'];
-                              final authProfile =
-                                  ref.read(authNotifierProvider).profile;
-                              final actorName =
-                                  authProfile?['full_name'] ?? 'Super Admin';
-                              final actorId = authProfile?['id'];
-
-                              await client.from('audit_logs').insert({
-                                'actor_id': actorId,
-                                'actor_name': actorName,
-                                'action_type': 'TAMBAH_PENGGUNA',
-                                'description':
-                                    'Super Admin menambahkan petugas kantin baru secara manual: ${nameCtrl.text.trim()}',
-                                'target_id': staffId,
-                                'new_value': {
-                                  'full_name': nameCtrl.text.trim(),
-                                  'username': usernameCtrl.text.trim(),
-                                  'role': 'petugas_kantin',
-                                },
-                              });
-                            } catch (_) {}
+                            if (!response.success) {
+                              throw Exception(response.message ?? 'Gagal menambahkan petugas kantin');
+                            }
 
                             ref.invalidate(adminUsersProvider);
                             if (ctx.mounted) Navigator.pop(ctx);
@@ -180,7 +157,7 @@ void showAddCanteenSheet(BuildContext context, WidgetRef ref) {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('${AppStrings.labelFailed} menyimpan'),
+                                  content: Text('${AppStrings.labelFailed} menyimpan: $e'),
                                   backgroundColor: AppColors.errorRed2,
                                 ),
                               );

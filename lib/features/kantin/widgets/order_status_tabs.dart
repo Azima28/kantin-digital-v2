@@ -43,7 +43,7 @@ class OrderStatusTabs extends StatelessWidget {
             width: 1,
           ),
         ),
-        padding: const EdgeInsets.all(4),
+        padding: const EdgeInsets.all(3),
         child: LayoutBuilder(
           builder: (context, constraints) {
             final double tabWidth = constraints.maxWidth / tabs.length;
@@ -54,19 +54,18 @@ class OrderStatusTabs extends StatelessWidget {
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 280),
                   curve: Curves.easeInOut,
-                  left: activeIndex * tabWidth,
-                  top: 0,
-                  bottom: 0,
-                  width: tabWidth,
+                  left: (activeIndex >= 0 ? activeIndex : 0) * tabWidth + 1.5,
+                  top: 1.5,
+                  bottom: 1.5,
+                  width: tabWidth - 3,
                   child: Container(
-                    margin: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
                       color: Nebula.teal, // active tab background
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Nebula.teal.withValues(alpha: 0.2),
-                          blurRadius: 4,
+                          color: Nebula.teal.withValues(alpha: 0.25),
+                          blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),
                       ],
@@ -85,48 +84,48 @@ class OrderStatusTabs extends StatelessWidget {
                       child: GestureDetector(
                         behavior: HitTestBehavior.opaque,
                         onTap: () => onTabChanged(tabKey),
-                        child: AnimatedScale(
-                          scale: isSelected ? 1.03 : 1.0,
-                          duration: const Duration(milliseconds: 250),
-                          curve: Curves.easeInOut,
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 250),
-                            curve: Curves.easeInOut,
+                        child: Container(
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
                             alignment: Alignment.center,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 AnimatedDefaultTextStyle(
-                                  duration: const Duration(milliseconds: 250),
+                                  duration: const Duration(milliseconds: 200),
                                   style: GoogleFonts.inter(
-                                    fontSize: 13,
+                                    fontSize: 12.5,
                                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                                     color: isSelected ? Colors.white : context.textSecondary,
                                   ),
                                   child: Text(label),
                                 ),
                                 if (count > 0) ...[
-                                  const SizedBox(width: 6),
-                                  AnimatedContainer(
-                                    duration: const Duration(milliseconds: 250),
-                                    padding: const EdgeInsets.all(4),
+                                  const SizedBox(width: 3.5),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1.5),
                                     decoration: BoxDecoration(
-                                      color: isSelected ? Colors.white.withValues(alpha: 0.25) : Colors.blueAccent,
-                                      shape: BoxShape.circle,
+                                      color: isSelected ? Colors.white.withValues(alpha: 0.25) : const Color(0xFF3B82F6),
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
                                     constraints: const BoxConstraints(
-                                      minWidth: 18,
-                                      minHeight: 18,
+                                      minWidth: 16,
+                                      minHeight: 16,
                                     ),
-                                    child: Text(
-                                      '$count',
-                                      style: TextStyle(
-                                        color: isSelected ? Colors.white : Colors.white,
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.bold,
+                                    child: Center(
+                                      child: Text(
+                                        '$count',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.w800,
+                                          height: 1.0,
+                                        ),
+                                        textAlign: TextAlign.center,
                                       ),
-                                      textAlign: TextAlign.center,
                                     ),
                                   ),
                                 ],

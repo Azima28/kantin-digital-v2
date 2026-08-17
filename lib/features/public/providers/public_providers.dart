@@ -1,60 +1,65 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
+import 'package:kantin_digital/core/utils/riverpod_cache_extensions.dart';
 
-// ─── Helper: pairs a Product with its canteen name ───
+// ─── Helper: pairs a Product with its canteen name & delivery settings ───
 class ProductWithCanteen {
   final Product product;
   final String canteenName;
-  const ProductWithCanteen({required this.product, required this.canteenName});
+  final bool isDeliveryEnabled;
+  final int deliveryFee;
+
+  const ProductWithCanteen({
+    required this.product,
+    required this.canteenName,
+    this.isDeliveryEnabled = true,
+    this.deliveryFee = 2000,
+  });
 }
 
-// ─── Provider untuk fetch menu publik (Legacy fallback) ───
+// ─── Provider untuk fetch menu publik (Cache Window 5 Menit) ───
 final publicMenuProvider = FutureProvider.autoDispose
     .family<List<ProductWithCanteen>, String?>((ref, category) async {
-  final client = ref.read(supabaseClientProvider);
-
-  List<dynamic> res;
+  ref.cacheFor(const Duration(minutes: 5));
+  final apiClient = ref.read(apiClientProvider);
+  final queryParams = <String, dynamic>{};
   if (category != null && category.isNotEmpty) {
-    res = await client
-        .from('products')
-        .select(
-            'id, operator_id, name, price, category, is_available, image_url, customizable_options, canteen_operators(canteen_name)')
-        .eq('category', category)
-        .order('is_available', ascending: false)
-        .order('name', ascending: true);
-  } else {
-    res = await client
-        .from('products')
-        .select(
-            'id, operator_id, name, price, category, is_available, image_url, customizable_options, canteen_operators(canteen_name)')
-        .order('is_available', ascending: false)
-        .order('name', ascending: true);
+    queryParams['category'] = category;
   }
 
-  return res.map((e) {
-    final data = e as Map<String, dynamic>;
-    final canteenData = data['canteen_operators'];
-    final canteenName = canteenData is Map<String, dynamic>
-        ? (canteenData['canteen_name'] as String? ?? 'Stan Lainnya')
-        : 'Stan Lainnya';
-    return ProductWithCanteen(
-        product: Product.fromJson(data), canteenName: canteenName);
-  }).toList();
+  final response = await apiClient.get('/products', queryParams: queryParams);
+  if (response.success && response.data != null) {
+    final list = response.data as List<dynamic>;
+    return list.map((e) {
+      final data = e as Map<String, dynamic>;
+      final canteenName = data['canteen_name'] as String? ?? 'Stan Kantin';
+      final isDeliveryEnabled = data['is_delivery_enabled'] as bool? ?? true;
+      final deliveryFee = (data['delivery_fee'] as num?)?.toInt() ?? 2000;
+      return ProductWithCanteen(
+        product: Product.fromJson(data),
+        canteenName: canteenName,
+        isDeliveryEnabled: isDeliveryEnabled,
+        deliveryFee: deliveryFee,
+      );
+    }).toList();
+  }
+  return <ProductWithCanteen>[];
 });
 
-// ─── [NEW] Provider daftar stan kantin aktif untuk filter ───
+// ─── Provider daftar stan kantin aktif (Cache Window 5 Menit) ───
 final publicCanteensProvider = FutureProvider.autoDispose<List<CanteenOperator>>((ref) async {
-  final client = ref.read(supabaseClientProvider);
-  final res = await client
-      .from('canteen_operators')
-      .select('id, canteen_name, balance_earned, is_delivery_enabled, delivery_fee')
-      .order('canteen_name', ascending: true);
-
-  return res.map((e) => CanteenOperator.fromJson(e)).toList();
+  ref.cacheFor(const Duration(minutes: 5));
+  final apiClient = ref.read(apiClientProvider);
+  final response = await apiClient.get('/canteens');
+  if (response.success && response.data != null) {
+    final list = response.data as List<dynamic>;
+    return list.map((e) => CanteenOperator.fromJson(e as Map<String, dynamic>)).toList();
+  }
+  return <CanteenOperator>[];
 });
 
-// ─── [NEW] Model filter preview untuk sectioned list ───
+// ─── Model filter preview untuk sectioned list ───
 class PreviewFilter {
   final String category;
   final String? canteenId;
@@ -71,37 +76,38 @@ class PreviewFilter {
   int get hashCode => category.hashCode ^ canteenId.hashCode;
 }
 
-// ─── [NEW] Provider untuk memuat preview 4 item per kategori ───
+// ─── Provider untuk memuat preview 4 item per kategori (Cache Window 3 Menit) ───
 final categoryPreviewProvider = FutureProvider.autoDispose
     .family<List<ProductWithCanteen>, PreviewFilter>((ref, filter) async {
-  final client = ref.read(supabaseClientProvider);
-  
-  var query = client
-      .from('products')
-      .select('id, operator_id, name, price, category, is_available, image_url, customizable_options, canteen_operators(canteen_name)')
-      .eq('category', filter.category);
-
+  ref.cacheFor(const Duration(minutes: 3));
+  final apiClient = ref.read(apiClientProvider);
+  final queryParams = <String, dynamic>{
+    'category': filter.category,
+  };
   if (filter.canteenId != null && filter.canteenId != 'semua') {
-    query = query.eq('operator_id', filter.canteenId!);
+    queryParams['canteen_id'] = filter.canteenId;
   }
 
-  // Hanya memuat 4 item untuk efisiensi database (preview)
-  final res = await query
-      .order('is_available', ascending: false)
-      .order('name', ascending: true)
-      .range(0, 3);
-
-  return res.map((data) {
-    final canteenData = data['canteen_operators'];
-    final canteenName = canteenData is Map<String, dynamic>
-        ? (canteenData['canteen_name'] as String? ?? 'Stan Lainnya')
-        : 'Stan Lainnya';
-    return ProductWithCanteen(
-        product: Product.fromJson(data), canteenName: canteenName);
-  }).toList();
+  final response = await apiClient.get('/products', queryParams: queryParams);
+  if (response.success && response.data != null) {
+    final list = response.data as List<dynamic>;
+    return list.take(4).map((data) {
+      final map = data as Map<String, dynamic>;
+      final canteenName = map['canteen_name'] as String? ?? 'Stan Kantin';
+      final isDeliveryEnabled = map['is_delivery_enabled'] as bool? ?? true;
+      final deliveryFee = (map['delivery_fee'] as num?)?.toInt() ?? 2000;
+      return ProductWithCanteen(
+        product: Product.fromJson(map),
+        canteenName: canteenName,
+        isDeliveryEnabled: isDeliveryEnabled,
+        deliveryFee: deliveryFee,
+      );
+    }).toList();
+  }
+  return <ProductWithCanteen>[];
 });
 
-// ─── [NEW] Objek filter pagination ───
+// ─── Objek filter pagination ───
 class PaginatedProductsFilter {
   final String? category;
   final String? canteenId;
@@ -120,7 +126,7 @@ class PaginatedProductsFilter {
   int get hashCode => category.hashCode ^ canteenId.hashCode ^ searchQuery.hashCode;
 }
 
-// ─── [NEW] Status state pagination ───
+// ─── Status state pagination ───
 class PaginatedProductsState {
   final List<ProductWithCanteen> items;
   final bool isLoading;
@@ -153,11 +159,10 @@ class PaginatedProductsState {
   }
 }
 
-// ─── [NEW] StateNotifier Pagination dengan Supabase Range ───
+// ─── StateNotifier Pagination ───
 class PaginatedProductsNotifier extends StateNotifier<PaginatedProductsState> {
   final Ref ref;
   final PaginatedProductsFilter filter;
-  static const int _pageSize = 8; // Memuat 8 jajanan per halaman
 
   PaginatedProductsNotifier(this.ref, this.filter) : super(const PaginatedProductsState(items: [])) {
     loadFirstPage();
@@ -166,90 +171,53 @@ class PaginatedProductsNotifier extends StateNotifier<PaginatedProductsState> {
   Future<void> loadFirstPage() async {
     state = state.copyWith(isLoading: true, error: null, hasReachedMax: false);
     try {
-      final client = ref.read(supabaseClientProvider);
-      var query = client
-          .from('products')
-          .select('id, operator_id, name, price, category, is_available, image_url, customizable_options, canteen_operators(canteen_name)');
-
+      final apiClient = ref.read(apiClientProvider);
+      final queryParams = <String, dynamic>{};
       if (filter.category != null) {
-        query = query.eq('category', filter.category!);
+        queryParams['category'] = filter.category;
       }
       if (filter.canteenId != null && filter.canteenId != 'semua') {
-        query = query.eq('operator_id', filter.canteenId!);
+        queryParams['canteen_id'] = filter.canteenId;
       }
       if (filter.searchQuery.isNotEmpty) {
-        query = query.ilike('name', '%${filter.searchQuery}%');
+        queryParams['search'] = filter.searchQuery;
       }
 
-      final res = await query
-          .order('is_available', ascending: false)
-          .order('name', ascending: true)
-          .range(0, _pageSize - 1);
+      final response = await apiClient.get('/products', queryParams: queryParams);
+      if (response.success && response.data != null) {
+        final list = response.data as List<dynamic>;
+        final items = list.map((e) {
+          final data = e as Map<String, dynamic>;
+          final canteenName = data['canteen_name'] as String? ?? 'Stan Kantin';
+          final isDeliveryEnabled = data['is_delivery_enabled'] as bool? ?? true;
+          final deliveryFee = (data['delivery_fee'] as num?)?.toInt() ?? 2000;
+          return ProductWithCanteen(
+            product: Product.fromJson(data),
+            canteenName: canteenName,
+            isDeliveryEnabled: isDeliveryEnabled,
+            deliveryFee: deliveryFee,
+          );
+        }).toList();
 
-      final items = _mapResponse(res);
-      state = PaginatedProductsState(
-        items: items,
-        isLoading: false,
-        hasReachedMax: items.length < _pageSize,
-      );
+        state = PaginatedProductsState(
+          items: items,
+          isLoading: false,
+          hasReachedMax: true,
+        );
+      } else {
+        state = PaginatedProductsState(items: [], isLoading: false, hasReachedMax: true);
+      }
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
   Future<void> loadNextPage() async {
-    if (state.isLoading || state.isLoadingMore || state.hasReachedMax) return;
-
-    state = state.copyWith(isLoadingMore: true, error: null);
-    try {
-      final client = ref.read(supabaseClientProvider);
-      final int start = state.items.length;
-      final int end = start + _pageSize - 1;
-
-      var query = client
-          .from('products')
-          .select('id, operator_id, name, price, category, is_available, image_url, customizable_options, canteen_operators(canteen_name)');
-
-      if (filter.category != null) {
-        query = query.eq('category', filter.category!);
-      }
-      if (filter.canteenId != null && filter.canteenId != 'semua') {
-        query = query.eq('operator_id', filter.canteenId!);
-      }
-      if (filter.searchQuery.isNotEmpty) {
-        query = query.ilike('name', '%${filter.searchQuery}%');
-      }
-
-      final res = await query
-          .order('is_available', ascending: false)
-          .order('name', ascending: true)
-          .range(start, end);
-
-      final newItems = _mapResponse(res);
-      state = state.copyWith(
-        items: [...state.items, ...newItems],
-        isLoadingMore: false,
-        hasReachedMax: newItems.length < _pageSize,
-      );
-    } catch (e) {
-      state = state.copyWith(isLoadingMore: false, error: e.toString());
-    }
-  }
-
-  List<ProductWithCanteen> _mapResponse(List<dynamic> res) {
-    return res.map((e) {
-      final data = e as Map<String, dynamic>;
-      final canteenData = data['canteen_operators'];
-      final canteenName = canteenData is Map<String, dynamic>
-          ? (canteenData['canteen_name'] as String? ?? 'Stan Lainnya')
-          : 'Stan Lainnya';
-      return ProductWithCanteen(
-          product: Product.fromJson(data), canteenName: canteenName);
-    }).toList();
+    // Single page response from Go in-memory high-speed cache
   }
 }
 
-// ─── [NEW] Provider keluarga untuk pagination ───
+// ─── Provider keluarga untuk pagination ───
 final paginatedProductsProvider = StateNotifierProvider.family<
     PaginatedProductsNotifier, PaginatedProductsState, PaginatedProductsFilter>((ref, filter) {
   return PaginatedProductsNotifier(ref, filter);

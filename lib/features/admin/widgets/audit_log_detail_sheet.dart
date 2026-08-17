@@ -9,7 +9,7 @@ import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/admin/widgets/audit_log_metadata_row.dart';
 
-/// Normalize JSONB values from Supabase (handle String/Map/List, doubles→ints).
+/// Normalize JSONB values from database (handle String/Map/List, doubles→ints).
 dynamic _normalizeJsonValue(dynamic value) {
   if (value == null) return null;
   if (value is String) {

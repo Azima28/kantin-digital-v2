@@ -72,14 +72,16 @@ class ParentTransactionTile extends ConsumerWidget {
     if (tx.type == 'topup') {
       return 'Top-up saldo digital';
     }
+    final methodLabel = tx.purchaseMethodDisplay;
     final items = tx.transactionItems ?? [];
     if (items.isEmpty) {
-      return 'Pembelian jajanan';
+      return '$methodLabel • Jajanan kantin';
     }
-    return items.map((item) {
+    final itemsText = items.map((item) {
       final qty = item.quantity;
       final name = item.productName;
       return "${qty}x $name";
     }).join(', ');
+    return '$methodLabel • $itemsText';
   }
 }

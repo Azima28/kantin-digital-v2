@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 
 /// Shows a custom modern dialog to freeze or activate the student card.
@@ -96,11 +96,10 @@ Future<void> showFreezeCardDialog(
                       onPressed: () async {
                         Navigator.pop(ctx);
                         try {
-                          final client = ref.read(supabaseClientProvider);
-                          await client
-                              .from('students')
-                              .update({'is_active': !currentStatus})
-                              .eq('id', studentId);
+                          final apiClient = ref.read(apiClientProvider);
+                          await apiClient.patch('/student/card-status', body: {
+                            'is_active': !currentStatus,
+                          });
 
                           ref.invalidate(siswaStudentProvider);
 

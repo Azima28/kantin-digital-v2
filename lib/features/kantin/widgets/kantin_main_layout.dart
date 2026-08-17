@@ -5,6 +5,7 @@ import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/utils/responsive.dart';
 import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
 
 import 'package:kantin_digital/core/widgets/premium_panel.dart';
 import 'package:kantin_digital/core/widgets/premium_bottom_nav_bar.dart';
@@ -113,36 +114,43 @@ class _KantinMainLayoutState extends ConsumerState<KantinMainLayout> {
           isDesktop: false,
           child: widget.child,
         ),
-        bottomNavigationBar: PremiumBottomNavBar(
-          currentIndex: selectedIndex,
-          onTap: (int index) => _onItemTapped(index, context),
-          items: const [
-            PremiumBottomNavBarItem(
-              icon: Icons.home_outlined,
-              activeIcon: Icons.home_rounded,
-              label: 'Beranda',
-            ),
-            PremiumBottomNavBarItem(
-              icon: Icons.shopping_bag_outlined,
-              activeIcon: Icons.shopping_bag_rounded,
-              label: 'Pesanan',
-            ),
-            PremiumBottomNavBarItem(
-              icon: Icons.inventory_2_outlined,
-              activeIcon: Icons.inventory_2_rounded,
-              label: 'Produk',
-            ),
-            PremiumBottomNavBarItem(
-              icon: Icons.history_outlined,
-              activeIcon: Icons.history_rounded,
-              label: 'Riwayat',
-            ),
-            PremiumBottomNavBarItem(
-              icon: Icons.person_outline_rounded,
-              activeIcon: Icons.person_rounded,
-              label: 'Akun',
-            ),
-          ],
+        bottomNavigationBar: Consumer(
+          builder: (context, ref, child) {
+            final activeCount = ref.watch(canteenActiveOrdersCountProvider);
+
+            return PremiumBottomNavBar(
+              currentIndex: selectedIndex,
+              onTap: (int index) => _onItemTapped(index, context),
+              items: [
+                const PremiumBottomNavBarItem(
+                  icon: Icons.home_outlined,
+                  activeIcon: Icons.home_rounded,
+                  label: 'Beranda',
+                ),
+                PremiumBottomNavBarItem(
+                  icon: Icons.shopping_bag_outlined,
+                  activeIcon: Icons.shopping_bag_rounded,
+                  label: 'Pesanan',
+                  badgeCount: activeCount,
+                ),
+                const PremiumBottomNavBarItem(
+                  icon: Icons.inventory_2_outlined,
+                  activeIcon: Icons.inventory_2_rounded,
+                  label: 'Produk',
+                ),
+                const PremiumBottomNavBarItem(
+                  icon: Icons.history_outlined,
+                  activeIcon: Icons.history_rounded,
+                  label: 'Riwayat',
+                ),
+                const PremiumBottomNavBarItem(
+                  icon: Icons.person_outline_rounded,
+                  activeIcon: Icons.person_rounded,
+                  label: 'Akun',
+                ),
+              ],
+            );
+          },
         ),
       );
     }

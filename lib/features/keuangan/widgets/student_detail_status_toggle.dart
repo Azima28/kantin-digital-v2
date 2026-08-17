@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 
 /// A button widget to block or unblock a student account.
@@ -55,38 +55,12 @@ class _StudentDetailStatusToggleState
               });
 
               try {
-                final client = ref.read(supabaseClientProvider);
-                final profile = ref.read(authNotifierProvider).profile;
-                final actorName = profile?['full_name'] ?? 'Admin Keuangan';
-                final actorId = profile?['id'];
-
-                // 1. Update profiles is_active
-                await client
-                    .from('profiles')
-                    .update({'is_active': newStatus})
-                    .eq('id', widget.studentId);
-
-                // 2. Update students is_active
-                await client
-                    .from('students')
-                    .update({'is_active': newStatus})
-                    .eq('id', widget.studentId);
-
-                // 3. Write to audit logs
-                await client.from('audit_logs').insert({
-                  'actor_id': actorId,
-                  'actor_name': actorName,
-                  'action_type':
-                      newStatus ? 'AKTIFKAN_AKUN' : 'BLOKIR_AKUN',
-                  'description':
-                      '${newStatus ? "Mengaktifkan" : "Memblokir"} akun siswa dengan ID: ${widget.studentId}',
-                  'target_id': widget.studentId,
-                  'old_value': {'is_active': widget.isAccountActive},
-                  'new_value': {'is_active': newStatus},
+                final apiClient = ref.read(apiClientProvider);
+                await apiClient.patch('/users/${widget.studentId}/status', body: {
+                  'is_active': newStatus,
                 });
 
-                ref
-                    .invalidate(keuanganStudentDetailProvider(widget.studentId));
+                ref.invalidate(keuanganStudentDetailProvider(widget.studentId));
 
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(

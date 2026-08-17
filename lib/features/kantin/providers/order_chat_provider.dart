@@ -1,9 +1,10 @@
 /* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 */
-import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kantin_digital/core/models/order_message.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
+import 'package:kantin_digital/core/utils/riverpod_cache_extensions.dart';
+import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 /// Preset quick-reply options for Siswa & Pedagang
 class OrderChatPresets {
@@ -11,22 +12,22 @@ class OrderChatPresets {
 
   static const List<String> siswa = [
     'Pesanan saya sudah sampai mana ya?',
-    'Tolong dipisah sambalnya ya kak 🙏',
+    'Tolong dipisah sambalnya ya kak',
     'Bisa tolong kurangin es nya?',
     'Saya mau ambil jam istirahat ya',
-    'Makasih banyak kak! 👍',
+    'Makasih banyak kak!',
   ];
 
   static const List<String> pedagang = [
-    'Pesanan sedang dimasak ya dek 🍳',
+    'Pesanan sedang dimasak ya dek',
     'Bahan makanan habis, mau diganti?',
-    'Pesanan sudah siap diambil di stan! 🛍️',
-    'Pengantar sedang jalan ke kelasmu 🛵',
-    'Sama-sama, selamat menikmati! 😊',
+    'Pesanan sudah siap diambil di stan!',
+    'Pengantar sedang jalan ke kelasmu',
+    'Sama-sama, selamat menikmati!',
   ];
 }
 
-/// In-memory fallback message store per orderId for dev testing
+/// In-memory fallback message store per orderId
 final localOrderChatProvider = StateNotifierProvider.family<LocalOrderChatNotifier, List<OrderMessage>, String>((ref, orderId) {
   return LocalOrderChatNotifier();
 });
@@ -34,34 +35,42 @@ final localOrderChatProvider = StateNotifierProvider.family<LocalOrderChatNotifi
 class LocalOrderChatNotifier extends StateNotifier<List<OrderMessage>> {
   LocalOrderChatNotifier() : super(const []);
 
+  void setMessages(List<OrderMessage> messages) {
+    state = messages;
+  }
+
   void addMessage(OrderMessage message) {
     state = [...state, message];
   }
 }
 
-/// Real-time stream provider for remote order chat messages from database
-final orderChatStreamProvider = StreamProvider.autoDispose.family<List<OrderMessage>, String>((ref, orderId) {
-  final client = ref.watch(supabaseClientProvider);
+/// Future provider for order chat messages from Go Backend with 5-minute memory cache
+final orderChatStreamProvider = FutureProvider.autoDispose.family<List<OrderMessage>, String>((ref, orderId) async {
+  ref.cacheFor(const Duration(minutes: 5));
+  final apiClient = ref.read(apiClientProvider);
+  final currentUserId = ref.watch(authNotifierProvider.select((s) => s.profile?['id'] as String?));
 
-  return client
-      .from('order_messages')
-      .stream(primaryKey: ['id'])
-      .eq('order_id', orderId)
-      .order('created_at', ascending: true)
-      .map((dataList) {
-        return dataList.map((json) => OrderMessage.fromJson(json)).toList();
-      })
-      .handleError((_) => <OrderMessage>[]);
+  try {
+    final response = await apiClient.get('/orders/$orderId/messages');
+    if (response.success && response.data != null) {
+      final list = response.data as List<dynamic>;
+      return list.map((json) => OrderMessage.fromJson(json as Map<String, dynamic>, currentUserId: currentUserId)).toList();
+    }
+  } catch (e) {
+    debugPrint('[OrderChat] fetchMessages error: $e');
+  }
+  return <OrderMessage>[];
 });
 
-/// Function provider to send a chat message with Instant Optimistic UI & Local Caching
+/// Function provider to send a chat message with Instant Optimistic UI & Live Server Confirmation
 final sendOrderMessageProvider = Provider<Future<void> Function(
   String orderId,
   String messageText, {
   required String senderRole,
   required String senderName,
 })>((ref) {
-  final client = ref.watch(supabaseClientProvider);
+  final apiClient = ref.read(apiClientProvider);
+  final currentUserId = ref.watch(authNotifierProvider.select((s) => s.profile?['id'] as String?));
 
   return (
     String orderId,
@@ -69,91 +78,75 @@ final sendOrderMessageProvider = Provider<Future<void> Function(
     required String senderRole,
     required String senderName,
   }) async {
-    final user = client.auth.currentUser;
     final String text = messageText.trim();
     if (text.isEmpty) return;
 
-    final String? validUserId = (user?.id != null && user!.id.isNotEmpty) ? user.id : null;
-
+    final localId = 'local_${DateTime.now().millisecondsSinceEpoch}';
     final newMessage = OrderMessage(
-      id: 'local_${DateTime.now().millisecondsSinceEpoch}',
+      id: localId,
       orderId: orderId,
-      senderId: validUserId ?? '',
+      senderId: currentUserId ?? '',
       senderRole: senderRole,
       senderName: senderName,
       message: text,
       createdAt: DateTime.now(),
+      isFromCurrentSession: true,
     );
 
-    // 1. INSTANT OPTIMISTIC RENDER: Add message to local state immediately
+    // 1. INSTANT OPTIMISTIC RENDER
     ref.read(localOrderChatProvider(orderId).notifier).addMessage(newMessage);
 
-    // 2. Perform DB insert asynchronously in background
+    // 2. Track sender presence as online immediately
+    ref.read(trackOrderPresenceProvider)(orderId, senderRole);
+
+    // 3. Send to Go Backend
     try {
-      final Map<String, dynamic> insertPayload = {
-        'order_id': orderId,
-        'sender_role': senderRole,
-        'sender_name': senderName,
-        'message': text,
-      };
-
-      if (validUserId != null) {
-        insertPayload['sender_id'] = validUserId;
+      final response = await apiClient.post(
+        '/orders/$orderId/messages',
+        body: {
+          'message': text,
+          'sender_role': senderRole,
+          'sender_name': senderName,
+        },
+      );
+      if (response.success) {
+        // Refresh server stream immediately so clock icon transitions to confirmed checkmark!
+        ref.invalidate(orderChatStreamProvider(orderId));
       }
-
-      await client.from('order_messages').insert(insertPayload);
-    } catch (_) {
-      // Retain local message so user sees pending state
+    } catch (e) {
+      debugPrint('[OrderChat] Gagal mengirim pesan: $e');
     }
   };
 });
 
-/// Realtime presence provider to track active roles ('student' or 'canteen_operator') in an order chat
-final orderPresenceProvider = StreamProvider.autoDispose.family<Set<String>, String>((ref, orderId) {
-  final client = ref.watch(supabaseClientProvider);
-  final controller = StreamController<Set<String>>();
-  final Set<String> activeRoles = {};
+/// Presence provider that fetches currently online participant roles from Go Backend
+final orderPresenceProvider = FutureProvider.autoDispose.family<Set<String>, String>((ref, orderId) async {
+  ref.cacheFor(const Duration(minutes: 2));
+  final apiClient = ref.read(apiClientProvider);
 
-  final channelName = 'order_presence_$orderId';
-  final RealtimeChannel channel = client.channel(channelName);
-
-  channel.onPresenceSync((_) {
-    final state = channel.presenceState();
-    activeRoles.clear();
-    for (final presence in state) {
-      for (final p in presence.presences) {
-        final role = p.payload['role']?.toString();
-        if (role != null && role.isNotEmpty) {
-          activeRoles.add(role);
-        }
-      }
+  try {
+    final response = await apiClient.get('/orders/$orderId/presence');
+    if (response.success && response.data != null) {
+      final list = response.data as List<dynamic>;
+      return list.map((e) => e.toString()).toSet();
     }
-    if (!controller.isClosed) {
-      controller.add(Set<String>.from(activeRoles));
-    }
-  }).subscribe();
-
-  ref.onDispose(() {
-    channel.unsubscribe();
-    controller.close();
-  });
-
-  return controller.stream;
+  } catch (_) {}
+  return <String>{};
 });
 
-/// Function to track presence in a chat session for the current user
+/// Function to track presence in a chat session via Go Backend
 final trackOrderPresenceProvider = Provider<Future<void> Function(String orderId, String myRole)>((ref) {
-  final client = ref.watch(supabaseClientProvider);
+  final apiClient = ref.read(apiClientProvider);
 
   return (String orderId, String myRole) async {
     try {
-      final channel = client.channel('order_presence_$orderId');
-      final user = client.auth.currentUser;
-      await channel.track({
-        'role': myRole,
-        'user_id': user?.id ?? 'guest',
-        'active_at': DateTime.now().toIso8601String(),
-      });
+      final response = await apiClient.post(
+        '/orders/$orderId/presence',
+        body: {'role': myRole},
+      );
+      if (response.success) {
+        ref.invalidate(orderPresenceProvider(orderId));
+      }
     } catch (_) {}
   };
 });

@@ -1,20 +1,19 @@
-import 'package:kantin_digital/core/services/supabase_client.dart';
+import 'package:http/http.dart' as http;
 
-/// Minimal connectivity checker.
-///
-/// Performs a lightweight query against the `system_settings` table
-/// (RLS disabled for dev) with a 5‑second timeout.
-///
-/// No third‑party package is required — only what the project already depends on.
+/// Minimal connectivity checker for Kantin Digital Go Backend.
 class ConnectivityService {
-  /// Returns `true` when the app can reach the Supabase backend.
+  static const String _healthUrl = String.fromEnvironment(
+    'BACKEND_HEALTH_URL',
+    defaultValue: 'http://127.0.0.1:8000/health',
+  );
+
+  /// Returns `true` when the app can reach the Go backend.
   static Future<bool> isOnline() async {
     try {
-      final client = SupabaseClientService.getClient();
-      await client.from('system_settings').select('id').limit(1).timeout(
-        const Duration(seconds: 5),
-      );
-      return true;
+      final response = await http
+          .get(Uri.parse(_healthUrl))
+          .timeout(const Duration(seconds: 3));
+      return response.statusCode == 200;
     } catch (_) {
       return false;
     }

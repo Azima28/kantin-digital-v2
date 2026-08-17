@@ -11,7 +11,7 @@ class Transaction {
   final DateTime createdAt;
   final String purchaseMethod; // 'rfid' or 'app'
 
-  /// Nested objects dari join Supabase (opsional).
+  /// Nested objects (opsional).
   final Map<String, dynamic>? operator;
   final Map<String, dynamic>? student;
 

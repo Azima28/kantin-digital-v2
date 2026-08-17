@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
@@ -165,30 +165,30 @@ void _showAddParentSheet(BuildContext context, WidgetRef ref) {
 
                           setLocal(() => isSaving = true);
                           try {
-                            final client = ref.read(supabaseClientProvider);
+                            final apiClient = ref.read(apiClientProvider);
 
-                            // 1. Call RPC function to create parent account and associate with student
-                            final result = await client
-                                .rpc('create_parent_with_student', params: {
-                              'p_email': email,
-                              'p_password': password,
-                              'p_full_name': name,
-                              'p_phone_number': phone,
-                              'p_relation': relation,
-                              'p_student_nisn': childNisn,
-                            });
+                            final response = await apiClient.post(
+                              '/admin/users',
+                              body: {
+                                'email': email,
+                                'password': password,
+                                'full_name': name,
+                                'role': 'parent',
+                                'phone_number': phone,
+                                'relation': relation,
+                                'student_nisn': childNisn,
+                              },
+                            );
 
-                            if (result == null) {
-                              throw Exception(
-                                  'Gagal mendaftarkan orang tua. Hubungan/NISN salah.');
+                            if (!response.success) {
+                              throw Exception(response.message ?? 'Gagal mendaftarkan orang tua');
                             }
 
                             ref.invalidate(keuanganParentsProvider);
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text(
-                                      'Orang tua berhasil didaftarkan & dihubungkan.'),
+                                  content: Text('Orang tua berhasil didaftarkan & dihubungkan.'),
                                 ),
                               );
                               Navigator.pop(context);
@@ -343,33 +343,33 @@ void _showAddStaffSheet(BuildContext context, WidgetRef ref) {
 
                           setLocal(() => isSaving = true);
                           try {
-                            final client = ref.read(supabaseClientProvider);
+                            final apiClient = ref.read(apiClientProvider);
 
                             final email = emailCtrl.text.trim().isNotEmpty
                                 ? emailCtrl.text.trim()
                                 : 'staff_${username}_${_randomSuffix()}@kantin.sch.id';
 
-                            // Call RPC function to create operator account
-                            final newProfile = await client
-                                .rpc('create_user_account', params: {
-                              'p_email': email,
-                              'p_password': password,
-                              'p_full_name': name,
-                              'p_role': 'operator',
-                              'p_phone_number': phone,
-                              'p_username': username,
-                            });
+                            final response = await apiClient.post(
+                              '/admin/users',
+                              body: {
+                                'email': email,
+                                'password': password,
+                                'full_name': name,
+                                'role': 'petugas_kantin',
+                                'phone_number': phone,
+                                'username': username,
+                              },
+                            );
 
-                            if (newProfile == null) {
-                              throw Exception('Gagal membuat profil petugas.');
+                            if (!response.success) {
+                              throw Exception(response.message ?? 'Gagal membuat profil petugas.');
                             }
 
                             ref.invalidate(keuanganStaffProvider);
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content:
-                                      Text('Petugas baru berhasil terdaftar.'),
+                                  content: Text('Petugas baru berhasil terdaftar.'),
                                 ),
                               );
                               Navigator.pop(context);

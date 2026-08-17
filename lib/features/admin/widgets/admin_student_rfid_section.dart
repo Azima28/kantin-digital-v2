@@ -5,8 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 /// Card showing the RFID status with freeze/unfreeze toggle.
 /// Styled as a horizontal action button to match the user screenshot design.
@@ -28,33 +28,14 @@ class AdminStudentRfidSection extends ConsumerStatefulWidget {
 class _AdminStudentRfidSectionState
     extends ConsumerState<AdminStudentRfidSection> {
   Future<void> _toggleFreezeCard() async {
-    final client = ref.read(supabaseClientProvider);
     final bool newStatus = !widget.isCardActive;
 
     try {
-      // 1. Update students table is_active field
-      await client
-          .from('students')
-          .update({'is_active': newStatus})
-          .eq('id', widget.studentId);
-
-      // Write to audit logs
-      try {
-        final authProfile = ref.read(authNotifierProvider).profile;
-        final actorName = authProfile?['full_name'] ?? 'Super Admin';
-        final actorId = authProfile?['id'];
-
-        await client.from('audit_logs').insert({
-          'actor_id': actorId,
-          'actor_name': actorName,
-          'action_type': newStatus ? 'AKTIFKAN_KARTU' : 'BLOKIR_KARTU',
-          'description':
-              'Super Admin ${newStatus ? "mengaktifkan kembali" : "membekukan"} kartu RFID siswa dengan ID: ${widget.studentId}',
-          'target_id': widget.studentId,
-          'old_value': {'is_active': widget.isCardActive},
-          'new_value': {'is_active': newStatus},
-        });
-      } catch (_) {}
+      final apiClient = ref.read(apiClientProvider);
+      await apiClient.patch('/student/card-status', body: {
+        'student_id': widget.studentId,
+        'is_active': newStatus,
+      });
 
       ref.invalidate(adminStudentDetailProvider(widget.studentId));
 

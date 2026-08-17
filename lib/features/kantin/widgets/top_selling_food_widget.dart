@@ -26,25 +26,24 @@ class _TopSellingFoodWidgetState extends ConsumerState<TopSellingFoodWidget> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: context.cardBg,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: context.isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-          width: 1.0,
+          width: 0.8,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: context.isDark ? 0.25 : 0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: context.isDark ? 0.2 : 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Header Row: Title & Interactive Date Filter Button
           Row(
@@ -56,56 +55,56 @@ class _TopSellingFoodWidgetState extends ConsumerState<TopSellingFoodWidget> {
               _buildFilterPickerButton(context),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
 
           // Donut Chart & Legend Content
-          SizedBox(
-            height: 320,
-            child: foodDataAsync.when(
-              data: (data) {
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Center Donut Chart with Square Badge
-                    _buildDonutChartSection(context, data),
-                    const SizedBox(height: 16),
+          foodDataAsync.when(
+            data: (data) {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Center Donut Chart with Square Badge
+                  _buildDonutChartSection(context, data),
+                  const SizedBox(height: 8),
 
-                    // Legend Breakdown List
-                    _buildLegendListSection(context, data),
-                  ],
-                );
-              },
-              loading: () => Shimmer(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SkeletonCircle(size: 130),
-                    const SizedBox(height: 16),
-                    Column(
-                      children: List.generate(
-                        3,
-                        (i) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Row(
-                            children: const [
-                              SkeletonCircle(size: 10),
-                              SizedBox(width: 8),
-                              SkeletonBox(width: 100, height: 12, borderRadius: 4),
-                              Spacer(),
-                              SkeletonBox(width: 40, height: 12, borderRadius: 4),
-                            ],
-                          ),
+                  // Legend Breakdown List
+                  _buildLegendListSection(context, data),
+                ],
+              );
+            },
+            loading: () => Shimmer(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SkeletonCircle(size: 55),
+                  const SizedBox(height: 8),
+                  Column(
+                    children: List.generate(
+                      3,
+                      (i) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 3),
+                        child: Row(
+                          children: const [
+                            SkeletonCircle(size: 8),
+                            SizedBox(width: 6),
+                            SkeletonBox(width: 90, height: 10, borderRadius: 4),
+                            Spacer(),
+                            SkeletonBox(width: 32, height: 10, borderRadius: 4),
+                          ],
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              error: (err, stack) => Center(
+            ),
+            error: (err, stack) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(10),
                 child: Text(
                   'Gagal memuat grafik makanan: $err',
                   style: GoogleFonts.inter(
-                    fontSize: 12,
+                    fontSize: 11,
                     color: context.textSecondary,
                   ),
                 ),
@@ -190,14 +189,14 @@ class _TopSellingFoodWidgetState extends ConsumerState<TopSellingFoodWidget> {
   Widget _buildDonutChartSection(BuildContext context, FoodSalesDistributionData data) {
     return Center(
       child: SizedBox(
-        width: 170,
-        height: 170,
+        width: 80,
+        height: 80,
         child: Stack(
           alignment: Alignment.center,
           children: [
             // Custom Painted Donut Ring
             CustomPaint(
-              size: const Size(170, 170),
+              size: const Size(80, 80),
               painter: _DonutChartPainter(
                 items: data.items,
                 isDark: context.isDark,
@@ -206,20 +205,20 @@ class _TopSellingFoodWidgetState extends ConsumerState<TopSellingFoodWidget> {
 
             // Center Badge Box (Matches reference design)
             Container(
-              width: 90,
-              height: 90,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: context.isDark ? const Color(0xFF1E293B) : Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: context.isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                  width: 1.5,
+                  width: 1.0,
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: context.isDark ? 0.3 : 0.06),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
@@ -229,18 +228,18 @@ class _TopSellingFoodWidgetState extends ConsumerState<TopSellingFoodWidget> {
                   Text(
                     data.topCount > 0 ? '${data.topCount}' : '0',
                     style: GoogleFonts.inter(
-                      fontSize: 28,
+                      fontSize: 13.5,
                       fontWeight: FontWeight.w800,
                       color: context.isDark ? Colors.white : const Color(0xFF0F172A),
                       height: 1.0,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 1),
                   Text(
-                    'Top Makanan',
+                    'Top',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
-                      fontSize: 11,
+                      fontSize: 8,
                       fontWeight: FontWeight.w700,
                       color: context.isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                     ),
@@ -323,133 +322,162 @@ class _TopSellingFoodWidgetState extends ConsumerState<TopSellingFoodWidget> {
 
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
+          padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).padding.bottom + 16),
           decoration: BoxDecoration(
             color: context.isDark ? const Color(0xFF1E293B) : Colors.white,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Pilih Filter Tanggal Makanan',
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: context.isDark ? Colors.white : const Color(0xFF0F172A),
+                const SizedBox(height: 16),
+                Text(
+                  'Pilih Filter Tanggal Makanan',
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: context.isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Lihat distribusi makanan terlaris pada hari itu atau hari sebelumnya',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: context.isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                const SizedBox(height: 4),
+                Text(
+                  'Lihat distribusi makanan terlaris pada hari itu atau hari sebelumnya',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: context.isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              _buildFilterOptionTile(
-                title: 'Hari Ini',
-                subtitle: DateFormat('dd MMMM yyyy', 'id_ID').format(now),
-                isSelected: _activeFilter == null || _activeFilter?.periodLabel == 'Hari Ini',
-                onTap: () {
-                  Navigator.pop(ctx);
-                  setState(() {
-                    _activeFilter = null; // Default to Hari Ini
-                  });
-                },
-              ),
-              _buildFilterOptionTile(
-                title: 'Kemarin',
-                subtitle: DateFormat('dd MMMM yyyy', 'id_ID').format(now.subtract(const Duration(days: 1))),
-                isSelected: _activeFilter?.periodLabel == 'Kemarin',
-                onTap: () {
-                  Navigator.pop(ctx);
-                  final yesterday = now.subtract(const Duration(days: 1));
-                  setState(() {
-                    _activeFilter = CanteenSalesFilterParam(
-                      startDate: yesterday,
-                      endDate: yesterday,
-                      periodLabel: 'Kemarin',
-                    );
-                  });
-                },
-              ),
-              _buildFilterOptionTile(
-                title: '7 Hari Terakhir',
-                subtitle: '${DateFormat('dd MMM', 'id_ID').format(now.subtract(const Duration(days: 6)))} - ${DateFormat('dd MMM yyyy', 'id_ID').format(now)}',
-                isSelected: _activeFilter?.periodLabel == '7 Hari Terakhir',
-                onTap: () {
-                  Navigator.pop(ctx);
-                  setState(() {
-                    _activeFilter = CanteenSalesFilterParam(
-                      startDate: now.subtract(const Duration(days: 6)),
-                      endDate: now,
-                      periodLabel: '7 Hari Terakhir',
-                    );
-                  });
-                },
-              ),
-              _buildFilterOptionTile(
-                title: 'Bulan Ini',
-                subtitle: DateFormat('MMMM yyyy', 'id_ID').format(now),
-                isSelected: _activeFilter?.periodLabel == 'Bulan Ini',
-                onTap: () {
-                  Navigator.pop(ctx);
-                  final start = DateTime(now.year, now.month, 1);
-                  final end = DateTime(now.year, now.month + 1, 0);
-                  setState(() {
-                    _activeFilter = CanteenSalesFilterParam(
-                      startDate: start,
-                      endDate: end,
-                      periodLabel: 'Bulan Ini',
-                    );
-                  });
-                },
-              ),
-              _buildFilterOptionTile(
-                title: 'Pilih Tanggal Khusus...',
-                subtitle: _activeFilter?.periodLabel.startsWith('Tgl:') == true
-                    ? _activeFilter!.periodLabel
-                    : 'Pilih tanggal hari sebelum-sebelumnya',
-                isSelected: _activeFilter?.periodLabel.startsWith('Tgl:') == true,
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  final pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: _activeFilter?.startDate ?? now,
-                    firstDate: DateTime(2025, 1, 1),
-                    lastDate: now,
-                  );
-                  if (pickedDate != null) {
-                    final labelStr = DateFormat('dd MMM yyyy', 'id_ID').format(pickedDate);
+                _buildFilterOptionTile(
+                  title: 'Hari Ini',
+                  subtitle: DateFormat('dd MMMM yyyy', 'id_ID').format(now),
+                  isSelected: _activeFilter == null || _activeFilter?.periodLabel == 'Hari Ini',
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    setState(() {
+                      _activeFilter = null; // Default to Hari Ini
+                    });
+                  },
+                ),
+                _buildFilterOptionTile(
+                  title: 'Kemarin',
+                  subtitle: DateFormat('dd MMMM yyyy', 'id_ID').format(now.subtract(const Duration(days: 1))),
+                  isSelected: _activeFilter?.periodLabel == 'Kemarin',
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    final yesterday = now.subtract(const Duration(days: 1));
                     setState(() {
                       _activeFilter = CanteenSalesFilterParam(
-                        startDate: pickedDate,
-                        endDate: pickedDate,
-                        periodLabel: labelStr,
+                        startDate: yesterday,
+                        endDate: yesterday,
+                        periodLabel: 'Kemarin',
                       );
                     });
-                  }
-                },
-              ),
-            ],
+                  },
+                ),
+                _buildFilterOptionTile(
+                  title: '7 Hari Terakhir',
+                  subtitle: '${DateFormat('dd MMM', 'id_ID').format(now.subtract(const Duration(days: 6)))} - ${DateFormat('dd MMM yyyy', 'id_ID').format(now)}',
+                  isSelected: _activeFilter?.periodLabel == '7 Hari Terakhir',
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    setState(() {
+                      _activeFilter = CanteenSalesFilterParam(
+                        startDate: now.subtract(const Duration(days: 6)),
+                        endDate: now,
+                        periodLabel: '7 Hari Terakhir',
+                      );
+                    });
+                  },
+                ),
+                _buildFilterOptionTile(
+                  title: 'Bulan Ini',
+                  subtitle: DateFormat('MMMM yyyy', 'id_ID').format(now),
+                  isSelected: _activeFilter?.periodLabel == 'Bulan Ini',
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    final start = DateTime(now.year, now.month, 1);
+                    final end = DateTime(now.year, now.month + 1, 0);
+                    setState(() {
+                      _activeFilter = CanteenSalesFilterParam(
+                        startDate: start,
+                        endDate: end,
+                        periodLabel: 'Bulan Ini',
+                      );
+                    });
+                  },
+                ),
+                _buildFilterOptionTile(
+                  title: 'Pilih Tanggal Khusus...',
+                  subtitle: _activeFilter?.periodLabel.startsWith('Tgl:') == true
+                      ? _activeFilter!.periodLabel
+                      : 'Pilih tanggal hari sebelum-sebelumnya',
+                  isSelected: _activeFilter?.periodLabel.startsWith('Tgl:') == true,
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final pickedDate = await showDatePicker(
+                      context: context,
+                      initialDate: _activeFilter?.startDate ?? now,
+                      firstDate: DateTime(2000, 1, 1),
+                      lastDate: DateTime(2100, 12, 31),
+                      builder: (context, child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: Theme.of(context).colorScheme.copyWith(
+                                  primary: Nebula.teal,
+                                  onPrimary: Colors.white,
+                                  surface: context.isDark ? const Color(0xFF1E293B) : Colors.white,
+                                  surfaceTint: Colors.transparent,
+                                ),
+                            dialogTheme: DialogThemeData(
+                              backgroundColor: context.isDark ? const Color(0xFF1E293B) : Colors.white,
+                              surfaceTintColor: Colors.transparent,
+                            ),
+                            datePickerTheme: DatePickerThemeData(
+                              backgroundColor: context.isDark ? const Color(0xFF1E293B) : Colors.white,
+                              surfaceTintColor: Colors.transparent,
+                              headerBackgroundColor: context.isDark ? const Color(0xFF1E293B) : Colors.white,
+                              headerForegroundColor: context.isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                          ),
+                          child: child!,
+                        );
+                      },
+                    );
+                    if (pickedDate != null) {
+                      final labelStr = DateFormat('dd MMM yyyy', 'id_ID').format(pickedDate);
+                      setState(() {
+                        _activeFilter = CanteenSalesFilterParam(
+                          startDate: pickedDate,
+                          endDate: pickedDate,
+                          periodLabel: labelStr,
+                        );
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
           ),
         );
       },

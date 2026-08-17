@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kantin_digital/core/services/nfc_service.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/kantin/providers/cart_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
@@ -19,6 +19,7 @@ enum NfcPaymentStatus {
 
 class NfcPaymentState {
   final NfcPaymentStatus status;
+  final String? studentId;
   final String? studentUid;
   final String? studentName;
   final String? studentClass;
@@ -27,6 +28,7 @@ class NfcPaymentState {
 
   NfcPaymentState({
     this.status = NfcPaymentStatus.idle,
+    this.studentId,
     this.studentUid,
     this.studentName,
     this.studentClass,
@@ -36,6 +38,7 @@ class NfcPaymentState {
 
   NfcPaymentState copyWith({
     NfcPaymentStatus? status,
+    String? studentId,
     String? studentUid,
     String? studentName,
     String? studentClass,
@@ -44,6 +47,7 @@ class NfcPaymentState {
   }) {
     return NfcPaymentState(
       status: status ?? this.status,
+      studentId: studentId ?? this.studentId,
       studentUid: studentUid ?? this.studentUid,
       studentName: studentName ?? this.studentName,
       studentClass: studentClass ?? this.studentClass,
@@ -62,10 +66,9 @@ class NfcPaymentNotifier extends StateNotifier<NfcPaymentState> {
     final bool isNfcAvailable = await NfcService.isNfcAvailable();
     if (!isNfcAvailable) {
       state = NfcPaymentState(
-        status: NfcPaymentStatus.scanning, // We still transition to scanning so simulator/debug tap is allowed
+        status: NfcPaymentStatus.scanning,
         errorMessage: 'Hardware NFC tidak terdeteksi atau dinonaktifkan di perangkat ini.',
       );
-      // Skip startScanning since hardware is not present/available
       return;
     }
 
@@ -88,24 +91,19 @@ class NfcPaymentNotifier extends StateNotifier<NfcPaymentState> {
   Future<void> _verifyStudentCard(String rfidUid, int totalAmount) async {
     state = state.copyWith(status: NfcPaymentStatus.verifyingStudent);
     try {
-      final client = _ref.read(supabaseClientProvider);
-      
-      // Query student profiles
-      final Map<String, dynamic>? student = await client
-          .from('students')
-          .select('id, balance, is_active, daily_limit, classes:classes(name), profiles:profiles!students_id_fkey(full_name)')
-          .eq('rfid_uid', rfidUid)
-          .maybeSingle();
+      final apiClient = _ref.read(apiClientProvider);
+      final response = await apiClient.get('/pos/scan-card', queryParams: {'rfid': rfidUid});
 
-      if (student == null) {
+      if (!response.success || response.data == null) {
         state = state.copyWith(
           status: NfcPaymentStatus.error,
-          errorMessage: 'Kartu siswa tidak terdaftar di sistem koperasi.',
+          errorMessage: response.message ?? 'Kartu siswa tidak terdaftar di sistem koperasi.',
         );
         return;
       }
 
-      final bool isActive = student['is_active'] ?? false;
+      final student = response.data as Map<String, dynamic>;
+      final bool isActive = student['is_active'] == true;
       if (!isActive) {
         state = state.copyWith(
           status: NfcPaymentStatus.error,
@@ -114,46 +112,15 @@ class NfcPaymentNotifier extends StateNotifier<NfcPaymentState> {
         return;
       }
 
-      final String studentId = student['id'];
-      final int dailyLimit = student['daily_limit'] != null 
-          ? (student['daily_limit'] as num?)?.toInt() ?? 0 
-          : 0;
-
-      // Check daily limit if set and active
-      if (dailyLimit > 0) {
-        final now = DateTime.now().toLocal();
-        final localTodayStart = DateTime(now.year, now.month, now.day);
-        final startOfDayUtc = localTodayStart.toUtc().toIso8601String();
-
-        final List<dynamic> todayTxs = await client
-            .from('transactions')
-            .select('total_amount')
-            .eq('student_id', studentId)
-            .eq('type', 'purchase')
-            .eq('status', 'success')
-            .gte('created_at', startOfDayUtc);
-
-        int todaySpending = 0;
-        for (var tx in todayTxs) {
-          todaySpending += int.tryParse(tx['total_amount'].toString()) ?? 0;
-        }
-
-        if ((todaySpending + totalAmount) > dailyLimit) {
-          state = state.copyWith(
-            status: NfcPaymentStatus.error,
-            errorMessage: 'Batas jajan harian terlampaui.',
-          );
-          return;
-        }
-      }
-
-      final String studentName = student['profiles']?['full_name'] ?? AppStrings.adminStudents;
-      final String studentClass = student['class'] ?? 'Belum Diisi';
+      final String studentId = student['id']?.toString() ?? '';
+      final String studentName = student['full_name']?.toString() ?? student['name']?.toString() ?? AppStrings.adminStudents;
+      final String studentClass = student['class']?.toString() ?? 'Belum Diisi';
       final int balance = (student['balance'] as num?)?.toInt() ?? 0;
 
       if (balance >= totalAmount) {
         state = state.copyWith(
           status: NfcPaymentStatus.confirmingPayment,
+          studentId: studentId,
           studentUid: rfidUid,
           studentName: studentName,
           studentClass: studentClass,
@@ -162,6 +129,7 @@ class NfcPaymentNotifier extends StateNotifier<NfcPaymentState> {
       } else {
         state = state.copyWith(
           status: NfcPaymentStatus.insufficientBalance,
+          studentId: studentId,
           studentUid: rfidUid,
           studentName: studentName,
           studentClass: studentClass,
@@ -171,7 +139,7 @@ class NfcPaymentNotifier extends StateNotifier<NfcPaymentState> {
     } catch (e) {
       state = state.copyWith(
         status: NfcPaymentStatus.error,
-        errorMessage: '${AppStrings.labelFailed} memverifikasi kartu siswa',
+        errorMessage: '${AppStrings.labelFailed} memverifikasi kartu siswa: $e',
       );
     }
   }
@@ -181,39 +149,45 @@ class NfcPaymentNotifier extends StateNotifier<NfcPaymentState> {
     _verifyStudentCard(rfidUid, totalAmount);
   }
 
-  // Confirm and deduct balance (executes process_purchase)
+  // Confirm and deduct balance (executes Go ACID checkout)
   Future<bool> confirmPurchase({
     required String sessionToken,
     required List<CartItem> items,
     required int totalAmount,
   }) async {
-    if (state.studentUid == null) return false;
-    // Prevent double-tap: if already processing, ignore subsequent calls
+    if (state.studentId == null && state.studentUid == null) return false;
     if (state.status == NfcPaymentStatus.processingPurchase) return false;
-    
+
     state = state.copyWith(status: NfcPaymentStatus.processingPurchase);
     try {
-      final client = _ref.read(supabaseClientProvider);
+      final apiClient = _ref.read(apiClientProvider);
 
-      // Map cart items format to match p_items JSONB parameter
-      final List<Map<String, dynamic>> cartItemsJson = items.map((item) => {
+      final List<Map<String, dynamic>> itemsPayload = items.map((item) => {
         'product_id': item.productId,
         'quantity': item.quantity,
         'unit_price': item.price,
         'custom_notes': item.notes ?? '',
       }).toList();
 
-      await client.rpc(
-        'process_purchase',
-        params: {
-          'p_rfid_uid': state.studentUid,
-          'p_session_token': sessionToken,
-          'p_items': cartItemsJson,
-          'p_total_amount': totalAmount,
+      final response = await apiClient.post(
+        '/pos/checkout',
+        body: {
+          'student_id': state.studentId ?? '',
+          'total_amount': totalAmount,
+          'purchase_method': 'nfc_rfid',
+          'items': itemsPayload,
         },
       );
 
-      // Trigger standard iOS haptic feedback for success
+      if (!response.success) {
+        state = state.copyWith(
+          status: NfcPaymentStatus.error,
+          errorMessage: response.message ?? 'Transaksi gagal diproses.',
+        );
+        return false;
+      }
+
+      // Trigger standard haptic feedback for success
       HapticFeedback.mediumImpact();
 
       state = state.copyWith(status: NfcPaymentStatus.success);
@@ -222,7 +196,7 @@ class NfcPaymentNotifier extends StateNotifier<NfcPaymentState> {
       _ref.read(cartProvider.notifier).clearCart();
       _ref.invalidate(todayRevenueProvider);
       _ref.invalidate(operatorTransactionsProvider);
-      
+
       return true;
     } catch (e) {
       state = state.copyWith(

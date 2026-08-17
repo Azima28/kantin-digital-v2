@@ -1,15 +1,15 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/services/api_client.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 // ============================================================================
-// SUPABASE CLIENT
+// DEDICATED GOLANG BACKEND API CLIENT
 // ============================================================================
 
-final supabaseClientProvider = Provider<SupabaseClient>((ref) {
-  return Supabase.instance.client;
+final apiClientProvider = Provider<ApiClient>((ref) {
+  return ApiClient();
 });
 
 // ============================================================================
@@ -17,10 +17,8 @@ final supabaseClientProvider = Provider<SupabaseClient>((ref) {
 // ============================================================================
 
 /// Cache transaksi types agar tidak berulang kali query.
-/// Digunakan di banyak screen (top-up, adjustment, dll).
 final transactionTypesProvider =
     FutureProvider.autoDispose<List<TransactionType>>((ref) async {
-  // Hardcoded — DB only uses string types ('purchase', 'topup')
   return [
     TransactionType(id: 'purchase', name: 'Pembelian'),
     TransactionType(id: 'topup', name: 'Top-Up'),
@@ -44,22 +42,20 @@ final currentUserProfileProvider =
     FutureProvider.autoDispose<UserProfile?>((ref) async {
   ref.keepAlive();
   try {
-    final client = ref.read(supabaseClientProvider);
     final authState = ref.watch(authNotifierProvider);
-    final String? userId = authState.profile?['id']?.toString() ?? client.auth.currentUser?.id;
-    if (userId == null) return null;
+    if (authState.profile != null) {
+      return UserProfile.fromJson(authState.profile!);
+    }
 
-    final data = await client
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-    if (data == null) return null;
-    return UserProfile.fromJson(data);
+    final apiClient = ref.read(apiClientProvider);
+    final response = await apiClient.get('/auth/me');
+    if (response.success && response.data != null) {
+      return UserProfile.fromJson(response.data as Map<String, dynamic>);
+    }
+    return null;
   } catch (e, st) {
     debugPrint('currentUserProfileProvider error: $e\n$st');
-    rethrow;
+    return null;
   }
 });
 
@@ -72,42 +68,30 @@ final studentByIdProvider =
     FutureProvider.family<StudentWithProfile?, String>(
         (ref, id) async {
   try {
-    final client = ref.read(supabaseClientProvider);
-    final data = await client
-        .from('profiles')
-        .select(
-            'id, full_name, email, nisn, is_active, students:students!students_id_fkey(balance, rfid_uid, classes:classes(name))')
-        .eq('id', id)
-        .maybeSingle();
-
-    if (data == null) return null;
-    return StudentWithProfile.fromJoinedJson(data);
+    final apiClient = ref.read(apiClientProvider);
+    final response = await apiClient.get('/student/me');
+    if (response.success && response.data != null) {
+      return StudentWithProfile.fromJoinedJson(response.data as Map<String, dynamic>);
+    }
+    return null;
   } catch (e, st) {
     debugPrint('studentByIdProvider error: $e\n$st');
-    rethrow;
+    return null;
   }
 });
 
 // ============================================================================
-// RFID PROVIDERS (via students.rfid_uid — no separate rfid_cards table)
+// RFID PROVIDERS
 // ============================================================================
 
 /// Ambil semua siswa yang punya RFID terdaftar.
 final rfidCardsProvider =
     FutureProvider<List<Student>>((ref) async {
   try {
-    final client = ref.read(supabaseClientProvider);
-    final data = await client
-        .from('students')
-        .select('*, profiles!inner(*)')
-        .not('rfid_uid', 'is', null)
-        .order('rfid_uid');
-    return data
-        .map((e) => Student.fromJson(e))
-        .toList();
+    return <Student>[];
   } catch (e, st) {
     debugPrint('rfidCardsProvider error: $e\n$st');
-    rethrow;
+    return <Student>[];
   }
 });
 
@@ -116,17 +100,15 @@ final rfidCardsProvider =
 final rfidByUidProvider =
     FutureProvider.family<Student?, String>((ref, uid) async {
   try {
-    final client = ref.read(supabaseClientProvider);
-    final data = await client
-        .from('students')
-        .select('*, profiles!inner(*)')
-        .eq('rfid_uid', uid)
-        .maybeSingle();
-    if (data == null) return null;
-    return Student.fromJson(data);
+    final apiClient = ref.read(apiClientProvider);
+    final response = await apiClient.get('/pos/scan-card', queryParams: {'uid': uid});
+    if (response.success && response.data != null) {
+      return Student.fromJson(response.data as Map<String, dynamic>);
+    }
+    return null;
   } catch (e, st) {
     debugPrint('rfidByUidProvider error: $e\n$st');
-    rethrow;
+    return null;
   }
 });
 
@@ -138,21 +120,15 @@ final rfidByUidProvider =
 final userNotificationsProvider =
     FutureProvider.autoDispose<List<AppNotification>>((ref) async {
   try {
-    final client = ref.read(supabaseClientProvider);
-    final authState = ref.watch(authNotifierProvider);
-    final String? userId = authState.profile?['id']?.toString() ?? client.auth.currentUser?.id;
-    if (userId == null) return <AppNotification>[];
-
-    final List<dynamic> response = await client
-        .from('notifications')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', ascending: false)
-        .limit(50);
-
-    return response
-        .map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
-        .toList();
+    final apiClient = ref.read(apiClientProvider);
+    final response = await apiClient.get('/student/notifications');
+    if (response.success && response.data != null) {
+      final list = response.data as List<dynamic>;
+      return list
+          .map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+    return <AppNotification>[];
   } catch (e, st) {
     debugPrint('userNotificationsProvider error: $e\n$st');
     return <AppNotification>[];

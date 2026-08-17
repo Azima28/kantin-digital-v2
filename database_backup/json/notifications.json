@@ -1,0 +1,692 @@
+[
+  {
+    "id": "9c051fff-2faf-461a-b69a-be965a44335c",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "halo anak anak yang rajin, soleh dan solehah",
+    "type": "system",
+    "is_read": true,
+    "created_at": "2026-06-25T03:49:19.271153+00:00",
+    "user_id": "6a4e32d5-45c1-4b10-86d9-f5d60b571111"
+  },
+  {
+    "id": "98988027-91f1-4887-8305-7191c36c543a",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "halo anak anak yang rajin, soleh dan solehah",
+    "type": "system",
+    "is_read": true,
+    "created_at": "2026-06-25T03:49:19.271153+00:00",
+    "user_id": "88888888-8888-8888-8888-888888888888"
+  },
+  {
+    "id": "0b9c6626-81a3-4f01-a360-6501cb62c9a0",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "title": "Pesanan Berhasil!",
+    "message": "Pesanan Anda senilai Rp 111.100 telah dikirim ke dapur stan kantin.",
+    "type": "purchase",
+    "is_read": true,
+    "created_at": "2026-07-29T03:22:52.45795+00:00",
+    "user_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025"
+  },
+  {
+    "id": "d8f4d90d-b0eb-4b9f-9825-7e2a3010ca2e",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "title": "Pesanan Dibatalkan ???",
+    "message": "Pesanan Anda (100x aaa) senilai Rp 111,100 telah dibatalkan. Alasan: Saya salah memilih menu.. Saldo dikembalikan.",
+    "type": "system",
+    "is_read": true,
+    "created_at": "2026-07-29T03:23:20.193455+00:00",
+    "user_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025"
+  },
+  {
+    "id": "d276f14d-925f-49a9-83ac-1e47c4ee8f0f",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "halo anak anak yang rajin, soleh dan solehah",
+    "type": "system",
+    "is_read": true,
+    "created_at": "2026-06-25T03:49:19.271153+00:00",
+    "user_id": "dbe4f12d-a2f2-45e0-94e8-8888bdf12345"
+  },
+  {
+    "id": "b03902f7-bf7b-412d-b236-e448c43c4c92",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "halo anak anak yang rajin, soleh dan solehah",
+    "type": "system",
+    "is_read": true,
+    "created_at": "2026-06-25T03:49:19.271153+00:00",
+    "user_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c"
+  },
+  {
+    "id": "4f29c3d7-9df7-4919-9fec-f53eece0dae4",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "title": "Kartu Dibekukan",
+    "message": "Kartu RFID Anda telah dibekukan sementara untuk keamanan.",
+    "type": "system",
+    "is_read": true,
+    "created_at": "2026-07-29T03:23:39.974218+00:00",
+    "user_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025"
+  },
+  {
+    "id": "53cbbfc8-dff1-43cd-b081-0bbfc21bd546",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "title": "Kartu Diaktifkan",
+    "message": "Kartu RFID Anda berhasil diaktifkan kembali.",
+    "type": "system",
+    "is_read": true,
+    "created_at": "2026-07-29T03:23:48.298233+00:00",
+    "user_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025"
+  },
+  {
+    "id": "c47d73c3-7688-4dc3-a4c2-4cccae3c15d1",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "title": "Pesanan Diterima! 🍳",
+    "message": "Pesanan Anda (15x nasgor goreng pedes) telah diterima oleh kantin dan sedang dimasak.",
+    "type": "system",
+    "is_read": true,
+    "created_at": "2026-07-29T03:26:47.387146+00:00",
+    "user_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025"
+  },
+  {
+    "id": "6f6e9285-4e5b-48e1-a888-20f252fc82ab",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "title": "Pesanan Selesai! 🎉",
+    "message": "Pesanan Anda (15x nasgor goreng pedes) telah selesai / diambil.",
+    "type": "system",
+    "is_read": true,
+    "created_at": "2026-07-29T03:26:52.510739+00:00",
+    "user_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025"
+  },
+  {
+    "id": "09c0edb0-372a-42f9-a92c-3a84fdbfc12d",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "title": "Pesanan Berhasil Disimpan! 🛒",
+    "message": "Pesanan Anda senilai Rp 1.111 telah dikirim ke kantin. Saldo ditahan sementara oleh sistem sampai pesanan selesai.",
+    "type": "purchase",
+    "is_read": false,
+    "created_at": "2026-08-13T07:25:41.037542+00:00",
+    "user_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025"
+  },
+  {
+    "id": "d73bfac1-762e-442a-9126-c174c7838247",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "title": "Pesanan Diterima! 🍳",
+    "message": "Pesanan Anda (1x cemil) telah diterima oleh kantin dan sedang dimasak.",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-08-13T15:21:21.601631+00:00",
+    "user_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025"
+  },
+  {
+    "id": "a1177b1d-ad93-4393-ac66-272971a83f89",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "halo anak anak yang rajin, soleh dan solehah",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:49:19.271153+00:00",
+    "user_id": "51325215-0176-4324-bb74-4e973bcfff13"
+  },
+  {
+    "id": "ee0d599c-674d-4ee9-b93a-2e7c3cf28cfb",
+    "student_id": "225883f2-5a0c-4228-89c3-7fca0dff4221",
+    "title": "Pengumuman Admin",
+    "message": "halo anak anak yang rajin, soleh dan solehah",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:49:19.271153+00:00",
+    "user_id": "225883f2-5a0c-4228-89c3-7fca0dff4221"
+  },
+  {
+    "id": "761fd7b1-64b9-4985-9758-6d1be575295a",
+    "student_id": "dfee7423-df2d-4ea9-ac9a-0df4af6b5496",
+    "title": "Pengumuman Admin",
+    "message": "halo anak anak yang rajin, soleh dan solehah",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:49:19.271153+00:00",
+    "user_id": "dfee7423-df2d-4ea9-ac9a-0df4af6b5496"
+  },
+  {
+    "id": "1a1760c4-8da2-44cf-b5c3-d7576605ea20",
+    "student_id": "87c5bfac-fb35-40c6-bb9a-9b0f969d6ae4",
+    "title": "Pengumuman Admin",
+    "message": "halo anak anak yang rajin, soleh dan solehah",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:49:19.271153+00:00",
+    "user_id": "87c5bfac-fb35-40c6-bb9a-9b0f969d6ae4"
+  },
+  {
+    "id": "19444c64-41da-4ef6-8e95-60b2b5f61df6",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "halo anak anak yang rajin, soleh dan solehah",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:49:19.271153+00:00",
+    "user_id": "92e9992f-d627-4070-b2e7-38905d934814"
+  },
+  {
+    "id": "6ee24707-faa0-4a28-8c0d-e32369c8647b",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "halo anak anak yang rajin, soleh dan solehah",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:49:19.271153+00:00",
+    "user_id": "e19a8524-9b2a-4ae8-a177-62c21760e70b"
+  },
+  {
+    "id": "fae94e5f-ba78-4e84-a8f7-d40927ba5d8a",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "halo anak anak yang rajin, soleh dan solehah",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:49:19.271153+00:00",
+    "user_id": "37e22cf7-173c-4351-b766-24574e25a630"
+  },
+  {
+    "id": "b2225377-56dc-48bd-993e-026eefecc0b1",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "halo anak anak yang rajin, soleh dan solehah",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:49:19.271153+00:00",
+    "user_id": "b68788d2-6643-4310-a18f-723d11a7b1d9"
+  },
+  {
+    "id": "7d4ecc9d-d0ad-4f4a-ae88-19aba0e41575",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "halo anak anak yang rajin, soleh dan solehah",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:49:19.271153+00:00",
+    "user_id": "d511689b-7ae6-4fb1-bbbd-e5d4ec35d9ca"
+  },
+  {
+    "id": "f46e7ff6-463b-41c1-b8d0-a290c31542b6",
+    "student_id": "90edbc75-8cb8-4e55-8786-e121536cb659",
+    "title": "Pengumuman Admin",
+    "message": "halo anak anak yang rajin, soleh dan solehah",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:49:19.271153+00:00",
+    "user_id": "90edbc75-8cb8-4e55-8786-e121536cb659"
+  },
+  {
+    "id": "55454fb4-4062-4a52-8bb6-f44e3aa2a7eb",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "halo anak anak yang rajin, soleh dan solehah",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:49:19.271153+00:00",
+    "user_id": "f0c16eec-fe34-4ebf-91d5-bcd5a8183d91"
+  },
+  {
+    "id": "e5a36e7e-e259-47b0-b4c4-c1f421d1196c",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "halo anak anak yang rajin, soleh dan solehah",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:49:19.271153+00:00",
+    "user_id": "33abd902-172f-4ab8-b560-c901120e2981"
+  },
+  {
+    "id": "f53590c7-76d7-4c36-8381-db66267ddcf9",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "halo anak anak yang rajin, soleh dan solehah",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:49:19.271153+00:00",
+    "user_id": "f1e4f12d-a2f2-45e0-94e8-9999cdf99999"
+  },
+  {
+    "id": "ff6472c9-9d3f-471d-87ac-4981961ac0d4",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "halo anak anak yang rajin, soleh dan solehah",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:49:19.271153+00:00",
+    "user_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3"
+  },
+  {
+    "id": "2fc8a0c7-48c3-4b20-b5ad-7611dac8cb24",
+    "student_id": "e7925276-2188-4536-b146-73935cea8065",
+    "title": "Pengumuman Admin",
+    "message": "halo anak anak yang rajin, soleh dan solehah",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:49:19.271153+00:00",
+    "user_id": "e7925276-2188-4536-b146-73935cea8065"
+  },
+  {
+    "id": "e568e90e-9fef-4554-baeb-35649533cb9a",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "rido butuh minum",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:57:22.534614+00:00",
+    "user_id": "51325215-0176-4324-bb74-4e973bcfff13"
+  },
+  {
+    "id": "f70ccb43-57e6-4965-97f0-6b084d2ef44a",
+    "student_id": "225883f2-5a0c-4228-89c3-7fca0dff4221",
+    "title": "Pengumuman Admin",
+    "message": "rido butuh minum",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:57:22.534614+00:00",
+    "user_id": "225883f2-5a0c-4228-89c3-7fca0dff4221"
+  },
+  {
+    "id": "3a557317-61d5-4558-bb94-968a12c62cbf",
+    "student_id": "dfee7423-df2d-4ea9-ac9a-0df4af6b5496",
+    "title": "Pengumuman Admin",
+    "message": "rido butuh minum",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:57:22.534614+00:00",
+    "user_id": "dfee7423-df2d-4ea9-ac9a-0df4af6b5496"
+  },
+  {
+    "id": "7a41728e-0293-453f-83b6-1ad78d987f62",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "rido butuh minum",
+    "type": "system",
+    "is_read": true,
+    "created_at": "2026-06-25T03:57:22.534614+00:00",
+    "user_id": "6a4e32d5-45c1-4b10-86d9-f5d60b571111"
+  },
+  {
+    "id": "68f9082d-f2e1-4121-a488-ff37edf8903f",
+    "student_id": "87c5bfac-fb35-40c6-bb9a-9b0f969d6ae4",
+    "title": "Pengumuman Admin",
+    "message": "rido butuh minum",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:57:22.534614+00:00",
+    "user_id": "87c5bfac-fb35-40c6-bb9a-9b0f969d6ae4"
+  },
+  {
+    "id": "ebaf2fc8-c958-4290-b17a-0a72cf0d89d4",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "rido butuh minum",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:57:22.534614+00:00",
+    "user_id": "92e9992f-d627-4070-b2e7-38905d934814"
+  },
+  {
+    "id": "4edbee76-80f4-48a2-a6d5-a2354351982a",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "rido butuh minum",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:57:22.534614+00:00",
+    "user_id": "e19a8524-9b2a-4ae8-a177-62c21760e70b"
+  },
+  {
+    "id": "965f024c-9dd9-45f0-a3a0-971a753db797",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "rido butuh minum",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:57:22.534614+00:00",
+    "user_id": "37e22cf7-173c-4351-b766-24574e25a630"
+  },
+  {
+    "id": "5a51b269-73d8-4002-aa75-81f69f36e4fb",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "rido butuh minum",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:57:22.534614+00:00",
+    "user_id": "b68788d2-6643-4310-a18f-723d11a7b1d9"
+  },
+  {
+    "id": "47e95035-2e57-4754-a0e7-9e91a6b5b3e6",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "rido butuh minum",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:57:22.534614+00:00",
+    "user_id": "d511689b-7ae6-4fb1-bbbd-e5d4ec35d9ca"
+  },
+  {
+    "id": "2e1f10d9-370f-4da5-b423-94c42a820bd8",
+    "student_id": "90edbc75-8cb8-4e55-8786-e121536cb659",
+    "title": "Pengumuman Admin",
+    "message": "rido butuh minum",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:57:22.534614+00:00",
+    "user_id": "90edbc75-8cb8-4e55-8786-e121536cb659"
+  },
+  {
+    "id": "a710c306-8832-437d-a0d9-2650ae4698df",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "rido butuh minum",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:57:22.534614+00:00",
+    "user_id": "f0c16eec-fe34-4ebf-91d5-bcd5a8183d91"
+  },
+  {
+    "id": "c8369786-a1c4-4b2e-9c8a-f80526976c5b",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "rido butuh minum",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:57:22.534614+00:00",
+    "user_id": "33abd902-172f-4ab8-b560-c901120e2981"
+  },
+  {
+    "id": "599cf972-ce21-4d22-999a-43ec93b58793",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "rido butuh minum",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:57:22.534614+00:00",
+    "user_id": "f1e4f12d-a2f2-45e0-94e8-9999cdf99999"
+  },
+  {
+    "id": "11389f1e-65e2-4bed-aa8c-1d28544bb9c1",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "rido butuh minum",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:57:22.534614+00:00",
+    "user_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3"
+  },
+  {
+    "id": "55d9dcc4-56e6-49a5-adfa-2dc9cdce6870",
+    "student_id": "e7925276-2188-4536-b146-73935cea8065",
+    "title": "Pengumuman Admin",
+    "message": "rido butuh minum",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T03:57:22.534614+00:00",
+    "user_id": "e7925276-2188-4536-b146-73935cea8065"
+  },
+  {
+    "id": "d982df3a-8c89-452b-bdc4-d4d0c64addd2",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "rido butuh minum",
+    "type": "system",
+    "is_read": true,
+    "created_at": "2026-06-25T03:57:22.534614+00:00",
+    "user_id": "88888888-8888-8888-8888-888888888888"
+  },
+  {
+    "id": "5d70aff1-130d-4047-9fff-54f6ca53072c",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "haha haha haha",
+    "type": "system",
+    "is_read": true,
+    "created_at": "2026-06-25T04:03:35.848751+00:00",
+    "user_id": "6a4e32d5-45c1-4b10-86d9-f5d60b571111"
+  },
+  {
+    "id": "9cf9cf12-d3c2-4c2e-b18f-58a280dd335f",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "haha haha haha",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T04:03:35.848751+00:00",
+    "user_id": "51325215-0176-4324-bb74-4e973bcfff13"
+  },
+  {
+    "id": "13666027-c1bd-432f-a746-ae3555a5c41c",
+    "student_id": "225883f2-5a0c-4228-89c3-7fca0dff4221",
+    "title": "Pengumuman Admin",
+    "message": "haha haha haha",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T04:03:35.848751+00:00",
+    "user_id": "225883f2-5a0c-4228-89c3-7fca0dff4221"
+  },
+  {
+    "id": "563b4ff4-a3ab-4af6-8165-b43954d08338",
+    "student_id": "dfee7423-df2d-4ea9-ac9a-0df4af6b5496",
+    "title": "Pengumuman Admin",
+    "message": "haha haha haha",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T04:03:35.848751+00:00",
+    "user_id": "dfee7423-df2d-4ea9-ac9a-0df4af6b5496"
+  },
+  {
+    "id": "1c46224b-f0e2-4395-ae45-abd550dbae77",
+    "student_id": "87c5bfac-fb35-40c6-bb9a-9b0f969d6ae4",
+    "title": "Pengumuman Admin",
+    "message": "haha haha haha",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T04:03:35.848751+00:00",
+    "user_id": "87c5bfac-fb35-40c6-bb9a-9b0f969d6ae4"
+  },
+  {
+    "id": "1bf64787-162c-4604-879c-fda46e6bb291",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "haha haha haha",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T04:03:35.848751+00:00",
+    "user_id": "92e9992f-d627-4070-b2e7-38905d934814"
+  },
+  {
+    "id": "5e9e5ffd-c7a1-438f-a0b5-9e83b7e1a9d1",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "haha haha haha",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T04:03:35.848751+00:00",
+    "user_id": "e19a8524-9b2a-4ae8-a177-62c21760e70b"
+  },
+  {
+    "id": "13f24614-cb98-4a67-8660-899507bd901f",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "haha haha haha",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T04:03:35.848751+00:00",
+    "user_id": "37e22cf7-173c-4351-b766-24574e25a630"
+  },
+  {
+    "id": "2103abdb-931c-4f47-80fc-4d6f67059a35",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "haha haha haha",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T04:03:35.848751+00:00",
+    "user_id": "b68788d2-6643-4310-a18f-723d11a7b1d9"
+  },
+  {
+    "id": "ea090314-c629-47c5-9dc6-03985f5d36b5",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "haha haha haha",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T04:03:35.848751+00:00",
+    "user_id": "d511689b-7ae6-4fb1-bbbd-e5d4ec35d9ca"
+  },
+  {
+    "id": "7b8aa871-3b9d-4551-b5a3-d2f703921af8",
+    "student_id": "90edbc75-8cb8-4e55-8786-e121536cb659",
+    "title": "Pengumuman Admin",
+    "message": "haha haha haha",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T04:03:35.848751+00:00",
+    "user_id": "90edbc75-8cb8-4e55-8786-e121536cb659"
+  },
+  {
+    "id": "dc66dfc6-6978-4157-bea1-677e909528f5",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "haha haha haha",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T04:03:35.848751+00:00",
+    "user_id": "f0c16eec-fe34-4ebf-91d5-bcd5a8183d91"
+  },
+  {
+    "id": "f147bcac-7e07-4766-a90a-8b24b06711c3",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "haha haha haha",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T04:03:35.848751+00:00",
+    "user_id": "33abd902-172f-4ab8-b560-c901120e2981"
+  },
+  {
+    "id": "2ea7659e-e252-4df0-8624-7466246165ab",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "haha haha haha",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T04:03:35.848751+00:00",
+    "user_id": "f1e4f12d-a2f2-45e0-94e8-9999cdf99999"
+  },
+  {
+    "id": "84e7818e-30a5-40ff-9bc4-61eaf05cae7c",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "haha haha haha",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T04:03:35.848751+00:00",
+    "user_id": "45ad99e3-5f4b-42ff-9f84-a85467cbe9b3"
+  },
+  {
+    "id": "4073086c-bf17-430f-a9d1-dca8640c1432",
+    "student_id": "e7925276-2188-4536-b146-73935cea8065",
+    "title": "Pengumuman Admin",
+    "message": "haha haha haha",
+    "type": "system",
+    "is_read": false,
+    "created_at": "2026-06-25T04:03:35.848751+00:00",
+    "user_id": "e7925276-2188-4536-b146-73935cea8065"
+  },
+  {
+    "id": "a9cd9945-12e4-4036-8f97-8873326d02fa",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "rido butuh minum",
+    "type": "system",
+    "is_read": true,
+    "created_at": "2026-06-25T03:57:22.534614+00:00",
+    "user_id": "dbe4f12d-a2f2-45e0-94e8-8888bdf12345"
+  },
+  {
+    "id": "9288b7bb-f3ea-452d-9c39-6f7e48023923",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "haha haha haha",
+    "type": "system",
+    "is_read": true,
+    "created_at": "2026-06-25T04:03:35.848751+00:00",
+    "user_id": "dbe4f12d-a2f2-45e0-94e8-8888bdf12345"
+  },
+  {
+    "id": "173bc27f-24b9-4e41-b35b-a84f615b0039",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "rido butuh minum",
+    "type": "system",
+    "is_read": true,
+    "created_at": "2026-06-25T03:57:22.534614+00:00",
+    "user_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c"
+  },
+  {
+    "id": "280eb759-5d3e-4387-9781-08720cc88469",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "haha haha haha",
+    "type": "system",
+    "is_read": true,
+    "created_at": "2026-06-25T04:03:35.848751+00:00",
+    "user_id": "6e5d9c21-1e80-4e92-86b9-1bb1e8ba258c"
+  },
+  {
+    "id": "3798e328-6459-494c-92c2-58b0086ee526",
+    "student_id": null,
+    "title": "Pengumuman Admin",
+    "message": "haha haha haha",
+    "type": "system",
+    "is_read": true,
+    "created_at": "2026-06-25T04:03:35.848751+00:00",
+    "user_id": "88888888-8888-8888-8888-888888888888"
+  },
+  {
+    "id": "44a89349-d8e9-4e2c-9f0b-b283d073dc97",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "title": "Pesanan Berhasil!",
+    "message": "Pesanan Anda senilai Rp 285.000 telah dikirim ke dapur stan kantin.",
+    "type": "purchase",
+    "is_read": true,
+    "created_at": "2026-07-29T03:25:10.4295+00:00",
+    "user_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025"
+  },
+  {
+    "id": "62b5d5f2-57fc-4c2e-80ba-0c92d50d683f",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "title": "Pesanan Dibatalkan ???",
+    "message": "Pesanan Anda (1x cemil) senilai Rp 10,231 telah dibatalkan. Alasan: sehjygyj. Saldo dikembalikan.",
+    "type": "system",
+    "is_read": true,
+    "created_at": "2026-07-29T05:53:16.955478+00:00",
+    "user_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025"
+  },
+  {
+    "id": "35cf1433-1357-4517-a68d-4dd5c1ae4e4a",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "title": "Pesanan Berhasil Disimpan! 🛒",
+    "message": "Pesanan Anda senilai Rp 10.231 telah dikirim ke kantin. Saldo ditahan sementara oleh sistem sampai pesanan selesai.",
+    "type": "purchase",
+    "is_read": false,
+    "created_at": "2026-08-13T08:09:05.594922+00:00",
+    "user_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025"
+  },
+  {
+    "id": "ba5c655f-5d37-4fad-9bcd-a1bbb695deb8",
+    "student_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025",
+    "title": "Pesanan Berhasil Disimpan! 🛒",
+    "message": "Pesanan Anda senilai Rp 3.111 (Diantar) telah dikirim ke kantin.",
+    "type": "purchase",
+    "is_read": false,
+    "created_at": "2026-08-16T04:36:44.397822+00:00",
+    "user_id": "03525ad9-d9e3-4f55-8ee6-7ff5b06d2025"
+  }
+]

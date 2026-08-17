@@ -1,5 +1,4 @@
 /* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 */
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Model representing an order chat message between Student and Canteen Merchant.
 class OrderMessage {
@@ -11,6 +10,7 @@ class OrderMessage {
   final String message;
   final DateTime? createdAt;
   final bool isRead;
+  final bool isFromCurrentSession;
 
   const OrderMessage({
     required this.id,
@@ -21,20 +21,28 @@ class OrderMessage {
     required this.message,
     this.createdAt,
     this.isRead = false,
+    this.isFromCurrentSession = false,
   });
 
-  factory OrderMessage.fromJson(Map<String, dynamic> json) {
+  factory OrderMessage.fromJson(Map<String, dynamic> json, {String? currentUserId}) {
+    final senderId = json['sender_id']?.toString() ?? '';
+    final rawRole = json['sender_role']?.toString() ?? 'student';
+    final normalizedRole = (rawRole == 'petugas_kantin' || rawRole == 'canteen_operator' || rawRole == 'merchant')
+        ? 'canteen_operator'
+        : 'student';
+
     return OrderMessage(
       id: json['id']?.toString() ?? '',
       orderId: json['order_id']?.toString() ?? '',
-      senderId: json['sender_id']?.toString() ?? '',
-      senderRole: json['sender_role']?.toString() ?? 'student',
+      senderId: senderId,
+      senderRole: normalizedRole,
       senderName: json['sender_name']?.toString() ?? '',
       message: json['message']?.toString() ?? '',
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
       isRead: json['is_read'] == true,
+      isFromCurrentSession: currentUserId != null && currentUserId.isNotEmpty && senderId == currentUserId,
     );
   }
 
@@ -51,10 +59,5 @@ class OrderMessage {
     };
   }
 
-  /// Returns true if the message was sent by the currently logged-in Supabase user.
-  bool get isFromMe {
-    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
-    if (currentUserId == null) return false;
-    return senderId == currentUserId;
-  }
+  bool get isFromMe => isFromCurrentSession;
 }

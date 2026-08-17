@@ -40,13 +40,20 @@ class OrderItem {
   /// Returns the item with the highest unit price (termahal) in this order
   OrderSubItem? get mostExpensiveItem {
     if (items.isEmpty) return null;
-    OrderSubItem top = items.first;
-    for (final item in items) {
-      if (item.price > top.price) {
-        top = item;
+
+    // Sort items by price descending (termahal di awal)
+    final sortedByPrice = List<OrderSubItem>.from(items)
+      ..sort((a, b) => b.price.compareTo(a.price));
+
+    // First try to find the most expensive item that has a valid image
+    for (final item in sortedByPrice) {
+      if (item.imageUrl != null && item.imageUrl!.isNotEmpty) {
+        return item;
       }
     }
-    return top;
+
+    // Otherwise, return the most expensive item
+    return sortedByPrice.first;
   }
 
   OrderItem copyWith({
