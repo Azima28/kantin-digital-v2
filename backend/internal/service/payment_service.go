@@ -63,6 +63,20 @@ func (s *PaymentService) ProcessCorrection(ctx context.Context, studentID, offic
 	return s.txRepo.ProcessCorrection(ctx, studentID, officerID, amount, reason)
 }
 
+func (s *PaymentService) ProcessMerchantWithdrawal(ctx context.Context, operatorID, actorID string, amount int, notes, method string) (*domain.Transaction, error) {
+	if amount <= 0 {
+		return nil, errors.New("nominal penarikan harus lebih dari 0")
+	}
+	return s.txRepo.ProcessMerchantWithdrawal(ctx, operatorID, actorID, amount, notes, method)
+}
+
+func (s *PaymentService) ProcessMerchantAdjustment(ctx context.Context, operatorID, actorID string, amount int, isAddition bool, reason string) (*domain.Transaction, error) {
+	if amount <= 0 {
+		return nil, errors.New("nominal penyesuaian harus lebih dari 0")
+	}
+	return s.txRepo.ProcessMerchantAdjustment(ctx, operatorID, actorID, amount, isAddition, reason)
+}
+
 func (s *PaymentService) GetFinanceSummary(ctx context.Context) (*postgres.FinanceSummary, error) {
 	return s.txRepo.GetFinanceDashboardSummary(ctx)
 }

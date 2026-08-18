@@ -86,6 +86,17 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
     } else if (actionType == 'UNLINK_KARTU') {
       final studentPart = studentName.isNotEmpty ? ' dari $studentName' : '';
       return 'Penghapusan tautan kartu RFID$studentPart.';
+    } else if (actionType == 'MERCHANT_PAYOUT') {
+      final amtStr = amount > 0 ? fmt.format(amount) : '';
+      final notes = newValue['notes']?.toString() ?? 'Pencairan kas';
+      final canteenPart = canteenName.isNotEmpty ? ' stan $canteenName' : '';
+      return 'Pencairan kas$canteenPart sebesar $amtStr. Catatan: $notes.';
+    } else if (actionType == 'MERCHANT_BALANCE_ADJUSTMENT') {
+      final amtStr = amount > 0 ? fmt.format(amount) : '';
+      final isAdd = newValue['is_addition'] == true;
+      final reason = newValue['reason']?.toString() ?? 'Penyesuaian kas';
+      final canteenPart = canteenName.isNotEmpty ? ' stan $canteenName' : '';
+      return 'Koreksi ${isAdd ? "tambah" : "kurang"} saldo$canteenPart sebesar $amtStr ($reason).';
     }
 
     // Replace raw UUID in description
@@ -634,10 +645,12 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                             }
                           },
                           items: const [
-                            DropdownMenuItem(value: 'Semua', child: Text('Semua Transaksi')),
-                            DropdownMenuItem(value: 'Top-Up', child: Text('Top-Up Tunai')),
-                            DropdownMenuItem(value: 'Koreksi', child: Text(AppStrings.keuanganKoreksiSaldo)),
-                            DropdownMenuItem(value: 'Kartu', child: Text('Registrasi Kartu')),
+                            DropdownMenuItem(value: 'Semua', child: Text('Semua Pembukuan')),
+                            DropdownMenuItem(value: 'Top-Up', child: Text('Top-Up Saldo Siswa')),
+                            DropdownMenuItem(value: 'Koreksi', child: Text('Koreksi Saldo Siswa')),
+                            DropdownMenuItem(value: 'Pencairan-Stan', child: Text('Pencairan Kas Stan (Payout)')),
+                            DropdownMenuItem(value: 'Koreksi-Stan', child: Text('Koreksi Saldo Stan')),
+                            DropdownMenuItem(value: 'Kartu', child: Text('Registrasi & Kartu RFID')),
                           ],
                         ),
                       ),
@@ -676,6 +689,10 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                         matchesType = type == 'TOPUP' || type == 'TOPUP_TUNAI';
                       } else if (_selectedType == 'Koreksi') {
                         matchesType = type == 'KOREKSI_SALDO';
+                      } else if (_selectedType == 'Pencairan-Stan') {
+                        matchesType = type == 'MERCHANT_PAYOUT';
+                      } else if (_selectedType == 'Koreksi-Stan') {
+                        matchesType = type == 'MERCHANT_BALANCE_ADJUSTMENT';
                       } else if (_selectedType == 'Kartu') {
                         matchesType = type == 'REGISTRASI_KARTU' || type == 'UNLINK_KARTU';
                       }

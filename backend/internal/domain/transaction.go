@@ -7,10 +7,12 @@ import (
 type TransactionType string
 
 const (
-	TxTypePurchase   TransactionType = "purchase"
-	TxTypeTopup      TransactionType = "topup"
-	TxTypeCorrection TransactionType = "correction"
-	TxTypeRefund     TransactionType = "refund"
+	TxTypePurchase           TransactionType = "purchase"
+	TxTypeTopup              TransactionType = "topup"
+	TxTypeCorrection         TransactionType = "correction"
+	TxTypeRefund             TransactionType = "refund"
+	TxTypeWithdrawal         TransactionType = "withdrawal"
+	TxTypeMerchantAdjustment TransactionType = "merchant_adjustment"
 )
 
 type TransactionStatus string

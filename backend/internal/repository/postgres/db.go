@@ -74,6 +74,19 @@ func NewDB(ctx context.Context, databaseURL string) (*DB, error) {
 		if err == nil {
 			if pingErr := pool.Ping(attemptCtx); pingErr == nil {
 				cancel()
+
+				// Auto-ensure transactions type check constraint includes withdrawal & merchant_adjustment
+				_, _ = pool.Exec(context.Background(), `
+					DO $$
+					BEGIN
+						ALTER TABLE public.transactions DROP CONSTRAINT IF EXISTS transactions_type_check;
+						ALTER TABLE public.transactions ADD CONSTRAINT transactions_type_check
+							CHECK (type IN ('purchase', 'topup', 'correction', 'refund', 'withdrawal', 'merchant_adjustment'));
+					EXCEPTION
+						WHEN OTHERS THEN NULL;
+					END $$;
+				`)
+
 				return &DB{Pool: pool}, nil
 			} else {
 				lastErr = pingErr

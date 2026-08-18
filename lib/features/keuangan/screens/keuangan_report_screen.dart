@@ -1380,11 +1380,13 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                     final totalTopup = (data['totalTopup'] as num?)?.toDouble() ?? 0.0;
                     final totalPurchase = (data['totalPurchase'] as num?)?.toDouble() ?? 0.0;
                     final totalCorrection = (data['totalCorrection'] as num?)?.toDouble() ?? 0.0;
+                    final totalWithdrawal = (data['totalWithdrawal'] as num?)?.toDouble() ?? 0.0;
                     final topupCount = (data['topupCount'] as num?)?.toInt() ?? 0;
                     final purchaseCount = (data['purchaseCount'] as num?)?.toInt() ?? 0;
+                    final withdrawalCount = (data['withdrawalCount'] as num?)?.toInt() ?? 0;
 
-                    // Calculate net balance flow
-                    final netInflow = totalTopup + totalCorrection;
+                    // Calculate net cash balance in school
+                    final netInflow = totalTopup - totalWithdrawal + totalCorrection;
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1410,10 +1412,10 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                               Row(
                                 children: [
                                   Icon(CupertinoIcons.graph_square_fill, color: Nebula.teal, size: 18),
-                                  SizedBox(width: 8),
+                                  const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      'Ringkasan Periode (${_currentFilterParam.formattedPeriodLabel})',
+                                      'Ringkasan Pembukuan Kas (${_currentFilterParam.formattedPeriodLabel})',
                                       style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: Nebula.teal),
                                       overflow: TextOverflow.ellipsis,
                                       maxLines: 1,
@@ -1421,15 +1423,17 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                   ),
                                 ],
                               ),
-                              SizedBox(height: 16),
-                              _buildReportRow('Total Top-Up Tunai', fmt.format(totalTopup), detail: '$topupCount transaksi'),
+                              const SizedBox(height: 16),
+                              _buildReportRow('Total Top-Up Siswa (Kas Masuk)', '+${fmt.format(totalTopup)}', detail: '$topupCount transaksi', valueColor: Nebula.teal),
                               Divider(height: 16, thickness: 0.5, color: context.dividerCol),
-                              _buildReportRow('Total Pembayaran Belanja', fmt.format(totalPurchase), detail: '$purchaseCount transaksi', valueColor: Nebula.amber),
+                              _buildReportRow('Total Belanja Siswa (Omzet)', fmt.format(totalPurchase), detail: '$purchaseCount transaksi', valueColor: Nebula.amber),
+                              Divider(height: 16, thickness: 0.5, color: context.dividerCol),
+                              _buildReportRow('Pencairan Kas Stan (Kas Keluar)', '-${fmt.format(totalWithdrawal)}', detail: '$withdrawalCount penarikan', valueColor: Nebula.rose),
                               Divider(height: 16, thickness: 0.5, color: context.dividerCol),
                               _buildReportRow('Total Koreksi Saldo', '${totalCorrection >= 0 ? "+" : ""}${fmt.format(totalCorrection)}', valueColor: totalCorrection >= 0 ? Nebula.teal : Nebula.rose),
                               Divider(height: 16, thickness: 0.5, color: context.dividerCol),
                               _buildReportRow(
-                                'Net Aliran Masuk',
+                                'Sisa Kas Mengendap Bersih',
                                 fmt.format(netInflow),
                                 isBold: true,
                                 valueColor: Nebula.teal,

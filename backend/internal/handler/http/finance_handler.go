@@ -155,3 +155,55 @@ func (h *FinanceHandler) Topup(c *fiber.Ctx) error {
 
 	return response.Success(c, fiber.StatusOK, "Top-up saldo berhasil", tx)
 }
+
+type MerchantWithdrawRequest struct {
+	OperatorID string `json:"operator_id"`
+	Amount     int    `json:"amount"`
+	Notes      string `json:"notes"`
+	Method     string `json:"method"`
+}
+
+func (h *FinanceHandler) MerchantWithdraw(c *fiber.Ctx) error {
+	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
+	var req MerchantWithdrawRequest
+	if err := c.BodyParser(&req); err != nil {
+		return response.Error(c, fiber.StatusBadRequest, "Payload pencairan dana tidak valid", err.Error())
+	}
+
+	if req.OperatorID == "" || req.Amount <= 0 {
+		return response.Error(c, fiber.StatusBadRequest, "Operator ID dan nominal pencairan wajib diisi", nil)
+	}
+
+	tx, err := h.paymentService.ProcessMerchantWithdrawal(c.Context(), req.OperatorID, claims.UserID, req.Amount, req.Notes, req.Method)
+	if err != nil {
+		return response.Error(c, fiber.StatusBadRequest, err.Error(), nil)
+	}
+
+	return response.Success(c, fiber.StatusOK, "Pencairan dana stan berhasil diproses", tx)
+}
+
+type MerchantAdjustRequest struct {
+	OperatorID string `json:"operator_id"`
+	Amount     int    `json:"amount"`
+	IsAddition bool   `json:"is_addition"`
+	Reason     string `json:"reason"`
+}
+
+func (h *FinanceHandler) MerchantAdjust(c *fiber.Ctx) error {
+	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
+	var req MerchantAdjustRequest
+	if err := c.BodyParser(&req); err != nil {
+		return response.Error(c, fiber.StatusBadRequest, "Payload penyesuaian saldo stan tidak valid", err.Error())
+	}
+
+	if req.OperatorID == "" || req.Amount <= 0 {
+		return response.Error(c, fiber.StatusBadRequest, "Operator ID dan nominal penyesuaian wajib diisi", nil)
+	}
+
+	tx, err := h.paymentService.ProcessMerchantAdjustment(c.Context(), req.OperatorID, claims.UserID, req.Amount, req.IsAddition, req.Reason)
+	if err != nil {
+		return response.Error(c, fiber.StatusBadRequest, err.Error(), nil)
+	}
+
+	return response.Success(c, fiber.StatusOK, "Penyesuaian saldo stan berhasil diproses", tx)
+}

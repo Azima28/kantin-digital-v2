@@ -131,8 +131,12 @@ final keuanganReportProvider = FutureProvider.family
           'totalTopup': data['total_topup'] ?? 0,
           'totalPurchase': data['total_purchase'] ?? 0,
           'totalCorrection': data['total_correction'] ?? 0,
+          'totalWithdrawal': data['total_withdrawal'] ?? 0,
           'topupCount': data['topup_count'] ?? 0,
           'purchaseCount': data['purchase_count'] ?? 0,
+          'withdrawalCount': data['withdrawal_count'] ?? 0,
+          'totalUnpaidMerchantEarn': data['total_unpaid_merchant_earn'] ?? 0,
+          'totalCirculatingFloat': data['total_circulating_float'] ?? 0,
         };
       }
     } catch (e) {
