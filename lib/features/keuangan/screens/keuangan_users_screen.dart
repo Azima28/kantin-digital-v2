@@ -91,6 +91,8 @@ class _KeuanganUsersScreenState extends ConsumerState<KeuanganUsersScreen>
             color: context.cardBg,
             child: TabBar(
               controller: _tabController,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
               labelColor: Nebula.teal,
               unselectedLabelColor: context.textSecondary,
               indicatorColor: Nebula.teal,

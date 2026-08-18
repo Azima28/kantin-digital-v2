@@ -87,12 +87,12 @@ class KeuanganStudentCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Wrap(
-                        spacing: 8,
+                        spacing: 6,
                         runSpacing: 4,
                         children: [
                           if (!hasCard)
                             _statusPill(
-                              'KARTU BELUM TERDAFTAR',
+                              'BELUM TERDAFTAR',
                               CupertinoIcons.clear_circled_solid,
                               context.textSecondary,
                             )
@@ -122,6 +122,7 @@ class KeuanganStudentCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       'Saldo',
@@ -135,7 +136,7 @@ class KeuanganStudentCard extends StatelessWidget {
                       fmt.format(student.balance),
                       style: GoogleFonts.inter(
                         fontWeight: FontWeight.bold,
-                        fontSize: 15,
+                        fontSize: 14,
                         color: student.balance < 5000
                             ? Nebula.rose
                             : context.textPrimary,
@@ -152,7 +153,7 @@ class KeuanganStudentCard extends StatelessWidget {
   }
 
   Widget _statusPill(String text, IconData icon, Color color) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
@@ -162,12 +163,16 @@ class KeuanganStudentCard extends StatelessWidget {
           children: [
             Icon(icon, size: 10, color: color),
             const SizedBox(width: 4),
-            Text(
-              text,
-              style: GoogleFonts.inter(
-                fontSize: 9,
-                fontWeight: FontWeight.bold,
-                color: color,
+            Flexible(
+              child: Text(
+                text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
               ),
             ),
           ],

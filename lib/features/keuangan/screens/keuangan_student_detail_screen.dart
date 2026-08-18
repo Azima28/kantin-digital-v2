@@ -212,17 +212,15 @@ class _KeuanganStudentDetailScreenState
                             icon: CupertinoIcons.arrow_up_circle,
                             iconColor: Nebula.teal,
                             title: 'Top-Up Saldo Tunai',
-                            isEnabled: hasCard && isCardActive && isAccountActive,
+                            isEnabled: hasCard && isCardActive,
                             subtitle: !hasCard
                                 ? 'Daftarkan kartu RFID terlebih dahulu'
                                 : (!isCardActive
                                     ? 'Kartu RFID sedang diblokir'
-                                    : (!isAccountActive ? 'Akun siswa dinonaktifkan' : null)),
+                                    : null),
                             disabledTooltip: !hasCard
                                 ? 'Siswa belum memiliki kartu RFID. Silakan daftarkan kartu terlebih dahulu.'
-                                : (!isCardActive
-                                    ? 'Kartu RFID sedang diblokir. Buka blokir kartu terlebih dahulu.'
-                                    : 'Akun siswa sedang dinonaktifkan.'),
+                                : 'Kartu RFID sedang diblokir. Buka blokir kartu terlebih dahulu.',
                             onTap: () {
                               final studentProfile = StudentWithProfile(
                                 id: widget.studentId,
@@ -251,13 +249,15 @@ class _KeuanganStudentDetailScreenState
                             icon: CupertinoIcons.arrow_right_arrow_left_circle,
                             iconColor: Nebula.rose,
                             title: AppStrings.keuanganKoreksiSaldo,
-                            isEnabled: hasCard && isAccountActive,
+                            isEnabled: hasCard && isCardActive,
                             subtitle: !hasCard
                                 ? 'Daftarkan kartu RFID terlebih dahulu'
-                                : (!isAccountActive ? 'Akun siswa dinonaktifkan' : null),
+                                : (!isCardActive
+                                    ? 'Kartu RFID sedang diblokir'
+                                    : null),
                             disabledTooltip: !hasCard
                                 ? 'Siswa belum memiliki kartu RFID. Silakan daftarkan kartu terlebih dahulu.'
-                                : 'Akun siswa sedang dinonaktifkan.',
+                                : 'Kartu RFID sedang diblokir. Buka blokir kartu terlebih dahulu.',
                             onTap: () {
                               final studentProfile = StudentWithProfile(
                                 id: widget.studentId,
@@ -287,8 +287,7 @@ class _KeuanganStudentDetailScreenState
                             iconColor: Nebula.teal,
                             title: hasCard ? 'Ganti Kartu RFID / NFC' : 'Registrasi Kartu RFID Baru',
                             subtitle: hasCard ? 'UID: $rfid' : 'Belum memiliki kartu fisik',
-                            isEnabled: isAccountActive,
-                            disabledTooltip: 'Akun siswa sedang dinonaktifkan.',
+                            isEnabled: true,
                             onTap: () {
                               context.push(
                                 '/finance/students/${widget.studentId}/card',

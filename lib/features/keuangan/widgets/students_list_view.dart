@@ -179,7 +179,7 @@ class StudentsListView extends ConsumerWidget {
                                   children: [
                                     if (!hasCard)
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                         decoration: BoxDecoration(
                                           color: context.dividerCol,
                                           borderRadius: BorderRadius.circular(12),
@@ -189,12 +189,16 @@ class StudentsListView extends ConsumerWidget {
                                           children: [
                                             Icon(CupertinoIcons.info_circle_fill, size: 10, color: context.textSecondary),
                                             const SizedBox(width: 4),
-                                            Text(
-                                              'KARTU BELUM TERDAFTAR',
-                                              style: GoogleFonts.inter(
-                                                fontSize: 9,
-                                                fontWeight: FontWeight.bold,
-                                                color: context.textSecondary,
+                                            Flexible(
+                                              child: Text(
+                                                'BELUM TERDAFTAR',
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: context.textSecondary,
+                                                ),
                                               ),
                                             ),
                                           ],
@@ -202,7 +206,7 @@ class StudentsListView extends ConsumerWidget {
                                       )
                                     else if (!student.cardIsActive)
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                         decoration: BoxDecoration(
                                           color: Nebula.amberLight,
                                           borderRadius: BorderRadius.circular(12),
@@ -212,12 +216,16 @@ class StudentsListView extends ConsumerWidget {
                                           children: [
                                             const Icon(CupertinoIcons.lock_circle_fill, size: 10, color: Nebula.amber),
                                             const SizedBox(width: 4),
-                                            Text(
-                                              'KARTU DIBLOKIR',
-                                              style: GoogleFonts.inter(
-                                                fontSize: 9,
-                                                fontWeight: FontWeight.bold,
-                                                color: Nebula.amber,
+                                            Flexible(
+                                              child: Text(
+                                                'KARTU DIBLOKIR',
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Nebula.amber,
+                                                ),
                                               ),
                                             ),
                                           ],
@@ -225,7 +233,7 @@ class StudentsListView extends ConsumerWidget {
                                       )
                                     else
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                         decoration: BoxDecoration(
                                           color: Nebula.teal.withValues(alpha: 0.08),
                                           borderRadius: BorderRadius.circular(12),
@@ -235,12 +243,16 @@ class StudentsListView extends ConsumerWidget {
                                           children: [
                                             const Icon(CupertinoIcons.checkmark_circle_fill, size: 10, color: Nebula.teal),
                                             const SizedBox(width: 4),
-                                            Text(
-                                              'KARTU AKTIF',
-                                              style: GoogleFonts.inter(
-                                                fontSize: 9,
-                                                fontWeight: FontWeight.bold,
-                                                color: Nebula.teal,
+                                            Flexible(
+                                              child: Text(
+                                                'KARTU AKTIF',
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Nebula.teal,
+                                                ),
                                               ),
                                             ),
                                           ],
@@ -248,7 +260,7 @@ class StudentsListView extends ConsumerWidget {
                                       ),
                                     if (!isActive)
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                         decoration: BoxDecoration(
                                           color: Nebula.rose.withValues(alpha: 0.08),
                                           borderRadius: BorderRadius.circular(12),
@@ -258,12 +270,16 @@ class StudentsListView extends ConsumerWidget {
                                           children: [
                                             const Icon(CupertinoIcons.clear_circled_solid, size: 10, color: Nebula.rose),
                                             const SizedBox(width: 4),
-                                            Text(
-                                              'AKUN DIBLOKIR',
-                                              style: GoogleFonts.inter(
-                                                fontSize: 9,
-                                                fontWeight: FontWeight.bold,
-                                                color: Nebula.rose,
+                                            Flexible(
+                                              child: Text(
+                                                'AKUN DIBLOKIR',
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Nebula.rose,
+                                                ),
                                               ),
                                             ),
                                           ],
@@ -278,6 +294,7 @@ class StudentsListView extends ConsumerWidget {
                           // Saldo
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                 'Saldo',
@@ -291,7 +308,7 @@ class StudentsListView extends ConsumerWidget {
                                 fmt.format(balance),
                                 style: GoogleFonts.inter(
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 15,
+                                  fontSize: 14,
                                   color: balance < 5000 ? Nebula.rose : context.textPrimary,
                                 ),
                               ),

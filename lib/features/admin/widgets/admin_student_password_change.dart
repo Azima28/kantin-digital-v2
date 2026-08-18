@@ -10,10 +10,8 @@ import 'package:kantin_digital/core/providers/shared_providers.dart';
 /// Helper class to show a password change dialog for a student profile.
 /// Used inside the admin student detail screen.
 class AdminStudentPasswordChange {
-  static final _passwordController = TextEditingController();
-
   static void dispose() {
-    _passwordController.dispose();
+    // No-op kept for backwards compatibility
   }
 
   static void show(BuildContext context, WidgetRef ref, String profileId) {
@@ -21,7 +19,6 @@ class AdminStudentPasswordChange {
       context: context,
       builder: (context) => _PasswordChangeDialog(
         profileId: profileId,
-        passwordController: _passwordController,
         ref: ref,
       ),
     );
@@ -30,12 +27,10 @@ class AdminStudentPasswordChange {
 
 class _PasswordChangeDialog extends ConsumerStatefulWidget {
   final String profileId;
-  final TextEditingController passwordController;
   final WidgetRef ref;
 
   const _PasswordChangeDialog({
     required this.profileId,
-    required this.passwordController,
     required this.ref,
   });
 
@@ -45,8 +40,21 @@ class _PasswordChangeDialog extends ConsumerStatefulWidget {
 }
 
 class _PasswordChangeDialogState extends ConsumerState<_PasswordChangeDialog> {
+  late final TextEditingController _passwordController;
   bool _obscure = true;
   bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +107,7 @@ class _PasswordChangeDialogState extends ConsumerState<_PasswordChangeDialog> {
               ),
               const SizedBox(height: 16),
               TextField(
-                controller: widget.passwordController,
+                controller: _passwordController,
                 obscureText: _obscure,
                 style: GoogleFonts.inter(fontSize: 14, color: context.textPrimary),
                 decoration: InputDecoration(
@@ -132,7 +140,7 @@ class _PasswordChangeDialogState extends ConsumerState<_PasswordChangeDialog> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-                        widget.passwordController.clear();
+                        _passwordController.clear();
                         Navigator.pop(context);
                       },
                       style: OutlinedButton.styleFrom(
@@ -187,7 +195,7 @@ class _PasswordChangeDialogState extends ConsumerState<_PasswordChangeDialog> {
   }
 
   Future<void> _changePassword() async {
-    final String password = widget.passwordController.text.trim();
+    final String password = _passwordController.text.trim();
     if (password.isEmpty) return;
 
     setState(() => _isSaving = true);
@@ -207,7 +215,6 @@ class _PasswordChangeDialogState extends ConsumerState<_PasswordChangeDialog> {
 
       if (mounted) {
         Navigator.pop(context); // Close dialog
-        widget.passwordController.clear();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(AppStrings.successPasswordUpdated),

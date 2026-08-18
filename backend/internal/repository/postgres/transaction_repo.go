@@ -78,10 +78,6 @@ func (r *TransactionRepo) ProcessPurchase(ctx context.Context, p CheckoutParams)
 		return nil, fmt.Errorf("siswa tidak ditemukan: %w", err)
 	}
 
-	if !isProfileActive {
-		return nil, fmt.Errorf("transaksi ditolak: Akun siswa sedang dinonaktifkan oleh pihak sekolah")
-	}
-
 	if rfidUID == nil || *rfidUID == "" {
 		return nil, fmt.Errorf("transaksi ditolak: Kartu RFID siswa belum didaftarkan")
 	}
@@ -209,10 +205,6 @@ func (r *TransactionRepo) ProcessTopup(ctx context.Context, studentID, officerID
 		FOR UPDATE`, studentID).Scan(&currentBalance, &isCardActive, &isProfileActive, &rfidUID)
 	if err != nil {
 		return nil, fmt.Errorf("siswa tidak ditemukan: %w", err)
-	}
-
-	if !isProfileActive {
-		return nil, fmt.Errorf("top-up ditolak: Akun siswa sedang dinonaktifkan oleh pihak sekolah")
 	}
 
 	if rfidUID == nil || *rfidUID == "" {
