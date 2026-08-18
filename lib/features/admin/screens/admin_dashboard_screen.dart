@@ -1,10 +1,14 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/services/api_client.dart';
 import 'package:kantin_digital/core/widgets/notification_bell.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
+import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_dashboard_header.dart';
@@ -21,6 +25,9 @@ class AdminDashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final metricsAsync = ref.watch(adminDashboardProvider);
+    final authState = ref.watch(authNotifierProvider);
+    final String? avatarUrl = authState.profile?['avatar_url'] as String?;
+    final String fullName = authState.profile?['full_name'] ?? 'Super Admin';
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -38,23 +45,42 @@ class AdminDashboardScreen extends ConsumerWidget {
             elevation: 0,
             title: Row(
               children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Nebula.blue, Nebula.purple],
+                GestureDetector(
+                  onTap: () => context.go('/admin/profile'),
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: Nebula.teal,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
                     ),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'SA',
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                    child: ClipOval(
+                      child: (avatarUrl != null && avatarUrl.isNotEmpty)
+                          ? CachedNetworkImage(
+                              imageUrl: ApiClient.resolveImageUrl(avatarUrl),
+                              fit: BoxFit.cover,
+                              errorWidget: (_, __, ___) => Center(
+                                child: Text(
+                                  fullName.isNotEmpty ? fullName[0].toUpperCase() : 'S',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Center(
+                              child: Text(
+                                fullName.isNotEmpty ? fullName[0].toUpperCase() : 'S',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
                     ),
                   ),
                 ),
@@ -71,7 +97,7 @@ class AdminDashboardScreen extends ConsumerWidget {
             ),
             actions: [
               NotificationBell(color: Nebula.teal),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
             ],
           ),
         ),

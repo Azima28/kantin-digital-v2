@@ -107,7 +107,7 @@ class _AdminMainLayoutState extends ConsumerState<AdminMainLayout> {
         bottomNavigationBar: PremiumBottomNavBar(
           currentIndex: selectedIndex,
           onTap: (int index) => _onItemTapped(index, context),
-          activeColor: Nebula.purple,
+          activeColor: Nebula.teal,
           items: const [
             PremiumBottomNavBarItem(
               icon: CupertinoIcons.square_grid_2x2,
