@@ -104,7 +104,7 @@ void _showAddParentSheet(BuildContext context, WidgetRef ref) {
                 inputType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 20),
-              _sectionLabel(context, 'AKUN SISTEM'),
+              _sectionLabel(context, 'KATA SANDI AWAL'),
               const SizedBox(height: 8),
               _buildFormField(
                 context,
@@ -291,7 +291,7 @@ void _showAddStaffSheet(BuildContext context, WidgetRef ref) {
                 inputType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 20),
-              _sectionLabel(context, 'AKUN SISTEM'),
+              _sectionLabel(context, 'USERNAME & KATA SANDI'),
               const SizedBox(height: 8),
               _buildFormField(context, usernameCtrl, 'Username *'),
               const SizedBox(height: 12),

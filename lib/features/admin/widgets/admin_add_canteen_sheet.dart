@@ -75,7 +75,7 @@ void showAddCanteenSheet(BuildContext context, WidgetRef ref) {
                 inputType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 20),
-              _sectionLabel('AKUN SISTEM'),
+              _sectionLabel('USERNAME & KATA SANDI'),
               const SizedBox(height: 8),
               _buildFormField(usernameCtrl, 'Username *'),
               const SizedBox(height: 12),

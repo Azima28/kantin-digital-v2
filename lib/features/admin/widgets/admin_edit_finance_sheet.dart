@@ -84,7 +84,7 @@ void showEditFinanceSheet(
                 inputType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 20),
-              AdminSectionLabel('AKUN SISTEM'),
+              AdminSectionLabel('USERNAME'),
               const SizedBox(height: 8),
               AdminFormTextField(controller: usernameCtrl, hintText: 'Username *'),
               const SizedBox(height: 20),

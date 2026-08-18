@@ -71,7 +71,7 @@ Future<void> showAddFinanceSheet(BuildContext context, WidgetRef ref) async {
                 inputType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 20),
-              AdminSectionLabel('AKUN SISTEM'),
+              AdminSectionLabel('USERNAME & KATA SANDI'),
               const SizedBox(height: 8),
               AdminFormTextField(controller: usernameCtrl, hintText: 'Username *'),
               const SizedBox(height: 12),

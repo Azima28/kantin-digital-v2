@@ -72,7 +72,7 @@ void showEditMerchantSheet(
               const SizedBox(height: 12),
               _buildFormField(context, emailCtrl, 'Email *', inputType: TextInputType.emailAddress),
               const SizedBox(height: 20),
-              _sectionLabel(context, 'AKUN SISTEM'),
+              _sectionLabel(context, 'USERNAME'),
               const SizedBox(height: 8),
               _buildFormField(context, usernameCtrl, 'Username *'),
               const SizedBox(height: 20),
