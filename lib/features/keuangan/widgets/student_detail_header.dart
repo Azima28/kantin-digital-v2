@@ -375,7 +375,7 @@ class StudentDetailHeader extends StatelessWidget {
           if (hasCard)
             SizedBox(
               width: double.infinity,
-              child: OutlinedButton.icon(
+              child: OutlinedButton(
                 onPressed: onToggleCardFreeze,
                 style: OutlinedButton.styleFrom(
                   foregroundColor: isCardActive ? Nebula.rose : Nebula.teal,
@@ -385,26 +385,36 @@ class StudentDetailHeader extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                 ),
-                icon: Icon(
-                  isCardActive ? Icons.lock_outline_rounded : Icons.lock_open_rounded,
-                  size: 18,
-                ),
-                label: Text(
-                  isCardActive ? 'BEKUKAN KARTU RFID' : 'BUKA BLOKIR KARTU RFID',
-                  style: GoogleFonts.inter(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.3,
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isCardActive ? Icons.lock_outline_rounded : Icons.lock_open_rounded,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        isCardActive ? 'BEKUKAN KARTU RFID' : 'BUKA BLOKIR KARTU RFID',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             )
           else
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
+              child: ElevatedButton(
                 onPressed: onRegisterCard,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Nebula.teal,
@@ -412,18 +422,28 @@ class StudentDetailHeader extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   elevation: 0,
                 ),
-                icon: const Icon(CupertinoIcons.wifi, size: 18, color: Colors.white),
-                label: Text(
-                  'DAFTARKAN KARTU RFID SEKARANG',
-                  style: GoogleFonts.inter(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 0.3,
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(CupertinoIcons.wifi, size: 18, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'DAFTARKAN KARTU RFID SEKARANG',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
