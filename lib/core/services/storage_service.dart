@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:kantin_digital/core/services/api_client.dart';
+import 'package:kantin_digital/core/services/web_camera.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 
 /// Service untuk upload dan kelola foto profil/produk menggunakan Go Backend REST API.
@@ -10,8 +12,21 @@ class StorageService {
   StorageService([ApiClient? apiClient]) : _apiClient = apiClient ?? ApiClient();
 
   /// Pilih gambar dari kamera atau galeri.
-  /// Returns [XFile?] atau null jika user membatalkan.
-  Future<XFile?> pickImage({ImageSource source = ImageSource.gallery}) async {
+  /// On Web + Camera: Membuka Live Webcam capture modal.
+  /// On Mobile + Camera/Gallery: Membuka native OS camera / gallery picker.
+  Future<XFile?> pickImage({
+    BuildContext? context,
+    ImageSource source = ImageSource.gallery,
+  }) async {
+    if (kIsWeb && source == ImageSource.camera && context != null) {
+      try {
+        final webImage = await showWebCameraDialog(context);
+        if (webImage != null) return webImage;
+      } catch (e) {
+        debugPrint('[StorageService] Web camera dialog fallback: $e');
+      }
+    }
+
     final picker = ImagePicker();
     try {
       final XFile? image = await picker.pickImage(
@@ -42,7 +57,7 @@ class StorageService {
       }
 
       final url = response.data?['url']?.toString() ?? '';
-      return url;
+      return ApiClient.resolveImageUrl(url);
     } catch (e) {
       throw Exception('${AppStrings.labelFailed} upload foto: $e');
     }

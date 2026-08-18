@@ -64,6 +64,21 @@ class ApiClient {
 
   String? get authToken => _authToken;
 
+  /// Resolves relative or absolute image URL to a fully qualified backend URL
+  static String resolveImageUrl(String? url) {
+    if (url == null || url.trim().isEmpty) return '';
+    final trimmed = url.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
+      return trimmed;
+    }
+    const backendHost = String.fromEnvironment(
+      'BACKEND_HOST',
+      defaultValue: 'http://127.0.0.1:8000',
+    );
+    final cleanPath = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+    return '$backendHost$cleanPath';
+  }
+
   void _checkRenewedToken(http.Response response) {
     final renewed = response.headers['x-renewed-token'];
     if (renewed != null && renewed.isNotEmpty && renewed != _authToken) {

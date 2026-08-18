@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
+import 'package:kantin_digital/core/services/api_client.dart';
 import 'package:kantin_digital/core/services/storage_service.dart';
 import 'package:kantin_digital/core/widgets/app_image_picker_sheet.dart';
 import 'package:kantin_digital/core/widgets/change_password_panel.dart';
@@ -40,7 +41,7 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
     final apiClient = ref.read(apiClientProvider);
     final storageService = StorageService(apiClient);
 
-    final imageFile = await storageService.pickImage(source: source);
+    final imageFile = await storageService.pickImage(context: context, source: source);
     if (imageFile == null) return;
 
     if (mounted) {
@@ -389,7 +390,7 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
                             child: ClipOval(
                               child: (avatarUrl != null && avatarUrl.isNotEmpty)
                                   ? CachedNetworkImage(
-                                      imageUrl: avatarUrl,
+                                      imageUrl: ApiClient.resolveImageUrl(avatarUrl),
                                       fit: BoxFit.cover,
                                       placeholder: (_, __) => const Center(
                                         child: CupertinoActivityIndicator(color: Colors.white),

@@ -45,8 +45,12 @@ func (h *UploadHandler) UploadProductImage(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusInternalServerError, "Gagal menyimpan file gambar ke server", err.Error())
 	}
 
-	// Generate absolute or relative URL
-	publicURL := fmt.Sprintf("/uploads/products/%s", newFilename)
+	// Generate absolute URL
+	baseURL := c.BaseURL()
+	if baseURL == "" || strings.Contains(baseURL, "localhost:655") || strings.Contains(baseURL, "localhost:591") {
+		baseURL = "http://127.0.0.1:8000"
+	}
+	publicURL := fmt.Sprintf("%s/uploads/products/%s", baseURL, newFilename)
 	return response.Success(c, fiber.StatusOK, "Gambar produk berhasil diupload", map[string]string{
 		"file_name": newFilename,
 		"url":       publicURL,
@@ -80,7 +84,11 @@ func (h *UploadHandler) UploadAvatar(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusInternalServerError, "Gagal menyimpan avatar ke server", err.Error())
 	}
 
-	publicURL := fmt.Sprintf("/uploads/avatars/%s", newFilename)
+	baseURL := c.BaseURL()
+	if baseURL == "" || strings.Contains(baseURL, "localhost:655") || strings.Contains(baseURL, "localhost:591") {
+		baseURL = "http://127.0.0.1:8000"
+	}
+	publicURL := fmt.Sprintf("%s/uploads/avatars/%s", baseURL, newFilename)
 
 	// Automatically persist avatar_url to user profile in database
 	if claimsVal := c.Locals(middleware.UserClaimsKey); claimsVal != nil {
