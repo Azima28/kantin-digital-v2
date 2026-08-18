@@ -43,6 +43,7 @@ class ApiResponse<T> {
 class ApiClient {
   final String baseUrl;
   String? _authToken;
+  void Function(String newToken)? onTokenRenewed;
 
   ApiClient({
     String? baseUrl,
@@ -61,6 +62,14 @@ class ApiClient {
   }
 
   String? get authToken => _authToken;
+
+  void _checkRenewedToken(http.Response response) {
+    final renewed = response.headers['x-renewed-token'];
+    if (renewed != null && renewed.isNotEmpty && renewed != _authToken) {
+      _authToken = renewed;
+      onTokenRenewed?.call(renewed);
+    }
+  }
 
   Map<String, String> _buildHeaders({Map<String, String>? extraHeaders}) {
     final headers = <String, String>{
@@ -94,6 +103,7 @@ class ApiClient {
   }
 
   Map<String, dynamic> _safeParseJson(http.Response response) {
+    _checkRenewedToken(response);
     try {
       final decoded = json.decode(response.body);
       if (decoded is Map<String, dynamic>) {

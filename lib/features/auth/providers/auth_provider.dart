@@ -77,6 +77,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   void _initAuthListener() async {
+    // 0. Listen for sliding session token renewals from backend
+    _apiClient.onTokenRenewed = (String newToken) {
+      updateSessionToken(newToken);
+    };
+
     // 1. Check persistent 7-day session storage on launch or page refresh first
     try {
       final cachedSession = await SecureSessionService.getValidSessionData();
@@ -156,6 +161,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       return false;
     }
+  }
+
+  // Update renewed session token from sliding session seamlessly
+  Future<void> updateSessionToken(String newToken) async {
+    if (state.sessionToken == newToken) return;
+    _apiClient.setAuthToken(newToken);
+    if (state.profile != null) {
+      await SecureSessionService.saveSessionData(
+        profile: state.profile!,
+        sessionToken: newToken,
+      );
+    }
+    state = state.copyWith(sessionToken: newToken);
   }
 
   // Update avatar URL in local profile state & persistent storage

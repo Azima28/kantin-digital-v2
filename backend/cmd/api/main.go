@@ -100,6 +100,7 @@ func main() {
 			return false
 		},
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, X-Requested-With",
+		ExposeHeaders:    "X-Renewed-Token",
 		AllowMethods:     "GET, POST, PUT, DELETE, PATCH, OPTIONS",
 		AllowCredentials: true,
 	}))

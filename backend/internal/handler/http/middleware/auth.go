@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"kantin-backend/internal/domain"
@@ -37,6 +38,29 @@ func AuthMiddleware(tokenMaker *token.TokenMaker) fiber.Handler {
 		claims, err := tokenMaker.VerifyToken(accessToken)
 		if err != nil {
 			return response.Error(c, fiber.StatusUnauthorized, "Sesi login kadaluarsa atau tidak valid", nil)
+		}
+
+		// Sliding Session: Auto-renew token if remaining lifetime is less than 50%
+		if claims.ExpiresAt != nil {
+			timeLeft := time.Until(claims.ExpiresAt.Time)
+			halfDuration := time.Duration(tokenMaker.DurationHours()/2) * time.Hour
+			if timeLeft < halfDuration {
+				renewedToken, newExpiry, renewErr := tokenMaker.RenewToken(claims)
+				if renewErr == nil && renewedToken != "" {
+					c.Set("X-Renewed-Token", renewedToken)
+					c.Set("Access-Control-Expose-Headers", "X-Renewed-Token")
+					if c.Cookies("access_token") != "" {
+						c.Cookie(&fiber.Cookie{
+							Name:     "access_token",
+							Value:    renewedToken,
+							Expires:  newExpiry,
+							HTTPOnly: true,
+							Secure:   false,
+							SameSite: "Lax",
+						})
+					}
+				}
+			}
 		}
 
 		c.Locals(UserClaimsKey, claims)
