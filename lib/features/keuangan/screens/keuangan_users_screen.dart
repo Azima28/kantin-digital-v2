@@ -9,7 +9,6 @@ import 'package:kantin_digital/features/keuangan/widgets/users_add_sheet.dart';
 import 'package:kantin_digital/features/keuangan/widgets/users_search_bar.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
-import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 
 // ── Main Screen ─────────────────────────────────────────────────────────────
 
@@ -62,12 +61,13 @@ class _KeuanganUsersScreenState extends ConsumerState<KeuanganUsersScreen>
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
+        centerTitle: true,
         title: Text(
           'Manajemen Pengguna',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
-            color: Nebula.teal,
-            fontSize: 20,
+            color: context.textPrimary,
+            fontSize: 18,
           ),
         ),
         actions: [
@@ -75,10 +75,10 @@ class _KeuanganUsersScreenState extends ConsumerState<KeuanganUsersScreen>
             PressScale(
               onTap: () => showAddUserBottomSheet(context, ref, _tabController.index),
               child: IconButton(
-                icon: Icon(
+                icon: const Icon(
                   CupertinoIcons.add_circled_solid,
                   color: Nebula.teal,
-                  size: 26,
+                  size: 24,
                 ),
                 tooltip: _tabController.index == 0
                     ? '${AppStrings.buttonAdd} Siswa'
@@ -86,11 +86,16 @@ class _KeuanganUsersScreenState extends ConsumerState<KeuanganUsersScreen>
                 onPressed: () => showAddUserBottomSheet(context, ref, _tabController.index),
               ),
             ),
+          const SizedBox(width: 8),
         ],
         bottom: PreferredSize(
-          preferredSize: Size.fromHeight(48),
+          preferredSize: const Size.fromHeight(44),
           child: Container(
-            color: context.cardBg,
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: context.dividerCol, width: 0.8),
+              ),
+            ),
             child: TabBar(
               controller: _tabController,
               isScrollable: true,
@@ -124,7 +129,7 @@ class _KeuanganUsersScreenState extends ConsumerState<KeuanganUsersScreen>
             hints: [_searchHint()],
             showClear: _searchQuery.isNotEmpty,
           ),
-          GradientLine(height: 1, margin: EdgeInsets.symmetric(vertical: 4)),
+          const SizedBox(height: 4),
           Expanded(
             child: TabBarView(
               controller: _tabController,

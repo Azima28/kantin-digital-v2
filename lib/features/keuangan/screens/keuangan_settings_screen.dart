@@ -337,10 +337,14 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
         elevation: 0,
         scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
-        centerTitle: false,
+        centerTitle: true,
         title: Text(
           'Akun Saya',
-          style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Nebula.teal, fontSize: 18),
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.bold,
+            color: context.textPrimary,
+            fontSize: 18,
+          ),
         ),
       ),
       body: SafeArea(

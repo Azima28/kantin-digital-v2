@@ -52,7 +52,7 @@ class ParentsTab extends ConsumerWidget {
             children: [
               // Pending verification section
               if (pending.isNotEmpty && searchQuery.isEmpty) ...[
-                _sectionHeader(context, '⚠️  PERLU VERIFIKASI (${pending.length})'),
+                _sectionHeader(context, 'PERLU VERIFIKASI (${pending.length})'),
                 const SizedBox(height: 8),
                 ...pending.map(
                   (p) => _buildParentCard(context, ref, p, isPending: true),
