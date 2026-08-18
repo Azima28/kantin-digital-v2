@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	ErrUserNotFound = errors.New("user tidak ditemukan")
+	ErrUserNotFound       = errors.New("user tidak ditemukan")
+	ErrDatabaseNotReady   = errors.New("koneksi database PostgreSQL belum terhubung")
 )
 
 type UserRepo struct {
@@ -23,6 +24,9 @@ func NewUserRepo(db *DB) *UserRepo {
 
 // FindByIdentifier finds user by email, username, or nisn
 func (r *UserRepo) FindByIdentifier(ctx context.Context, identifier string) (*domain.UserProfile, error) {
+	if r == nil || r.db == nil || r.db.Pool == nil {
+		return nil, ErrDatabaseNotReady
+	}
 	query := `
 		SELECT id, email, full_name, role, password, username, nisn, phone_number, is_active, relation, avatar_url, created_at
 		FROM public.profiles
@@ -46,6 +50,9 @@ func (r *UserRepo) FindByIdentifier(ctx context.Context, identifier string) (*do
 
 // FindByID finds user profile by UUID
 func (r *UserRepo) FindByID(ctx context.Context, id string) (*domain.UserProfile, error) {
+	if r == nil || r.db == nil || r.db.Pool == nil {
+		return nil, ErrDatabaseNotReady
+	}
 	query := `
 		SELECT id, email, full_name, role, password, username, nisn, phone_number, is_active, relation, avatar_url, created_at
 		FROM public.profiles
@@ -68,6 +75,9 @@ func (r *UserRepo) FindByID(ctx context.Context, id string) (*domain.UserProfile
 
 // GetStudentDetail retrieves student entity with profile
 func (r *UserRepo) GetStudentDetail(ctx context.Context, studentID string) (*domain.Student, error) {
+	if r == nil || r.db == nil || r.db.Pool == nil {
+		return nil, ErrDatabaseNotReady
+	}
 	query := `
 		SELECT s.id, s.balance, s.rfid_uid, s.is_active, COALESCE(s.daily_limit, 0), COALESCE(s.wa_notifications_enabled, true), s.parent_phone, s.class_id, s.rombel_id,
 		       p.email, p.full_name, p.role, p.username, p.nisn, p.phone_number, p.is_active, p.avatar_url, p.created_at
@@ -96,6 +106,9 @@ func (r *UserRepo) GetStudentDetail(ctx context.Context, studentID string) (*dom
 
 // FindStudentByRFID finds student by card UID
 func (r *UserRepo) FindStudentByRFID(ctx context.Context, rfidUID string) (*domain.Student, error) {
+	if r == nil || r.db == nil || r.db.Pool == nil {
+		return nil, ErrDatabaseNotReady
+	}
 	query := `
 		SELECT s.id, s.balance, s.rfid_uid, s.is_active, COALESCE(s.daily_limit, 0), COALESCE(s.wa_notifications_enabled, true), s.parent_phone, s.class_id, s.rombel_id,
 		       p.email, p.full_name, p.role, p.username, p.nisn, p.phone_number, p.is_active, p.avatar_url, p.created_at
@@ -125,6 +138,9 @@ func (r *UserRepo) FindStudentByRFID(ctx context.Context, rfidUID string) (*doma
 
 // FindParentByStudentNISN finds parent profile linked to student by student's NISN
 func (r *UserRepo) FindParentByStudentNISN(ctx context.Context, nisn string) (*domain.UserProfile, error) {
+	if r == nil || r.db == nil || r.db.Pool == nil {
+		return nil, ErrDatabaseNotReady
+	}
 	query := `
 		SELECT p_parent.id, p_parent.email, p_parent.full_name, p_parent.role, p_parent.password, p_parent.username,
 		       p_parent.nisn, p_parent.phone_number, p_parent.is_active, p_parent.relation, p_parent.avatar_url, p_parent.created_at
