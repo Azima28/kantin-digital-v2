@@ -16,6 +16,7 @@ import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/admin/widgets/merchant_profile_header.dart';
 import 'package:kantin_digital/features/admin/widgets/merchant_stats_card.dart';
 import 'package:kantin_digital/features/admin/widgets/merchant_product_list_item.dart';
+import 'package:kantin_digital/features/admin/widgets/merchant_all_products_sheet.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_edit_merchant_sheet.dart';
 import 'package:kantin_digital/features/shared/screens/student_transactions_screen.dart';
 import 'package:kantin_digital/features/siswa/widgets/siswa_transaction_detail_sheet.dart';
@@ -313,7 +314,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: _buildProductCatalog(products),
+                        child: _buildProductCatalog(products, canteenName),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -322,7 +323,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                     ],
                   )
                 else ...[
-                  _buildProductCatalog(products),
+                  _buildProductCatalog(products, canteenName),
                   const SizedBox(height: 16),
                   _buildRecentSales(txs, canteenName),
                 ],
@@ -380,7 +381,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
     );
   }
 
-  Widget _buildProductCatalog(List<Product> products) {
+  Widget _buildProductCatalog(List<Product> products, String canteenName) {
     return NebulaCard(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -391,7 +392,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
             children: [
               Expanded(
                 child: Text(
-                  'Product Catalog',
+                  'Katalog Produk',
                   style: GoogleFonts.inter(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
@@ -402,20 +403,26 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                 ),
               ),
               const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: context.cardBg,
-                  borderRadius: BorderRadius.circular(99),
-                ),
+              TextButton(
+                onPressed: () {
+                  MerchantAllProductsSheet.show(
+                    context,
+                    products: products,
+                    canteenName: canteenName,
+                  );
+                },
                 child: Text(
-                  'Read-Only',
-                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700),
+                  'Lihat Semua',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Nebula.teal,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           if (products.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24.0),
@@ -425,15 +432,11 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: products.length,
-              separatorBuilder: (context, i) => Divider(height: 16, color: context.dividerCol),
+              itemCount: products.take(5).length,
+              separatorBuilder: (context, i) => const SizedBox(height: 8),
               itemBuilder: (context, i) {
                 final p = products[i];
-                return MerchantProductListItem(
-                  name: p.name,
-                  price: p.price,
-                  isAvailable: p.isAvailable,
-                );
+                return MerchantProductListItem.fromProduct(p);
               },
             ),
         ],
@@ -452,7 +455,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
             children: [
               Expanded(
                 child: Text(
-                  'Riwayat Penjualan (10 Terakhir)',
+                  'Riwayat Penjualan (5 Terakhir)',
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -494,7 +497,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: txs.take(10).length,
+              itemCount: txs.take(5).length,
               separatorBuilder: (context, i) => Divider(height: 14, color: context.dividerCol),
               itemBuilder: (context, i) {
                 final tx = txs[i];

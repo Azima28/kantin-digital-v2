@@ -379,7 +379,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
               ],
             ),
             child: Column(
-              children: logs.asMap().entries.map((entry) {
+              children: logs.take(5).toList().asMap().entries.map((entry) {
                 final i = entry.key;
                 final log = entry.value;
                 final type = (log['type'] ?? log['action_type'] ?? '').toString();

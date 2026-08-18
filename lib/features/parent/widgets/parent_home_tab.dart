@@ -189,7 +189,7 @@ class ParentHomeTab extends StatelessWidget {
             child: ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: todayTxs.length,
+              itemCount: todayTxs.take(5).length,
               separatorBuilder: (context, i) =>
                   Divider(height: 1, color: context.dividerCol),
               itemBuilder: (context, i) {

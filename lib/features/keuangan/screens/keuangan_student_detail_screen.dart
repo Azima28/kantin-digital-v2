@@ -326,7 +326,7 @@ class _KeuanganStudentDetailScreenState
                             children: [
                               Expanded(
                                 child: Text(
-                                  'Riwayat Transaksi (10 Terakhir)',
+                                  'Riwayat Transaksi (5 Terakhir)',
                                   style: GoogleFonts.inter(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
@@ -365,7 +365,7 @@ class _KeuanganStudentDetailScreenState
                             )
                           else
                             Column(
-                              children: txs.take(10).map((tx) {
+                              children: txs.take(5).map((tx) {
                                 final isTopup = tx.isTopup;
                                 final statusStr = tx.status?.toString().toLowerCase() ?? '';
                                 final isRefund = statusStr == 'refunded' || tx.type == 'refund';

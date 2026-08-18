@@ -450,7 +450,7 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                   )
                 else
                   Column(
-                    children: logs.map((log) {
+                    children: logs.take(5).map((log) {
                       final String actionType = log.actionType;
                       final String desc = log.description;
                       final date = log.createdAt?.toLocal() ?? DateTime.now();

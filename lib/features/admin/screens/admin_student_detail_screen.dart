@@ -298,7 +298,7 @@ class _AdminStudentDetailScreenState
                             )
                           else
                             Column(
-                              children: txs.map((tx) {
+                              children: txs.take(5).map((tx) {
                                 final int amount = tx.totalAmount;
                                 final bool isTopup = tx.isTopup;
                                 final bool isRefund = tx.status?.toString().toLowerCase() == 'refunded' || tx.type == 'refund';
