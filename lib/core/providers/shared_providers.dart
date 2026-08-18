@@ -120,6 +120,9 @@ final rfidByUidProvider =
 final userNotificationsProvider =
     FutureProvider.autoDispose<List<AppNotification>>((ref) async {
   try {
+    final profile = ref.watch(authNotifierProvider.select((s) => s.profile));
+    if (profile == null || profile['is_active'] == false) return <AppNotification>[];
+
     final apiClient = ref.read(apiClientProvider);
     final response = await apiClient.get('/student/notifications');
     if (response.success && response.data != null) {

@@ -118,13 +118,23 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
                     height: 1.4,
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  '💡 Anda tetap bisa menggunakan kartu fisik RFID untuk jajan di kantin selama kartu Anda aktif.',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    color: colors.textMuted,
-                  ),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(CupertinoIcons.info_circle, size: 14, color: colors.textMuted),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Anda tetap bisa menggunakan kartu fisik RFID untuk jajan di kantin selama kartu Anda aktif.',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          color: colors.textMuted,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
