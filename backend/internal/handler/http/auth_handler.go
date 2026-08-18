@@ -86,3 +86,24 @@ func (h *AuthHandler) ChangePassword(c *fiber.Ctx) error {
 
 	return response.Success(c, fiber.StatusOK, "Kata sandi berhasil diperbarui", nil)
 }
+
+type UpdateProfileRequest struct {
+	FullName    string  `json:"full_name"`
+	PhoneNumber *string `json:"phone_number"`
+	AvatarURL   *string `json:"avatar_url"`
+}
+
+func (h *AuthHandler) UpdateProfile(c *fiber.Ctx) error {
+	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
+	var req UpdateProfileRequest
+	if err := c.BodyParser(&req); err != nil {
+		return response.Error(c, fiber.StatusBadRequest, "Payload request tidak valid", err.Error())
+	}
+
+	user, err := h.authService.UpdateProfile(c.Context(), claims.UserID, req.FullName, req.PhoneNumber, req.AvatarURL)
+	if err != nil {
+		return response.Error(c, fiber.StatusInternalServerError, "Gagal memperbarui profil: "+err.Error(), err.Error())
+	}
+
+	return response.Success(c, fiber.StatusOK, "Profil berhasil diperbarui", user)
+}

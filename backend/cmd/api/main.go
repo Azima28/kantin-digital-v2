@@ -182,6 +182,10 @@ func main() {
 		authRequired.Post("/upload/product-image", uploadH.UploadProductImage)
 		authRequired.Post("/upload/avatar", uploadH.UploadAvatar)
 
+		// Profile Updates
+		authRequired.Patch("/auth/profile", authH.UpdateProfile)
+		authRequired.Put("/auth/profile", authH.UpdateProfile)
+
 		// Universal Notifications (Available for all authenticated roles)
 		authRequired.Get("/student/notifications", studentH.GetNotifications)
 		authRequired.Get("/notifications", studentH.GetNotifications)

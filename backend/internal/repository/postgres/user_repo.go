@@ -609,8 +609,8 @@ func (r *UserRepo) DeleteUser(ctx context.Context, id string) error {
 func (r *UserRepo) UpdateUserProfile(ctx context.Context, user *domain.UserProfile) error {
 	query := `
 		UPDATE public.profiles
-		SET full_name = $1, email = $2, username = $3, nisn = $4, phone_number = $5, is_active = $6
-		WHERE id = $7`
-	_, err := r.db.Pool.Exec(ctx, query, user.FullName, user.Email, user.Username, user.NISN, user.PhoneNumber, user.IsActive, user.ID)
+		SET full_name = $1, email = $2, username = $3, nisn = $4, phone_number = $5, avatar_url = $6, is_active = $7
+		WHERE id = $8`
+	_, err := r.db.Pool.Exec(ctx, query, user.FullName, user.Email, user.Username, user.NISN, user.PhoneNumber, user.AvatarURL, user.IsActive, user.ID)
 	return err
 }

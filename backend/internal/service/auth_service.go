@@ -124,3 +124,25 @@ func (s *AuthService) ChangePassword(ctx context.Context, userID, oldPassword, n
 
 	return s.userRepo.UpdatePassword(ctx, userID, newHashed)
 }
+
+func (s *AuthService) UpdateProfile(ctx context.Context, userID, fullName string, phoneNumber, avatarURL *string) (*domain.UserProfile, error) {
+	user, err := s.userRepo.FindByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if strings.TrimSpace(fullName) != "" {
+		user.FullName = strings.TrimSpace(fullName)
+	}
+	if phoneNumber != nil {
+		user.PhoneNumber = phoneNumber
+	}
+	if avatarURL != nil && strings.TrimSpace(*avatarURL) != "" {
+		user.AvatarURL = avatarURL
+	}
+
+	if err := s.userRepo.UpdateUserProfile(ctx, user); err != nil {
+		return nil, err
+	}
+	return user, nil
+}

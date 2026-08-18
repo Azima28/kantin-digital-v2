@@ -205,6 +205,37 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  // Update profile details (Full name, Phone number) to Go Backend & persistent local state
+  Future<bool> updateProfileDetails({
+    required String fullName,
+    String? phoneNumber,
+  }) async {
+    try {
+      final response = await _apiClient.patch('/auth/profile', body: {
+        'full_name': fullName.trim(),
+        'phone_number': phoneNumber?.trim(),
+      });
+      if (response.success && response.data != null) {
+        final updatedMap = Map<String, dynamic>.from(response.data as Map);
+        final currentProfile = Map<String, dynamic>.from(state.profile ?? {});
+        currentProfile['full_name'] = updatedMap['full_name'] ?? fullName.trim();
+        if (phoneNumber != null) currentProfile['phone_number'] = phoneNumber.trim();
+        currentProfile['phone'] = phoneNumber?.trim();
+        if (updatedMap['avatar_url'] != null) currentProfile['avatar_url'] = updatedMap['avatar_url'];
+
+        await SecureSessionService.saveSessionData(
+          profile: currentProfile,
+          sessionToken: state.sessionToken,
+        );
+        state = state.copyWith(profile: currentProfile);
+        return true;
+      }
+    } catch (e) {
+      debugPrint('[AuthNotifier] Update profile error: $e');
+    }
+    return false;
+  }
+
   // Fungsi Logout Kasir / User
   Future<void> logout() async {
     state = state.copyWith(isLoading: true);
