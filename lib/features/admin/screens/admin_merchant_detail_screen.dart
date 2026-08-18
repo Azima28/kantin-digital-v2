@@ -394,27 +394,34 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                       ),
                       const SizedBox(height: 14),
 
-                      // Metode Pembayaran
-                      Text(
-                        'Metode Penyerahan Kas',
-                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: ctx.textSecondary),
-                      ),
-                      const SizedBox(height: 6),
-                      DropdownButtonFormField<String>(
-                        initialValue: selectedMethod,
-                        items: const [
-                          DropdownMenuItem(value: 'Tunai (Cash)', child: Text('Tunai (Serah Terima Kas)')),
-                          DropdownMenuItem(value: 'Transfer Bank', child: Text('Transfer Bank / QRIS')),
-                        ],
-                        onChanged: (v) {
-                          if (v != null) setLocal(() => selectedMethod = v);
-                        },
-                        style: GoogleFonts.inter(fontSize: 13, color: ctx.textPrimary),
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: ctx.surfaceBg,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                      // Metode Penyerahan Kas: Tunai
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: ctx.surfaceBg,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: ctx.dividerCol, width: 0.8),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(CupertinoIcons.money_dollar_circle, size: 18, color: Nebula.teal),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Metode Penyerahan:',
+                                    style: GoogleFonts.inter(fontSize: 10.5, color: ctx.textSecondary),
+                                  ),
+                                  Text(
+                                    'Tunai (Serah Terima Kas Langsung)',
+                                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: ctx.textPrimary),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 14),
