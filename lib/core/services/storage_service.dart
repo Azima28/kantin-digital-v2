@@ -22,6 +22,7 @@ class StorageService {
       );
       return image;
     } catch (e) {
+      debugPrint('[StorageService] pickImage error ($source): $e');
       return null;
     }
   }

@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Aplikasi membutuhkan izin kamera untuk mengambil foto profil pengguna dan foto produk jajanan.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Aplikasi membutuhkan izin galeri foto untuk memilih foto profil pengguna dan foto produk jajanan.</string>
+	<key>NFCReaderUsageDescription</key>
+	<string>Aplikasi membutuhkan izin NFC untuk membaca kartu RFID/NFC siswa.</string>
 </dict>
 </plist>
