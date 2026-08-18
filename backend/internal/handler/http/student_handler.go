@@ -131,3 +131,24 @@ func (h *StudentHandler) MarkAllNotificationsRead(c *fiber.Ctx) error {
 	}
 	return response.Success(c, fiber.StatusOK, "Semua notifikasi ditandai dibaca", nil)
 }
+
+type UpdateCardStatusRequest struct {
+	StudentID string  `json:"student_id"`
+	RfidUID   *string `json:"rfid_uid"`
+	IsActive  *bool   `json:"is_active"`
+}
+
+func (h *StudentHandler) UpdateCardStatus(c *fiber.Ctx) error {
+	var req UpdateCardStatusRequest
+	if err := c.BodyParser(&req); err != nil {
+		return response.Error(c, fiber.StatusBadRequest, "Payload tidak valid", err.Error())
+	}
+	if req.StudentID == "" {
+		return response.Error(c, fiber.StatusBadRequest, "Student ID wajib diisi", nil)
+	}
+
+	if err := h.paymentService.UpdateStudentCardStatus(c.Context(), req.StudentID, req.RfidUID, req.IsActive); err != nil {
+		return response.Error(c, fiber.StatusInternalServerError, "Gagal memperbarui status kartu: "+err.Error(), err.Error())
+	}
+	return response.Success(c, fiber.StatusOK, "Status kartu berhasil diperbarui", nil)
+}

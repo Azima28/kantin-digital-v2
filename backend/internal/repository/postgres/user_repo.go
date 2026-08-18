@@ -315,13 +315,21 @@ func (r *UserRepo) ListAllStudents(ctx context.Context) ([]domain.Student, error
 	return list, nil
 }
 
+// EnrichedUserProfile includes profile and related sub-entity metadata
+type EnrichedUserProfile struct {
+	domain.UserProfile
+	CanteenOperators map[string]interface{} `json:"canteen_operators,omitempty"`
+}
+
 // ListAllUsers retrieves all user profiles with optional role filtering
-func (r *UserRepo) ListAllUsers(ctx context.Context, roleFilter string) ([]domain.UserProfile, error) {
+func (r *UserRepo) ListAllUsers(ctx context.Context, roleFilter string) ([]EnrichedUserProfile, error) {
 	query := `
-		SELECT id, email, full_name, role, password, username, nisn, phone_number, is_active, relation, avatar_url, created_at
-		FROM public.profiles
-		WHERE ($1 = '' OR role = $1)
-		ORDER BY created_at DESC`
+		SELECT p.id, p.email, p.full_name, p.role, p.password, p.username, p.nisn, p.phone_number, p.is_active, p.relation, p.avatar_url, p.created_at,
+		       c.canteen_name, c.balance_earned
+		FROM public.profiles p
+		LEFT JOIN public.canteen_operators c ON c.id = p.id
+		WHERE ($1 = '' OR p.role = $1)
+		ORDER BY p.created_at DESC`
 
 	rows, err := r.db.Pool.Query(ctx, query, roleFilter)
 	if err != nil {
@@ -329,15 +337,28 @@ func (r *UserRepo) ListAllUsers(ctx context.Context, roleFilter string) ([]domai
 	}
 	defer rows.Close()
 
-	var list []domain.UserProfile
+	var list []EnrichedUserProfile
 	for rows.Next() {
-		var u domain.UserProfile
+		var u EnrichedUserProfile
+		var cName *string
+		var bEarned *int
 		err := rows.Scan(
 			&u.ID, &u.Email, &u.FullName, &u.Role, &u.Password, &u.Username,
 			&u.NISN, &u.PhoneNumber, &u.IsActive, &u.Relation, &u.AvatarURL, &u.CreatedAt,
+			&cName, &bEarned,
 		)
 		if err != nil {
 			return nil, err
+		}
+		if cName != nil && *cName != "" {
+			earned := 0
+			if bEarned != nil {
+				earned = *bEarned
+			}
+			u.CanteenOperators = map[string]interface{}{
+				"canteen_name":   *cName,
+				"balance_earned": earned,
+			}
 		}
 		list = append(list, u)
 	}
@@ -422,7 +443,7 @@ func (r *UserRepo) GetParentChildren(ctx context.Context, parentID string) ([]do
 }
 
 // CreateUserProfile creates a new user profile with associated role sub-record
-func (r *UserRepo) CreateUserProfile(ctx context.Context, user *domain.UserProfile, passwordHash string, canteenName string, rfidUID *string) error {
+func (r *UserRepo) CreateUserProfile(ctx context.Context, user *domain.UserProfile, passwordHash string, canteenName string, rfidUID *string, studentNISN *string) error {
 	tx, err := r.db.Pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -431,10 +452,10 @@ func (r *UserRepo) CreateUserProfile(ctx context.Context, user *domain.UserProfi
 
 	var newID string
 	err = tx.QueryRow(ctx, `
-		INSERT INTO public.profiles (email, full_name, role, password, username, nisn, phone_number, is_active, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+		INSERT INTO public.profiles (email, full_name, role, password, username, nisn, phone_number, is_active, relation, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
 		RETURNING id`,
-		user.Email, user.FullName, user.Role, passwordHash, user.Username, user.NISN, user.PhoneNumber, user.IsActive,
+		user.Email, user.FullName, user.Role, passwordHash, user.Username, user.NISN, user.PhoneNumber, user.IsActive, user.Relation,
 	).Scan(&newID)
 	if err != nil {
 		return err
@@ -464,9 +485,66 @@ func (r *UserRepo) CreateUserProfile(ctx context.Context, user *domain.UserProfi
 			VALUES ($1, 0)`,
 			newID,
 		)
+	case domain.RoleParent:
+		if studentNISN != nil && strings.TrimSpace(*studentNISN) != "" {
+			var studentID string
+			sErr := tx.QueryRow(ctx, `SELECT id FROM public.profiles WHERE nisn = $1 OR username = $1 LIMIT 1`, strings.TrimSpace(*studentNISN)).Scan(&studentID)
+			if sErr == nil && studentID != "" {
+				_, _ = tx.Exec(ctx, `
+					INSERT INTO public.parent_students (parent_id, student_id, created_at)
+					VALUES ($1, $2, NOW())
+					ON CONFLICT DO NOTHING`,
+					newID, studentID,
+				)
+			}
+		}
 	}
 	if err != nil {
 		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
+// UpdateUserStatus updates is_active flag on profile and related sub-tables
+func (r *UserRepo) UpdateUserStatus(ctx context.Context, id string, isActive bool) error {
+	tx, err := r.db.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx, `UPDATE public.profiles SET is_active = $1 WHERE id = $2`, isActive, id)
+	if err != nil {
+		return err
+	}
+	_, _ = tx.Exec(ctx, `UPDATE public.students SET is_active = $1 WHERE id = $2`, isActive, id)
+	return tx.Commit(ctx)
+}
+
+// UpdateStudentCardStatus links or unlinks RFID UID from student
+func (r *UserRepo) UpdateStudentCardStatus(ctx context.Context, studentID string, rfidUID *string, isActive *bool) error {
+	tx, err := r.db.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	if rfidUID != nil && *rfidUID != "" {
+		_, err = tx.Exec(ctx, `UPDATE public.students SET rfid_uid = $1 WHERE id = $2`, *rfidUID, studentID)
+		if err != nil {
+			return err
+		}
+	} else {
+		_, err = tx.Exec(ctx, `UPDATE public.students SET rfid_uid = NULL WHERE id = $1`, studentID)
+		if err != nil {
+			return err
+		}
+	}
+
+	if isActive != nil {
+		_, _ = tx.Exec(ctx, `UPDATE public.students SET is_active = $1 WHERE id = $2`, *isActive, studentID)
+		_, _ = tx.Exec(ctx, `UPDATE public.profiles SET is_active = $1 WHERE id = $2`, *isActive, studentID)
 	}
 
 	return tx.Commit(ctx)

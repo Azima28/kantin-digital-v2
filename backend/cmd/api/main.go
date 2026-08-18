@@ -231,6 +231,9 @@ func main() {
 			financeGroup.Get("/dashboard", financeH.Dashboard)
 			financeGroup.Get("/students", financeH.ListStudents)
 			financeGroup.Get("/history", financeH.History)
+			financeGroup.Get("/audit-logs", adminH.ListAuditLogs)
+			financeGroup.Get("/users", adminH.ListUsers)
+			financeGroup.Get("/student/:id", adminH.GetStudentDetail)
 			financeGroup.Post("/topup", financeH.Topup)
 			financeGroup.Post("/correction", financeH.Correction)
 			financeGroup.Get("/report", financeH.Report)
@@ -243,14 +246,19 @@ func main() {
 			parentGroup.Post("/topup", financeH.Topup)
 		}
 		authRequired.Patch("/student/settings", parentH.UpdateStudentSettings)
+		authRequired.Patch("/student/card-status", middleware.RequireRoles(domain.RolePetugasKeuangan, domain.RoleSuperAdmin, domain.RoleAdmin), studentH.UpdateCardStatus)
+		authRequired.Patch("/users/:id/status", middleware.RequireRoles(domain.RolePetugasKeuangan, domain.RoleSuperAdmin, domain.RoleAdmin), adminH.UpdateStatus)
 
-		// Super Admin & Admin Management
-		adminGroup := authRequired.Group("/admin", middleware.RequireRoles(domain.RoleSuperAdmin, domain.RoleAdmin))
+		// Super Admin & Admin / Finance Management
+		adminGroup := authRequired.Group("/admin", middleware.RequireRoles(domain.RoleSuperAdmin, domain.RoleAdmin, domain.RolePetugasKeuangan))
 		{
 			adminGroup.Get("/dashboard", adminH.Dashboard)
 			adminGroup.Get("/users", adminH.ListUsers)
 			adminGroup.Post("/users", adminH.CreateUser)
+			adminGroup.Post("/students", adminH.CreateUser)
 			adminGroup.Put("/users/:id", adminH.UpdateUser)
+			adminGroup.Patch("/users/:id", adminH.UpdateUser)
+			adminGroup.Post("/users/password", adminH.AdminChangePassword)
 			adminGroup.Delete("/users/:id", adminH.DeleteUser)
 			adminGroup.Get("/audit-logs", adminH.ListAuditLogs)
 			adminGroup.Get("/student/:id", adminH.GetStudentDetail)

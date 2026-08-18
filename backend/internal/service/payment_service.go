@@ -77,11 +77,11 @@ func (s *PaymentService) ListAllStudents(ctx context.Context) ([]domain.Student,
 	return s.userRepo.ListAllStudents(ctx)
 }
 
-func (s *PaymentService) ListAllUsers(ctx context.Context, roleFilter string) ([]domain.UserProfile, error) {
+func (s *PaymentService) ListAllUsers(ctx context.Context, roleFilter string) ([]postgres.EnrichedUserProfile, error) {
 	return s.userRepo.ListAllUsers(ctx, roleFilter)
 }
 
-func (s *PaymentService) CreateUser(ctx context.Context, user *domain.UserProfile, rawPassword string, canteenName string, rfidUID *string) error {
+func (s *PaymentService) CreateUser(ctx context.Context, user *domain.UserProfile, rawPassword string, canteenName string, rfidUID *string, studentNISN *string) error {
 	if rawPassword == "" {
 		rawPassword = "password123"
 	}
@@ -89,7 +89,23 @@ func (s *PaymentService) CreateUser(ctx context.Context, user *domain.UserProfil
 	if err != nil {
 		return err
 	}
-	return s.userRepo.CreateUserProfile(ctx, user, hash, canteenName, rfidUID)
+	return s.userRepo.CreateUserProfile(ctx, user, hash, canteenName, rfidUID, studentNISN)
+}
+
+func (s *PaymentService) UpdateUserStatus(ctx context.Context, id string, isActive bool) error {
+	return s.userRepo.UpdateUserStatus(ctx, id, isActive)
+}
+
+func (s *PaymentService) AdminChangePassword(ctx context.Context, userID string, newPassword string) error {
+	hash, err := hasher.HashPassword(newPassword)
+	if err != nil {
+		return err
+	}
+	return s.userRepo.UpdatePassword(ctx, userID, hash)
+}
+
+func (s *PaymentService) UpdateStudentCardStatus(ctx context.Context, studentID string, rfidUID *string, isActive *bool) error {
+	return s.userRepo.UpdateStudentCardStatus(ctx, studentID, rfidUID, isActive)
 }
 
 func (s *PaymentService) UpdateUser(ctx context.Context, user *domain.UserProfile) error {

@@ -61,9 +61,10 @@ func (h *FinanceHandler) History(c *fiber.Ctx) error {
 }
 
 type CorrectionRequest struct {
-	StudentID string `json:"student_id"`
-	Amount    int    `json:"amount"`
-	Reason    string `json:"reason"`
+	StudentID  string `json:"student_id"`
+	Amount     int    `json:"amount"`
+	NewBalance *int   `json:"new_balance"`
+	Reason     string `json:"reason"`
 }
 
 func (h *FinanceHandler) Correction(c *fiber.Ctx) error {
@@ -73,11 +74,24 @@ func (h *FinanceHandler) Correction(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusBadRequest, "Payload koreksi tidak valid", err.Error())
 	}
 
-	if req.StudentID == "" || req.Amount == 0 {
-		return response.Error(c, fiber.StatusBadRequest, "Student ID dan nominal koreksi wajib diisi", nil)
+	if req.StudentID == "" {
+		return response.Error(c, fiber.StatusBadRequest, "Student ID wajib diisi", nil)
 	}
 
-	tx, err := h.paymentService.ProcessCorrection(c.Context(), req.StudentID, claims.UserID, req.Amount, req.Reason)
+	amount := req.Amount
+	if amount == 0 && req.NewBalance != nil {
+		student, err := h.paymentService.GetStudentDetail(c.Context(), req.StudentID)
+		if err != nil {
+			return response.Error(c, fiber.StatusNotFound, "Data siswa tidak ditemukan", err.Error())
+		}
+		amount = *req.NewBalance - student.Balance
+	}
+
+	if amount == 0 {
+		return response.Error(c, fiber.StatusBadRequest, "Nominal koreksi tidak boleh 0", nil)
+	}
+
+	tx, err := h.paymentService.ProcessCorrection(c.Context(), req.StudentID, claims.UserID, amount, req.Reason)
 	if err != nil {
 		return response.Error(c, fiber.StatusBadRequest, err.Error(), nil)
 	}

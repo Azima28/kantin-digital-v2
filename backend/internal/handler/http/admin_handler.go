@@ -46,8 +46,11 @@ type CreateUserRequest struct {
 	Role        domain.Role `json:"role"`
 	NISN        *string     `json:"nisn"`
 	PhoneNumber *string     `json:"phone_number"`
+	Relation    *string     `json:"relation"`
+	StudentNISN *string     `json:"student_nisn"`
 	CanteenName string      `json:"canteen_name"`
 	RfidUID     *string     `json:"rfid_uid"`
+	Class       *string     `json:"class"`
 }
 
 func (h *AdminHandler) CreateUser(c *fiber.Ctx) error {
@@ -56,8 +59,13 @@ func (h *AdminHandler) CreateUser(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusBadRequest, "Payload pengguna tidak valid", err.Error())
 	}
 
-	if req.FullName == "" || req.Role == "" {
-		return response.Error(c, fiber.StatusBadRequest, "Nama lengkap dan role wajib diisi", nil)
+	if req.FullName == "" {
+		return response.Error(c, fiber.StatusBadRequest, "Nama lengkap wajib diisi", nil)
+	}
+
+	// Default role to student if endpoint was /admin/students or role empty
+	if req.Role == "" {
+		req.Role = domain.RoleStudent
 	}
 
 	user := &domain.UserProfile{
@@ -67,14 +75,52 @@ func (h *AdminHandler) CreateUser(c *fiber.Ctx) error {
 		Role:        req.Role,
 		NISN:        req.NISN,
 		PhoneNumber: req.PhoneNumber,
+		Relation:    req.Relation,
 		IsActive:    true,
 	}
 
-	if err := h.paymentService.CreateUser(c.Context(), user, req.Password, req.CanteenName, req.RfidUID); err != nil {
+	if err := h.paymentService.CreateUser(c.Context(), user, req.Password, req.CanteenName, req.RfidUID, req.StudentNISN); err != nil {
 		return response.Error(c, fiber.StatusInternalServerError, "Gagal menambahkan pengguna: "+err.Error(), err.Error())
 	}
 
 	return response.Success(c, fiber.StatusCreated, "Pengguna berhasil ditambahkan", user)
+}
+
+type UpdateUserStatusRequest struct {
+	IsActive bool `json:"is_active"`
+}
+
+func (h *AdminHandler) UpdateStatus(c *fiber.Ctx) error {
+	id := c.Params("id")
+	var req UpdateUserStatusRequest
+	if err := c.BodyParser(&req); err != nil {
+		return response.Error(c, fiber.StatusBadRequest, "Payload tidak valid", err.Error())
+	}
+
+	if err := h.paymentService.UpdateUserStatus(c.Context(), id, req.IsActive); err != nil {
+		return response.Error(c, fiber.StatusInternalServerError, "Gagal mengubah status: "+err.Error(), err.Error())
+	}
+	return response.Success(c, fiber.StatusOK, "Status pengguna berhasil diperbarui", nil)
+}
+
+type AdminChangePasswordRequest struct {
+	UserID      string `json:"user_id"`
+	NewPassword string `json:"new_password"`
+}
+
+func (h *AdminHandler) AdminChangePassword(c *fiber.Ctx) error {
+	var req AdminChangePasswordRequest
+	if err := c.BodyParser(&req); err != nil {
+		return response.Error(c, fiber.StatusBadRequest, "Payload tidak valid", err.Error())
+	}
+	if req.UserID == "" || req.NewPassword == "" {
+		return response.Error(c, fiber.StatusBadRequest, "User ID dan kata sandi baru wajib diisi", nil)
+	}
+
+	if err := h.paymentService.AdminChangePassword(c.Context(), req.UserID, req.NewPassword); err != nil {
+		return response.Error(c, fiber.StatusInternalServerError, "Gagal mengubah kata sandi: "+err.Error(), err.Error())
+	}
+	return response.Success(c, fiber.StatusOK, "Kata sandi berhasil diperbarui", nil)
 }
 
 func (h *AdminHandler) UpdateUser(c *fiber.Ctx) error {
