@@ -205,20 +205,26 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  // Update profile details (Full name, Phone number) to Go Backend & persistent local state
+  // Update profile details (Full name, Email, Username, Phone number) to Go Backend & persistent local state
   Future<bool> updateProfileDetails({
     required String fullName,
+    String? email,
+    String? username,
     String? phoneNumber,
   }) async {
     try {
       final response = await _apiClient.patch('/auth/profile', body: {
         'full_name': fullName.trim(),
+        if (email != null && email.trim().isNotEmpty) 'email': email.trim(),
+        if (username != null && username.trim().isNotEmpty) 'username': username.trim(),
         'phone_number': phoneNumber?.trim(),
       });
       if (response.success && response.data != null) {
         final updatedMap = Map<String, dynamic>.from(response.data as Map);
         final currentProfile = Map<String, dynamic>.from(state.profile ?? {});
         currentProfile['full_name'] = updatedMap['full_name'] ?? fullName.trim();
+        if (email != null && email.trim().isNotEmpty) currentProfile['email'] = updatedMap['email'] ?? email.trim();
+        if (username != null && username.trim().isNotEmpty) currentProfile['username'] = updatedMap['username'] ?? username.trim();
         if (phoneNumber != null) currentProfile['phone_number'] = phoneNumber.trim();
         currentProfile['phone'] = phoneNumber?.trim();
         if (updatedMap['avatar_url'] != null) currentProfile['avatar_url'] = updatedMap['avatar_url'];

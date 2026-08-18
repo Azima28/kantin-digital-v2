@@ -93,6 +93,8 @@ func (h *AuthHandler) ChangePassword(c *fiber.Ctx) error {
 
 type UpdateProfileRequest struct {
 	FullName    string  `json:"full_name"`
+	Email       *string `json:"email"`
+	Username    *string `json:"username"`
 	PhoneNumber *string `json:"phone_number"`
 	AvatarURL   *string `json:"avatar_url"`
 }
@@ -104,7 +106,7 @@ func (h *AuthHandler) UpdateProfile(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusBadRequest, "Payload request tidak valid", err.Error())
 	}
 
-	user, err := h.authService.UpdateProfile(c.Context(), claims.UserID, req.FullName, req.PhoneNumber, req.AvatarURL)
+	user, err := h.authService.UpdateProfile(c.Context(), claims.UserID, req.FullName, req.Email, req.Username, req.PhoneNumber, req.AvatarURL)
 	if err != nil {
 		return response.Error(c, fiber.StatusInternalServerError, "Gagal memperbarui profil: "+err.Error(), err.Error())
 	}

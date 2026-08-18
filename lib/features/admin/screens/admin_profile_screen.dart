@@ -87,8 +87,15 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
     }
   }
 
-  void _showEditProfileDialog(String currentName, String currentPhone) {
+  void _showEditProfileDialog({
+    required String currentName,
+    required String currentEmail,
+    required String currentUsername,
+    required String currentPhone,
+  }) {
     final nameController = TextEditingController(text: currentName);
+    final emailController = TextEditingController(text: currentEmail);
+    final usernameController = TextEditingController(text: currentUsername);
     final phoneController = TextEditingController(text: currentPhone == '-' ? '' : currentPhone);
     final formKey = GlobalKey<FormState>();
     bool isSaving = false;
@@ -98,9 +105,9 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) => Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
+            constraints: const BoxConstraints(maxWidth: 440),
             child: Container(
               decoration: BoxDecoration(
                 color: ctx.cardBg,
@@ -114,139 +121,211 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
                   ),
                 ],
               ),
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(22),
               child: Form(
                 key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Nebula.teal.withValues(alpha: 0.12),
-                            shape: BoxShape.circle,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: Nebula.teal.withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(CupertinoIcons.pencil_ellipsis_rectangle, color: Nebula.teal, size: 20),
                           ),
-                          child: const Icon(CupertinoIcons.pencil_ellipsis_rectangle, color: Nebula.teal, size: 22),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Text(
-                            'Edit Detail Profil',
-                            style: GoogleFonts.inter(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                              color: ctx.textPrimary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    Text(
-                      'Nama Lengkap',
-                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: ctx.textSecondary),
-                    ),
-                    const SizedBox(height: 6),
-                    TextFormField(
-                      controller: nameController,
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama lengkap wajib diisi' : null,
-                      style: GoogleFonts.inter(fontSize: 14, color: ctx.textPrimary),
-                      decoration: InputDecoration(
-                        hintText: 'Nama lengkap Anda',
-                        hintStyle: GoogleFonts.inter(color: ctx.textSecondary, fontSize: 13),
-                        filled: true,
-                        fillColor: ctx.surfaceBg,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Nebula.teal, width: 1.5)),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      'No. Telepon / WhatsApp',
-                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: ctx.textSecondary),
-                    ),
-                    const SizedBox(height: 6),
-                    TextFormField(
-                      controller: phoneController,
-                      keyboardType: TextInputType.phone,
-                      style: GoogleFonts.inter(fontSize: 14, color: ctx.textPrimary),
-                      decoration: InputDecoration(
-                        hintText: 'Contoh: 081234567890',
-                        hintStyle: GoogleFonts.inter(color: ctx.textSecondary, fontSize: 13),
-                        filled: true,
-                        fillColor: ctx.surfaceBg,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Nebula.teal, width: 1.5)),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: isSaving ? null : () => Navigator.pop(ctx),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 13),
-                              side: BorderSide(color: ctx.dividerCol),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            ),
-                            child: Text(
-                              AppStrings.buttonCancel,
-                              style: GoogleFonts.inter(color: ctx.textSecondary, fontWeight: FontWeight.w600, fontSize: 13),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: isSaving
-                                ? null
-                                : () async {
-                                    if (!formKey.currentState!.validate()) return;
-                                    setModalState(() => isSaving = true);
-                                    final ok = await ref.read(authNotifierProvider.notifier).updateProfileDetails(
-                                          fullName: nameController.text.trim(),
-                                          phoneNumber: phoneController.text.trim().isEmpty ? null : phoneController.text.trim(),
-                                        );
-                                    if (ctx.mounted) {
-                                      Navigator.pop(ctx);
-                                    }
-                                    if (mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(ok ? 'Profil berhasil diperbarui!' : 'Gagal memperbarui profil'),
-                                          backgroundColor: ok ? Nebula.teal : Nebula.rose,
-                                          behavior: SnackBarBehavior.floating,
-                                        ),
-                                      );
-                                    }
-                                  },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Nebula.teal,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(vertical: 13),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            ),
-                            child: isSaving
-                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                : Text(
-                                    AppStrings.buttonSave,
-                                    style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Edit Profil Lengkap',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                    color: ctx.textPrimary,
                                   ),
+                                ),
+                                Text(
+                                  'Kelola informasi akun Super Admin Anda',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.5,
+                                    color: ctx.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Nama Lengkap
+                      Text(
+                        'Nama Lengkap',
+                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: ctx.textSecondary),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: nameController,
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama lengkap wajib diisi' : null,
+                        style: GoogleFonts.inter(fontSize: 13.5, color: ctx.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: 'Nama lengkap Anda',
+                          hintStyle: GoogleFonts.inter(color: ctx.textSecondary, fontSize: 13),
+                          filled: true,
+                          fillColor: ctx.surfaceBg,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Nebula.teal, width: 1.5)),
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Email
+                      Text(
+                        'Email Login',
+                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: ctx.textSecondary),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return 'Email wajib diisi';
+                          if (!v.contains('@') || !v.contains('.')) return 'Format email tidak valid';
+                          return null;
+                        },
+                        style: GoogleFonts.inter(fontSize: 13.5, color: ctx.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: 'admin@sekolah.sch.id',
+                          hintStyle: GoogleFonts.inter(color: ctx.textSecondary, fontSize: 13),
+                          filled: true,
+                          fillColor: ctx.surfaceBg,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Nebula.teal, width: 1.5)),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Username
+                      Text(
+                        'Username',
+                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: ctx.textSecondary),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: usernameController,
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Username wajib diisi' : null,
+                        style: GoogleFonts.inter(fontSize: 13.5, color: ctx.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: 'superadmin',
+                          hintStyle: GoogleFonts.inter(color: ctx.textSecondary, fontSize: 13),
+                          filled: true,
+                          fillColor: ctx.surfaceBg,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Nebula.teal, width: 1.5)),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // No. Telepon / WhatsApp
+                      Text(
+                        'No. Telepon / WhatsApp',
+                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: ctx.textSecondary),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: phoneController,
+                        keyboardType: TextInputType.phone,
+                        style: GoogleFonts.inter(fontSize: 13.5, color: ctx.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: 'Contoh: 081234567890',
+                          hintStyle: GoogleFonts.inter(color: ctx.textSecondary, fontSize: 13),
+                          filled: true,
+                          fillColor: ctx.surfaceBg,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Nebula.teal, width: 1.5)),
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: isSaving ? null : () => Navigator.pop(ctx),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                side: BorderSide(color: ctx.dividerCol),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: Text(
+                                AppStrings.buttonCancel,
+                                style: GoogleFonts.inter(color: ctx.textSecondary, fontWeight: FontWeight.w600, fontSize: 13),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: isSaving
+                                  ? null
+                                  : () async {
+                                      if (!formKey.currentState!.validate()) return;
+                                      setModalState(() => isSaving = true);
+                                      final ok = await ref.read(authNotifierProvider.notifier).updateProfileDetails(
+                                            fullName: nameController.text.trim(),
+                                            email: emailController.text.trim(),
+                                            username: usernameController.text.trim(),
+                                            phoneNumber: phoneController.text.trim().isEmpty ? null : phoneController.text.trim(),
+                                          );
+                                      if (ctx.mounted) {
+                                        Navigator.pop(ctx);
+                                      }
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(ok ? 'Profil Super Admin berhasil diperbarui!' : 'Gagal memperbarui profil'),
+                                            backgroundColor: ok ? Nebula.teal : Nebula.rose,
+                                            behavior: SnackBarBehavior.floating,
+                                          ),
+                                        );
+                                      }
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Nebula.teal,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: isSaving
+                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                  : Text(
+                                      AppStrings.buttonSave,
+                                      style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -482,7 +561,12 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
                     'Edit',
                     style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Nebula.teal),
                   ),
-                  onPressed: () => _showEditProfileDialog(fullName, phone),
+                  onPressed: () => _showEditProfileDialog(
+                    currentName: fullName,
+                    currentEmail: email,
+                    currentUsername: username,
+                    currentPhone: phone,
+                  ),
                 ),
                 children: [
                   _buildInfoRow('Nama Lengkap', fullName),
