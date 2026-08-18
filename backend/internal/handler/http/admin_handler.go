@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"kantin-backend/internal/domain"
+	ws "kantin-backend/internal/handler/websocket"
 	"kantin-backend/internal/pkg/response"
 	"kantin-backend/internal/service"
 )
@@ -12,12 +13,18 @@ import (
 type AdminHandler struct {
 	paymentService *service.PaymentService
 	catalogService *service.CatalogService
+	hub            *ws.Hub
 }
 
-func NewAdminHandler(paymentService *service.PaymentService, catalogService *service.CatalogService) *AdminHandler {
+func NewAdminHandler(paymentService *service.PaymentService, catalogService *service.CatalogService, hub ...*ws.Hub) *AdminHandler {
+	var h *ws.Hub
+	if len(hub) > 0 {
+		h = hub[0]
+	}
 	return &AdminHandler{
 		paymentService: paymentService,
 		catalogService: catalogService,
+		hub:            h,
 	}
 }
 
@@ -100,6 +107,18 @@ func (h *AdminHandler) UpdateStatus(c *fiber.Ctx) error {
 	if err := h.paymentService.UpdateUserStatus(c.Context(), id, req.IsActive); err != nil {
 		return response.Error(c, fiber.StatusInternalServerError, "Gagal mengubah status: "+err.Error(), err.Error())
 	}
+
+	if h.hub != nil {
+		h.hub.BroadcastToRoom("all", "account_status_changed", fiber.Map{
+			"user_id":   id,
+			"is_active": req.IsActive,
+		})
+		h.hub.BroadcastToRoom(id, "account_status_changed", fiber.Map{
+			"user_id":   id,
+			"is_active": req.IsActive,
+		})
+	}
+
 	return response.Success(c, fiber.StatusOK, "Status pengguna berhasil diperbarui", nil)
 }
 

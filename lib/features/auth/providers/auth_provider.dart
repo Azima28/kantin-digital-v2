@@ -77,9 +77,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   void _initAuthListener() async {
-    // 0. Listen for sliding session token renewals from backend
+    // 0. Listen for sliding session token renewals and account blocked signals from backend
     _apiClient.onTokenRenewed = (String newToken) {
       updateSessionToken(newToken);
+    };
+    _apiClient.onAccountBlocked = () {
+      updateAccountActiveStatus(false);
     };
 
     // 1. Check persistent 7-day session storage on launch or page refresh first
@@ -174,6 +177,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
     }
     state = state.copyWith(sessionToken: newToken);
+  }
+
+  // Update account active status (e.g. from real-time blocked event or 403 response)
+  Future<void> updateAccountActiveStatus(bool isActive) async {
+    if (state.profile != null) {
+      final updatedProfile = Map<String, dynamic>.from(state.profile!);
+      updatedProfile['is_active'] = isActive;
+      await SecureSessionService.saveSessionData(
+        profile: updatedProfile,
+        sessionToken: state.sessionToken,
+      );
+      state = state.copyWith(profile: updatedProfile);
+    }
   }
 
   // Update avatar URL in local profile state & persistent storage

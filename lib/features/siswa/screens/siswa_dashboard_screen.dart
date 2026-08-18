@@ -16,6 +16,7 @@ import 'package:kantin_digital/core/widgets/notification_bell.dart';
 import 'package:kantin_digital/core/widgets/hallmark_button.dart';
 import 'package:kantin_digital/core/widgets/hallmark_card.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 import 'package:kantin_digital/features/siswa/providers/student_cart_provider.dart';
@@ -68,10 +69,76 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
     });
   }
 
+  void _showAccountBlockedDialog(BuildContext context) {
+    showAppConfirmationDialog(
+      context,
+      title: 'Aksi Ditolak',
+      message: 'Akun digital Anda sedang dinonaktifkan oleh pihak sekolah. Seluruh transaksi pemesanan online, top-up digital, dan chat dinonaktifkan.',
+      confirmLabel: 'Mengerti',
+      icon: Icons.block_rounded,
+      isDestructive: true,
+    );
+  }
+
+  Widget _buildBlockedAccountBanner(BuildContext context, HallmarkColorScheme colors) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colors.statusError.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colors.statusError.withValues(alpha: 0.35),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(CupertinoIcons.exclamationmark_shield_fill, color: colors.statusError, size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'AKUN DIGITAL DIBLOKIR',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: colors.statusError,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Akun digital Anda sedang dinonaktifkan oleh pihak sekolah. Seluruh transaksi pemesanan online, top-up digital, dan chat dinonaktifkan.',
+                  style: GoogleFonts.inter(
+                    fontSize: 11.5,
+                    color: colors.textPrimary,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '💡 Anda tetap bisa menggunakan kartu fisik RFID untuk jajan di kantin selama kartu Anda aktif.',
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    color: colors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final authState = ref.watch(authNotifierProvider);
+    final bool isAccountBlocked = authState.profile != null && authState.profile!['is_active'] == false;
     final profile = authState.profile != null ? UserProfile.fromJson(authState.profile!) : null;
     final String fullName = profile?.fullName ?? AppStrings.adminStudents;
     final String? profilePhotoUrl = authState.profile?['avatar_url'];
@@ -161,7 +228,13 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
                       ),
                   ],
                 ),
-                onPressed: () => context.push('/student/cart'),
+                onPressed: () {
+                  if (isAccountBlocked) {
+                    _showAccountBlockedDialog(context);
+                  } else {
+                    context.push('/student/cart');
+                  }
+                },
               );
             },
           ),
@@ -184,6 +257,8 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (isAccountBlocked) _buildBlockedAccountBanner(context, colors),
+
                   // Specimen Hero Balance Card
                   studentAsync.when(
                     data: (student) {
@@ -270,7 +345,13 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
                                       child: HallmarkButton(
                                         label: isSmallScreen ? 'Top Up' : 'Top-Up Saldo',
                                         icon: CupertinoIcons.add,
-                                        onPressed: () => context.push('/student/topup'),
+                                        onPressed: () {
+                                          if (isAccountBlocked) {
+                                            _showAccountBlockedDialog(context);
+                                          } else {
+                                            context.push('/student/topup');
+                                          }
+                                        },
                                       ),
                                     ),
                                     const SizedBox(width: 10),
@@ -278,7 +359,13 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
                                       child: HallmarkButton(
                                         label: isSmallScreen ? 'Kartu' : 'Kartu Saya',
                                         icon: CupertinoIcons.creditcard,
-                                        onPressed: () => context.push('/student/cards'),
+                                        onPressed: () {
+                                          if (isAccountBlocked) {
+                                            _showAccountBlockedDialog(context);
+                                          } else {
+                                            context.push('/student/cards');
+                                          }
+                                        },
                                       ),
                                     ),
                                   ],

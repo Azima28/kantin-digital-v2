@@ -44,6 +44,7 @@ class ApiClient {
   final String baseUrl;
   String? _authToken;
   void Function(String newToken)? onTokenRenewed;
+  void Function()? onAccountBlocked;
 
   ApiClient({
     String? baseUrl,
@@ -107,6 +108,14 @@ class ApiClient {
     try {
       final decoded = json.decode(response.body);
       if (decoded is Map<String, dynamic>) {
+        if (response.statusCode == 403) {
+          final errorData = decoded['error'] is Map ? decoded['error'] as Map : null;
+          final errorCode = errorData?['error_code']?.toString() ?? decoded['error_code']?.toString();
+          final message = decoded['message']?.toString() ?? '';
+          if (errorCode == 'ACCOUNT_BLOCKED' || message.contains('dinonaktifkan') || message.contains('diblokir')) {
+            onAccountBlocked?.call();
+          }
+        }
         return decoded;
       }
       return {

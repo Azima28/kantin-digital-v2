@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/utils/responsive.dart';
 import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
+import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 
@@ -37,6 +38,20 @@ class _SiswaMainLayoutState extends ConsumerState<SiswaMainLayout> {
   }
 
   void _onItemTapped(int index, BuildContext context) {
+    final authState = ref.read(authNotifierProvider);
+    final bool isBlocked = authState.profile != null && authState.profile!['is_active'] == false;
+    if (isBlocked && index != 0) {
+      showAppConfirmationDialog(
+        context,
+        title: 'Akses Ditolak',
+        message: 'Akun digital Anda sedang dinonaktifkan oleh pihak sekolah. Anda hanya dapat melihat Beranda.',
+        confirmLabel: 'Mengerti',
+        icon: Icons.block_rounded,
+        isDestructive: true,
+      );
+      return;
+    }
+
     final int currentIndex = _getSelectedIndex(context);
     if (currentIndex == index) return;
 

@@ -1,6 +1,9 @@
 package http
 
 import (
+	"errors"
+	"strings"
+
 	"github.com/gofiber/fiber/v2"
 	"kantin-backend/internal/handler/http/middleware"
 	"kantin-backend/internal/pkg/response"
@@ -34,6 +37,12 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 
 	resp, err := h.authService.Login(c.Context(), req.Identifier, req.Password, req.Role)
 	if err != nil {
+		if errors.Is(err, service.ErrAccountInactive) || strings.Contains(err.Error(), "dinonaktifkan") || strings.Contains(err.Error(), "diblokir") {
+			return response.Error(c, fiber.StatusForbidden, err.Error(), fiber.Map{
+				"error_code": "ACCOUNT_BLOCKED",
+				"is_active":  false,
+			})
+		}
 		return response.Error(c, fiber.StatusUnauthorized, err.Error(), nil)
 	}
 

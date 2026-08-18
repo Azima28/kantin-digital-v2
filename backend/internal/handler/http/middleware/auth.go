@@ -8,6 +8,7 @@ import (
 	"kantin-backend/internal/domain"
 	"kantin-backend/internal/pkg/response"
 	"kantin-backend/internal/pkg/token"
+	"kantin-backend/internal/repository/postgres"
 )
 
 const (
@@ -16,7 +17,7 @@ const (
 	UserClaimsKey       = "user_claims"
 )
 
-func AuthMiddleware(tokenMaker *token.TokenMaker) fiber.Handler {
+func AuthMiddleware(tokenMaker *token.TokenMaker, userRepo ...*postgres.UserRepo) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get(AuthorizationHeader)
 		if authHeader == "" {
@@ -38,6 +39,17 @@ func AuthMiddleware(tokenMaker *token.TokenMaker) fiber.Handler {
 		claims, err := tokenMaker.VerifyToken(accessToken)
 		if err != nil {
 			return response.Error(c, fiber.StatusUnauthorized, "Sesi login kadaluarsa atau tidak valid", nil)
+		}
+
+		// Security check: Verify if the user's account is still active in database
+		if len(userRepo) > 0 && userRepo[0] != nil && claims.UserID != "" {
+			user, userErr := userRepo[0].FindByID(c.Context(), claims.UserID)
+			if userErr == nil && user != nil && !user.IsActive {
+				return response.Error(c, fiber.StatusForbidden, "Akun Anda sedang dinonaktifkan / diblokir oleh pihak sekolah", fiber.Map{
+					"error_code": "ACCOUNT_BLOCKED",
+					"is_active":  false,
+				})
+			}
 		}
 
 		// Sliding Session: Auto-renew token if remaining lifetime is less than 50%

@@ -200,6 +200,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         return AppRouter.publicHome;
       }
 
+      // ─── Blocked account lockdown guard ───
+      final isAccountBlocked = authState.profile?['is_active'] == false;
+      if (isLoggedIn && isAccountBlocked && role == 'student') {
+        if (path != AppRouter.studentHome) {
+          return AppRouter.studentHome;
+        }
+      }
+
       // ─── Role-based access control ───
       if (isLoggedIn) {
         // Admin & super_admin routes

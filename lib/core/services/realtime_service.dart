@@ -172,6 +172,19 @@ class RealtimeService {
           }
           break;
 
+        case 'account:status_changed':
+        case 'account_status_changed':
+          if (payloadMap != null) {
+            final String targetUserId = (payloadMap['user_id'] ?? payloadMap['id'])?.toString() ?? '';
+            final bool newIsActive = payloadMap['is_active'] == true;
+            final currentUserId = profile?['id']?.toString();
+            if (currentUserId != null && currentUserId == targetUserId) {
+              debugPrint('[RealtimeService] Current account status changed to: $newIsActive');
+              _ref.read(authNotifierProvider.notifier).updateAccountActiveStatus(newIsActive);
+            }
+          }
+          break;
+
         default:
           break;
       }

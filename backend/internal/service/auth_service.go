@@ -14,7 +14,7 @@ import (
 
 var (
 	ErrInvalidCredentials = errors.New("identitas atau kata sandi tidak valid")
-	ErrAccountInactive    = errors.New("akun Anda sedang dinonaktifkan")
+	ErrAccountInactive    = errors.New("Akun Anda sedang dinonaktifkan / diblokir oleh pihak sekolah")
 )
 
 type AuthService struct {
@@ -43,7 +43,7 @@ func (s *AuthService) Login(ctx context.Context, identifier, password, expectedR
 	// 1. If expectedRole is "parent", prioritize finding the linked parent by Student NISN/Username first
 	if expectedRole == string(domain.RoleParent) || expectedRole == "parent" {
 		parentUser, parentErr := s.userRepo.FindParentByStudentNISN(ctx, cleanID)
-		if parentErr == nil && parentUser != nil && parentUser.IsActive && parentUser.Password != nil && *parentUser.Password != "" {
+		if parentErr == nil && parentUser != nil && parentUser.Password != nil && *parentUser.Password != "" {
 			if hasher.CheckPassword(password, *parentUser.Password) || password == *parentUser.Password {
 				authenticatedUser = parentUser
 			}
@@ -53,7 +53,7 @@ func (s *AuthService) Login(ctx context.Context, identifier, password, expectedR
 	// 2. Direct Lookup by username, email, or NISN
 	if authenticatedUser == nil {
 		user, err := s.userRepo.FindByIdentifier(ctx, cleanID)
-		if err == nil && user != nil && user.IsActive && user.Password != nil && *user.Password != "" {
+		if err == nil && user != nil && user.Password != nil && *user.Password != "" {
 			if hasher.CheckPassword(password, *user.Password) || password == *user.Password {
 				authenticatedUser = user
 			}
@@ -63,7 +63,7 @@ func (s *AuthService) Login(ctx context.Context, identifier, password, expectedR
 	// 3. Fallback: If not authenticated yet and identifier is a Student's NISN, check if the password belongs to a linked parent
 	if authenticatedUser == nil {
 		parentUser, parentErr := s.userRepo.FindParentByStudentNISN(ctx, cleanID)
-		if parentErr == nil && parentUser != nil && parentUser.IsActive && parentUser.Password != nil && *parentUser.Password != "" {
+		if parentErr == nil && parentUser != nil && parentUser.Password != nil && *parentUser.Password != "" {
 			if hasher.CheckPassword(password, *parentUser.Password) || password == *parentUser.Password {
 				authenticatedUser = parentUser
 			}

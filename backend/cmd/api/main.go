@@ -70,7 +70,7 @@ func main() {
 	posH := httpHandler.NewPOSHandler(paymentService)
 	studentH := httpHandler.NewStudentHandler(paymentService, notifService)
 	financeH := httpHandler.NewFinanceHandler(paymentService)
-	adminH := httpHandler.NewAdminHandler(paymentService, catalogService)
+	adminH := httpHandler.NewAdminHandler(paymentService, catalogService, hub)
 	parentH := httpHandler.NewParentHandler(paymentService)
 	uploadH := httpHandler.NewUploadHandler(cfg.UploadDir, db)
 
@@ -173,7 +173,7 @@ func main() {
 	api.Get("/student/lookup", studentH.LookupStudent)
 
 	// Protected Routes
-	authRequired := api.Group("", middleware.AuthMiddleware(tokenMaker))
+	authRequired := api.Group("", middleware.AuthMiddleware(tokenMaker, userRepo))
 	{
 		authRequired.Get("/auth/me", authH.Me)
 		authRequired.Post("/auth/change-password", authH.ChangePassword)
