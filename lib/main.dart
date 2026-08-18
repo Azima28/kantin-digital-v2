@@ -32,7 +32,15 @@ void main() async {
     PaintingBinding.instance.imageCache.maximumSize = 120;
     PaintingBinding.instance.imageCache.maximumSizeBytes = 30 * 1024 * 1024; // 30 MB
 
-    // Custom error page — no red screen of death
+    // Custom error handler & widget builder
+    FlutterError.onError = (FlutterErrorDetails details) {
+      debugPrint('[FlutterError] ${details.exceptionAsString()}');
+    };
+    ui.PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+      debugPrint('[PlatformDispatcher Error] $error');
+      return true;
+    };
+
     ErrorWidget.builder = (FlutterErrorDetails details) {
       return Material(
         color: AppColors.systemBackground,
