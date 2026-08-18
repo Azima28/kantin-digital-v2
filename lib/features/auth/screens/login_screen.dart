@@ -14,7 +14,6 @@ import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/auth/widgets/login_account_preview.dart';
 import 'package:kantin_digital/features/auth/widgets/login_preview_item.dart';
-import 'package:kantin_digital/features/auth/widgets/running_food_characters.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   final String? from;
@@ -199,11 +198,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ),
           ],
-
-          // Full-Screen Ambient Running Food & Drink Mascots (All over background behind text/cards)
-          const Positioned.fill(
-            child: RunningFoodBackground(isInteractive: true),
-          ),
 
           SafeArea(
             child: Column(
