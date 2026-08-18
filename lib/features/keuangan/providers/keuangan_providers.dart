@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
+import 'package:kantin_digital/core/utils/riverpod_cache_extensions.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 // ============================================================================
@@ -9,35 +12,40 @@ import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 final keuanganDashboardProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-      ref.keepAlive();
-      final profile = ref.read(authNotifierProvider).profile;
-      final officerId = profile?['id'];
-      final school = profile?['assigned_school'] ?? '';
+  ref.cacheFor(const Duration(minutes: 2));
+  final profile = ref.watch(authNotifierProvider.select((s) => s.profile));
+  final apiClient = ref.watch(apiClientProvider);
 
-      if (officerId == null || officerId.toString().isEmpty) {
-        return {
-          'profile': profile,
-          'school': school,
-          'totalSaldo': 0.0,
-          'topupToday': 0.0,
-          'topupCount': 0,
-          'koreksCount': 0,
-          'koreksNet': 0.0,
-          'recentLogs': <Map<String, dynamic>>[],
-        };
-      }
-
+  try {
+    final res = await apiClient.get('/finance/dashboard');
+    if (res.success && res.data != null) {
+      final data = res.data as Map<String, dynamic>;
       return {
         'profile': profile,
-        'school': school,
-        'totalSaldo': 0,
-        'topupToday': 0,
-        'topupCount': 0,
-        'koreksCount': 0,
-        'koreksNet': 0,
-        'recentLogs': <Map<String, dynamic>>[],
+        'school': profile?['assigned_school'] ?? 'SMP Terpadu',
+        'totalSaldo': data['total_circulating_balance'] ?? 0,
+        'topupToday': data['topup_today_amount'] ?? 0,
+        'topupCount': data['topup_today_count'] ?? 0,
+        'koreksCount': data['koreksi_today_count'] ?? 0,
+        'koreksNet': data['koreksi_today_net'] ?? 0,
+        'recentLogs': (data['recent_transactions'] as List?)?.map((e) => e as Map<String, dynamic>).toList() ?? [],
       };
-    });
+    }
+  } catch (e) {
+    debugPrint('keuanganDashboardProvider error: $e');
+  }
+
+  return {
+    'profile': profile,
+    'school': profile?['assigned_school'] ?? 'SMP Terpadu',
+    'totalSaldo': 0,
+    'topupToday': 0,
+    'topupCount': 0,
+    'koreksCount': 0,
+    'koreksNet': 0,
+    'recentLogs': <Map<String, dynamic>>[],
+  };
+});
 
 // ============================================================================
 // HISTORY PROVIDER (Keuangan)
@@ -45,8 +53,19 @@ final keuanganDashboardProvider =
 
 final keuanganHistoryProvider =
     FutureProvider.autoDispose<List<AuditLog>>((ref) async {
-      return <AuditLog>[];
-    });
+  ref.cacheFor(const Duration(minutes: 2));
+  final apiClient = ref.watch(apiClientProvider);
+  try {
+    final res = await apiClient.get('/admin/audit-logs', queryParams: {'limit': '100'});
+    if (res.success && res.data != null) {
+      final list = res.data as List<dynamic>;
+      return list.map((e) => AuditLog.fromJson(e as Map<String, dynamic>)).toList();
+    }
+  } catch (e) {
+    debugPrint('keuanganHistoryProvider error: $e');
+  }
+  return <AuditLog>[];
+});
 
 // ============================================================================
 // REPORT PROVIDER (Keuangan)
@@ -98,6 +117,27 @@ class ReportFilterParam {
 final keuanganReportProvider = FutureProvider.family
     .autoDispose<Map<String, dynamic>, ReportFilterParam>(
   (ref, param) async {
+    ref.cacheFor(const Duration(minutes: 3));
+    final apiClient = ref.watch(apiClientProvider);
+    try {
+      final res = await apiClient.get('/finance/report', queryParams: {
+        'start_date': param.startDate.toIso8601String(),
+        'end_date': param.endDate.toIso8601String(),
+      });
+      if (res.success && res.data != null) {
+        final data = res.data as Map<String, dynamic>;
+        return {
+          'canteens': data['canteens'] ?? [],
+          'totalTopup': data['total_topup'] ?? 0,
+          'totalPurchase': data['total_purchase'] ?? 0,
+          'totalCorrection': data['total_correction'] ?? 0,
+          'topupCount': data['topup_count'] ?? 0,
+          'purchaseCount': data['purchase_count'] ?? 0,
+        };
+      }
+    } catch (e) {
+      debugPrint('keuanganReportProvider error: $e');
+    }
     return {
       'canteens': <Map<String, dynamic>>[],
       'totalTopup': 0,
@@ -115,9 +155,19 @@ final keuanganReportProvider = FutureProvider.family
 
 final keuanganStudentsProvider =
     FutureProvider<List<StudentWithProfile>>((ref) async {
-      ref.keepAlive();
-      return <StudentWithProfile>[];
-    });
+  ref.cacheFor(const Duration(minutes: 3));
+  final apiClient = ref.watch(apiClientProvider);
+  try {
+    final res = await apiClient.get('/finance/students');
+    if (res.success && res.data != null) {
+      final list = res.data as List<dynamic>;
+      return list.map((e) => StudentWithProfile.fromApiJson(e as Map<String, dynamic>)).toList();
+    }
+  } catch (e) {
+    debugPrint('keuanganStudentsProvider error: $e');
+  }
+  return <StudentWithProfile>[];
+});
 
 // ============================================================================
 // STUDENT DETAIL PROVIDER
@@ -125,12 +175,21 @@ final keuanganStudentsProvider =
 
 final keuanganStudentDetailProvider = FutureProvider
     .family<AdminStudentDetail, String>((ref, id) async {
-      return AdminStudentDetail.fromJson({
-        'profile': <String, dynamic>{},
-        'student': <String, dynamic>{},
-        'transactions': <dynamic>[],
-      });
-    });
+  final apiClient = ref.watch(apiClientProvider);
+  try {
+    final res = await apiClient.get('/admin/student/$id');
+    if (res.success && res.data != null) {
+      return AdminStudentDetail.fromJson(res.data as Map<String, dynamic>);
+    }
+  } catch (e) {
+    debugPrint('keuanganStudentDetailProvider error: $e');
+  }
+  return AdminStudentDetail.fromJson({
+    'profile': <String, dynamic>{},
+    'student': <String, dynamic>{},
+    'transactions': <dynamic>[],
+  });
+});
 
 // ============================================================================
 // USERS PROVIDERS (Keuangan)
@@ -138,15 +197,38 @@ final keuanganStudentDetailProvider = FutureProvider
 
 final keuanganParentsProvider =
     FutureProvider<List<Map<String, dynamic>>>((ref) async {
-      ref.keepAlive();
-      return <Map<String, dynamic>>[];
-    });
+  ref.cacheFor(const Duration(minutes: 3));
+  final apiClient = ref.watch(apiClientProvider);
+  try {
+    final res = await apiClient.get('/admin/users', queryParams: {'role': 'parent'});
+    if (res.success && res.data != null) {
+      final list = res.data as List<dynamic>;
+      return list.map((e) => e as Map<String, dynamic>).toList();
+    }
+  } catch (e) {
+    debugPrint('keuanganParentsProvider error: $e');
+  }
+  return <Map<String, dynamic>>[];
+});
 
 final keuanganStaffProvider =
     FutureProvider<List<Map<String, dynamic>>>((ref) async {
-      ref.keepAlive();
-      return <Map<String, dynamic>>[];
-    });
+  ref.cacheFor(const Duration(minutes: 3));
+  final apiClient = ref.watch(apiClientProvider);
+  try {
+    final res = await apiClient.get('/admin/users');
+    if (res.success && res.data != null) {
+      final list = res.data as List<dynamic>;
+      return list
+          .map((e) => e as Map<String, dynamic>)
+          .where((u) => u['role'] != 'student' && u['role'] != 'parent')
+          .toList();
+    }
+  } catch (e) {
+    debugPrint('keuanganStaffProvider error: $e');
+  }
+  return <Map<String, dynamic>>[];
+});
 
 // ============================================================================
 // REALTIME DAILY TREND CHART PROVIDER

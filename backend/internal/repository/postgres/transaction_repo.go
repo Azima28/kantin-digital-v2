@@ -233,12 +233,17 @@ func (r *TransactionRepo) ProcessTopup(ctx context.Context, studentID, officerID
 
 // ListTransactionsByStudent retrieves student transaction ledger
 func (r *TransactionRepo) ListTransactionsByStudent(ctx context.Context, studentID string, limit int) ([]domain.Transaction, error) {
-	list, _, err := r.ListTransactionsByStudentPaged(ctx, studentID, limit, 0, "", "", "")
+	list, _, err := r.ListTransactionsPaged(ctx, studentID, limit, 0, "", "", "")
 	return list, err
 }
 
 // ListTransactionsByStudentPaged retrieves student transaction ledger with pagination, filters, and total count
 func (r *TransactionRepo) ListTransactionsByStudentPaged(ctx context.Context, studentID string, limit, offset int, txType, status, search string) ([]domain.Transaction, int, error) {
+	return r.ListTransactionsPaged(ctx, studentID, limit, offset, txType, status, search)
+}
+
+// ListTransactionsPaged retrieves transaction ledger with pagination, filters, and total count (optional studentID)
+func (r *TransactionRepo) ListTransactionsPaged(ctx context.Context, studentID string, limit, offset int, txType, status, search string) ([]domain.Transaction, int, error) {
 	if limit <= 0 {
 		limit = 15
 	}
@@ -246,9 +251,15 @@ func (r *TransactionRepo) ListTransactionsByStudentPaged(ctx context.Context, st
 		offset = 0
 	}
 
-	whereClause := ` WHERE t.student_id = $1`
-	args := []interface{}{studentID}
-	argIdx := 2
+	whereClause := ` WHERE 1=1`
+	var args []interface{}
+	argIdx := 1
+
+	if studentID != "" {
+		whereClause += fmt.Sprintf(` AND t.student_id = $%d`, argIdx)
+		args = append(args, studentID)
+		argIdx++
+	}
 
 	if txType != "" && txType != "all" {
 		whereClause += fmt.Sprintf(` AND t.type = $%d`, argIdx)
@@ -455,4 +466,284 @@ func (r *TransactionRepo) ListTransactionsByOperator(ctx context.Context, operat
 	}
 
 	return list, nil
+}
+
+type FinanceSummary struct {
+	TotalCirculatingBalance int                  `json:"total_circulating_balance"`
+	TopupTodayAmount        int                  `json:"topup_today_amount"`
+	TopupTodayCount         int                  `json:"topup_today_count"`
+	KoreksiTodayCount       int                  `json:"koreksi_today_count"`
+	KoreksiTodayNet         int                  `json:"koreksi_today_net"`
+	RecentTransactions      []domain.Transaction `json:"recent_transactions"`
+}
+
+// GetFinanceDashboardSummary aggregates statistics for finance dashboard
+func (r *TransactionRepo) GetFinanceDashboardSummary(ctx context.Context) (*FinanceSummary, error) {
+	var s FinanceSummary
+
+	// 1. Total circulating balance
+	_ = r.db.Pool.QueryRow(ctx, `SELECT COALESCE(SUM(balance), 0) FROM public.students`).Scan(&s.TotalCirculatingBalance)
+
+	// 2. Top-up today
+	_ = r.db.Pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(total_amount), 0), COUNT(*)
+		FROM public.transactions
+		WHERE type = 'topup' AND created_at >= CURRENT_DATE
+	`).Scan(&s.TopupTodayAmount, &s.TopupTodayCount)
+
+	// 3. Corrections today
+	_ = r.db.Pool.QueryRow(ctx, `
+		SELECT COUNT(*), COALESCE(SUM(total_amount), 0)
+		FROM public.transactions
+		WHERE type = 'correction' AND created_at >= CURRENT_DATE
+	`).Scan(&s.KoreksiTodayCount, &s.KoreksiTodayNet)
+
+	// 4. Recent transactions
+	txs, _, err := r.ListTransactionsPaged(ctx, "", 10, 0, "", "", "")
+	if err == nil {
+		s.RecentTransactions = txs
+	}
+
+	return &s, nil
+}
+
+type AdminSummary struct {
+	UserCount      int                  `json:"user_count"`
+	GlobalBalance  int                  `json:"global_balance"`
+	DailyVolume    int                  `json:"daily_volume"`
+	TxCountToday   int                  `json:"tx_count_today"`
+	DailyTrend     []int                `json:"daily_trend"`
+	RecentActivity []domain.Transaction `json:"recent_activity"`
+}
+
+// GetAdminDashboardSummary aggregates statistics for super admin dashboard
+func (r *TransactionRepo) GetAdminDashboardSummary(ctx context.Context) (*AdminSummary, error) {
+	var s AdminSummary
+
+	// 1. User count
+	_ = r.db.Pool.QueryRow(ctx, `SELECT COUNT(*) FROM public.profiles`).Scan(&s.UserCount)
+
+	// 2. Global balance
+	_ = r.db.Pool.QueryRow(ctx, `SELECT COALESCE(SUM(balance), 0) FROM public.students`).Scan(&s.GlobalBalance)
+
+	// 3. Daily volume (purchase)
+	_ = r.db.Pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(total_amount), 0), COUNT(*)
+		FROM public.transactions
+		WHERE type = 'purchase' AND created_at >= CURRENT_DATE
+	`).Scan(&s.DailyVolume, &s.TxCountToday)
+
+	// 4. Daily trend (past 30 days)
+	s.DailyTrend = make([]int, 30)
+	trendQuery := `
+		SELECT (CURRENT_DATE - created_at::date) as day_diff, COALESCE(SUM(total_amount), 0)
+		FROM public.transactions
+		WHERE type = 'purchase' AND created_at >= (CURRENT_DATE - INTERVAL '29 days')
+		GROUP BY day_diff
+		ORDER BY day_diff ASC`
+	rows, err := r.db.Pool.Query(ctx, trendQuery)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var dayDiff, vol int
+			if err := rows.Scan(&dayDiff, &vol); err == nil && dayDiff >= 0 && dayDiff < 30 {
+				s.DailyTrend[29-dayDiff] = vol
+			}
+		}
+	}
+
+	// 5. Recent transactions
+	txs, _, err := r.ListTransactionsPaged(ctx, "", 10, 0, "", "", "")
+	if err == nil {
+		s.RecentActivity = txs
+	}
+
+	return &s, nil
+}
+
+// ProcessCorrection executes balance correction with audit and transaction records
+func (r *TransactionRepo) ProcessCorrection(ctx context.Context, studentID, officerID string, amount int, reason string) (*domain.Transaction, error) {
+	tx, err := r.db.Pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	var currentBalance int
+	err = tx.QueryRow(ctx, `SELECT balance FROM public.students WHERE id = $1 FOR UPDATE`, studentID).Scan(&currentBalance)
+	if err != nil {
+		return nil, fmt.Errorf("siswa tidak ditemukan: %w", err)
+	}
+
+	newBalance := currentBalance + amount
+	if newBalance < 0 {
+		return nil, fmt.Errorf("koreksi ditolak: saldo tidak boleh menjadi negatif (saldo saat ini: Rp %d, koreksi: Rp %d)", currentBalance, amount)
+	}
+
+	_, err = tx.Exec(ctx, `UPDATE public.students SET balance = $1 WHERE id = $2`, newBalance, studentID)
+	if err != nil {
+		return nil, err
+	}
+
+	absAmount := amount
+	if absAmount < 0 {
+		absAmount = -absAmount
+	}
+
+	var txID string
+	var createdAt time.Time
+	err = tx.QueryRow(ctx, `
+		INSERT INTO public.transactions (student_id, operator_id, total_amount, type, status, purchase_method, created_at)
+		VALUES ($1, $2, $3, 'correction', 'success', 'manual_adjustment', NOW())
+		RETURNING id, created_at`,
+		studentID, officerID, absAmount,
+	).Scan(&txID, &createdAt)
+	if err != nil {
+		return nil, err
+	}
+
+	notifMsg := fmt.Sprintf("Koreksi saldo sebesar Rp %d (%s). Saldo Anda sekarang Rp %d.", amount, reason, newBalance)
+	_, _ = tx.Exec(ctx, `INSERT INTO public.notifications (student_id, title, message, type) VALUES ($1, 'Penyesuaian Saldo ℹ️', $2, 'correction')`, studentID, notifMsg)
+
+	_, _ = tx.Exec(ctx, `
+		INSERT INTO public.audit_logs (user_id, action, entity_name, entity_id, old_data, new_data, created_at)
+		VALUES ($1, 'KOREKSI_SALDO', 'students', $2, $3, $4, NOW())
+	`, officerID, studentID, fmt.Sprintf(`{"balance": %d}`, currentBalance), fmt.Sprintf(`{"balance": %d, "amount": %d, "reason": "%s"}`, newBalance, amount, reason))
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+
+	return &domain.Transaction{
+		ID:             txID,
+		StudentID:      studentID,
+		OperatorID:     officerID,
+		TotalAmount:    absAmount,
+		Type:           domain.TxTypeCorrection,
+		Status:         domain.TxStatusSuccess,
+		PurchaseMethod: "manual_adjustment",
+		CreatedAt:      createdAt,
+	}, nil
+}
+
+type FinanceReport struct {
+	TotalTopup       int                      `json:"total_topup"`
+	TotalPurchase    int                      `json:"total_purchase"`
+	TotalCorrection  int                      `json:"total_correction"`
+	TopupCount       int                      `json:"topup_count"`
+	PurchaseCount    int                      `json:"purchase_count"`
+	Canteens         []map[string]interface{} `json:"canteens"`
+}
+
+// GetFinanceReport aggregates report for given date range
+func (r *TransactionRepo) GetFinanceReport(ctx context.Context, startDate, endDate time.Time) (*FinanceReport, error) {
+	var rep FinanceReport
+
+	// 1. Total topup
+	_ = r.db.Pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(total_amount), 0), COUNT(*)
+		FROM public.transactions
+		WHERE type = 'topup' AND created_at >= $1 AND created_at <= $2
+	`, startDate, endDate).Scan(&rep.TotalTopup, &rep.TopupCount)
+
+	// 2. Total purchase
+	_ = r.db.Pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(total_amount), 0), COUNT(*)
+		FROM public.transactions
+		WHERE type = 'purchase' AND status = 'success' AND created_at >= $1 AND created_at <= $2
+	`, startDate, endDate).Scan(&rep.TotalPurchase, &rep.PurchaseCount)
+
+	// 3. Total correction
+	_ = r.db.Pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(total_amount), 0)
+		FROM public.transactions
+		WHERE type = 'correction' AND created_at >= $1 AND created_at <= $2
+	`, startDate, endDate).Scan(&rep.TotalCorrection)
+
+	// 4. Per-canteen performance
+	canteenQuery := `
+		SELECT c.id, c.canteen_name, COALESCE(SUM(t.total_amount), 0) as total_sales, COUNT(t.id) as tx_count
+		FROM public.canteen_operators c
+		LEFT JOIN public.transactions t ON t.operator_id = c.id AND t.type = 'purchase' AND t.status = 'success' AND t.created_at >= $1 AND t.created_at <= $2
+		GROUP BY c.id, c.canteen_name
+		ORDER BY total_sales DESC`
+
+	rows, err := r.db.Pool.Query(ctx, canteenQuery, startDate, endDate)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var id, name string
+			var sales, count int
+			if err := rows.Scan(&id, &name, &sales, &count); err == nil {
+				rep.Canteens = append(rep.Canteens, map[string]interface{}{
+					"canteen_id":   id,
+					"canteen_name": name,
+					"total_sales":  sales,
+					"tx_count":     count,
+				})
+			}
+		}
+	}
+
+	return &rep, nil
+}
+
+type StudentSpendingStats struct {
+	WeeklySpending   []int                    `json:"weekly_spending"`
+	FavoriteProducts []map[string]interface{} `json:"favorite_products"`
+}
+
+// GetStudentSpendingStats aggregates stats for student & parent dashboard
+func (r *TransactionRepo) GetStudentSpendingStats(ctx context.Context, studentID string) (*StudentSpendingStats, error) {
+	var s StudentSpendingStats
+	s.WeeklySpending = make([]int, 7)
+
+	// Weekly spending (last 7 days)
+	trendQuery := `
+		SELECT (CURRENT_DATE - created_at::date) as day_diff, COALESCE(SUM(total_amount), 0)
+		FROM public.transactions
+		WHERE student_id = $1 AND type = 'purchase' AND status = 'success' AND created_at >= (CURRENT_DATE - INTERVAL '6 days')
+		GROUP BY day_diff
+		ORDER BY day_diff ASC`
+	rows, err := r.db.Pool.Query(ctx, trendQuery, studentID)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var dayDiff, vol int
+			if err := rows.Scan(&dayDiff, &vol); err == nil && dayDiff >= 0 && dayDiff < 7 {
+				s.WeeklySpending[6-dayDiff] = vol
+			}
+		}
+	}
+
+	// Favorite products
+	favQuery := `
+		SELECT ti.product_id, COALESCE(p.name, 'Menu Kantin'), COALESCE(p.image_url, ''), SUM(ti.quantity) as total_qty, COALESCE(p.price, 0)
+		FROM public.transaction_items ti
+		JOIN public.transactions t ON t.id = ti.transaction_id
+		LEFT JOIN public.products p ON p.id = ti.product_id
+		WHERE t.student_id = $1 AND t.type = 'purchase' AND t.status = 'success'
+		GROUP BY ti.product_id, p.name, p.image_url, p.price
+		ORDER BY total_qty DESC
+		LIMIT 5`
+	fRows, err := r.db.Pool.Query(ctx, favQuery, studentID)
+	if err == nil {
+		defer fRows.Close()
+		for fRows.Next() {
+			var pid *string
+			var name, imgURL string
+			var qty, price int
+			if err := fRows.Scan(&pid, &name, &imgURL, &qty, &price); err == nil {
+				s.FavoriteProducts = append(s.FavoriteProducts, map[string]interface{}{
+					"product_id": pid,
+					"name":       name,
+					"image_url":  imgURL,
+					"quantity":   qty,
+					"price":      price,
+				})
+			}
+		}
+	}
+
+	return &s, nil
 }

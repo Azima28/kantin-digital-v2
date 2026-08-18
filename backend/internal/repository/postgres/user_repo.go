@@ -159,6 +159,41 @@ func (r *UserRepo) GetFirstStudentByParentID(ctx context.Context, parentID strin
 	return r.GetStudentDetail(ctx, studentID)
 }
 
+// SearchStudents searches students by name, NISN, or username
+func (r *UserRepo) SearchStudents(ctx context.Context, search string) ([]domain.Student, error) {
+	query := `
+		SELECT s.id, s.balance, s.rfid_uid, s.is_active, COALESCE(s.daily_limit, 0), COALESCE(s.wa_notifications_enabled, true), s.parent_phone, s.class_id, s.rombel_id,
+		       p.email, p.full_name, p.role, p.username, p.nisn, p.phone_number, p.avatar_url, p.created_at
+		FROM public.students s
+		JOIN public.profiles p ON p.id = s.id
+		WHERE ($1 = '' OR p.full_name ILIKE '%' || $1 || '%' OR p.nisn ILIKE '%' || $1 || '%' OR p.username ILIKE '%' || $1 || '%')
+		ORDER BY p.full_name ASC
+		LIMIT 20`
+
+	rows, err := r.db.Pool.Query(ctx, query, strings.TrimSpace(search))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []domain.Student
+	for rows.Next() {
+		var s domain.Student
+		var p domain.UserProfile
+		err := rows.Scan(
+			&s.ID, &s.Balance, &s.RfidUID, &s.IsActive, &s.DailyLimit, &s.WANotificationsEnabled, &s.ParentPhone, &s.ClassID, &s.RombelID,
+			&p.Email, &p.FullName, &p.Role, &p.Username, &p.NISN, &p.PhoneNumber, &p.AvatarURL, &p.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		p.ID = s.ID
+		s.Profile = &p
+		list = append(list, s)
+	}
+	return list, nil
+}
+
 // FindStudentByNISN finds student by NISN or NIS
 func (r *UserRepo) FindStudentByNISN(ctx context.Context, nisn string) (*domain.Student, error) {
 	query := `
@@ -244,5 +279,212 @@ func (r *UserRepo) UpdatePassword(ctx context.Context, userID, newHashedPassword
 func (r *UserRepo) UpdateAvatarURL(ctx context.Context, userID, avatarURL string) error {
 	query := `UPDATE public.profiles SET avatar_url = $1 WHERE id = $2`
 	_, err := r.db.Pool.Exec(ctx, query, avatarURL, userID)
+	return err
+}
+
+// ListAllStudents retrieves all registered students with profile details
+func (r *UserRepo) ListAllStudents(ctx context.Context) ([]domain.Student, error) {
+	query := `
+		SELECT s.id, s.balance, s.rfid_uid, s.is_active, COALESCE(s.daily_limit, 0), COALESCE(s.wa_notifications_enabled, true), s.parent_phone, s.class_id, s.rombel_id,
+		       p.email, p.full_name, p.role, p.username, p.nisn, p.phone_number, p.avatar_url, p.created_at
+		FROM public.students s
+		JOIN public.profiles p ON p.id = s.id
+		ORDER BY p.full_name ASC`
+
+	rows, err := r.db.Pool.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []domain.Student
+	for rows.Next() {
+		var s domain.Student
+		var p domain.UserProfile
+		err := rows.Scan(
+			&s.ID, &s.Balance, &s.RfidUID, &s.IsActive, &s.DailyLimit, &s.WANotificationsEnabled, &s.ParentPhone, &s.ClassID, &s.RombelID,
+			&p.Email, &p.FullName, &p.Role, &p.Username, &p.NISN, &p.PhoneNumber, &p.AvatarURL, &p.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		p.ID = s.ID
+		s.Profile = &p
+		list = append(list, s)
+	}
+	return list, nil
+}
+
+// ListAllUsers retrieves all user profiles with optional role filtering
+func (r *UserRepo) ListAllUsers(ctx context.Context, roleFilter string) ([]domain.UserProfile, error) {
+	query := `
+		SELECT id, email, full_name, role, password, username, nisn, phone_number, is_active, relation, avatar_url, created_at
+		FROM public.profiles
+		WHERE ($1 = '' OR role = $1)
+		ORDER BY created_at DESC`
+
+	rows, err := r.db.Pool.Query(ctx, query, roleFilter)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []domain.UserProfile
+	for rows.Next() {
+		var u domain.UserProfile
+		err := rows.Scan(
+			&u.ID, &u.Email, &u.FullName, &u.Role, &u.Password, &u.Username,
+			&u.NISN, &u.PhoneNumber, &u.IsActive, &u.Relation, &u.AvatarURL, &u.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, u)
+	}
+	return list, nil
+}
+
+// UpdateStudentSettings updates student limit, freeze state, parent phone, and notification preferences
+func (r *UserRepo) UpdateStudentSettings(ctx context.Context, studentID string, dailyLimit *int, isActive *bool, waEnabled *bool, parentPhone *string) error {
+	tx, err := r.db.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	if dailyLimit != nil {
+		_, err = tx.Exec(ctx, `UPDATE public.students SET daily_limit = $1 WHERE id = $2`, *dailyLimit, studentID)
+		if err != nil {
+			return err
+		}
+	}
+
+	if isActive != nil {
+		_, err = tx.Exec(ctx, `UPDATE public.students SET is_active = $1 WHERE id = $2`, *isActive, studentID)
+		if err != nil {
+			return err
+		}
+		_, err = tx.Exec(ctx, `UPDATE public.profiles SET is_active = $1 WHERE id = $2`, *isActive, studentID)
+		if err != nil {
+			return err
+		}
+	}
+
+	if waEnabled != nil {
+		_, err = tx.Exec(ctx, `UPDATE public.students SET wa_notifications_enabled = $1 WHERE id = $2`, *waEnabled, studentID)
+		if err != nil {
+			return err
+		}
+	}
+
+	if parentPhone != nil {
+		_, err = tx.Exec(ctx, `UPDATE public.students SET parent_phone = $1 WHERE id = $2`, *parentPhone, studentID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit(ctx)
+}
+
+// GetParentChildren retrieves all students linked to a parent
+func (r *UserRepo) GetParentChildren(ctx context.Context, parentID string) ([]domain.Student, error) {
+	query := `
+		SELECT s.id, s.balance, s.rfid_uid, s.is_active, COALESCE(s.daily_limit, 0), COALESCE(s.wa_notifications_enabled, true), s.parent_phone, s.class_id, s.rombel_id,
+		       p.email, p.full_name, p.role, p.username, p.nisn, p.phone_number, p.avatar_url, p.created_at
+		FROM public.parent_students ps
+		JOIN public.students s ON s.id = ps.student_id
+		JOIN public.profiles p ON p.id = s.id
+		WHERE ps.parent_id = $1`
+
+	rows, err := r.db.Pool.Query(ctx, query, parentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []domain.Student
+	for rows.Next() {
+		var s domain.Student
+		var p domain.UserProfile
+		err := rows.Scan(
+			&s.ID, &s.Balance, &s.RfidUID, &s.IsActive, &s.DailyLimit, &s.WANotificationsEnabled, &s.ParentPhone, &s.ClassID, &s.RombelID,
+			&p.Email, &p.FullName, &p.Role, &p.Username, &p.NISN, &p.PhoneNumber, &p.AvatarURL, &p.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		p.ID = s.ID
+		s.Profile = &p
+		list = append(list, s)
+	}
+	return list, nil
+}
+
+// CreateUserProfile creates a new user profile with associated role sub-record
+func (r *UserRepo) CreateUserProfile(ctx context.Context, user *domain.UserProfile, passwordHash string, canteenName string, rfidUID *string) error {
+	tx, err := r.db.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	var newID string
+	err = tx.QueryRow(ctx, `
+		INSERT INTO public.profiles (email, full_name, role, password, username, nisn, phone_number, is_active, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+		RETURNING id`,
+		user.Email, user.FullName, user.Role, passwordHash, user.Username, user.NISN, user.PhoneNumber, user.IsActive,
+	).Scan(&newID)
+	if err != nil {
+		return err
+	}
+	user.ID = newID
+
+	switch user.Role {
+	case domain.RoleStudent:
+		_, err = tx.Exec(ctx, `
+			INSERT INTO public.students (id, balance, rfid_uid, is_active, daily_limit, wa_notifications_enabled)
+			VALUES ($1, 0, $2, $3, 0, TRUE)`,
+			newID, rfidUID, user.IsActive,
+		)
+	case domain.RolePetugasKantin:
+		name := canteenName
+		if name == "" {
+			name = user.FullName
+		}
+		_, err = tx.Exec(ctx, `
+			INSERT INTO public.canteen_operators (id, canteen_name, balance_earned, is_delivery_enabled, delivery_fee)
+			VALUES ($1, $2, 0, TRUE, 2000)`,
+			newID, name,
+		)
+	case domain.RolePetugasKeuangan:
+		_, err = tx.Exec(ctx, `
+			INSERT INTO public.finance_officers (id, total_managed_funds)
+			VALUES ($1, 0)`,
+			newID,
+		)
+	}
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
+// DeleteUser deletes a user from profiles (cascades to all sub-tables)
+func (r *UserRepo) DeleteUser(ctx context.Context, id string) error {
+	query := `DELETE FROM public.profiles WHERE id = $1`
+	_, err := r.db.Pool.Exec(ctx, query, id)
+	return err
+}
+
+// UpdateUserProfile updates basic profile attributes
+func (r *UserRepo) UpdateUserProfile(ctx context.Context, user *domain.UserProfile) error {
+	query := `
+		UPDATE public.profiles
+		SET full_name = $1, email = $2, username = $3, nisn = $4, phone_number = $5, is_active = $6
+		WHERE id = $7`
+	_, err := r.db.Pool.Exec(ctx, query, user.FullName, user.Email, user.Username, user.NISN, user.PhoneNumber, user.IsActive, user.ID)
 	return err
 }

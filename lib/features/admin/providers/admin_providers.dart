@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
+import 'package:kantin_digital/core/utils/riverpod_cache_extensions.dart';
 
 // ============================================================================
 // ADMIN DASHBOARD PROVIDER
@@ -9,7 +11,17 @@ import 'package:kantin_digital/core/providers/shared_providers.dart';
 final adminDashboardProvider = FutureProvider.autoDispose<AdminDashboardData>((
   ref,
 ) async {
-  ref.keepAlive();
+  ref.cacheFor(const Duration(minutes: 2));
+  final apiClient = ref.watch(apiClientProvider);
+  try {
+    final res = await apiClient.get('/admin/dashboard');
+    if (res.success && res.data != null) {
+      return AdminDashboardData.fromJson(res.data as Map<String, dynamic>);
+    }
+  } catch (e) {
+    debugPrint('adminDashboardProvider error: $e');
+  }
+
   return AdminDashboardData.fromJson({
     'user_count': 0,
     'global_balance': 0,
@@ -28,7 +40,22 @@ final adminRoleFilterProvider = StateProvider<String?>((ref) => null);
 final adminUsersProvider = FutureProvider<List<UserProfile>>((
   ref,
 ) async {
-  ref.keepAlive();
+  ref.cacheFor(const Duration(minutes: 3));
+  final apiClient = ref.watch(apiClientProvider);
+  final roleFilter = ref.watch(adminRoleFilterProvider);
+
+  try {
+    final res = await apiClient.get('/admin/users', queryParams: {
+      if (roleFilter != null && roleFilter.isNotEmpty) 'role': roleFilter,
+    });
+    if (res.success && res.data != null) {
+      final list = res.data as List<dynamic>;
+      return list.map((e) => UserProfile.fromJson(e as Map<String, dynamic>)).toList();
+    }
+  } catch (e) {
+    debugPrint('adminUsersProvider error: $e');
+  }
+
   return <UserProfile>[];
 });
 
@@ -39,6 +66,18 @@ final adminUsersProvider = FutureProvider<List<UserProfile>>((
 final adminAuditLogsProvider = FutureProvider.autoDispose<List<AuditLog>>((
   ref,
 ) async {
+  ref.cacheFor(const Duration(minutes: 2));
+  final apiClient = ref.watch(apiClientProvider);
+  try {
+    final res = await apiClient.get('/admin/audit-logs');
+    if (res.success && res.data != null) {
+      final list = res.data as List<dynamic>;
+      return list.map((e) => AuditLog.fromJson(e as Map<String, dynamic>)).toList();
+    }
+  } catch (e) {
+    debugPrint('adminAuditLogsProvider error: $e');
+  }
+
   return <AuditLog>[];
 });
 
@@ -49,7 +88,12 @@ final adminAuditLogsProvider = FutureProvider.autoDispose<List<AuditLog>>((
 final adminSettingsProvider = FutureProvider<Map<String, dynamic>>((
   ref,
 ) async {
-  return <String, dynamic>{};
+  return <String, dynamic>{
+    'school_name': 'SMP Terpadu Digital',
+    'academic_year': '2026/2027',
+    'app_version': '2.0.0',
+    'db_status': 'Connected (PostgreSQL 16)',
+  };
 });
 
 // ============================================================================
@@ -58,12 +102,22 @@ final adminSettingsProvider = FutureProvider<Map<String, dynamic>>((
 
 final adminStudentDetailProvider = FutureProvider
     .family<AdminStudentDetail, String>((ref, id) async {
-      return AdminStudentDetail.fromJson({
-        'profile': <String, dynamic>{},
-        'student': <String, dynamic>{},
-        'transactions': <dynamic>[],
-      });
-    });
+  final apiClient = ref.watch(apiClientProvider);
+  try {
+    final res = await apiClient.get('/admin/student/$id');
+    if (res.success && res.data != null) {
+      return AdminStudentDetail.fromJson(res.data as Map<String, dynamic>);
+    }
+  } catch (e) {
+    debugPrint('adminStudentDetailProvider error: $e');
+  }
+
+  return AdminStudentDetail.fromJson({
+    'profile': <String, dynamic>{},
+    'student': <String, dynamic>{},
+    'transactions': <dynamic>[],
+  });
+});
 
 // ============================================================================
 // ADMIN PARENT DETAIL PROVIDER
@@ -71,11 +125,28 @@ final adminStudentDetailProvider = FutureProvider
 
 final adminParentDetailProvider = FutureProvider
     .family<AdminParentDetail, String>((ref, id) async {
-      return AdminParentDetail.fromJson({
-        'profile': <String, dynamic>{},
-        'children': <dynamic>[],
-      });
-    });
+  final apiClient = ref.watch(apiClientProvider);
+  try {
+    final userRes = await apiClient.get('/admin/users');
+    if (userRes.success && userRes.data != null) {
+      final list = userRes.data as List<dynamic>;
+      final user = list.firstWhere((e) => e['id'] == id, orElse: () => null);
+      if (user != null) {
+        return AdminParentDetail.fromJson({
+          'profile': user,
+          'children': <dynamic>[],
+        });
+      }
+    }
+  } catch (e) {
+    debugPrint('adminParentDetailProvider error: $e');
+  }
+
+  return AdminParentDetail.fromJson({
+    'profile': <String, dynamic>{},
+    'children': <dynamic>[],
+  });
+});
 
 // ============================================================================
 // ADMIN MERCHANT DETAIL PROVIDER
@@ -83,19 +154,39 @@ final adminParentDetailProvider = FutureProvider
 
 final adminMerchantDetailProvider = FutureProvider
     .family<AdminMerchantDetail, String>((ref, id) async {
-      final apiClient = ref.read(apiClientProvider);
-      final prodRes = await apiClient.get('/products', queryParams: {'canteen_id': id});
-      final List<dynamic> products = prodRes.success && prodRes.data != null ? prodRes.data as List<dynamic> : [];
+  final apiClient = ref.watch(apiClientProvider);
+  try {
+    final prodRes = await apiClient.get('/products', queryParams: {'canteen_id': id});
+    final List<dynamic> products = prodRes.success && prodRes.data != null ? prodRes.data as List<dynamic> : [];
 
-      return AdminMerchantDetail.fromJson({
-        'profile': <String, dynamic>{},
-        'operator': <String, dynamic>{},
-        'products': products,
-        'transactions': <dynamic>[],
-        'daily_sales_aggregated': 0.0,
-        'monthly_sales_aggregated': 0.0,
-      });
+    final canteensRes = await apiClient.get('/canteens');
+    Map<String, dynamic>? canteen;
+    if (canteensRes.success && canteensRes.data != null) {
+      final list = canteensRes.data as List<dynamic>;
+      canteen = list.firstWhere((e) => e['id'] == id, orElse: () => null) as Map<String, dynamic>?;
+    }
+
+    return AdminMerchantDetail.fromJson({
+      'profile': canteen?['profile'] ?? <String, dynamic>{},
+      'operator': canteen ?? <String, dynamic>{'id': id, 'canteen_name': 'Stan Kantin'},
+      'products': products,
+      'transactions': <dynamic>[],
+      'daily_sales_aggregated': 0.0,
+      'monthly_sales_aggregated': 0.0,
     });
+  } catch (e) {
+    debugPrint('adminMerchantDetailProvider error: $e');
+  }
+
+  return AdminMerchantDetail.fromJson({
+    'profile': <String, dynamic>{},
+    'operator': <String, dynamic>{'id': id, 'canteen_name': 'Stan Kantin'},
+    'products': <dynamic>[],
+    'transactions': <dynamic>[],
+    'daily_sales_aggregated': 0.0,
+    'monthly_sales_aggregated': 0.0,
+  });
+});
 
 // ============================================================================
 // ADMIN FINANCE DETAIL PROVIDER
@@ -103,9 +194,27 @@ final adminMerchantDetailProvider = FutureProvider
 
 final adminFinanceDetailProvider = FutureProvider
     .family<AdminFinanceDetail, String>((ref, id) async {
-      return AdminFinanceDetail.fromJson({
-        'profile': <String, dynamic>{},
-        'officer': <String, dynamic>{},
-        'logs': <dynamic>[],
-      });
-    });
+  final apiClient = ref.watch(apiClientProvider);
+  try {
+    final usersRes = await apiClient.get('/admin/users');
+    if (usersRes.success && usersRes.data != null) {
+      final list = usersRes.data as List<dynamic>;
+      final user = list.firstWhere((e) => e['id'] == id, orElse: () => null);
+      if (user != null) {
+        return AdminFinanceDetail.fromJson({
+          'profile': user,
+          'officer': <String, dynamic>{'id': id},
+          'logs': <dynamic>[],
+        });
+      }
+    }
+  } catch (e) {
+    debugPrint('adminFinanceDetailProvider error: $e');
+  }
+
+  return AdminFinanceDetail.fromJson({
+    'profile': <String, dynamic>{},
+    'officer': <String, dynamic>{},
+    'logs': <dynamic>[],
+  });
+});

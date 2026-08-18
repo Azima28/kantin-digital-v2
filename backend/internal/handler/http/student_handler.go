@@ -23,6 +23,18 @@ func NewStudentHandler(paymentService *service.PaymentService, notifService *ser
 }
 
 func (h *StudentHandler) LookupStudent(c *fiber.Ctx) error {
+	search := c.Query("search", "")
+	if search == "" {
+		search = c.Query("q", "")
+	}
+	if search != "" {
+		students, err := h.paymentService.SearchStudents(c.Context(), search)
+		if err != nil {
+			return response.Error(c, fiber.StatusInternalServerError, "Gagal mencari data siswa", err.Error())
+		}
+		return response.Success(c, fiber.StatusOK, "Hasil pencarian siswa", students)
+	}
+
 	nisn := c.Query("nisn", "")
 	if nisn == "" {
 		nisn = c.Query("nis", "")

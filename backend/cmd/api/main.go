@@ -70,6 +70,8 @@ func main() {
 	posH := httpHandler.NewPOSHandler(paymentService)
 	studentH := httpHandler.NewStudentHandler(paymentService, notifService)
 	financeH := httpHandler.NewFinanceHandler(paymentService)
+	adminH := httpHandler.NewAdminHandler(paymentService, catalogService)
+	parentH := httpHandler.NewParentHandler(paymentService)
 	uploadH := httpHandler.NewUploadHandler(cfg.UploadDir, db)
 
 	// 7. Fiber App
@@ -224,9 +226,34 @@ func main() {
 		}
 
 		// Finance Officer
-		financeGroup := authRequired.Group("/finance", middleware.RequireRoles(domain.RolePetugasKeuangan))
+		financeGroup := authRequired.Group("/finance", middleware.RequireRoles(domain.RolePetugasKeuangan, domain.RoleSuperAdmin, domain.RoleAdmin))
 		{
+			financeGroup.Get("/dashboard", financeH.Dashboard)
+			financeGroup.Get("/students", financeH.ListStudents)
+			financeGroup.Get("/history", financeH.History)
 			financeGroup.Post("/topup", financeH.Topup)
+			financeGroup.Post("/correction", financeH.Correction)
+			financeGroup.Get("/report", financeH.Report)
+		}
+
+		// Parent Portal & Student Management
+		parentGroup := authRequired.Group("/parent", middleware.RequireRoles(domain.RoleParent, domain.RoleSuperAdmin, domain.RoleAdmin))
+		{
+			parentGroup.Get("/dashboard/:studentId", parentH.Dashboard)
+			parentGroup.Post("/topup", financeH.Topup)
+		}
+		authRequired.Patch("/student/settings", parentH.UpdateStudentSettings)
+
+		// Super Admin & Admin Management
+		adminGroup := authRequired.Group("/admin", middleware.RequireRoles(domain.RoleSuperAdmin, domain.RoleAdmin))
+		{
+			adminGroup.Get("/dashboard", adminH.Dashboard)
+			adminGroup.Get("/users", adminH.ListUsers)
+			adminGroup.Post("/users", adminH.CreateUser)
+			adminGroup.Put("/users/:id", adminH.UpdateUser)
+			adminGroup.Delete("/users/:id", adminH.DeleteUser)
+			adminGroup.Get("/audit-logs", adminH.ListAuditLogs)
+			adminGroup.Get("/student/:id", adminH.GetStudentDetail)
 		}
 	}
 
