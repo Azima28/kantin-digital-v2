@@ -216,6 +216,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         }
       }
 
+      // ─── Master redirection for Super Admin visiting finance dashboard ───
+      if (isLoggedIn && (role == 'super_admin' || role == 'admin') && path == AppRouter.financeHome) {
+        return AppRouter.adminHome;
+      }
+
       // ─── Role-based access control ───
       if (isLoggedIn) {
         // Super Admin & Admin have universal master access to all routes across modules

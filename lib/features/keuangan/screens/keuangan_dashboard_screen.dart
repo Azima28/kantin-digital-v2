@@ -73,7 +73,9 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
-                            'Admin Keuangan · $school',
+                            (profile?['role'] == 'super_admin' || profile?['role'] == 'admin')
+                                ? 'Super Admin · Sistem Utama'
+                                : 'Admin Keuangan · $school',
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               color: context.textSecondary,
