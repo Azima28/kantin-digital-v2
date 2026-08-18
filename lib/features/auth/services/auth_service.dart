@@ -43,6 +43,7 @@ class AuthService {
         body: {
           'identifier': rawInput,
           'password': password,
+          if (expectedRole.isNotEmpty) 'role': expectedRole,
         },
       );
 

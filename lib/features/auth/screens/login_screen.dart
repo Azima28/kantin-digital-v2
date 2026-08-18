@@ -807,12 +807,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           LoginPreviewItem(
             roleName: 'Admin Keuangan',
             identifier: 'budi_fin',
-            password: 'budi123',
+            password: 'password123',
             onTap: () {
               FocusScope.of(context).unfocus();
               setState(() {
                 _emailController.text = 'budi_fin';
-                _passwordController.text = 'budi123';
+                _passwordController.text = 'password123';
               });
               _showToast('Akun Admin Keuangan berhasil diisi!');
             },
@@ -833,12 +833,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           LoginPreviewItem(
             roleName: 'Super Admin',
             identifier: 'superadmin',
-            password: 'admin123',
+            password: 'password123',
             onTap: () {
               FocusScope.of(context).unfocus();
               setState(() {
                 _emailController.text = 'superadmin';
-                _passwordController.text = 'admin123';
+                _passwordController.text = 'password123';
               });
               _showToast('Akun Super Admin berhasil diisi!');
             },
@@ -847,12 +847,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           LoginPreviewItem(
             roleName: 'Orang Tua (Wali Siswa - NISN)',
             identifier: '20260012',
-            password: 'parent123',
+            password: 'password123',
             onTap: () {
               FocusScope.of(context).unfocus();
               setState(() {
                 _emailController.text = '20260012';
-                _passwordController.text = 'parent123';
+                _passwordController.text = 'password123';
               });
               _showToast('Akun Orang Tua berhasil diisi!');
             },

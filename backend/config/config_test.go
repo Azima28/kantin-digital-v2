@@ -19,7 +19,7 @@ func TestLoadConfig(t *testing.T) {
 		t.Errorf("Expected JWTSecret 'custom-secret-test', got %s", cfg.JWTSecret)
 	}
 
-	if cfg.JWTExpiryHours != 72 {
-		t.Errorf("Expected default JWTExpiryHours 72, got %d", cfg.JWTExpiryHours)
+	if cfg.JWTExpiryHours != 1440 {
+		t.Errorf("Expected default JWTExpiryHours 1440, got %d", cfg.JWTExpiryHours)
 	}
 }

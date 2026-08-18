@@ -123,6 +123,42 @@ func (r *UserRepo) FindStudentByRFID(ctx context.Context, rfidUID string) (*doma
 	return &s, nil
 }
 
+// FindParentByStudentNISN finds parent profile linked to student by student's NISN
+func (r *UserRepo) FindParentByStudentNISN(ctx context.Context, nisn string) (*domain.UserProfile, error) {
+	query := `
+		SELECT p_parent.id, p_parent.email, p_parent.full_name, p_parent.role, p_parent.password, p_parent.username,
+		       p_parent.nisn, p_parent.phone_number, p_parent.is_active, p_parent.relation, p_parent.avatar_url, p_parent.created_at
+		FROM public.parent_students ps
+		JOIN public.profiles p_student ON p_student.id = ps.student_id
+		JOIN public.profiles p_parent ON p_parent.id = ps.parent_id
+		WHERE p_student.nisn = $1 OR LOWER(p_student.username) = LOWER($1)
+		LIMIT 1`
+
+	row := r.db.Pool.QueryRow(ctx, query, strings.TrimSpace(nisn))
+	var u domain.UserProfile
+	err := row.Scan(
+		&u.ID, &u.Email, &u.FullName, &u.Role, &u.Password, &u.Username,
+		&u.NISN, &u.PhoneNumber, &u.IsActive, &u.Relation, &u.AvatarURL, &u.CreatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, err
+	}
+	return &u, nil
+}
+
+// GetFirstStudentByParentID finds the primary student linked to a parent
+func (r *UserRepo) GetFirstStudentByParentID(ctx context.Context, parentID string) (*domain.Student, error) {
+	var studentID string
+	err := r.db.Pool.QueryRow(ctx, `SELECT student_id FROM public.parent_students WHERE parent_id = $1 LIMIT 1`, parentID).Scan(&studentID)
+	if err != nil {
+		return nil, err
+	}
+	return r.GetStudentDetail(ctx, studentID)
+}
+
 // FindStudentByNISN finds student by NISN or NIS
 func (r *UserRepo) FindStudentByNISN(ctx context.Context, nisn string) (*domain.Student, error) {
 	query := `

@@ -19,6 +19,7 @@ func NewAuthHandler(authService *service.AuthService) *AuthHandler {
 type LoginRequest struct {
 	Identifier string `json:"identifier"` // Email, Username, or NISN
 	Password   string `json:"password"`
+	Role       string `json:"role,omitempty"` // Optional expected role: "parent", "student", "petugas_kantin", etc.
 }
 
 func (h *AuthHandler) Login(c *fiber.Ctx) error {
@@ -31,7 +32,7 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusBadRequest, "Identitas login (Email/NISN/Username) wajib diisi", nil)
 	}
 
-	resp, err := h.authService.Login(c.Context(), req.Identifier, req.Password)
+	resp, err := h.authService.Login(c.Context(), req.Identifier, req.Password, req.Role)
 	if err != nil {
 		return response.Error(c, fiber.StatusUnauthorized, err.Error(), nil)
 	}

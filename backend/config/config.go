@@ -26,13 +26,13 @@ func LoadConfig() *Config {
 		}
 		jwtSecret = "kantin-digital-v2-super-secret-key-2026-dev-only"
 	}
-	expiryStr := getEnv("JWT_EXPIRY_HOURS", "72")
+	expiryStr := getEnv("JWT_EXPIRY_HOURS", "1440") // 1440 hours = 60 days (2 months)
 	corsOrigins := getEnv("CORS_ORIGINS", "*")
 	uploadDir := getEnv("UPLOAD_DIR", "./uploads")
 
 	expiryHours, err := strconv.Atoi(expiryStr)
 	if err != nil {
-		expiryHours = 72
+		expiryHours = 1440
 	}
 
 	return &Config{

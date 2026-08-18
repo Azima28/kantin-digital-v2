@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"kantin-backend/internal/domain"
@@ -35,26 +36,49 @@ type LoginResponse struct {
 	Student   *domain.Student     `json:"student,omitempty"`
 }
 
-func (s *AuthService) Login(ctx context.Context, identifier, password string) (*LoginResponse, error) {
-	user, err := s.userRepo.FindByIdentifier(ctx, identifier)
-	if err != nil {
+func (s *AuthService) Login(ctx context.Context, identifier, password, expectedRole string) (*LoginResponse, error) {
+	cleanID := strings.TrimSpace(identifier)
+	var authenticatedUser *domain.UserProfile
+
+	// 1. If expectedRole is "parent", prioritize finding the linked parent by Student NISN/Username first
+	if expectedRole == string(domain.RoleParent) || expectedRole == "parent" {
+		parentUser, parentErr := s.userRepo.FindParentByStudentNISN(ctx, cleanID)
+		if parentErr == nil && parentUser != nil && parentUser.IsActive && parentUser.Password != nil && *parentUser.Password != "" {
+			if hasher.CheckPassword(password, *parentUser.Password) || password == *parentUser.Password {
+				authenticatedUser = parentUser
+			}
+		}
+	}
+
+	// 2. Direct Lookup by username, email, or NISN
+	if authenticatedUser == nil {
+		user, err := s.userRepo.FindByIdentifier(ctx, cleanID)
+		if err == nil && user != nil && user.IsActive && user.Password != nil && *user.Password != "" {
+			if hasher.CheckPassword(password, *user.Password) || password == *user.Password {
+				authenticatedUser = user
+			}
+		}
+	}
+
+	// 3. Fallback: If not authenticated yet and identifier is a Student's NISN, check if the password belongs to a linked parent
+	if authenticatedUser == nil {
+		parentUser, parentErr := s.userRepo.FindParentByStudentNISN(ctx, cleanID)
+		if parentErr == nil && parentUser != nil && parentUser.IsActive && parentUser.Password != nil && *parentUser.Password != "" {
+			if hasher.CheckPassword(password, *parentUser.Password) || password == *parentUser.Password {
+				authenticatedUser = parentUser
+			}
+		}
+	}
+
+	if authenticatedUser == nil {
 		return nil, ErrInvalidCredentials
 	}
 
-	if !user.IsActive {
+	if !authenticatedUser.IsActive {
 		return nil, ErrAccountInactive
 	}
 
-	// Verify Password strictly (reject nil / empty stored passwords)
-	if user.Password == nil || *user.Password == "" {
-		return nil, errors.New("akun belum memiliki kata sandi terdaftar, silakan hubungi administrator")
-	}
-
-	if !hasher.CheckPassword(password, *user.Password) && password != *user.Password {
-		return nil, ErrInvalidCredentials
-	}
-
-	tokenStr, expiresAt, err := s.tokenMaker.CreateToken(user)
+	tokenStr, expiresAt, err := s.tokenMaker.CreateToken(authenticatedUser)
 	if err != nil {
 		return nil, err
 	}
@@ -62,11 +86,17 @@ func (s *AuthService) Login(ctx context.Context, identifier, password string) (*
 	resp := &LoginResponse{
 		Token:     tokenStr,
 		ExpiresAt: expiresAt,
-		User:      user,
+		User:      authenticatedUser,
 	}
 
-	if user.Role == domain.RoleStudent {
-		student, err := s.userRepo.GetStudentDetail(ctx, user.ID)
+	if authenticatedUser.Role == domain.RoleStudent {
+		student, err := s.userRepo.GetStudentDetail(ctx, authenticatedUser.ID)
+		if err == nil {
+			resp.Student = student
+		}
+	} else if authenticatedUser.Role == domain.RoleParent {
+		// Attach linked student data for parent convenience
+		student, err := s.userRepo.GetFirstStudentByParentID(ctx, authenticatedUser.ID)
 		if err == nil {
 			resp.Student = student
 		}
