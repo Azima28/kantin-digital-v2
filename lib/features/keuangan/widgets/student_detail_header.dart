@@ -111,7 +111,7 @@ class StudentDetailHeader extends StatelessWidget {
               !isAccountActive
                   ? 'AKUN DIBLOKIR'
                   : (!hasCard
-                      ? 'BELUM AKTIF'
+                      ? 'KARTU BELUM TERDAFTAR'
                       : (!isCardActive ? 'KARTU DIBLOKIR' : 'AKTIF')),
               style: GoogleFonts.inter(
                 fontSize: 11,
@@ -211,12 +211,18 @@ class StudentDetailHeader extends StatelessWidget {
                 ),
               ),
               Text(
-                hasCard ? 'AKTIF' : 'BELUM AKTIF',
+                !hasCard
+                    ? 'BELUM TERDAFTAR'
+                    : (!isCardActive
+                        ? 'KARTU DIBLOKIR'
+                        : (!isAccountActive ? 'AKUN DIBLOKIR' : 'AKTIF')),
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
-                  color: hasCard
-                      ? Nebula.teal
-                      : context.textSecondary,
+                  color: !hasCard
+                      ? context.textSecondary
+                      : (!isCardActive || !isAccountActive
+                          ? Nebula.rose
+                          : Nebula.teal),
                 ),
               ),
             ],
