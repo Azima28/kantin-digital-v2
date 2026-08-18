@@ -8,6 +8,8 @@ class AdminDashboardData {
   final int dailyVolume;
   final int txCountToday;
   final List<int> dailyTrend;
+  final Map<String, int> roleCounts;
+  final Map<String, dynamic> systemHealth;
 
   const AdminDashboardData({
     this.userCount = 0,
@@ -15,16 +17,28 @@ class AdminDashboardData {
     this.dailyVolume = 0,
     this.txCountToday = 0,
     this.dailyTrend = const [],
+    this.roleCounts = const {},
+    this.systemHealth = const {},
   });
 
   factory AdminDashboardData.fromJson(Map<String, dynamic> json) {
     final trendList = json['daily_trend'] as List<dynamic>? ?? [];
+
+    final rawRoles = json['role_counts'] as Map<String, dynamic>? ?? {};
+    final Map<String, int> parsedRoles = rawRoles.map(
+      (k, v) => MapEntry(k, (v as num?)?.toInt() ?? 0),
+    );
+
+    final rawHealth = json['system_health'] as Map<String, dynamic>? ?? {};
+
     return AdminDashboardData(
       userCount: (json['user_count'] as num?)?.toInt() ?? 0,
       globalBalance: (double.tryParse(json['global_balance']?.toString() ?? '0') ?? 0.0).toInt(),
       dailyVolume: (double.tryParse(json['daily_volume']?.toString() ?? '0') ?? 0.0).toInt(),
       txCountToday: (json['tx_count_today'] as num?)?.toInt() ?? 0,
       dailyTrend: trendList.map((e) => (double.tryParse(e.toString()) ?? 0.0).toInt()).toList(),
+      roleCounts: parsedRoles,
+      systemHealth: rawHealth,
     );
   }
 
@@ -34,6 +48,8 @@ class AdminDashboardData {
         'daily_volume': dailyVolume,
         'tx_count_today': txCountToday,
         'daily_trend': dailyTrend,
+        'role_counts': roleCounts,
+        'system_health': systemHealth,
       };
 
   String get formattedGlobalBalance =>

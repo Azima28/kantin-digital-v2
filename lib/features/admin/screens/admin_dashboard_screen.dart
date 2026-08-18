@@ -230,8 +230,13 @@ class AdminDashboardScreen extends ConsumerWidget {
                 // Two widgets row: Contribution & Server Health
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    final contributionCard = AdminContributionCard();
-                    final healthCard = AdminSystemHealthCard();
+                    final contributionCard = AdminContributionCard(
+                      roleCounts: data.roleCounts,
+                      totalUsers: data.userCount,
+                    );
+                    final healthCard = AdminSystemHealthCard(
+                      systemHealth: data.systemHealth,
+                    );
 
                     if (constraints.maxWidth < 430) {
                       return Column(
