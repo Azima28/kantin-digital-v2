@@ -181,7 +181,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   // Update account active status (e.g. from real-time blocked event or 403 response)
   Future<void> updateAccountActiveStatus(bool isActive) async {
-    if (state.profile != null) {
+    if (state.profile != null && state.profile!['is_active'] != isActive) {
       final updatedProfile = Map<String, dynamic>.from(state.profile!);
       updatedProfile['is_active'] = isActive;
       await SecureSessionService.saveSessionData(

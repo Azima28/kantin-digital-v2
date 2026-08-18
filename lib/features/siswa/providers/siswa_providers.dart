@@ -11,8 +11,22 @@ import 'package:kantin_digital/features/kantin/models/order_item.dart';
 final AutoDisposeFutureProvider<Student?> siswaStudentProvider =
     FutureProvider.autoDispose<Student?>((Ref ref) async {
   ref.cacheFor(const Duration(minutes: 5));
-  final profileId = ref.watch(authNotifierProvider.select((s) => s.profile?['id'] as String?));
-  if (profileId == null) return null;
+  final profile = ref.watch(authNotifierProvider.select((s) => s.profile));
+  if (profile == null || profile['id'] == null) return null;
+  if (profile['is_active'] == false) {
+    // If digital account is blocked, provide local student data without hitting backend
+    final cachedStudent = profile['student'] is Map<String, dynamic> ? profile['student'] as Map<String, dynamic> : null;
+    if (cachedStudent != null) {
+      return Student.fromJson(cachedStudent);
+    }
+    return Student(
+      id: profile['id'].toString(),
+      class_: profile['class']?.toString(),
+      balance: (profile['balance'] as num?)?.toInt() ?? 0,
+      rfidUid: profile['rfid_uid']?.toString(),
+      isActive: profile['is_card_active'] == true || profile['card_is_active'] == true,
+    );
+  }
 
   final apiClient = ref.read(apiClientProvider);
   final response = await apiClient.get('/student/me');
@@ -70,13 +84,20 @@ class SiswaTransactionsState {
 // StateNotifier untuk lazy loading & memory caching transaksi siswa
 class SiswaTransactionsNotifier extends StateNotifier<SiswaTransactionsState> {
   final ApiClient _apiClient;
+  final Ref _ref;
 
-  SiswaTransactionsNotifier(this._apiClient)
+  SiswaTransactionsNotifier(this._apiClient, this._ref)
       : super(const SiswaTransactionsState()) {
     loadInitial();
   }
 
   Future<void> loadInitial({bool forceRefresh = false}) async {
+    final profile = _ref.read(authNotifierProvider).profile;
+    if (profile == null || profile['is_active'] == false) {
+      state = state.copyWith(isLoading: false, transactions: const []);
+      return;
+    }
+
     if (!forceRefresh &&
         state.transactions.isNotEmpty &&
         state.lastFetched != null &&
@@ -192,7 +213,7 @@ final siswaTransactionsNotifierProvider =
     StateNotifierProvider.autoDispose<SiswaTransactionsNotifier, SiswaTransactionsState>((ref) {
   ref.keepAlive();
   final apiClient = ref.read(apiClientProvider);
-  return SiswaTransactionsNotifier(apiClient);
+  return SiswaTransactionsNotifier(apiClient, ref);
 });
 
 // Provider untuk mengambil daftar transaksi milik siswa (dengan auto cache & lazy load)
@@ -216,8 +237,8 @@ final AutoDisposeFutureProvider<List<AppNotification>>
     siswaNotificationsProvider =
     FutureProvider.autoDispose<List<AppNotification>>((Ref ref) async {
   ref.cacheFor(const Duration(minutes: 2));
-  final profileId = ref.watch(authNotifierProvider.select((s) => s.profile?['id'] as String?));
-  if (profileId == null) return <AppNotification>[];
+  final profile = ref.watch(authNotifierProvider.select((s) => s.profile));
+  if (profile == null || profile['id'] == null || profile['is_active'] == false) return <AppNotification>[];
 
   final apiClient = ref.read(apiClientProvider);
   final response = await apiClient.get('/student/notifications');
@@ -241,7 +262,7 @@ final siswaActiveOrdersProvider =
     FutureProvider.autoDispose<List<OrderItem>>((Ref ref) async {
   ref.cacheFor(const Duration(minutes: 3));
   final profile = ref.watch(authNotifierProvider.select((s) => s.profile));
-  if (profile == null || profile['role']?.toString() != 'student') return <OrderItem>[];
+  if (profile == null || profile['role']?.toString() != 'student' || profile['is_active'] == false) return <OrderItem>[];
   final profileId = profile['id'] as String?;
   if (profileId == null) return <OrderItem>[];
 
