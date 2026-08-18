@@ -301,6 +301,8 @@ class _AdminStudentDetailScreenState
                               children: txs.map((tx) {
                                 final int amount = tx.totalAmount;
                                 final bool isTopup = tx.isTopup;
+                                final bool isRefund = tx.status?.toString().toLowerCase() == 'refunded' || tx.type == 'refund';
+                                final bool isIncoming = isTopup || isRefund;
                                 final String canteen =
                                     tx.canteenName ?? 'Stan Kantin';
                                 final date =
@@ -313,15 +315,15 @@ class _AdminStudentDetailScreenState
                                     children: [
                                       CircleAvatar(
                                         radius: 20,
-                                        backgroundColor: isTopup
-                                            ? Nebula.amber
+                                        backgroundColor: isIncoming
+                                            ? Nebula.teal.withValues(alpha: 0.1)
                                             : Nebula.teal.withValues(alpha: 0.1),
                                         child: Icon(
                                           isTopup
                                               ? CupertinoIcons.creditcard
-                                              : Icons.shopping_bag,
-                                          color: isTopup
-                                              ? Nebula.amber
+                                              : (isRefund ? CupertinoIcons.arrow_uturn_left : Icons.shopping_bag),
+                                          color: isIncoming
+                                              ? Nebula.teal
                                               : Nebula.teal,
                                           size: 20,
                                         ),
@@ -335,7 +337,7 @@ class _AdminStudentDetailScreenState
                                             Text(
                                               isTopup
                                                   ? 'Top-up Saldo'
-                                                  : canteen,
+                                                  : (isRefund ? 'Dana Dikembalikan (Refund)' : canteen),
                                               style: GoogleFonts.inter(
                                                 fontSize: 15,
                                                 fontWeight: FontWeight.bold,
@@ -356,13 +358,13 @@ class _AdminStudentDetailScreenState
                                         ),
                                       ),
                                       Text(
-                                        '${isTopup ? "+" : "-"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
+                                        '${isIncoming ? "+" : "-"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
                                         style: GoogleFonts.inter(
                                           fontSize: 15,
                                           fontWeight: FontWeight.bold,
-                                          color: isTopup
+                                          color: isIncoming
                                               ? Nebula.teal
-                                              : Nebula.rose,
+                                              : context.textPrimary,
                                         ),
                                       ),
                                     ],

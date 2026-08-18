@@ -10,6 +10,7 @@ import 'package:kantin_digital/features/keuangan/widgets/student_detail_header.d
 import 'package:kantin_digital/features/keuangan/widgets/student_detail_password_change.dart';
 import 'package:kantin_digital/features/keuangan/widgets/student_detail_status_toggle.dart';
 import 'package:kantin_digital/features/shared/screens/student_transactions_screen.dart';
+import 'package:kantin_digital/features/siswa/widgets/siswa_transaction_detail_sheet.dart';
 
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
@@ -366,6 +367,9 @@ class _KeuanganStudentDetailScreenState
                             Column(
                               children: txs.take(10).map((tx) {
                                 final isTopup = tx.isTopup;
+                                final statusStr = tx.status?.toString().toLowerCase() ?? '';
+                                final isRefund = statusStr == 'refunded' || tx.type == 'refund';
+                                final isIncoming = isTopup || isRefund;
                                 final isSuccess = tx.isSuccess;
                                 final int amount = tx.totalAmount;
                                 final timestamp =
@@ -375,97 +379,124 @@ class _KeuanganStudentDetailScreenState
                                 ).format(timestamp);
                                 final canteenName = tx.canteenName ?? 'Top-up';
 
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 8,
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        child: Row(
-                                          children: [
-                                            CircleAvatar(
-                                              radius: 14,
-                                              backgroundColor: isTopup
-                                                  ? Nebula.teal.withValues(
-                                                      alpha: 0.08,
-                                                    )
-                                                  : Nebula.amber.withValues(
-                                                      alpha: 0.08,
-                                                    ),
-                                              child: Icon(
-                                                isTopup
-                                                    ? CupertinoIcons.arrow_up
-                                                    : CupertinoIcons.cart,
-                                                size: 14,
-                                                color: isTopup
-                                                    ? Nebula.teal
-                                                    : Nebula.amber,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 10),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    isTopup
-                                                        ? 'Top-Up Saldo'
-                                                        : canteenName,
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                    style: GoogleFonts.inter(
-                                                      fontWeight: FontWeight.w600,
-                                                      fontSize: 13,
-                                                      color: context.textPrimary,
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    timeStr,
-                                                    style: GoogleFonts.inter(
-                                                      fontSize: 11,
-                                                      color: context.textSecondary,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
+                                return Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(12),
+                                    onTap: () => showTransactionDetailSheet(context, ref, tx),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 8,
+                                        horizontal: 4,
                                       ),
-                                      const SizedBox(width: 8),
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.end,
-                                        mainAxisSize: MainAxisSize.min,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text(
-                                            '${isTopup ? "+" : "-"}${fmt.format(amount)}',
-                                            style: GoogleFonts.inter(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 13,
-                                              color: isTopup
-                                                  ? Nebula.teal
-                                                  : context.textPrimary,
+                                          Expanded(
+                                            child: Row(
+                                              children: [
+                                                CircleAvatar(
+                                                  radius: 14,
+                                                  backgroundColor: isIncoming
+                                                      ? Nebula.teal.withValues(
+                                                          alpha: 0.08,
+                                                        )
+                                                      : Nebula.amber.withValues(
+                                                          alpha: 0.08,
+                                                        ),
+                                                  child: Icon(
+                                                    isTopup
+                                                        ? CupertinoIcons.arrow_up
+                                                        : (isRefund
+                                                            ? CupertinoIcons.arrow_uturn_left
+                                                            : CupertinoIcons.cart),
+                                                    size: 14,
+                                                    color: isIncoming
+                                                        ? Nebula.teal
+                                                        : Nebula.amber,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 10),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        isTopup
+                                                            ? 'Top-Up Saldo'
+                                                            : canteenName,
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                        style: GoogleFonts.inter(
+                                                          fontWeight: FontWeight.w600,
+                                                          fontSize: 13,
+                                                          color: context.textPrimary,
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        timeStr,
+                                                        style: GoogleFonts.inter(
+                                                          fontSize: 11,
+                                                          color: context.textSecondary,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
-                                          if (!isSuccess)
-                                            Text(
-                                              tx.status
-                                                  .toString()
-                                                  .toUpperCase(),
-                                              style: GoogleFonts.inter(
-                                                fontSize: 9,
-                                                fontWeight: FontWeight.bold,
-                                                color: Nebula.rose,
+                                          const SizedBox(width: 8),
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.end,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                '${isIncoming ? "+" : "-"}${fmt.format(amount)}',
+                                                style: GoogleFonts.inter(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 13,
+                                                  color: isIncoming
+                                                      ? Nebula.teal
+                                                      : context.textPrimary,
+                                                ),
                                               ),
-                                            ),
+                                              if (isRefund)
+                                                Container(
+                                                  margin: const EdgeInsets.only(top: 2),
+                                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                                  decoration: BoxDecoration(
+                                                    color: Nebula.teal.withValues(alpha: 0.1),
+                                                    borderRadius: BorderRadius.circular(4),
+                                                  ),
+                                                  child: Text(
+                                                    'REFUNDED',
+                                                    style: GoogleFonts.inter(
+                                                      fontSize: 8.5,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Nebula.teal,
+                                                    ),
+                                                  ),
+                                                )
+                                              else if (!isSuccess)
+                                                Text(
+                                                  tx.status
+                                                      .toString()
+                                                      .toUpperCase(),
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 9,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Nebula.rose,
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
                                         ],
                                       ),
-                                    ],
+                                    ),
                                   ),
                                 );
                               }).toList(),

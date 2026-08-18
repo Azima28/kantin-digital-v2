@@ -12,6 +12,7 @@ import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/core/utils/app_date_formatter.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/siswa/widgets/siswa_transaction_detail_sheet.dart';
 
 class StudentTransactionsScreen extends ConsumerStatefulWidget {
@@ -524,7 +525,10 @@ class _StudentTransactionsScreenState
         (double.tryParse(tx['total_amount']?.toString() ?? '0') ?? 0.0).toInt();
     final type = tx['type']?.toString() ?? 'purchase';
     final status = tx['status']?.toString() ?? 'success';
+    final statusStr = status.toLowerCase();
     final isTopup = type == 'topup';
+    final isRefund = statusStr == 'refunded' || type == 'refund';
+    final isIncoming = isTopup || isRefund;
     final canteenData = tx['canteen_operators'];
     final canteen = tx['canteen_name']?.toString() ??
         (canteenData is Map<String, dynamic>
@@ -568,11 +572,11 @@ class _StudentTransactionsScreenState
                       width: 42,
                       height: 42,
                       fit: BoxFit.cover,
-                      errorWidget: (_, __, ___) => _buildFallbackAvatar(isTopup),
+                      errorWidget: (_, __, ___) => _buildFallbackAvatar(isTopup, isRefund),
                     ),
                   )
                 else
-                  _buildFallbackAvatar(isTopup),
+                  _buildFallbackAvatar(isTopup, isRefund),
                 const SizedBox(width: 12),
 
                 // Middle Info
@@ -608,14 +612,31 @@ class _StudentTransactionsScreenState
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '${isTopup ? "+" : "-"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
+                      '${isIncoming ? "+" : "-"}${CurrencyFormatter.format(amount)}',
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: isTopup ? Nebula.teal : (status == 'refunded' ? Nebula.rose : context.textPrimary),
+                        color: isIncoming ? Nebula.teal : context.textPrimary,
                       ),
                     ),
-                    if (status != 'success')
+                    if (isRefund)
+                      Container(
+                        margin: const EdgeInsets.only(top: 3),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: Nebula.teal.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'REFUNDED',
+                          style: GoogleFonts.inter(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: Nebula.teal,
+                          ),
+                        ),
+                      )
+                    else if (status != 'success')
                       Container(
                         margin: const EdgeInsets.only(top: 3),
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
@@ -642,15 +663,17 @@ class _StudentTransactionsScreenState
     );
   }
 
-  Widget _buildFallbackAvatar(bool isTopup) {
+  Widget _buildFallbackAvatar(bool isTopup, bool isRefund) {
     return CircleAvatar(
       radius: 21,
-      backgroundColor: isTopup
-          ? Nebula.amber.withValues(alpha: 0.12)
+      backgroundColor: (isTopup || isRefund)
+          ? Nebula.teal.withValues(alpha: 0.12)
           : widget.primaryColor.withValues(alpha: 0.1),
       child: Icon(
-        isTopup ? CupertinoIcons.creditcard : Icons.shopping_bag_outlined,
-        color: isTopup ? widget.accentColor : widget.primaryColor,
+        isTopup
+            ? CupertinoIcons.creditcard
+            : (isRefund ? CupertinoIcons.arrow_uturn_left : Icons.shopping_bag_outlined),
+        color: (isTopup || isRefund) ? Nebula.teal : widget.primaryColor,
         size: 18,
       ),
     );

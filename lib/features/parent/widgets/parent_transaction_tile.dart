@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -20,28 +21,29 @@ class ParentTransactionTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    Color primaryTeal = Nebula.teal;
-    const Color orangeAccent = Nebula.amber;
+    const Color primaryTeal = Nebula.teal;
 
     final int amount = transaction.totalAmount;
     final String type = transaction.type ?? 'purchase';
     final bool isTopup = type == 'topup';
+    final bool isRefund = transaction.status?.toString().toLowerCase() == 'refunded' || type == 'refund';
+    final bool isIncoming = isTopup || isRefund;
     final String canteen = transaction.canteenName ?? 'Stan Kantin';
 
     return ListTile(
       onTap: onTap,
       leading: CircleAvatar(
-        backgroundColor: isTopup
-            ? Nebula.amber.withValues(alpha: 0.3)
-            : Nebula.teal.withValues(alpha: 0.2).withValues(alpha: 0.3),
+        backgroundColor: isIncoming
+            ? Nebula.teal.withValues(alpha: 0.15)
+            : Nebula.teal.withValues(alpha: 0.1),
         child: Icon(
-          isTopup ? Icons.account_balance : Icons.restaurant,
-          color: isTopup ? orangeAccent : primaryTeal,
+          isTopup ? Icons.account_balance : (isRefund ? CupertinoIcons.arrow_uturn_left : Icons.restaurant),
+          color: isIncoming ? primaryTeal : primaryTeal,
           size: 18,
         ),
       ),
       title: Text(
-        isTopup ? 'Top-Up Berhasil' : canteen,
+        isTopup ? 'Top-Up Berhasil' : (isRefund ? 'Dana Dikembalikan (Refund)' : canteen),
         style: GoogleFonts.inter(
           fontSize: 14,
           fontWeight: FontWeight.w700,
@@ -58,11 +60,11 @@ class ParentTransactionTile extends ConsumerWidget {
         ),
       ),
       trailing: Text(
-        '${isTopup ? "+" : "-"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
+        '${isIncoming ? "+" : "-"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
         style: GoogleFonts.inter(
           fontSize: 14,
           fontWeight: FontWeight.w700,
-          color: isTopup ? Nebula.teal : Nebula.rose,
+          color: isIncoming ? Nebula.teal : context.textPrimary,
         ),
       ),
     );
