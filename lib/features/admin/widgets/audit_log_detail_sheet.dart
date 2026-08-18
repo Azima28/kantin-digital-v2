@@ -1,5 +1,4 @@
 ﻿import 'dart:convert';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -88,6 +87,15 @@ class AuditLogDetailSheet extends StatelessWidget {
   final AuditLog log;
 
   const AuditLogDetailSheet({super.key, required this.log});
+
+  static void show(BuildContext context, AuditLog log) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => AuditLogDetailSheet(log: log),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

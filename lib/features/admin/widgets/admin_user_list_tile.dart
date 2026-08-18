@@ -147,22 +147,22 @@ class AdminUserListTile extends StatelessWidget {
                     Text(
                       'Status: ',
                       style: GoogleFonts.inter(
-                        fontSize: 12,
+                        fontSize: 11.5,
                         color: context.textSecondary,
                       ),
                     ),
                     Text(
                       isActive ? 'AKTIF' : 'DIBLOKIR',
                       style: GoogleFonts.inter(
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: isActive ? Nebula.teal : Nebula.rose,
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 3),
                     SizedBox(
-                      width: 36,
-                      height: 22,
+                      width: 32,
+                      height: 20,
                       child: FittedBox(
                         fit: BoxFit.contain,
                         child: CupertinoSwitch(
@@ -176,9 +176,9 @@ class AdminUserListTile extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
 
-              // Detail & Riwayat > Link
+              // Detail > Link
               InkWell(
                 onTap: () => onNavigateToDetail(id, role),
                 borderRadius: BorderRadius.circular(8),
@@ -188,7 +188,7 @@ class AdminUserListTile extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Detail & Riwayat',
+                        'Detail',
                         style: GoogleFonts.inter(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
@@ -198,7 +198,7 @@ class AdminUserListTile extends StatelessWidget {
                       const SizedBox(width: 1),
                       const Icon(
                         CupertinoIcons.chevron_right,
-                        size: 12,
+                        size: 11,
                         color: Nebula.teal,
                       ),
                     ],

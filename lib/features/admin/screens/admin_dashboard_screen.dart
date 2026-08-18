@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -221,6 +222,103 @@ class AdminDashboardScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
 
+                // ─── Aksi Cepat Finansial & Audit Super Admin ───
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: context.cardBg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: context.dividerCol, width: 0.6),
+                    boxShadow: [
+                      BoxShadow(
+                        color: context.shadowColor,
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Aksi Cepat & Audit Keuangan',
+                              style: GoogleFonts.inter(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.bold,
+                                color: context.textPrimary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          InkWell(
+                            onTap: () => context.go('/admin/audit'),
+                            child: Text(
+                              'Log Audit →',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Nebula.teal,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildQuickActionBtn(
+                              context,
+                              icon: CupertinoIcons.arrow_up_circle_fill,
+                              color: Nebula.teal,
+                              label: 'Top-Up\nSiswa',
+                              onTap: () => context.push('/finance/topup'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildQuickActionBtn(
+                              context,
+                              icon: CupertinoIcons.money_dollar_circle_fill,
+                              color: const Color(0xFF0D9488),
+                              label: 'Tarik Saldo\nStan',
+                              onTap: () => context.push('/finance/users?tab=2'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildQuickActionBtn(
+                              context,
+                              icon: CupertinoIcons.arrow_right_arrow_left_circle_fill,
+                              color: Nebula.rose,
+                              label: 'Koreksi\nSaldo',
+                              onTap: () => context.push('/finance/correction'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildQuickActionBtn(
+                              context,
+                              icon: CupertinoIcons.chart_bar_square_fill,
+                              color: Nebula.amber,
+                              label: 'Laporan\nKas',
+                              onTap: () => context.push('/finance/report'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+
                 // Transaction Trend Card
                 AdminTransactionTrendCard(
                   dailyTrend: data.dailyTrend,
@@ -267,4 +365,46 @@ class AdminDashboardScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildQuickActionBtn(
+    BuildContext context, {
+    required IconData icon,
+    required Color color,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+        decoration: BoxDecoration(
+          color: context.surfaceBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: context.dividerCol, width: 0.6),
+        ),
+        child: Column(
+          children: [
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: color.withValues(alpha: 0.12),
+              child: Icon(icon, color: color, size: 16),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 10.5,
+                fontWeight: FontWeight.bold,
+                color: context.textPrimary,
+                height: 1.15,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

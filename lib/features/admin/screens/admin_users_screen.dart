@@ -120,13 +120,16 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
+        centerTitle: true,
         title: Text(
           'Kelola Akun Pengguna',
           style: GoogleFonts.inter(
-            fontSize: 22,
+            fontSize: 17,
             fontWeight: FontWeight.bold,
             color: context.textPrimary,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         actions: [
           if (_selectedRoleFilter != 'Semua' &&

@@ -40,9 +40,15 @@ class AuditLogTile extends StatelessWidget {
     if (actionType == 'BATAL_PESANAN' || actionType.contains('BATAL')) {
       actionColor = Nebula.rose;
       actionIcon = CupertinoIcons.xmark_circle_fill;
-    } else if (actionType == 'KOREKSI_SALDO') {
+    } else if (actionType == 'MERCHANT_PAYOUT') {
       actionColor = Nebula.rose;
-      actionIcon = CupertinoIcons.exclamationmark_triangle_fill;
+      actionIcon = CupertinoIcons.money_dollar_circle_fill;
+    } else if (actionType == 'KOREKSI_SALDO' || actionType == 'MERCHANT_BALANCE_ADJUSTMENT') {
+      actionColor = Nebula.amber;
+      actionIcon = CupertinoIcons.arrow_right_arrow_left_circle_fill;
+    } else if (actionType == 'TOPUP_TUNAI' || actionType == 'TOPUP' || actionType.contains('TOPUP')) {
+      actionColor = Nebula.teal;
+      actionIcon = CupertinoIcons.arrow_up_circle_fill;
     } else if (actionType == 'REGISTRASI_KARTU') {
       actionColor = Nebula.teal;
       actionIcon = CupertinoIcons.creditcard_fill;
