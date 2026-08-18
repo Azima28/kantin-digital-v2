@@ -15,6 +15,7 @@ import 'package:kantin_digital/features/public/providers/public_providers.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
 
 class ManageProductsScreen extends ConsumerStatefulWidget {
   const ManageProductsScreen({super.key});
@@ -67,58 +68,49 @@ class _ManageProductsScreenState extends ConsumerState<ManageProductsScreen> {
     String productId,
     String productName,
   ) async {
-    showCupertinoDialog(
-      context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: const Text('Hapus Jajanan'),
-        content: Text('Apakah Anda yakin ingin menghapus "$productName" dari katalog stan Anda?'),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () async {
-              Navigator.pop(ctx);
-              try {
-                final apiClient = ref.read(apiClientProvider);
-                await apiClient.delete('/pos/products/$productId');
-
-                // Refresh providers
-                if (mounted) {
-                  setState(() {
-                    _localAvailability.remove(productId);
-                  });
-                }
-                ref.invalidate(posProductsProvider);
-                ref.invalidate(manageProductsProvider);
-
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(AppStrings.successProductDeleted),
-                      backgroundColor: Nebula.teal,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${AppStrings.labelFailed} menghapus jajanan'),
-                      backgroundColor: Nebula.rose,
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text(AppStrings.buttonDelete),
-          ),
-        ],
-      ),
+    final confirmed = await showAppConfirmationDialog(
+      context,
+      title: 'Hapus Jajanan',
+      message: 'Apakah Anda yakin ingin menghapus "$productName" dari katalog stan Anda?',
+      confirmLabel: 'Hapus',
+      isDestructive: true,
+      icon: Icons.delete_outline_rounded,
     );
+
+    if (!confirmed) return;
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      await apiClient.delete('/pos/products/$productId');
+
+      // Refresh providers
+      if (mounted) {
+        setState(() {
+          _localAvailability.remove(productId);
+        });
+      }
+      ref.invalidate(posProductsProvider);
+      ref.invalidate(manageProductsProvider);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(AppStrings.successProductDeleted),
+            backgroundColor: Nebula.teal,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${AppStrings.labelFailed} menghapus jajanan'),
+            backgroundColor: Nebula.rose,
+          ),
+        );
+      }
+    }
   }
 
   // Preset fallback background colors for products without custom image

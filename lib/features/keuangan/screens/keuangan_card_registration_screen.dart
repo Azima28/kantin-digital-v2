@@ -9,6 +9,7 @@ import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.da
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/widgets/app_toast.dart';
+import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_card_registration_form.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_card_registration_success.dart';
@@ -102,70 +103,61 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
   }
 
   Future<void> _unlinkCard() async {
-    showCupertinoDialog(
-      context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: const Text('Hapus Tautan Kartu'),
-        content: const Text('Apakah Anda yakin ingin menghapus tautan kartu dari siswa ini? Kartu tidak akan bisa digunakan lagi.'),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () async {
-              Navigator.pop(ctx);
-              setState(() {
-                _isLoading = true;
-              });
-
-              try {
-                final apiClient = ref.read(apiClientProvider);
-                await apiClient.patch('/student/card-status', body: {
-                  'student_id': widget.studentId,
-                  'rfid_uid': null,
-                });
-
-                // Update detail provider
-                ref.invalidate(keuanganStudentDetailProvider(widget.studentId));
-                ref.invalidate(keuanganHistoryProvider);
-
-                setState(() {
-                  _oldRfid = null;
-                  _uidController.clear();
-                });
-
-                if (mounted) {
-                  AppToast.showSuccess(
-                    context,
-                    title: 'Berhasil Disimpan',
-                    message: AppStrings.successCardUnlinked,
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${AppStrings.labelFailed} menghapus tautan kartu'),
-                      backgroundColor: Nebula.rose,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              } finally {
-                if (mounted) {
-                  setState(() {
-                    _isLoading = false;
-                  });
-                }
-              }
-            },
-            child: const Text(AppStrings.buttonDelete),
-          ),
-        ],
-      ),
+    final confirmed = await showAppConfirmationDialog(
+      context,
+      title: 'Hapus Tautan Kartu',
+      message: 'Apakah Anda yakin ingin menghapus tautan kartu dari siswa ini? Kartu tidak akan bisa digunakan lagi.',
+      confirmLabel: 'Hapus Tautan',
+      isDestructive: true,
+      icon: Icons.link_off_rounded,
     );
+
+    if (!confirmed) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      await apiClient.patch('/student/card-status', body: {
+        'student_id': widget.studentId,
+        'rfid_uid': null,
+      });
+
+      // Update detail provider
+      ref.invalidate(keuanganStudentDetailProvider(widget.studentId));
+      ref.invalidate(keuanganHistoryProvider);
+
+      setState(() {
+        _oldRfid = null;
+        _uidController.clear();
+      });
+
+      if (mounted) {
+        AppToast.showSuccess(
+          context,
+          title: 'Berhasil Disimpan',
+          message: AppStrings.successCardUnlinked,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${AppStrings.labelFailed} menghapus tautan kartu'),
+            backgroundColor: Nebula.rose,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _linkCard() async {

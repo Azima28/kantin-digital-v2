@@ -8,6 +8,7 @@ import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/widgets/change_password_panel.dart';
 import 'package:kantin_digital/core/widgets/theme_toggle_tile.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 class KeuanganSettingsScreen extends ConsumerStatefulWidget {
@@ -59,30 +60,13 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
     );
   }
 
-  void _handleLogout() {
-    showCupertinoDialog(
-      context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: const Text('Keluar dari Akun'),
-        content: const Text('Apakah Anda yakin ingin keluar dari akun keuangan ini?'),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () async {
-              final router = GoRouter.of(context);
-              Navigator.pop(ctx);
-              await ref.read(authNotifierProvider.notifier).logout();
-              router.go('/login');
-            },
-            child: const Text(AppStrings.buttonLogout),
-          ),
-        ],
-      ),
-    );
+  Future<void> _handleLogout() async {
+    final confirmed = await showLogoutConfirmationDialog(context);
+    if (confirmed && mounted) {
+      final router = GoRouter.of(context);
+      await ref.read(authNotifierProvider.notifier).logout();
+      router.go('/login');
+    }
   }
 
   @override

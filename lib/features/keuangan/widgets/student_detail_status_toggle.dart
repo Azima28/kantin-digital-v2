@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
+import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 
 /// A button widget to block or unblock a student account.
@@ -32,73 +33,59 @@ class _StudentDetailStatusToggleState
   Future<void> _toggleAccountStatus() async {
     final bool newStatus = !widget.isAccountActive;
 
-    showCupertinoDialog(
-      context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: Text(newStatus ? 'Aktifkan Akun' : 'Blokir Akun'),
-        content: Text(
-          newStatus
-              ? 'Apakah Anda yakin ingin mengaktifkan kembali akun siswa ini?'
-              : 'Apakah Anda yakin ingin memblokir akun siswa ini? Siswa tidak akan bisa melakukan transaksi jajan atau top-up.',
-        ),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: !newStatus,
-            onPressed: () async {
-              Navigator.pop(ctx);
-              setState(() {
-                _isUpdatingStatus = true;
-              });
-
-              try {
-                final apiClient = ref.read(apiClientProvider);
-                await apiClient.patch('/users/${widget.studentId}/status', body: {
-                  'is_active': newStatus,
-                });
-
-                ref.invalidate(keuanganStudentDetailProvider(widget.studentId));
-
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Akun siswa berhasil ${newStatus ? "diaktifkan" : "diblokir"}.',
-                      ),
-                      backgroundColor: newStatus
-                          ? Nebula.teal
-                          : Nebula.rose,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content:
-                          Text('${AppStrings.labelFailed} memperbarui status'),
-                      backgroundColor: Nebula.rose,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              } finally {
-                if (mounted) {
-                  setState(() {
-                    _isUpdatingStatus = false;
-                  });
-                }
-              }
-            },
-            child: Text(newStatus ? 'Aktifkan' : 'Blokir'),
-          ),
-        ],
-      ),
+    final confirmed = await showAppConfirmationDialog(
+      context,
+      title: newStatus ? 'Aktifkan Akun Siswa' : 'Blokir Akun Siswa',
+      message: newStatus
+          ? 'Apakah Anda yakin ingin mengaktifkan kembali akun siswa ini? Siswa dapat kembali bertransaksi dan top-up.'
+          : 'Apakah Anda yakin ingin memblokir akun siswa ini? Siswa tidak akan bisa melakukan transaksi jajan atau top-up.',
+      confirmLabel: newStatus ? 'Aktifkan' : 'Blokir',
+      isDestructive: !newStatus,
+      icon: newStatus ? Icons.lock_open_rounded : Icons.lock_outline_rounded,
     );
+
+    if (!confirmed) return;
+
+    setState(() {
+      _isUpdatingStatus = true;
+    });
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      await apiClient.patch('/users/${widget.studentId}/status', body: {
+        'is_active': newStatus,
+      });
+
+      ref.invalidate(keuanganStudentDetailProvider(widget.studentId));
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Akun siswa berhasil ${newStatus ? "diaktifkan" : "diblokir"}.',
+            ),
+            backgroundColor: newStatus ? Nebula.teal : Nebula.rose,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${AppStrings.labelFailed} memperbarui status'),
+            backgroundColor: Nebula.rose,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUpdatingStatus = false;
+        });
+      }
+    }
   }
 
   @override

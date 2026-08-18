@@ -17,6 +17,7 @@ import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/kantin/providers/cart_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 
 class PosDashboardScreen extends ConsumerStatefulWidget {
   const PosDashboardScreen({super.key});
@@ -62,30 +63,12 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
           IconButton(
             icon: const Icon(CupertinoIcons.square_arrow_right,
                 color: Nebula.rose),
-            onPressed: () {
-              showCupertinoDialog(
-                context: context,
-                builder: (BuildContext ctx) => CupertinoAlertDialog(
-                  title: const Text('Keluar Aplikasi'),
-                  content: const Text(
-                      'Apakah Anda yakin ingin keluar dari akun kasir?'),
-                  actions: [
-                    CupertinoDialogAction(
-                      child: const Text(AppStrings.buttonCancel),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                    CupertinoDialogAction(
-                      isDestructiveAction: true,
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        ref.read(authNotifierProvider.notifier).logout();
-                        context.go('/login');
-                      },
-                      child: const Text(AppStrings.buttonLogout),
-                    ),
-                  ],
-                ),
-              );
+            onPressed: () async {
+              final confirmed = await showLogoutConfirmationDialog(context);
+              if (confirmed && context.mounted) {
+                ref.read(authNotifierProvider.notifier).logout();
+                context.go('/login');
+              }
             },
           ),
         ],

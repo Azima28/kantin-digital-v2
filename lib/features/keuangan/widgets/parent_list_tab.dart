@@ -11,6 +11,7 @@ import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
 
 // ── Parents Tab ─────────────────────────────────────────────────────────────
 
@@ -340,47 +341,38 @@ class ParentsTab extends ConsumerWidget {
     String parentId,
     String name,
   ) async {
-    showCupertinoDialog(
-      context: context,
-      builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('Tolak Pendaftaran'),
-        content: Text('Tolak pendaftaran orang tua "$name"?'),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final apiClient = ref.read(apiClientProvider);
-              try {
-                await apiClient.patch('/users/$parentId/status', body: {'is_active': false});
-                ref.invalidate(keuanganParentsProvider);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Pendaftaran $name ditolak'),
-                      backgroundColor: Nebula.rose,
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(AppStrings.labelFailed),
-                      backgroundColor: Nebula.rose,
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text('Tolak'),
-          ),
-        ],
-      ),
+    final confirmed = await showAppConfirmationDialog(
+      context,
+      title: 'Tolak Pendaftaran',
+      message: 'Apakah Anda yakin ingin menolak pendaftaran orang tua "$name"?',
+      confirmLabel: 'Tolak',
+      isDestructive: true,
+      icon: Icons.person_remove_rounded,
     );
+
+    if (!confirmed) return;
+
+    final apiClient = ref.read(apiClientProvider);
+    try {
+      await apiClient.patch('/users/$parentId/status', body: {'is_active': false});
+      ref.invalidate(keuanganParentsProvider);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Pendaftaran $name ditolak'),
+            backgroundColor: Nebula.rose,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppStrings.labelFailed),
+            backgroundColor: Nebula.rose,
+          ),
+        );
+      }
+    }
   }
 }

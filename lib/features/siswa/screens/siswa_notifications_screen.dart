@@ -9,6 +9,7 @@ import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
@@ -31,37 +32,28 @@ class SiswaNotificationsScreen extends ConsumerWidget {
     final String? studentId = authState.profile?['id'];
     if (studentId == null) return;
 
-    showCupertinoDialog(
-      context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: const Text('Hapus Semua Notifikasi'),
-        content: const Text('Apakah Anda yakin ingin menghapus semua notifikasi dari kotak masuk Anda?'),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () async {
-              Navigator.pop(ctx);
-              try {
-                final apiClient = ref.read(apiClientProvider);
-                await apiClient.patch('/student/notifications/read-all');
-                ref.invalidate(siswaNotificationsProvider);
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(AppStrings.labelFailedDeleteNotification), backgroundColor: Nebula.rose),
-                  );
-                }
-              }
-            },
-            child: const Text(AppStrings.buttonDelete),
-          ),
-        ],
-      ),
+    final confirmed = await showAppConfirmationDialog(
+      context,
+      title: 'Hapus Semua Notifikasi',
+      message: 'Apakah Anda yakin ingin menandai dan menghapus semua notifikasi dari kotak masuk Anda?',
+      confirmLabel: 'Tandai Dibaca',
+      isDestructive: true,
+      icon: Icons.mark_email_read_rounded,
     );
+
+    if (!confirmed) return;
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      await apiClient.patch('/student/notifications/read-all');
+      ref.invalidate(siswaNotificationsProvider);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppStrings.labelFailedDeleteNotification), backgroundColor: Nebula.rose),
+        );
+      }
+    }
   }
 
   @override

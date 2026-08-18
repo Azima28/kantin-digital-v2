@@ -9,6 +9,7 @@ import 'package:kantin_digital/core/services/storage_service.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/providers/theme_provider.dart';
+import 'package:kantin_digital/core/widgets/app_image_picker_sheet.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 /// Settings section for parent dashboard with profile avatar upload, daily limit, card freeze, WA alerts.
@@ -44,32 +45,10 @@ class ParentSettingsSection extends ConsumerStatefulWidget {
 
 class _ParentSettingsSectionState extends ConsumerState<ParentSettingsSection> {
   Future<void> _handleAvatarChange() async {
-    await showCupertinoModalPopup<void>(
-      context: context,
-      builder: (ctx) => CupertinoActionSheet(
-        title: const Text('Ubah Foto Profil'),
-        actions: [
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _uploadAvatar(ImageSource.camera);
-            },
-            child: const Text('Ambil Foto dari Kamera'),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _uploadAvatar(ImageSource.gallery);
-            },
-            child: const Text('Pilih dari Galeri'),
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          isDestructiveAction: true,
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('Batal'),
-        ),
-      ),
+    await showAppImagePickerBottomSheet(
+      context,
+      title: 'Ubah Foto Profil Orang Tua',
+      onSourceSelected: (source) => _uploadAvatar(source),
     );
   }
 

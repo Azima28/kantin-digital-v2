@@ -12,8 +12,9 @@ import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
-import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/app_image_picker_sheet.dart';
+import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 
 class KeuanganProfileScreen extends ConsumerStatefulWidget {
   const KeuanganProfileScreen({super.key});
@@ -25,32 +26,10 @@ class KeuanganProfileScreen extends ConsumerStatefulWidget {
 class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
 
   Future<void> _handleAvatarChange() async {
-    await showCupertinoModalPopup<void>(
-      context: context,
-      builder: (ctx) => CupertinoActionSheet(
-        title: const Text('Ubah Foto Profil Petugas'),
-        actions: [
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _uploadAvatar(ImageSource.camera);
-            },
-            child: const Text('Ambil Foto dari Kamera'),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _uploadAvatar(ImageSource.gallery);
-            },
-            child: const Text('Pilih dari Galeri'),
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          isDestructiveAction: true,
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('Batal'),
-        ),
-      ),
+    await showAppImagePickerBottomSheet(
+      context,
+      title: 'Ubah Foto Profil Petugas',
+      onSourceSelected: (source) => _uploadAvatar(source),
     );
   }
 
@@ -149,30 +128,13 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
     );
   }
 
-  void _handleLogout() {
-    showCupertinoDialog(
-      context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: const Text('Keluar dari Akun'),
-        content: const Text('Apakah Anda yakin ingin keluar dari akun keuangan ini?'),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () async {
-              final router = GoRouter.of(context);
-              Navigator.pop(ctx);
-              await ref.read(authNotifierProvider.notifier).logout();
-              router.go('/login');
-            },
-            child: const Text(AppStrings.buttonLogout),
-          ),
-        ],
-      ),
-    );
+  Future<void> _handleLogout() async {
+    final confirmed = await showLogoutConfirmationDialog(context);
+    if (confirmed && mounted) {
+      final router = GoRouter.of(context);
+      await ref.read(authNotifierProvider.notifier).logout();
+      router.go('/login');
+    }
   }
 
   @override

@@ -18,6 +18,7 @@ import 'package:kantin_digital/features/admin/widgets/setting_section_widget.dar
 import 'package:kantin_digital/features/admin/widgets/admin_settings_broadcast_section.dart';
 import 'package:kantin_digital/features/admin/widgets/setting_tile_widget.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/widgets/app_image_picker_sheet.dart';
 
 class AdminSettingsScreen extends ConsumerStatefulWidget {
   const AdminSettingsScreen({super.key});
@@ -162,32 +163,10 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
 
 
   Future<void> _handleAvatarChange() async {
-    await showCupertinoModalPopup<void>(
-      context: context,
-      builder: (ctx) => CupertinoActionSheet(
-        title: const Text('Ubah Foto Profil Admin'),
-        actions: [
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _uploadAvatar(ImageSource.camera);
-            },
-            child: const Text('Ambil Foto dari Kamera'),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _uploadAvatar(ImageSource.gallery);
-            },
-            child: const Text('Pilih dari Galeri'),
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          isDestructiveAction: true,
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('Batal'),
-        ),
-      ),
+    await showAppImagePickerBottomSheet(
+      context,
+      title: 'Ubah Foto Profil Admin',
+      onSourceSelected: (source) => _uploadAvatar(source),
     );
   }
 

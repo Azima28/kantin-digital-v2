@@ -9,6 +9,7 @@ import 'package:kantin_digital/core/theme/hallmark_color_scheme.dart';
 import 'package:kantin_digital/core/theme/hallmark_typography.dart';
 import 'package:kantin_digital/core/widgets/hallmark_card.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 
@@ -22,56 +23,48 @@ class SiswaCardsScreen extends ConsumerWidget {
     String studentId,
     bool currentStatus,
   ) async {
-    showCupertinoDialog(
-      context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: Text(currentStatus ? 'Bekukan Kartu' : 'Aktifkan Kartu'),
-        content: Text(currentStatus
-            ? 'Apakah Anda yakin ingin membekukan kartu? Kartu tidak akan bisa digunakan jajan sementara waktu.'
-            : 'Apakah Anda yakin ingin mengaktifkan kembali kartu Anda?'),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: currentStatus,
-            onPressed: () async {
-              Navigator.pop(ctx);
-              try {
-                final apiClient = ref.read(apiClientProvider);
-
-                await apiClient.patch('/student/card-status', body: {
-                  'is_active': !currentStatus,
-                });
-
-                ref.invalidate(siswaStudentProvider);
-                ref.invalidate(siswaNotificationsProvider);
-
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(!currentStatus ? 'Kartu berhasil diaktifkan!' : 'Kartu berhasil dibekukan!'),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${AppStrings.labelFailed} memperbarui kartu: $e'),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              }
-            },
-            child: Text(currentStatus ? 'Bekukan' : 'Aktifkan'),
-          ),
-        ],
-      ),
+    final confirmed = await showAppConfirmationDialog(
+      context,
+      title: currentStatus ? 'Bekukan Kartu RFID' : 'Aktifkan Kartu RFID',
+      message: currentStatus
+          ? 'Apakah Anda yakin ingin membekukan kartu? Kartu tidak akan bisa digunakan jajan sementara waktu.'
+          : 'Apakah Anda yakin ingin mengaktifkan kembali kartu Anda?',
+      confirmLabel: currentStatus ? 'Bekukan' : 'Aktifkan',
+      isDestructive: currentStatus,
+      icon: currentStatus ? Icons.lock_outline_rounded : Icons.lock_open_rounded,
     );
+
+    if (!confirmed) return;
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+
+      await apiClient.patch('/student/card-status', body: {
+        'student_id': studentId,
+        'is_active': !currentStatus,
+      });
+
+      ref.invalidate(siswaStudentProvider);
+      ref.invalidate(siswaNotificationsProvider);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(!currentStatus ? 'Kartu berhasil diaktifkan!' : 'Kartu berhasil dibekukan!'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${AppStrings.labelFailed} memperbarui kartu: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   @override

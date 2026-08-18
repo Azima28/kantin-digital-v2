@@ -13,6 +13,7 @@ import 'package:kantin_digital/core/utils/responsive.dart';
 import 'package:kantin_digital/features/siswa/providers/student_cart_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
 
 class _CanteenStallInfo {
   final String id;
@@ -1510,7 +1511,7 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
     );
   }
 
-  void _handleAddToCart(ProductWithCanteen item) {
+  Future<void> _handleAddToCart(ProductWithCanteen item) async {
     final product = item.product;
     final operatorId = product.operatorId.isNotEmpty ? product.operatorId : 'stan-utama';
     final canteenName = item.canteenName;
@@ -1520,39 +1521,27 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
 
     if (hasConflict) {
       final currentCanteenName = ref.read(studentCartProvider).canteenName ?? 'Stan Lain';
-      showCupertinoDialog(
-        context: context,
-        builder: (context) => CupertinoAlertDialog(
-          title: const Text('Mau ganti stan?'),
-          content: Text(
-            'Keranjangmu saat ini berisi pesanan dari $currentCanteenName. '
-            'Jika memilih menu dari $canteenName, pesanan sebelumnya akan diganti.',
-          ),
-          actions: [
-            CupertinoDialogAction(
-              child: const Text('Batal'),
-              onPressed: () => Navigator.pop(context),
-            ),
-            CupertinoDialogAction(
-              isDestructiveAction: true,
-              child: const Text('Ganti & Tambah'),
-              onPressed: () {
-                Navigator.pop(context);
-                cartNotifier.addProductWithCanteen(
-                  canteenId: operatorId,
-                  canteenName: canteenName,
-                  deliveryFee: 2000,
-                  productId: product.id,
-                  name: product.name,
-                  price: product.price,
-                  imageUrl: product.imageUrl,
-                );
-                _showAddedSnackbar(product.name);
-              },
-            ),
-          ],
-        ),
+      final confirmed = await showAppConfirmationDialog(
+        context,
+        title: 'Mau ganti stan?',
+        message: 'Keranjangmu saat ini berisi pesanan dari $currentCanteenName. Jika memilih menu dari $canteenName, pesanan sebelumnya akan diganti.',
+        confirmLabel: 'Ganti & Tambah',
+        confirmColor: Nebula.teal,
+        icon: Icons.storefront_rounded,
       );
+
+      if (confirmed) {
+        cartNotifier.addProductWithCanteen(
+          canteenId: operatorId,
+          canteenName: canteenName,
+          deliveryFee: 2000,
+          productId: product.id,
+          name: product.name,
+          price: product.price,
+          imageUrl: product.imageUrl,
+        );
+        _showAddedSnackbar(product.name);
+      }
     } else {
       cartNotifier.addProductWithCanteen(
         canteenId: operatorId,

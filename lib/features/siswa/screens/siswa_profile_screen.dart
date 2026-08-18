@@ -14,6 +14,7 @@ import 'package:kantin_digital/core/widgets/change_password_panel.dart';
 import 'package:kantin_digital/core/widgets/theme_toggle_tile.dart';
 import 'package:kantin_digital/core/widgets/app_toast.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/widgets/app_image_picker_sheet.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
@@ -165,32 +166,10 @@ class SiswaProfileScreen extends ConsumerWidget {
   }
 
   Future<void> _handleAvatarChange(BuildContext context, WidgetRef ref) async {
-    await showCupertinoModalPopup<void>(
-      context: context,
-      builder: (ctx) => CupertinoActionSheet(
-        title: const Text('Ubah Foto Profil'),
-        actions: [
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _uploadAvatar(context, ref, ImageSource.camera);
-            },
-            child: const Text('Ambil Foto dari Kamera'),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _uploadAvatar(context, ref, ImageSource.gallery);
-            },
-            child: const Text('${AppStrings.buttonSelect} dari Galeri'),
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          isDestructiveAction: true,
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text(AppStrings.buttonCancel),
-        ),
-      ),
+    await showAppImagePickerBottomSheet(
+      context,
+      title: 'Ubah Foto Profil Siswa',
+      onSourceSelected: (source) => _uploadAvatar(context, ref, source),
     );
   }
 

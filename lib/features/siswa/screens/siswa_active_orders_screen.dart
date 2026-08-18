@@ -15,6 +15,7 @@ import 'package:kantin_digital/core/widgets/date_filter_modal.dart';
 import 'package:kantin_digital/core/widgets/hallmark_button.dart';
 import 'package:kantin_digital/core/widgets/order_chat_button.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
 import 'package:kantin_digital/features/kantin/providers/order_chat_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 import 'package:kantin_digital/features/siswa/widgets/order_chat_sheet.dart';
@@ -113,25 +114,14 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
   }
 
   Future<void> _handleStudentRejectMerchantCancel(OrderItem order) async {
-    final bool confirm = await showCupertinoDialog<bool>(
-          context: context,
-          builder: (context) => CupertinoAlertDialog(
-            title: const Text('Tolak Pembatalan'),
-            content: const Text('Apakah Anda yakin ingin menolak pembatalan dari kantin? Pesanan Anda akan tetap diproses.'),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text('Batal'),
-                onPressed: () => Navigator.pop(context, false),
-              ),
-              CupertinoDialogAction(
-                isDestructiveAction: true,
-                child: const Text('Tolak Pembatalan'),
-                onPressed: () => Navigator.pop(context, true),
-              ),
-            ],
-          ),
-        ) ??
-        false;
+    final bool confirm = await showAppConfirmationDialog(
+      context,
+      title: 'Tolak Pembatalan Kantin',
+      message: 'Apakah Anda yakin ingin menolak pembatalan dari kantin? Pesanan Anda akan tetap diproses.',
+      confirmLabel: 'Tolak Pembatalan',
+      isDestructive: true,
+      icon: Icons.cancel_schedule_send_rounded,
+    );
 
     if (confirm) {
       try {
@@ -165,25 +155,14 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
   }
 
   Future<void> _handleStudentApproveMerchantCancel(OrderItem order) async {
-    final bool confirm = await showCupertinoDialog<bool>(
-          context: context,
-          builder: (context) => CupertinoAlertDialog(
-            title: const Text('Setujui Pembatalan'),
-            content: const Text('Apakah Anda setuju membatalkan pesanan ini? Saldo Anda akan segera dikembalikan.'),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text('Batal'),
-                onPressed: () => Navigator.pop(context, false),
-              ),
-              CupertinoDialogAction(
-                isDefaultAction: true,
-                child: const Text('Setujui Batal'),
-                onPressed: () => Navigator.pop(context, true),
-              ),
-            ],
-          ),
-        ) ??
-        false;
+    final bool confirm = await showAppConfirmationDialog(
+      context,
+      title: 'Setujui Pembatalan Pesanan',
+      message: 'Apakah Anda setuju membatalkan pesanan ini? Saldo Anda akan segera dikembalikan.',
+      confirmLabel: 'Setujui Batal',
+      isDestructive: true,
+      icon: Icons.cancel_outlined,
+    );
 
     if (confirm) {
       try {

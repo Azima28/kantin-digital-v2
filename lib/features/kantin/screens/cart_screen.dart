@@ -18,66 +18,160 @@ class CartScreen extends ConsumerWidget {
     final TextEditingController nameController = TextEditingController();
     final TextEditingController priceController = TextEditingController();
 
-    showCupertinoDialog(
+    showDialog(
       context: context,
-      builder: (BuildContext ctx) => CupertinoAlertDialog(
-        title: Text(
-          AppStrings.labelAddExtraCharge,
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 12.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CupertinoTextField(
-                controller: nameController,
-                placeholder: 'Nama biaya (contoh: Nasi Tambah)',
-                placeholderStyle: TextStyle(color: context.textSecondary, fontSize: 13),
-                style: TextStyle(fontSize: 14, color: context.textPrimary),
-                decoration: BoxDecoration(
-                  color: CupertinoColors.extraLightBackgroundGray,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: context.borderLight, width: 0.5),
+      builder: (BuildContext ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Container(
+            decoration: BoxDecoration(
+              color: ctx.cardBg,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: ctx.dividerCol, width: 0.8),
+              boxShadow: [
+                BoxShadow(
+                  color: ctx.shadowColor,
+                  blurRadius: 28,
+                  offset: const Offset(0, 8),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              ),
-              const SizedBox(height: 8),
-              CupertinoTextField(
-                controller: priceController,
-                placeholder: 'Nominal harga (Rp)',
-                placeholderStyle: TextStyle(color: context.textSecondary, fontSize: 13),
-                keyboardType: TextInputType.number,
-                style: TextStyle(fontSize: 14, color: context.textPrimary),
-                decoration: BoxDecoration(
-                  color: CupertinoColors.extraLightBackgroundGray,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: context.borderLight, width: 0.5),
+              ],
+            ),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Nebula.teal.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.add_circle_outline_rounded, color: Nebula.teal, size: 22),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        AppStrings.labelAddExtraCharge,
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: ctx.textPrimary),
+                      ),
+                    ),
+                  ],
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          CupertinoDialogAction(
-            isDefaultAction: true,
-            onPressed: () {
-              final String name = nameController.text.trim();
-              final int? price = int.tryParse(priceController.text.trim());
+                const SizedBox(height: 16),
+                TextField(
+                  controller: nameController,
+                  style: TextStyle(fontSize: 14, color: ctx.textPrimary),
+                  decoration: InputDecoration(
+                    hintText: 'Nama biaya (contoh: Nasi Tambah)',
+                    hintStyle: TextStyle(color: ctx.textSecondary, fontSize: 13),
+                    filled: true,
+                    fillColor: ctx.surfaceBg,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: ctx.dividerCol),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: ctx.dividerCol),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Nebula.teal, width: 1.5),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: priceController,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(fontSize: 14, color: ctx.textPrimary),
+                  decoration: InputDecoration(
+                    hintText: 'Nominal harga (Rp)',
+                    hintStyle: TextStyle(color: ctx.textSecondary, fontSize: 13),
+                    filled: true,
+                    fillColor: ctx.surfaceBg,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: ctx.dividerCol),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: ctx.dividerCol),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Nebula.teal, width: 1.5),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          side: BorderSide(color: ctx.dividerCol),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: Text(
+                          AppStrings.buttonCancel,
+                          style: TextStyle(
+                            color: ctx.textSecondary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final String name = nameController.text.trim();
+                          final int? price = int.tryParse(priceController.text.trim());
 
-              if (name.isNotEmpty && price != null && price > 0) {
-                ref.read(cartProvider.notifier).addCustomCharge(name, price);
-                Navigator.pop(ctx);
-              }
-            },
-            child: const Text(AppStrings.buttonSave),
+                          if (name.isNotEmpty && price != null && price > 0) {
+                            ref.read(cartProvider.notifier).addCustomCharge(name, price);
+                            Navigator.pop(ctx);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Nebula.teal,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: const Text(
+                          AppStrings.buttonSave,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }

@@ -10,6 +10,7 @@ import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/services/storage_service.dart';
 import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
+import 'package:kantin_digital/core/widgets/app_image_picker_sheet.dart';
 import 'package:kantin_digital/core/widgets/change_password_panel.dart';
 import 'package:kantin_digital/core/widgets/theme_toggle_tile.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
@@ -117,32 +118,10 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
   }
 
   Future<void> _handleAvatarChange() async {
-    await showCupertinoModalPopup<void>(
-      context: context,
-      builder: (ctx) => CupertinoActionSheet(
-        title: const Text('Ubah Foto Profil Stan'),
-        actions: [
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _uploadAvatar(ImageSource.camera);
-            },
-            child: const Text('Ambil Foto dari Kamera'),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _uploadAvatar(ImageSource.gallery);
-            },
-            child: const Text('Pilih dari Galeri'),
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          isDestructiveAction: true,
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('Batal'),
-        ),
-      ),
+    await showAppImagePickerBottomSheet(
+      context,
+      title: 'Ubah Foto Profil Stan',
+      onSourceSelected: (source) => _uploadAvatar(source),
     );
   }
 

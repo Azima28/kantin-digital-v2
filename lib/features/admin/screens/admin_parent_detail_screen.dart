@@ -14,6 +14,7 @@ import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_edit_parent_sheet.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
 
 
 class AdminParentDetailScreen extends ConsumerStatefulWidget {
@@ -106,40 +107,149 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
   }
 
   void _showChangePasswordDialog(String profileId) {
-    showCupertinoDialog(
+    bool obscure = true;
+    showDialog(
       context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text(AppStrings.adminChangePassword),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 12.0),
-          child: CupertinoTextField(
-            controller: _passwordController,
-            placeholder: 'Masukkan sandi baru',
-            obscureText: true,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Container(
+              decoration: BoxDecoration(
+                color: ctx.cardBg,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: ctx.dividerCol, width: 0.8),
+                boxShadow: [
+                  BoxShadow(
+                    color: ctx.shadowColor,
+                    blurRadius: 28,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: Nebula.teal.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.lock_reset_rounded, color: Nebula.teal, size: 22),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          AppStrings.adminChangePassword,
+                          style: GoogleFonts.inter(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: ctx.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: obscure,
+                    style: GoogleFonts.inter(fontSize: 14, color: ctx.textPrimary),
+                    decoration: InputDecoration(
+                      hintText: 'Masukkan sandi baru',
+                      hintStyle: GoogleFonts.inter(color: ctx.textSecondary, fontSize: 14),
+                      filled: true,
+                      fillColor: ctx.surfaceBg,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: ctx.dividerCol),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: ctx.dividerCol),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Nebula.teal, width: 1.5),
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20),
+                        onPressed: () => setLocal(() => obscure = !obscure),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            _passwordController.clear();
+                            Navigator.pop(ctx);
+                          },
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            side: BorderSide(color: ctx.dividerCol),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: Text(
+                            AppStrings.buttonCancel,
+                            style: GoogleFonts.inter(
+                              color: ctx.textSecondary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => _changePassword(profileId),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Nebula.teal,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: Text(
+                            AppStrings.buttonSave,
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(AppStrings.buttonCancel),
-            onPressed: () {
-              _passwordController.clear();
-              Navigator.pop(context);
-            },
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () => _changePassword(profileId),
-            child: const Text(AppStrings.buttonSave),
-          ),
-        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final parentAsync = ref.watch(parentParentDetailProvider);
+    final parentAsync = ref.watch(adminParentDetailProvider(widget.parentId));
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -372,20 +482,75 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                         icon: CupertinoIcons.device_phone_portrait,
                         title: AppStrings.adminSessionActiveLabel,
                         onTap: () {
-                          showCupertinoDialog(
+                          showDialog(
                             context: context,
-                            builder: (context) => CupertinoAlertDialog(
-                              title: const Text(AppStrings.adminSessionActiveLabel),
-                              content: const Padding(
-                                padding: EdgeInsets.only(top: 8.0),
-                                child: Text('1 Sesi aktif di perangkat iOS (iPhone 15 Pro Max).'),
-                              ),
-                              actions: [
-                                CupertinoDialogAction(
-                                  child: const Text('Tutup'),
-                                  onPressed: () => Navigator.pop(context),
+                            builder: (ctx) => Dialog(
+                              backgroundColor: Colors.transparent,
+                              insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 400),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: ctx.cardBg,
+                                    borderRadius: BorderRadius.circular(24),
+                                    border: Border.all(color: ctx.dividerCol, width: 0.8),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: ctx.shadowColor,
+                                        blurRadius: 24,
+                                        offset: const Offset(0, 6),
+                                      ),
+                                    ],
+                                  ),
+                                  padding: const EdgeInsets.all(24),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Container(
+                                            width: 40,
+                                            height: 40,
+                                            decoration: BoxDecoration(
+                                              color: Nebula.teal.withValues(alpha: 0.1),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(Icons.devices_rounded, color: Nebula.teal, size: 20),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              AppStrings.adminSessionActiveLabel,
+                                              style: GoogleFonts.inter(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: ctx.textPrimary,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 14),
+                                      Text(
+                                        '1 Sesi aktif di perangkat mobile.',
+                                        style: GoogleFonts.inter(fontSize: 13.5, color: ctx.textSecondary),
+                                      ),
+                                      const SizedBox(height: 20),
+                                      ElevatedButton(
+                                        onPressed: () => Navigator.pop(ctx),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Nebula.teal,
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                          padding: const EdgeInsets.symmetric(vertical: 12),
+                                        ),
+                                        child: const Text('Tutup', style: TextStyle(fontWeight: FontWeight.bold)),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ],
+                              ),
                             ),
                           );
                         },
@@ -404,32 +569,21 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: TextButton.icon(
-                    onPressed: () {
-                      showCupertinoDialog(
-                        context: context,
-                        builder: (ctx) => CupertinoAlertDialog(
-                          title: Text(isAccountActive ? 'Nonaktifkan Akun' : 'Aktifkan Akun'),
-                          content: Text(
-                            isAccountActive 
-                                ? 'Apakah Anda yakin ingin menonaktifkan akun orang tua ini?' 
-                                : 'Apakah Anda yakin ingin mengaktifkan kembali akun orang tua ini?',
-                          ),
-                          actions: [
-                            CupertinoDialogAction(
-                              child: const Text(AppStrings.buttonCancel),
-                              onPressed: () => Navigator.pop(ctx),
-                            ),
-                            CupertinoDialogAction(
-                              isDestructiveAction: true,
-                              onPressed: () {
-                                Navigator.pop(ctx);
-                                _toggleDisableParentAccount(profile.id, isAccountActive);
-                              },
-                              child: Text(isAccountActive ? AppStrings.adminNonaktifkan : AppStrings.adminAktifkan),
-                            ),
-                          ],
-                        ),
+                    onPressed: () async {
+                      final confirmed = await showAppConfirmationDialog(
+                        context,
+                        title: isAccountActive ? 'Nonaktifkan Akun' : 'Aktifkan Akun',
+                        message: isAccountActive
+                            ? 'Apakah Anda yakin ingin menonaktifkan akun orang tua ini?'
+                            : 'Apakah Anda yakin ingin mengaktifkan kembali akun orang tua ini?',
+                        confirmLabel: isAccountActive ? AppStrings.adminNonaktifkan : AppStrings.adminAktifkan,
+                        isDestructive: isAccountActive,
+                        icon: isAccountActive ? Icons.person_off_rounded : Icons.person_rounded,
                       );
+
+                      if (confirmed) {
+                        _toggleDisableParentAccount(profile.id, isAccountActive);
+                      }
                     },
                     icon: Icon(
                       isAccountActive ? CupertinoIcons.minus_circle : CupertinoIcons.checkmark_seal,
