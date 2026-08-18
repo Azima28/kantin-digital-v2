@@ -364,7 +364,7 @@ class _KeuanganStudentDetailScreenState
                             )
                           else
                             Column(
-                              children: txs.map((tx) {
+                              children: txs.take(10).map((tx) {
                                 final isTopup = tx.isTopup;
                                 final isSuccess = tx.isSuccess;
                                 final int amount = tx.totalAmount;
@@ -376,67 +376,71 @@ class _KeuanganStudentDetailScreenState
                                 final canteenName = tx.canteenName ?? 'Top-up';
 
                                 return Padding(
-                                  padding: EdgeInsets.symmetric(
+                                  padding: const EdgeInsets.symmetric(
                                     vertical: 8,
                                   ),
                                   child: Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Row(
-                                        children: [
-                                          CircleAvatar(
-                                            radius: 14,
-                                            backgroundColor: isTopup
-                                                ? Nebula.teal.withValues(
-                                                    alpha: 0.08,
-                                                  )
-                                                : Nebula.teal.withValues(
-                                                    alpha: 0.08,
-                                                  ),
-                                            child: Icon(
-                                              isTopup
-                                                  ? CupertinoIcons.arrow_up
-                                                  : CupertinoIcons.cart,
-                                              size: 14,
-                                              color: isTopup
-                                                  ? Nebula.teal
-                                                  : Nebula.teal,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 10),
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
+                                      Expanded(
+                                        child: Row(
+                                          children: [
+                                            CircleAvatar(
+                                              radius: 14,
+                                              backgroundColor: isTopup
+                                                  ? Nebula.teal.withValues(
+                                                      alpha: 0.08,
+                                                    )
+                                                  : Nebula.amber.withValues(
+                                                      alpha: 0.08,
+                                                    ),
+                                              child: Icon(
                                                 isTopup
-                                                    ? 'Top-Up Saldo'
-                                                    : canteenName,
-                                                style: GoogleFonts.inter(
-                                                  fontWeight: FontWeight.w600,
-                                                  fontSize: 13,
-                                                  color: const Color(
-                                                    0xFF1B1C1B,
-                                                  ),
-                                                ),
+                                                    ? CupertinoIcons.arrow_up
+                                                    : CupertinoIcons.cart,
+                                                size: 14,
+                                                color: isTopup
+                                                    ? Nebula.teal
+                                                    : Nebula.amber,
                                               ),
-                                              Text(
-                                                timeStr,
-                                                style: GoogleFonts.inter(
-                                                  fontSize: 11,
-                                                  color: const Color(
-                                                    0xFF6F7978,
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    isTopup
+                                                        ? 'Top-Up Saldo'
+                                                        : canteenName,
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: GoogleFonts.inter(
+                                                      fontWeight: FontWeight.w600,
+                                                      fontSize: 13,
+                                                      color: context.textPrimary,
+                                                    ),
                                                   ),
-                                                ),
+                                                  Text(
+                                                    timeStr,
+                                                    style: GoogleFonts.inter(
+                                                      fontSize: 11,
+                                                      color: context.textSecondary,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                            ],
-                                          ),
-                                        ],
+                                            ),
+                                          ],
+                                        ),
                                       ),
+                                      const SizedBox(width: 8),
                                       Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.end,
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Text(
                                             '${isTopup ? "+" : "-"}${fmt.format(amount)}',
@@ -445,7 +449,7 @@ class _KeuanganStudentDetailScreenState
                                               fontSize: 13,
                                               color: isTopup
                                                   ? Nebula.teal
-                                                  : Nebula.teal,
+                                                  : context.textPrimary,
                                             ),
                                           ),
                                           if (!isSuccess)
