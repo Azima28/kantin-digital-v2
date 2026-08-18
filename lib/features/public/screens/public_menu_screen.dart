@@ -1000,114 +1000,112 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
 
   Widget _buildKulinerSesuaiSeleramuSection() {
     final List<Map<String, dynamic>> categories = [
-      {'label': 'Semua Menu', 'val': null, 'icon': Icons.restaurant, 'color': const Color(0xFF0D9488)},
-      {'label': 'Aneka Nasi', 'val': 'makanan', 'icon': Icons.rice_bowl, 'color': const Color(0xFFD97706)},
-      {'label': 'Nasi Goreng', 'val': 'makanan', 'icon': Icons.lunch_dining, 'color': const Color(0xFFEF4444)},
-      {'label': 'Cepat Saji', 'val': 'makanan', 'icon': Icons.fastfood, 'color': const Color(0xFFF59E0B)},
-      {'label': 'Minuman', 'val': 'minuman', 'icon': Icons.local_drink, 'color': const Color(0xFF06B6D4)},
-      {'label': 'Jajanan', 'val': 'camilan', 'icon': Icons.bakery_dining, 'color': const Color(0xFF8B5CF6)},
-      {'label': 'Manis', 'val': 'camilan', 'icon': Icons.cake, 'color': const Color(0xFFEC4899)},
-      {'label': 'Kopi & Teh', 'val': 'minuman', 'icon': Icons.coffee, 'color': const Color(0xFF78350F)},
+      {
+        'label': 'Semua',
+        'val': null,
+        'icon': Icons.restaurant_menu_rounded,
+        'color': Nebula.teal,
+      },
+      {
+        'label': 'Makanan',
+        'val': 'makanan',
+        'icon': Icons.lunch_dining_rounded,
+        'color': const Color(0xFFE11D48),
+      },
+      {
+        'label': 'Minuman',
+        'val': 'minuman',
+        'icon': Icons.local_drink_rounded,
+        'color': const Color(0xFF0284C7),
+      },
+      {
+        'label': 'Camilan',
+        'val': 'camilan',
+        'icon': Icons.bakery_dining_rounded,
+        'color': const Color(0xFFD97706),
+      },
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                'Kuliner sesuai seleramu',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  fontSize: 15.5,
-                  fontWeight: FontWeight.w800,
-                  color: context.textPrimary,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: () => setState(() => _selectedCategory = null),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Text(
-                  'Lihat Semua',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF10B981),
-                  ),
-                ),
-              ),
-            ),
-          ],
+        Text(
+          'Kuliner sesuai seleramu',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.inter(
+            fontSize: 15.5,
+            fontWeight: FontWeight.w800,
+            color: context.textPrimary,
+          ),
         ),
         const SizedBox(height: 14),
 
-        // 4-Column Grid of Categories
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: categories.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 10,
-            childAspectRatio: 0.76,
-          ),
-          itemBuilder: (context, index) {
-            final cat = categories[index];
-            final bool isSelected = _selectedCategory == cat['val'] && (index == 0 ? _selectedCategory == null : true);
+        // 4 Category Items (Semua, Makanan, Minuman, Camilan)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: categories.map((cat) {
+            final String? val = cat['val'] as String?;
+            final bool isSelected = _selectedCategory == val;
+            final Color color = cat['color'] as Color;
 
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  _selectedCategory = cat['val'] as String?;
-                });
-              },
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: (cat['color'] as Color).withValues(alpha: 0.14),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isSelected ? Nebula.teal : Colors.transparent,
-                        width: 2,
+            return Expanded(
+              child: PressScale(
+                scale: 0.92,
+                onTap: () {
+                  setState(() {
+                    _selectedCategory = val;
+                  });
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? color.withValues(alpha: 0.2)
+                            : color.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isSelected ? color : Colors.transparent,
+                          width: 2,
+                        ),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: color.withValues(alpha: 0.25),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Icon(
+                        cat['icon'] as IconData,
+                        size: 24,
+                        color: color,
                       ),
                     ),
-                    child: Icon(
-                      cat['icon'] as IconData,
-                      size: 22,
-                      color: cat['color'] as Color,
+                    const SizedBox(height: 6),
+                    Text(
+                      cat['label'] as String,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 11.5,
+                        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                        color: isSelected ? color : context.textPrimary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    cat['label'] as String,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      fontSize: 10.5,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                      color: isSelected ? Nebula.teal : context.textPrimary,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
-          },
+          }).toList(),
         ),
       ],
     );
