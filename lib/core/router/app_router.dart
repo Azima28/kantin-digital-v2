@@ -135,11 +135,12 @@ class AppRouter {
 }
 
 /// Role constants used for route guard checks.
+const Set<String> _superRoles = {'super_admin', 'admin'};
 const Set<String> _adminRoles = {'super_admin', 'admin'};
-const Set<String> _keuanganRoles = {'petugas_keuangan'};
-const Set<String> _canteenRoles = {'petugas_kantin'};
-const Set<String> _studentRoles = {'student'};
-const Set<String> _parentRoles = {'parent'};
+const Set<String> _keuanganRoles = {'petugas_keuangan', 'super_admin', 'admin'};
+const Set<String> _canteenRoles = {'petugas_kantin', 'super_admin', 'admin'};
+const Set<String> _studentRoles = {'student', 'super_admin', 'admin'};
+const Set<String> _parentRoles = {'parent', 'super_admin', 'admin'};
 
 /// Provider for GoRouter with authentication route guards.
 ///
@@ -178,6 +179,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isPublicRoute = publicRoutes.contains(path) ||
           path.startsWith('/public/');
 
+      // If auth state is still loading from persistent local storage, wait before redirecting
+      if (!authState.isInitialized) {
+        return null;
+      }
+
       // If NOT logged in and trying to access a protected route → /login
       if (!isLoggedIn && !isPublicRoute) {
         return AppRouter.login;
@@ -212,7 +218,12 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // ─── Role-based access control ───
       if (isLoggedIn) {
-        // Admin & super_admin routes
+        // Super Admin & Admin have universal master access to all routes across modules
+        if (_superRoles.contains(role)) {
+          return null;
+        }
+
+        // Admin routes
         if (path == AppRouter.adminSecureEntry ||
             path == AppRouter.adminHome ||
             path.startsWith('/admin/')) {
