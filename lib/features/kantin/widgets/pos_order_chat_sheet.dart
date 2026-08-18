@@ -125,7 +125,7 @@ class _PosOrderChatSheetState extends ConsumerState<PosOrderChatSheet> {
 
   void _scrollToBottom({bool immediate = false}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
+      if (mounted && _scrollController.hasClients) {
         if (immediate) {
           _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
         } else {

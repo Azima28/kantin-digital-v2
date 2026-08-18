@@ -183,6 +183,7 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
   }
 
   void _onScroll() {
+    if (!mounted || !_scrollController.hasClients) return;
     // Jalankan infinite scroll lazy loading saat mendekati bagian bawah halaman
     if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
       _loadNextPage();
@@ -190,6 +191,7 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
   }
 
   void _loadNextPage() {
+    if (!mounted) return;
     final bool isSearchingOrFiltered = _selectedCategory != null || _searchQuery.isNotEmpty;
     if (isSearchingOrFiltered) {
       final filter = PaginatedProductsFilter(
@@ -204,9 +206,11 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), () {
-      setState(() {
-        _searchQuery = query;
-      });
+      if (mounted) {
+        setState(() {
+          _searchQuery = query;
+        });
+      }
     });
   }
 

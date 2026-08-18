@@ -39,6 +39,7 @@ class _UsersSearchBarState extends State<UsersSearchBar> {
   }
 
   void _onTextChanged() {
+    if (!mounted) return;
     final hasText = widget.controller.text.isNotEmpty;
     if (hasText != _hasText) {
       setState(() => _hasText = hasText);

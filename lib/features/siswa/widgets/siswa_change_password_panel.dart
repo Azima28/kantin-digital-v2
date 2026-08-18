@@ -38,9 +38,15 @@ class _SiswaChangePasswordPanelState
   @override
   void initState() {
     super.initState();
-    _oldFocus.addListener(() => setState(() {}));
-    _newFocus.addListener(() => setState(() {}));
-    _confirmFocus.addListener(() => setState(() {}));
+    _oldFocus.addListener(() {
+      if (mounted) setState(() {});
+    });
+    _newFocus.addListener(() {
+      if (mounted) setState(() {});
+    });
+    _confirmFocus.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   @override

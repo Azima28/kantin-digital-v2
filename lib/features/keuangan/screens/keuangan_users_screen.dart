@@ -31,7 +31,9 @@ class _KeuanganUsersScreenState extends ConsumerState<KeuanganUsersScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _tabController.addListener(() => setState(() {}));
+    _tabController.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
