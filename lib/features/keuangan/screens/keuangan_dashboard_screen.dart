@@ -365,7 +365,7 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
                   borderRadius: BorderRadius.circular(10),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: _selectedSegment == 0 ? Nebula.teal : Colors.transparent,
@@ -373,19 +373,24 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           CupertinoIcons.person_crop_circle_fill,
-                          size: 15,
+                          size: 14,
                           color: _selectedSegment == 0 ? Colors.white : context.textSecondary,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Siswa (${studentLogs.length})',
-                          style: GoogleFonts.inter(
-                            fontSize: 12.5,
-                            fontWeight: _selectedSegment == 0 ? FontWeight.bold : FontWeight.w500,
-                            color: _selectedSegment == 0 ? Colors.white : context.textPrimary,
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            'Siswa (${studentLogs.length})',
+                            style: GoogleFonts.inter(
+                              fontSize: 11.5,
+                              fontWeight: _selectedSegment == 0 ? FontWeight.bold : FontWeight.w500,
+                              color: _selectedSegment == 0 ? Colors.white : context.textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -400,7 +405,7 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
                   borderRadius: BorderRadius.circular(10),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: _selectedSegment == 1 ? Nebula.teal : Colors.transparent,
@@ -408,19 +413,24 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           CupertinoIcons.building_2_fill,
-                          size: 15,
+                          size: 14,
                           color: _selectedSegment == 1 ? Colors.white : context.textSecondary,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Petugas Kantin (${merchantLogs.length})',
-                          style: GoogleFonts.inter(
-                            fontSize: 12.5,
-                            fontWeight: _selectedSegment == 1 ? FontWeight.bold : FontWeight.w500,
-                            color: _selectedSegment == 1 ? Colors.white : context.textPrimary,
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            'Stan (${merchantLogs.length})',
+                            style: GoogleFonts.inter(
+                              fontSize: 11.5,
+                              fontWeight: _selectedSegment == 1 ? FontWeight.bold : FontWeight.w500,
+                              color: _selectedSegment == 1 ? Colors.white : context.textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -437,20 +447,25 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              _selectedSegment == 0 ? 'Aktivitas Transaksi Siswa' : 'Aktivitas & Mutasi Stan Kantin',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: context.textPrimary,
+            Expanded(
+              child: Text(
+                _selectedSegment == 0 ? 'Aktivitas Transaksi Siswa' : 'Aktivitas & Mutasi Kas Stan',
+                style: GoogleFonts.inter(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.bold,
+                  color: context.textPrimary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
+            const SizedBox(width: 8),
             GestureDetector(
               onTap: () => context.push('/finance/history'),
               child: Text(
                 'Lihat Semua →',
                 style: GoogleFonts.inter(
-                  fontSize: 12.5,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: Nebula.teal,
                 ),

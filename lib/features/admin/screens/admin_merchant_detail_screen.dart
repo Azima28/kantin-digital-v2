@@ -1218,14 +1218,19 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Pembukuan Mutasi Stan',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Nebula.teal,
+              Expanded(
+                child: Text(
+                  'Pembukuan Mutasi Stan',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Nebula.teal,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 8),
               TextButton(
                 onPressed: () {
                   Navigator.of(context).push(
