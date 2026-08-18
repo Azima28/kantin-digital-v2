@@ -16,9 +16,9 @@ class AdminAcademicSettingsScreen extends ConsumerStatefulWidget {
   ConsumerState<AdminAcademicSettingsScreen> createState() => _AdminAcademicSettingsScreenState();
 }
 
-class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSettingsScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSettingsScreen> {
+  final PageController _pageController = PageController();
+  int _currentStep = 0; // 0: Jenjang & Jurusan, 1: Tingkat Kelas, 2: Master Rombel
   bool _isInitialized = false;
 
   // Working state
@@ -36,30 +36,24 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
     AcademicMajor(id: 'tkj', name: 'Teknik Komputer & Jaringan', code: 'TKJ'),
     AcademicMajor(id: 'dkv', name: 'Desain Komunikasi Visual', code: 'DKV'),
     AcademicMajor(id: 'akl', name: 'Akuntansi & Keuangan Lembaga', code: 'AKL'),
-    AcademicMajor(id: 'otkp', name: 'Otomatisasi & Tata Kelola Perkantoran', code: 'OTKP'),
-    AcademicMajor(id: 'tbsm', name: 'Teknik Bisnis Sepeda Motor', code: 'TBSM'),
+    AcademicMajor(id: 'otkp', name: 'Otomatisasi Perkantoran', code: 'OTKP'),
+    AcademicMajor(id: 'tbsm', name: 'Teknik Sepeda Motor', code: 'TBSM'),
     AcademicMajor(id: 'tkr', name: 'Teknik Kendaraan Ringan', code: 'TKR'),
-    AcademicMajor(id: 'boga', name: 'Kuliner / Tata Boga', code: 'TBG'),
+    AcademicMajor(id: 'boga', name: 'Tata Boga / Kuliner', code: 'TBG'),
     AcademicMajor(id: 'hotel', name: 'Perhotelan', code: 'HTL'),
   ];
 
   static const List<AcademicMajor> _smaPresetMajors = [
-    AcademicMajor(id: 'mipa', name: 'Matematika & Ilmu Pengetahuan Alam', code: 'MIPA'),
+    AcademicMajor(id: 'mipa', name: 'Matematika & IPA', code: 'MIPA'),
     AcademicMajor(id: 'ips', name: 'Ilmu Pengetahuan Sosial', code: 'IPS'),
     AcademicMajor(id: 'bahasa', name: 'Bahasa & Budaya', code: 'Bahasa'),
-    AcademicMajor(id: 'merdeka_e', name: 'Kurikulum Merdeka (Fase E Umum)', code: 'Fase-E'),
-    AcademicMajor(id: 'merdeka_f', name: 'Kurikulum Merdeka (Fase F Peminatan)', code: 'Fase-F'),
+    AcademicMajor(id: 'merdeka_e', name: 'Kurikulum Merdeka (Fase E)', code: 'Fase-E'),
+    AcademicMajor(id: 'merdeka_f', name: 'Kurikulum Merdeka (Fase F)', code: 'Fase-F'),
   ];
 
   @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-  }
-
-  @override
   void dispose() {
-    _tabController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -138,6 +132,16 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
     });
   }
 
+  void _goToStep(int step) {
+    if (step < 0 || step > 2) return;
+    setState(() => _currentStep = step);
+    _pageController.animateToPage(
+      step,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeInOut,
+    );
+  }
+
   Future<void> _handleSave() async {
     if (_rombels.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -201,172 +205,222 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
             color: context.textPrimary,
-            fontSize: 18,
-          ),
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Simpan Master',
-            icon: _isSaving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(color: Nebula.teal, strokeWidth: 2),
-                  )
-                : const Icon(CupertinoIcons.checkmark_seal_fill, color: Nebula.teal, size: 24),
-            onPressed: _isSaving ? null : _handleSave,
-          ),
-          const SizedBox(width: 8),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: context.dividerCol, width: 0.8),
-              ),
-            ),
-            child: TabBar(
-              controller: _tabController,
-              labelColor: Nebula.teal,
-              unselectedLabelColor: context.textSecondary,
-              indicatorColor: Nebula.teal,
-              indicatorWeight: 2.5,
-              labelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
-              unselectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 13),
-              tabs: [
-                const Tab(text: '1. Jenjang & Jurusan'),
-                const Tab(text: '2. Tingkat Kelas'),
-                Tab(text: '3. Master Rombel (${_rombels.length})'),
-              ],
-            ),
+            fontSize: 17,
           ),
         ),
       ),
       body: SafeArea(
-        child: TabBarView(
-          controller: _tabController,
+        child: Column(
           children: [
-            _buildTabSchoolAndMajors(context),
-            _buildTabGradeLevels(context),
-            _buildTabRombels(context),
+            // ── Step Indicator Bar ──────────────────────────────────────────
+            _buildStepIndicator(context),
+            Divider(height: 1, color: context.dividerCol),
+
+            // ── Multi-Step Wizard PageView ──────────────────────────────────
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                physics: const NeverScrollableScrollPhysics(), // Managed via bottom buttons
+                children: [
+                  _buildStep1SchoolAndMajors(context),
+                  _buildStep2GradeLevels(context),
+                  _buildStep3Rombels(context),
+                ],
+              ),
+            ),
+
+            // ── Bottom Wizard Navigation Bar ────────────────────────────────
+            _buildBottomWizardBar(context),
           ],
-        ),
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
-          color: context.cardBg,
-          border: Border(top: BorderSide(color: context.dividerCol, width: 0.5)),
-        ),
-        child: SizedBox(
-          width: double.infinity,
-          height: 48,
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Nebula.teal,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              elevation: 0,
-            ),
-            icon: const Icon(CupertinoIcons.checkmark_circle, size: 18, color: Colors.white),
-            label: Text(
-              _isSaving ? 'Menyimpan Master...' : 'Simpan Master Struktur (${_rombels.length} Rombel)',
-              style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13.5),
-            ),
-            onPressed: _isSaving ? null : _handleSave,
-          ),
         ),
       ),
     );
   }
 
-  // ── Tab 1: Jenjang & Jurusan ────────────────────────────────────────────────
-  Widget _buildTabSchoolAndMajors(BuildContext context) {
+  // ── Step Indicator ──────────────────────────────────────────────────────────
+  Widget _buildStepIndicator(BuildContext context) {
+    final steps = ['Jenjang & Jurusan', 'Tingkat Kelas', 'Master Rombel'];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: List.generate(steps.length, (index) {
+          final isCurrent = _currentStep == index;
+          final isPast = _currentStep > index;
+
+          return Expanded(
+            child: InkWell(
+              onTap: () => _goToStep(index),
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircleAvatar(
+                          radius: 10,
+                          backgroundColor: isCurrent
+                              ? Nebula.teal
+                              : (isPast ? Nebula.teal.withValues(alpha: 0.2) : context.dividerCol),
+                          child: Text(
+                            '${index + 1}',
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: isCurrent
+                                  ? Colors.white
+                                  : (isPast ? Nebula.teal : context.textSecondary),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            steps[index],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
+                              color: isCurrent ? Nebula.teal : context.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      height: 2.5,
+                      decoration: BoxDecoration(
+                        color: isCurrent
+                            ? Nebula.teal
+                            : (isPast ? Nebula.teal.withValues(alpha: 0.4) : Colors.transparent),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  // ── Bottom Wizard Navigation Bar ────────────────────────────────────────────
+  Widget _buildBottomWizardBar(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: context.cardBg,
+        border: Border(top: BorderSide(color: context.dividerCol, width: 0.5)),
+      ),
+      child: Row(
+        children: [
+          // Tombol Kembali
+          if (_currentStep > 0) ...[
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                side: BorderSide(color: context.dividerCol),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () => _goToStep(_currentStep - 1),
+              child: Text(
+                'Kembali',
+                style: GoogleFonts.inter(color: context.textSecondary, fontWeight: FontWeight.w600, fontSize: 13),
+              ),
+            ),
+            const SizedBox(width: 10),
+          ],
+
+          // Tombol Lanjut / Simpan Akhir
+          Expanded(
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Nebula.teal,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
+              ),
+              onPressed: _isSaving
+                  ? null
+                  : () {
+                      if (_currentStep < 2) {
+                        _goToStep(_currentStep + 1);
+                      } else {
+                        _handleSave();
+                      }
+                    },
+              child: Text(
+                _currentStep == 0
+                    ? 'Lanjut: Tingkat Kelas →'
+                    : (_currentStep == 1
+                        ? 'Lanjut: Master Rombel →'
+                        : (_isSaving ? 'Menyimpan...' : 'Simpan Seluruh Struktur (Selesai)')),
+                style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── LANGKAH 1: Jenjang & Jurusan ───────────────────────────────────────────
+  Widget _buildStep1SchoolAndMajors(BuildContext context) {
     final schoolTypes = [
-      {'key': 'smk', 'label': 'SMK / MAK', 'desc': 'Kejuruan (Banyak Jurusan)'},
-      {'key': 'sma', 'label': 'SMA / MA', 'desc': 'Umum / Peminatan MIPA, IPS'},
-      {'key': 'smp', 'label': 'SMP / MTs', 'desc': 'Menengah Pertama (Tanpa Jurusan)'},
-      {'key': 'sd', 'label': 'SD / MI', 'desc': 'Sekolah Dasar (Tanpa Jurusan)'},
+      {'key': 'smk', 'label': 'SMK / MAK', 'desc': 'Kejuruan / Banyak Jurusan'},
+      {'key': 'sma', 'label': 'SMA / MA', 'desc': 'Umum / Peminatan MIPA/IPS'},
+      {'key': 'smp', 'label': 'SMP / MTs', 'desc': 'Tanpa Jurusan (Kelas 7-9)'},
+      {'key': 'sd', 'label': 'SD / MI', 'desc': 'Sekolah Dasar (Kelas 1-6)'},
     ];
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Tipe & Jenjang Sekolah',
-            style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold, color: context.textPrimary),
+            'Langkah 1: Tipe Jenjang & Master Jurusan',
+            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: context.textPrimary),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
-            'Pilih jenjang sekolah untuk memuat preset jurusan dan penamaan rombel secara otomatis.',
-            style: GoogleFonts.inter(fontSize: 12, color: context.textSecondary),
+            'Pilih jenjang sekolah Anda untuk menerapkan format standar secara otomatis.',
+            style: GoogleFonts.inter(fontSize: 11.5, color: context.textSecondary),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
-          // School type selector cards
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: schoolTypes.map((st) {
-              final isSelected = _schoolType == st['key'];
-              return InkWell(
-                onTap: () => _applySchoolTypePreset(st['key']!),
-                borderRadius: BorderRadius.circular(14),
-                child: Container(
-                  width: (MediaQuery.of(context).size.width - 50) / 2,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isSelected ? Nebula.teal.withValues(alpha: 0.1) : context.cardBg,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isSelected ? Nebula.teal : context.dividerCol,
-                      width: isSelected ? 1.5 : 0.8,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            st['label']!,
-                            style: GoogleFonts.inter(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.bold,
-                              color: isSelected ? Nebula.teal : context.textPrimary,
-                            ),
-                          ),
-                          Icon(
-                            isSelected ? CupertinoIcons.check_mark_circled_solid : CupertinoIcons.circle,
-                            color: isSelected ? Nebula.teal : context.textSecondary,
-                            size: 16,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        st['desc']!,
-                        style: GoogleFonts.inter(fontSize: 10.5, color: context.textSecondary),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
+          // Pilihan Jenjang Grid 2 Kolom Ringkas
+          Row(
+            children: [
+              Expanded(child: _buildSchoolTypeCard(context, schoolTypes[0])),
+              const SizedBox(width: 8),
+              Expanded(child: _buildSchoolTypeCard(context, schoolTypes[1])),
+            ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(child: _buildSchoolTypeCard(context, schoolTypes[2])),
+              const SizedBox(width: 8),
+              Expanded(child: _buildSchoolTypeCard(context, schoolTypes[3])),
+            ],
+          ),
+          const SizedBox(height: 16),
 
-          // Toggle sistem jurusan
+          // Toggle Sistem Jurusan (Minimalis)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
               color: context.cardBg,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: context.dividerCol, width: 0.8),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: context.dividerCol, width: 0.6),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -377,135 +431,150 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
                     children: [
                       Text(
                         'Sistem Jurusan / Peminatan',
-                        style: GoogleFonts.inter(fontSize: 13.5, fontWeight: FontWeight.bold, color: context.textPrimary),
+                        style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.bold, color: context.textPrimary),
                       ),
-                      const SizedBox(height: 2),
                       Text(
-                        'Aktifkan jika sekolah memiliki program keahlian/jurusan seperti di SMK/SMA.',
-                        style: GoogleFonts.inter(fontSize: 11, color: context.textSecondary),
+                        'Aktif untuk SMK / SMA peminatan.',
+                        style: GoogleFonts.inter(fontSize: 10.5, color: context.textSecondary),
                       ),
                     ],
                   ),
                 ),
-                CupertinoSwitch(
-                  value: _hasMajors,
-                  activeTrackColor: Nebula.teal,
-                  onChanged: (val) {
-                    setState(() {
-                      _hasMajors = val;
-                      if (!val) {
+                Transform.scale(
+                  scale: 0.85,
+                  child: CupertinoSwitch(
+                    value: _hasMajors,
+                    activeTrackColor: Nebula.teal,
+                    onChanged: (val) {
+                      setState(() {
+                        _hasMajors = val;
                         _autoGenerateRombels();
-                      }
-                    });
-                  },
+                      });
+                    },
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
-          // Daftar Jurusan
+          // Master Jurusan List (Clean & Minimalist, No Oversized Cards)
           if (_hasMajors) ...[
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Master Jurusan (${_majors.length})',
-                  style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold, color: context.textPrimary),
+                  'Daftar Jurusan (${_majors.length})',
+                  style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: context.textPrimary),
                 ),
-                Row(
+                Wrap(
+                  spacing: 4,
                   children: [
-                    TextButton.icon(
-                      icon: const Icon(CupertinoIcons.sparkles, size: 14, color: Nebula.teal),
-                      label: Text('Preset ${_schoolType.toUpperCase()}', style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.bold, color: Nebula.teal)),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
                       onPressed: () {
                         setState(() {
                           _majors = _schoolType == 'sma' ? List.from(_smaPresetMajors) : List.from(_smkPresetMajors);
                           _autoGenerateRombels();
                         });
                       },
+                      child: Text(
+                        'Preset ${_schoolType.toUpperCase()}',
+                        style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: Nebula.teal),
+                      ),
                     ),
-                    const SizedBox(width: 4),
-                    ElevatedButton.icon(
+                    ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Nebula.teal,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                       ),
-                      icon: const Icon(CupertinoIcons.add, size: 14, color: Colors.white),
-                      label: Text('Tambah', style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.bold)),
                       onPressed: () => _showAddOrEditMajorDialog(),
+                      child: Text('+ Tambah', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
+
             if (_majors.isEmpty)
-              const EmptyStateWidget(message: 'Belum ada jurusan yang ditambahkan.')
+              const EmptyStateWidget(message: 'Belum ada jurusan.')
             else
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _majors.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final major = _majors[index];
-                  return Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: context.cardBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: context.dividerCol, width: 0.6),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Nebula.teal.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(8),
+              Container(
+                decoration: BoxDecoration(
+                  color: context.cardBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: context.dividerCol, width: 0.6),
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _majors.length,
+                  separatorBuilder: (_, __) => Divider(height: 1, color: context.dividerCol, indent: 48),
+                  itemBuilder: (context, index) {
+                    final major = _majors[index];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: Nebula.teal.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              major.code,
+                              style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Nebula.teal, fontSize: 11.5),
+                            ),
                           ),
-                          child: Text(
-                            major.code,
-                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Nebula.teal, fontSize: 13),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  major.name,
+                                  style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600, color: context.textPrimary),
+                                ),
+                                Text(
+                                  'Singkatan: ${major.code}',
+                                  style: GoogleFonts.inter(fontSize: 10.5, color: context.textSecondary),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                major.name,
-                                style: GoogleFonts.inter(fontSize: 13.5, fontWeight: FontWeight.bold, color: context.textPrimary),
-                              ),
-                              Text(
-                                'Kode Singkatan: ${major.code}',
-                                style: GoogleFonts.inter(fontSize: 11, color: context.textSecondary),
-                              ),
-                            ],
+                          IconButton(
+                            icon: const Icon(CupertinoIcons.pencil, size: 16, color: Nebula.teal),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                            onPressed: () => _showAddOrEditMajorDialog(existing: major, index: index),
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(CupertinoIcons.pencil, size: 18, color: Nebula.teal),
-                          onPressed: () => _showAddOrEditMajorDialog(existing: major, index: index),
-                        ),
-                        IconButton(
-                          icon: const Icon(CupertinoIcons.trash, size: 18, color: Nebula.rose),
-                          onPressed: () {
-                            setState(() {
-                              _majors.removeAt(index);
-                              _autoGenerateRombels();
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                          IconButton(
+                            icon: const Icon(CupertinoIcons.trash, size: 16, color: Nebula.rose),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                            onPressed: () {
+                              setState(() {
+                                _majors.removeAt(index);
+                                _autoGenerateRombels();
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
           ],
         ],
@@ -513,23 +582,72 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
     );
   }
 
-  // ── Tab 2: Tingkat Kelas ────────────────────────────────────────────────────
-  Widget _buildTabGradeLevels(BuildContext context) {
+  Widget _buildSchoolTypeCard(BuildContext context, Map<String, String> st) {
+    final isSelected = _schoolType == st['key'];
+    return InkWell(
+      onTap: () => _applySchoolTypePreset(st['key']!),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Nebula.teal.withValues(alpha: 0.1) : context.cardBg,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? Nebula.teal : context.dividerCol,
+            width: isSelected ? 1.5 : 0.6,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  st['label']!,
+                  style: GoogleFonts.inter(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.bold,
+                    color: isSelected ? Nebula.teal : context.textPrimary,
+                  ),
+                ),
+                Icon(
+                  isSelected ? CupertinoIcons.check_mark_circled_solid : CupertinoIcons.circle,
+                  color: isSelected ? Nebula.teal : context.textSecondary,
+                  size: 14,
+                ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              st['desc']!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(fontSize: 9.5, color: context.textSecondary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── LANGKAH 2: Tingkat Kelas ───────────────────────────────────────────────
+  Widget _buildStep2GradeLevels(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Tingkat Kelas yang Aktif',
-            style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold, color: context.textPrimary),
+            'Langkah 2: Tingkat Kelas yang Digunakan',
+            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: context.textPrimary),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
-            'Kelola tingkatan kelas yang digunakan di sekolah (misal: X, XI, XII atau 7, 8, 9).',
-            style: GoogleFonts.inter(fontSize: 12, color: context.textSecondary),
+            'Tentukan format penamaan tingkat kelas yang berlaku di sekolah.',
+            style: GoogleFonts.inter(fontSize: 11.5, color: context.textSecondary),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // Pilihan Format Cepat
           Row(
@@ -537,8 +655,8 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
               Expanded(
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     side: BorderSide(color: context.dividerCol),
                   ),
                   onPressed: () {
@@ -547,15 +665,15 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
                       _autoGenerateRombels();
                     });
                   },
-                  child: Text('Romawi (X, XI, XII)', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Nebula.teal)),
+                  child: Text('Romawi (X, XI, XII)', style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.bold, color: Nebula.teal)),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     side: BorderSide(color: context.dividerCol),
                   ),
                   onPressed: () {
@@ -564,24 +682,29 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
                       _autoGenerateRombels();
                     });
                   },
-                  child: Text('Angka (10, 11, 12)', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Nebula.teal)),
+                  child: Text('Angka (10, 11, 12)', style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.bold, color: Nebula.teal)),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
-          // Chip List Tingkat
+          // Daftar Tingkat Aktif
+          Text(
+            'Tingkat Aktif (${_gradeLevels.length})',
+            style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: context.textPrimary),
+          ),
+          const SizedBox(height: 8),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: 6,
+            runSpacing: 6,
             children: [
               ..._gradeLevels.map((grade) {
                 return Chip(
                   backgroundColor: Nebula.teal.withValues(alpha: 0.12),
                   side: BorderSide(color: Nebula.teal.withValues(alpha: 0.3)),
-                  label: Text('Kelas $grade', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Nebula.teal, fontSize: 13)),
-                  deleteIcon: const Icon(CupertinoIcons.xmark, size: 14, color: Nebula.rose),
+                  label: Text('Kelas $grade', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Nebula.teal, fontSize: 12)),
+                  deleteIcon: const Icon(CupertinoIcons.xmark, size: 12, color: Nebula.rose),
                   onDeleted: () {
                     if (_gradeLevels.length <= 1) return;
                     setState(() {
@@ -592,8 +715,8 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
                 );
               }),
               ActionChip(
-                avatar: const Icon(CupertinoIcons.add, size: 14, color: Nebula.teal),
-                label: Text('Tambah Tingkat', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Nebula.teal, fontSize: 12)),
+                avatar: const Icon(CupertinoIcons.add, size: 12, color: Nebula.teal),
+                label: Text('+ Tingkat Baru', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Nebula.teal, fontSize: 11.5)),
                 onPressed: () => _showAddGradeDialog(),
               ),
             ],
@@ -603,134 +726,157 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
     );
   }
 
-  // ── Tab 3: Master Rombel ────────────────────────────────────────────────────
-  Widget _buildTabRombels(BuildContext context) {
+  // ── LANGKAH 3: Master Rombel & Generator ───────────────────────────────────
+  Widget _buildStep3Rombels(BuildContext context) {
+    // Kelompokkan rombel berdasarkan tingkat kelas agar tertata rapi
+    final Map<String, List<String>> grouped = {};
+    for (final grade in _gradeLevels) {
+      grouped[grade] = _rombels.where((r) => r.startsWith(grade)).toList();
+    }
+    // Sisa rombel kustom yang tidak diawali nama tingkat standar
+    final customRombels = _rombels.where((r) => !_gradeLevels.any((g) => r.startsWith(g))).toList();
+    if (customRombels.isNotEmpty) {
+      grouped['Lainnya'] = customRombels;
+    }
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Smart Batch Generator Banner
+          Text(
+            'Langkah 3: Master Rombel (Kelas Paralel)',
+            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: context.textPrimary),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Rombel yang terbentuk di sini otomatis digunakan di form pendaftaran siswa dan filter.',
+            style: GoogleFonts.inter(fontSize: 11.5, color: context.textSecondary),
+          ),
+          const SizedBox(height: 12),
+
+          // Generator Ringkas & Bersih
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Nebula.teal.withValues(alpha: 0.15), Nebula.tealDark.withValues(alpha: 0.08)],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Nebula.teal.withValues(alpha: 0.3)),
+              color: Nebula.teal.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Nebula.teal.withValues(alpha: 0.25)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Icon(CupertinoIcons.wand_rays, color: Nebula.teal, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Smart Batch Rombel Generator',
-                      style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: context.textPrimary),
+                    Row(
+                      children: [
+                        const Icon(CupertinoIcons.wand_rays, color: Nebula.teal, size: 16),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Generator Otomatis',
+                          style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.bold, color: context.textPrimary),
+                        ),
+                      ],
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Nebula.teal,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      ),
+                      onPressed: () => _showAddCustomRombelDialog(),
+                      child: Text('+ Kustom', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  'Buat seluruh rombel otomatis berdasarkan kombinasi tingkat (${_gradeLevels.join(', ')}) dan jurusan aktif (${_majors.map((m) => m.code).join(', ')}).',
-                  style: GoogleFonts.inter(fontSize: 11.5, color: context.textSecondary),
-                ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Row(
                   children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          side: const BorderSide(color: Nebula.teal),
+                    Text('Jumlah Paralel: ', style: GoogleFonts.inter(fontSize: 11, color: context.textSecondary)),
+                    const SizedBox(width: 4),
+                    ...[1, 2, 3, 4].map((count) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: InkWell(
+                          onTap: () => _autoGenerateRombels(countPerMajor: count),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: context.cardBg,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Nebula.teal, width: 0.8),
+                            ),
+                            child: Text('$count', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: Nebula.teal)),
+                          ),
                         ),
-                        onPressed: () => _autoGenerateRombels(countPerMajor: 2),
-                        child: Text('2 Rombel / Jurusan', style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.bold, color: Nebula.teal)),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          side: const BorderSide(color: Nebula.teal),
-                        ),
-                        onPressed: () => _autoGenerateRombels(countPerMajor: 3),
-                        child: Text('3 Rombel / Jurusan', style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.bold, color: Nebula.teal)),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          side: const BorderSide(color: Nebula.teal),
-                        ),
-                        onPressed: () => _autoGenerateRombels(countPerMajor: 4),
-                        child: Text('4 Rombel / Jurusan', style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.bold, color: Nebula.teal)),
-                      ),
-                    ),
+                      );
+                    }),
                   ],
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
-          // Header Rombel
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Daftar Rombel Aktif (${_rombels.length})',
-                style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold, color: context.textPrimary),
-              ),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Nebula.teal,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  elevation: 0,
-                ),
-                icon: const Icon(CupertinoIcons.add, size: 14, color: Colors.white),
-                label: Text('Tambah Manual', style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.bold)),
-                onPressed: () => _showAddCustomRombelDialog(),
-              ),
-            ],
+          // Organized Rombels by Grade
+          Text(
+            'Total Rombel Terdaftar (${_rombels.length})',
+            style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: context.textPrimary),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
-          // Rombel Grid
           if (_rombels.isEmpty)
-            const EmptyStateWidget(message: 'Belum ada rombel. Gunakan generator atau tambah manual.')
+            const EmptyStateWidget(message: 'Belum ada rombel. Klik generator di atas.')
           else
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _rombels.map((rombel) {
-                return Chip(
-                  backgroundColor: context.cardBg,
-                  side: BorderSide(color: context.dividerCol, width: 0.8),
-                  label: Text(
-                    rombel,
-                    style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.textPrimary, fontSize: 12),
-                  ),
-                  deleteIcon: const Icon(CupertinoIcons.xmark_circle_fill, size: 16, color: Nebula.rose),
-                  onDeleted: () {
-                    setState(() {
-                      _rombels.remove(rombel);
-                    });
-                  },
-                );
-              }).toList(),
-            ),
+            ...grouped.entries.map((entry) {
+              if (entry.value.isEmpty) return const SizedBox.shrink();
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: context.cardBg,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: context.dividerCol, width: 0.6),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Tingkat ${entry.key} (${entry.value.length})',
+                      style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.bold, color: Nebula.teal),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: entry.value.map((rombel) {
+                        return Chip(
+                          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          backgroundColor: context.surfaceBg,
+                          side: BorderSide(color: context.dividerCol, width: 0.6),
+                          label: Text(
+                            rombel,
+                            style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: context.textPrimary, fontSize: 11),
+                          ),
+                          deleteIcon: const Icon(CupertinoIcons.xmark, size: 11, color: Nebula.rose),
+                          onDeleted: () {
+                            setState(() {
+                              _rombels.remove(rombel);
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+              );
+            }),
         ],
       ),
     );
@@ -759,33 +905,35 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
             children: [
               Text(
                 isEdit ? 'Edit Jurusan' : 'Tambah Jurusan Baru',
-                style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold, color: ctx.textPrimary),
+                style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold, color: ctx.textPrimary),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               TextField(
                 controller: nameCtrl,
                 style: GoogleFonts.inter(fontSize: 13, color: ctx.textPrimary),
                 decoration: InputDecoration(
-                  labelText: 'Nama Lengkap Jurusan (Contoh: Rekayasa Perangkat Lunak)',
-                  labelStyle: GoogleFonts.inter(fontSize: 12),
+                  labelText: 'Nama Lengkap (Contoh: Rekayasa Perangkat Lunak)',
+                  labelStyle: GoogleFonts.inter(fontSize: 11.5),
                   filled: true,
                   fillColor: ctx.surfaceBg,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               TextField(
                 controller: codeCtrl,
                 style: GoogleFonts.inter(fontSize: 13, color: ctx.textPrimary),
                 decoration: InputDecoration(
-                  labelText: 'Kode / Singkatan (Contoh: RPL)',
-                  labelStyle: GoogleFonts.inter(fontSize: 12),
+                  labelText: 'Kode Singkatan (Contoh: RPL)',
+                  labelStyle: GoogleFonts.inter(fontSize: 11.5),
                   filled: true,
                   fillColor: ctx.surfaceBg,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
@@ -794,7 +942,7 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
                       child: const Text('Batal'),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(backgroundColor: Nebula.teal, foregroundColor: Colors.white),
@@ -847,24 +995,25 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Tambah Tingkat Kelas', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold, color: ctx.textPrimary)),
-              const SizedBox(height: 14),
+              Text('Tambah Tingkat Kelas', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold, color: ctx.textPrimary)),
+              const SizedBox(height: 12),
               TextField(
                 controller: gradeCtrl,
                 style: GoogleFonts.inter(fontSize: 13, color: ctx.textPrimary),
                 decoration: InputDecoration(
                   labelText: 'Nama Tingkat (Contoh: XIII / 10 / VII)',
-                  labelStyle: GoogleFonts.inter(fontSize: 12),
+                  labelStyle: GoogleFonts.inter(fontSize: 11.5),
                   filled: true,
                   fillColor: ctx.surfaceBg,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               Row(
                 children: [
                   Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal'))),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(backgroundColor: Nebula.teal, foregroundColor: Colors.white),
@@ -907,24 +1056,25 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Tambah Rombel Kustom', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold, color: ctx.textPrimary)),
-              const SizedBox(height: 14),
+              Text('Tambah Rombel Kustom', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold, color: ctx.textPrimary)),
+              const SizedBox(height: 12),
               TextField(
                 controller: rombelCtrl,
                 style: GoogleFonts.inter(fontSize: 13, color: ctx.textPrimary),
                 decoration: InputDecoration(
                   labelText: 'Nama Rombel (Contoh: XII RPL Unggulan / X-A)',
-                  labelStyle: GoogleFonts.inter(fontSize: 12),
+                  labelStyle: GoogleFonts.inter(fontSize: 11.5),
                   filled: true,
                   fillColor: ctx.surfaceBg,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               Row(
                 children: [
                   Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal'))),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(backgroundColor: Nebula.teal, foregroundColor: Colors.white),
