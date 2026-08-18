@@ -239,10 +239,10 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
 
   // ── Step Indicator ──────────────────────────────────────────────────────────
   Widget _buildStepIndicator(BuildContext context) {
-    final steps = ['Jenjang & Jurusan', 'Tingkat Kelas', 'Master Rombel'];
+    final steps = ['Jurusan', 'Tingkat', 'Rombel'];
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: List.generate(steps.length, (index) {
           final isCurrent = _currentStep == index;
@@ -253,21 +253,22 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
               onTap: () => _goToStep(index),
               borderRadius: BorderRadius.circular(8),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
                 child: Column(
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         CircleAvatar(
-                          radius: 10,
+                          radius: 9,
                           backgroundColor: isCurrent
                               ? Nebula.teal
                               : (isPast ? Nebula.teal.withValues(alpha: 0.2) : context.dividerCol),
                           child: Text(
                             '${index + 1}',
                             style: GoogleFonts.inter(
-                              fontSize: 10,
+                              fontSize: 9.5,
                               fontWeight: FontWeight.bold,
                               color: isCurrent
                                   ? Colors.white
@@ -275,7 +276,7 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
                             ),
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 4),
                         Flexible(
                           child: Text(
                             steps[index],
@@ -290,7 +291,7 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 5),
                     Container(
                       height: 2.5,
                       decoration: BoxDecoration(
@@ -726,7 +727,7 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
     );
   }
 
-  // ── LANGKAH 3: Master Rombel & Generator ───────────────────────────────────
+  // ── LANGKAH 3: Master Rombel ────────────────────────────────────────────────
   Widget _buildStep3Rombels(BuildContext context) {
     // Kelompokkan rombel berdasarkan tingkat kelas agar tertata rapi
     final Map<String, List<String>> grouped = {};
@@ -745,93 +746,44 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Langkah 3: Master Rombel (Kelas Paralel)',
+            'Langkah 3: Master Rombel (Kelas)',
             style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: context.textPrimary),
           ),
           const SizedBox(height: 2),
           Text(
-            'Rombel yang terbentuk di sini otomatis digunakan di form pendaftaran siswa dan filter.',
+            'Daftar ruang kelas yang aktif di sekolah. Anda dapat menambah atau menghapus kelas sesuai kebutuhan.',
             style: GoogleFonts.inter(fontSize: 11.5, color: context.textSecondary),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
-          // Generator Ringkas & Bersih
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Nebula.teal.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Nebula.teal.withValues(alpha: 0.25)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(CupertinoIcons.wand_rays, color: Nebula.teal, size: 16),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Generator Otomatis',
-                          style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.bold, color: context.textPrimary),
-                        ),
-                      ],
-                    ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Nebula.teal,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                      ),
-                      onPressed: () => _showAddCustomRombelDialog(),
-                      child: Text('+ Kustom', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold)),
-                    ),
-                  ],
+          // Header Bar with Clean Add Button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Daftar Rombel / Kelas (${_rombels.length})',
+                style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: context.textPrimary),
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Nebula.teal,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Text('Jumlah Paralel: ', style: GoogleFonts.inter(fontSize: 11, color: context.textSecondary)),
-                    const SizedBox(width: 4),
-                    ...[1, 2, 3, 4].map((count) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: InkWell(
-                          onTap: () => _autoGenerateRombels(countPerMajor: count),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: context.cardBg,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: Nebula.teal, width: 0.8),
-                            ),
-                            child: Text('$count', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: Nebula.teal)),
-                          ),
-                        ),
-                      );
-                    }),
-                  ],
-                ),
-              ],
-            ),
+                icon: const Icon(CupertinoIcons.plus, size: 13, color: Colors.white),
+                label: Text('Tambah Kelas', style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                onPressed: () => _showAddRombelDialog(),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-
-          // Organized Rombels by Grade
-          Text(
-            'Total Rombel Terdaftar (${_rombels.length})',
-            style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: context.textPrimary),
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
 
           if (_rombels.isEmpty)
-            const EmptyStateWidget(message: 'Belum ada rombel. Klik generator di atas.')
+            const EmptyStateWidget(message: 'Belum ada rombel. Klik "+ Tambah Kelas" untuk menambahkan.')
           else
             ...grouped.entries.map((entry) {
               if (entry.value.isEmpty) return const SizedBox.shrink();
@@ -1039,7 +991,7 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
     );
   }
 
-  void _showAddCustomRombelDialog() {
+  void _showAddRombelDialog() {
     final rombelCtrl = TextEditingController();
     showDialog(
       context: context,
@@ -1056,14 +1008,17 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Tambah Rombel Kustom', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold, color: ctx.textPrimary)),
+              Text('Tambah Rombel / Kelas Baru', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold, color: ctx.textPrimary)),
               const SizedBox(height: 12),
               TextField(
                 controller: rombelCtrl,
+                autofocus: true,
                 style: GoogleFonts.inter(fontSize: 13, color: ctx.textPrimary),
                 decoration: InputDecoration(
-                  labelText: 'Nama Rombel (Contoh: XII RPL Unggulan / X-A)',
+                  labelText: 'Nama Kelas',
+                  hintText: 'Contoh: X RPL 1, 7-A, atau XII MIPA 2',
                   labelStyle: GoogleFonts.inter(fontSize: 11.5),
+                  hintStyle: GoogleFonts.inter(fontSize: 11.5, color: ctx.textSecondary.withValues(alpha: 0.6)),
                   filled: true,
                   fillColor: ctx.surfaceBg,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
