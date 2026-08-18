@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/theme/hallmark_color_scheme.dart';
 import 'package:kantin_digital/core/theme/hallmark_typography.dart';
 import 'package:kantin_digital/core/models/order_message.dart';
@@ -374,6 +375,7 @@ class _PosOrderChatSheetState extends ConsumerState<PosOrderChatSheet> {
                     final isMe = msg.isFromCurrentSession ||
                         msg.senderRole == 'canteen_operator' ||
                         msg.senderRole == 'petugas_kantin';
+                    final bool isAdminSender = msg.isAdmin || msg.senderRole == 'admin' || msg.senderRole == 'petugas_keuangan';
                     final timeStr = AppDateFormatter.formatTime(msg.createdAt);
 
                     return Align(
@@ -402,6 +404,32 @@ class _PosOrderChatSheetState extends ConsumerState<PosOrderChatSheet> {
                           crossAxisAlignment:
                               isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                           children: [
+                            if (isAdminSender) ...[
+                              Container(
+                                margin: const EdgeInsets.only(bottom: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.amber.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: Colors.amber.withValues(alpha: 0.4), width: 0.5),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.verified_user_rounded, size: 10, color: Colors.amber),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      'PETUGAS KEUANGAN / ADMIN',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.amber[900] ?? Colors.amber,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                             Text(
                               msg.message,
                               style: HallmarkTypography.bodyMain(

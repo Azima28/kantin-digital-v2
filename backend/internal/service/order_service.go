@@ -92,8 +92,8 @@ func (s *OrderService) SendMessage(ctx context.Context, msg *domain.OrderMessage
 		return nil, err
 	}
 
-	// Verify participant authorization strictly
-	if callerRole != domain.RoleSuperAdmin && callerRole != domain.RoleAdmin {
+	// Verify participant authorization strictly (Admins & Finance Officers are universally authorized)
+	if callerRole != domain.RoleSuperAdmin && callerRole != domain.RoleAdmin && callerRole != domain.RolePetugasKeuangan {
 		isParticipant := (callerRole == domain.RoleStudent && strings.EqualFold(msg.SenderID, order.StudentID)) ||
 			(callerRole == domain.RolePetugasKantin && order.OperatorID != nil && strings.EqualFold(msg.SenderID, *order.OperatorID))
 		if !isParticipant {
@@ -111,8 +111,8 @@ func (s *OrderService) GetMessages(ctx context.Context, orderID, callerUserID st
 		return nil, err
 	}
 
-	// Verify participant authorization strictly
-	if callerRole != domain.RoleSuperAdmin && callerRole != domain.RoleAdmin {
+	// Verify participant authorization strictly (Admins & Finance Officers are universally authorized)
+	if callerRole != domain.RoleSuperAdmin && callerRole != domain.RoleAdmin && callerRole != domain.RolePetugasKeuangan {
 		isParticipant := (callerRole == domain.RoleStudent && strings.EqualFold(callerUserID, order.StudentID)) ||
 			(callerRole == domain.RolePetugasKantin && order.OperatorID != nil && strings.EqualFold(callerUserID, *order.OperatorID))
 		if !isParticipant {

@@ -29,7 +29,7 @@ class OrderMessage {
     final rawRole = json['sender_role']?.toString() ?? 'student';
     final normalizedRole = (rawRole == 'petugas_kantin' || rawRole == 'canteen_operator' || rawRole == 'merchant')
         ? 'canteen_operator'
-        : 'student';
+        : (rawRole == 'admin' || rawRole == 'petugas_keuangan' || rawRole == 'super_admin' ? 'admin' : 'student');
 
     return OrderMessage(
       id: json['id']?.toString() ?? '',
@@ -60,4 +60,7 @@ class OrderMessage {
   }
 
   bool get isFromMe => isFromCurrentSession;
+  bool get isAdmin => senderRole == 'admin' || senderRole == 'petugas_keuangan' || senderRole == 'super_admin';
+  bool get isCanteen => senderRole == 'canteen_operator' || senderRole == 'petugas_kantin';
+  bool get isStudent => senderRole == 'student';
 }

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,15 +7,14 @@ import 'package:intl/intl.dart';
 
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
-import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/services/pdf_service.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
+import 'package:kantin_digital/features/kantin/models/order_item.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
+import 'package:kantin_digital/features/siswa/widgets/order_chat_sheet.dart';
 
-/// Shows the transaction detail bottom sheet.
-///
-/// This can be called as a top-level function or wrapped in a widget class.
+/// Shows the rich transaction detail bottom sheet with product images, receipt PDF, and order chat.
 void showTransactionDetailSheet(
     BuildContext context, WidgetRef ref, OperatorTransaction tx) {
   final String txId = tx.id;
@@ -24,12 +24,15 @@ void showTransactionDetailSheet(
       ? DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(tx.createdAt!.toLocal())
       : '-';
   final String canteenName = tx.canteenName ?? 'Kantin';
+  final String studentName = tx.studentName ?? 'Siswa';
+  final String status = tx.status?.toString() ?? 'success';
+  final bool isAppOrder = tx.purchaseMethod == 'app' || tx.purchaseMethod == 'app_order';
 
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
     backgroundColor: context.cardBg,
     builder: (context) {
@@ -37,174 +40,233 @@ void showTransactionDetailSheet(
         builder: (context, ref, child) {
           final itemsAsync = ref.watch(transactionDetailsProvider(txId));
 
-          return SingleChildScrollView(
-            child: Container(
-              padding: EdgeInsets.only(
-                left: 24,
-                right: 24,
-                top: 16,
-                bottom: MediaQuery.of(context).padding.bottom + 16,
-              ),
+          return Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.88,
+            ),
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 14,
+              bottom: MediaQuery.of(context).padding.bottom + 16,
+            ),
+            child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // iOS Grab Handle
+                  // Grab Handle
                   Center(
                     child: Container(
-                      width: 36,
-                      height: 5,
+                      width: 38,
+                      height: 4,
                       decoration: BoxDecoration(
-                        color: Colors.grey[300],
+                        color: Colors.grey.withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(999),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   Center(
                     child: Text(
-                      '${AppStrings.titleDetail} Transaksi',
+                      'Rincian Transaksi',
                       style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
                         color: context.textPrimary,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
 
-                  // Success Centered Checkmark/Plus
-                  Center(
-                    child: Column(
+                  // Header Badge Card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: (type == 'topup' ? Nebula.teal : (status == 'refunded' ? Nebula.rose : Nebula.teal)).withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: (type == 'topup' ? Nebula.teal : (status == 'refunded' ? Nebula.rose : Nebula.teal)).withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Row(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Nebula.teal.withValues(alpha: 0.1),
-                          ),
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundColor: (type == 'topup' ? Nebula.teal : (status == 'refunded' ? Nebula.rose : Nebula.teal)).withValues(alpha: 0.15),
                           child: Icon(
                             type == 'topup'
-                                ? CupertinoIcons.square_arrow_down
-                                : CupertinoIcons.check_mark_circled,
-                            color: Nebula.teal,
-                            size: 36,
+                                ? CupertinoIcons.arrow_up_circle
+                                : (status == 'refunded' ? CupertinoIcons.arrow_uturn_left_circle : CupertinoIcons.check_mark_circled),
+                            color: type == 'topup' ? Nebula.teal : (status == 'refunded' ? Nebula.rose : Nebula.teal),
+                            size: 24,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          type == 'topup' ? 'Top-Up Saldo Berhasil' : 'Pembayaran Berhasil',
-                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                type == 'topup'
+                                    ? 'Top-Up Saldo Berhasil'
+                                    : (status == 'refunded' ? 'Pembayaran Dikembalikan (Refund)' : 'Pembayaran Berhasil'),
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: context.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${isAppOrder ? "Pesanan Aplikasi" : (type == "topup" ? "Setoran Tunai" : "Tap Kartu RFID")} • $timeStr',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11.5,
+                                  color: context.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 18),
 
-                  // Details
-                  _buildDataRow(context, 'ID Transaksi', txId.substring(0, 10).toUpperCase()),
-                  const Divider(height: 20),
-                  _buildDataRow(context, 'Waktu', timeStr),
-                  const Divider(height: 20),
-                  _buildDataRow(
-                    context,
-                    'Merchant / Lokasi',
-                    type == 'topup' ? 'Koperasi Sekolah' : canteenName,
-                  ),
-                  const Divider(height: 20),
-                  _buildDataRow(
-                    context,
-                    'Metode Transaksi',
-                    type == 'topup'
-                        ? 'Kasir Keuangan'
-                        : tx.purchaseMethodDisplay,
-                  ),
+                  // Metadata Info Section
+                  _buildDataRow(context, 'ID Transaksi', '#${txId.length > 8 ? txId.substring(0, 8).toUpperCase() : txId}'),
+                  const Divider(height: 18, thickness: 0.5),
+                  _buildDataRow(context, 'Nama Siswa', studentName),
+                  const Divider(height: 18, thickness: 0.5),
+                  _buildDataRow(context, 'Merchant / Stan', type == 'topup' ? 'Koperasi / Petugas Keuangan' : canteenName),
+                  const Divider(height: 18, thickness: 0.5),
+                  _buildDataRow(context, 'Metode Pembayaran', type == 'topup' ? 'Kasir Tunai' : tx.purchaseMethodDisplay),
 
                   if (type == 'purchase') ...[
-                    const Divider(height: 20),
+                    const Divider(height: 20, thickness: 0.5),
                     Text(
-                      'Rincian Pembelian:',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
+                      'Rincian Menu & Produk:',
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.bold,
                         fontSize: 13,
                         color: context.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
                     itemsAsync.when(
                       data: (items) {
-                        return Container(
-                          constraints: const BoxConstraints(maxHeight: 120),
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: items.length,
-                            itemBuilder: (context, i) {
-                              final item = items[i];
-                              final String name = item.productName;
-                              final int itemPrice = item.unitPrice;
-                              final int qty = item.quantity;
+                        if (items.isEmpty) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Text(
+                              'Detail produk kantin tercatat dalam sistem.',
+                              style: GoogleFonts.inter(fontSize: 12, color: context.textSecondary),
+                            ),
+                          );
+                        }
 
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 4),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      '$qty x  $name',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: context.textPrimary,
+                        return Column(
+                          children: items.map((item) {
+                            final String name = item.productName;
+                            final int itemPrice = item.unitPrice;
+                            final int qty = item.quantity;
+                            final String? imgUrl = item.imageUrl;
+
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: context.surfaceBg,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: context.dividerCol, width: 0.5),
+                              ),
+                              child: Row(
+                                children: [
+                                  if (imgUrl != null && imgUrl.isNotEmpty)
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: CachedNetworkImage(
+                                        imageUrl: imgUrl,
+                                        width: 40,
+                                        height: 40,
+                                        fit: BoxFit.cover,
+                                        errorWidget: (_, __, ___) => Container(
+                                          width: 40,
+                                          height: 40,
+                                          color: Nebula.teal.withValues(alpha: 0.08),
+                                          child: const Icon(Icons.restaurant, size: 20, color: Nebula.teal),
+                                        ),
                                       ),
-                                    ),
-                                    Text(
-                                      CurrencyFormatter.format(itemPrice * qty),
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                        color: context.textPrimary,
+                                    )
+                                  else
+                                    Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        color: Nebula.teal.withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
+                                      child: const Icon(Icons.fastfood_rounded, size: 20, color: Nebula.teal),
                                     ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          name,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.inter(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: context.textPrimary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          '$qty x ${CurrencyFormatter.format(itemPrice)}',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 11.5,
+                                            color: context.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    CurrencyFormatter.format(itemPrice * qty),
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: context.textPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
                         );
                       },
-                      loading: () => const Center(child: CupertinoActivityIndicator()),
-                      error: (err, stack) => Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '${AppStrings.labelFailed} memuat detail barang',
-                            style: TextStyle(color: context.errorColor, fontSize: 11),
-                          ),
-                          const SizedBox(height: 4),
-                          TextButton(
-                            onPressed: () => ref.invalidate(transactionDetailsProvider(txId)),
-                            child: const Text(
-                              AppStrings.buttonRetry,
-                              style: TextStyle(fontSize: 11),
-                            ),
-                          ),
-                        ],
-                      ),
+                      loading: () => const Center(child: Padding(padding: EdgeInsets.all(12), child: CupertinoActivityIndicator())),
+                      error: (_, __) => const SizedBox(),
                     ),
                   ],
 
-                  const Divider(height: 24),
+                  const Divider(height: 22, thickness: 0.5),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        type == 'topup' ? 'Total Masuk Saldo:' : 'Total Potong Saldo:',
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: context.textPrimary),
+                        type == 'topup' ? 'Total Masuk Saldo:' : 'Total Tagihan:',
+                        style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: context.textPrimary),
                       ),
                       Text(
                         CurrencyFormatter.format(amount),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 17,
                           color: type == 'topup' ? Nebula.teal : context.textPrimary,
                         ),
                       ),
@@ -212,100 +274,110 @@ void showTransactionDetailSheet(
                   ),
                   const SizedBox(height: 24),
 
-                  // PDF Download button
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Nebula.teal),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(AppStrings.successPdfDownloaded),
-                            backgroundColor: Nebula.teal,
-                            behavior: SnackBarBehavior.floating,
+                  // Actions: Print PDF Receipt & Share
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Nebula.teal),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            padding: const EdgeInsets.symmetric(vertical: 13),
                           ),
-                        );
-                        Navigator.pop(context);
-                      },
-                      child: const Text(
-                        'Simpan Struk PDF',
-                        style: TextStyle(
-                          color: Nebula.teal,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
+                          icon: const Icon(CupertinoIcons.doc_text, size: 16, color: Nebula.teal),
+                          label: Text(
+                            'Lihat Nota / PDF',
+                            style: GoogleFonts.inter(color: Nebula.teal, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                          onPressed: () async {
+                            final List<Map<String, dynamic>> itemsForPdf =
+                                (itemsAsync.asData?.value ?? []).map((item) => {
+                                      'product_name': item.productName,
+                                      'quantity': item.quantity,
+                                      'unit_price': item.unitPrice,
+                                    }).toList();
 
-                  // PDF Share button
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Nebula.teal),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      onPressed: () async {
-                        Navigator.pop(context);
-                        try {
-                          final List<Map<String, dynamic>> itemsForPdf =
-                              (itemsAsync.asData?.value ?? []).map((item) => {
-                                    'product_name': item.productName,
-                                    'quantity': item.quantity,
-                                    'unit_price': item.unitPrice,
-                                  }).toList();
-
-                          await PdfService.shareReceipt(
-                            transactionId: txId,
-                            type: type,
-                            amount: amount,
-                            studentName: tx.studentName ?? AppStrings.adminStudents,
-                            canteenOrLocation:
-                                type == 'topup' ? 'QRIS / Koperasi' : canteenName,
-                            dateTime: tx.createdAt ?? DateTime.now(),
-                            items: itemsForPdf,
-                          );
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('${AppStrings.labelFailed} membuat struk PDF: $e'),
-                                backgroundColor: context.errorColor,
-                                behavior: SnackBarBehavior.floating,
-                              ),
+                            await PdfService.showReceiptPreview(
+                              transactionId: txId,
+                              type: type,
+                              amount: amount,
+                              studentName: studentName,
+                              canteenOrLocation: type == 'topup' ? 'Koperasi / Petugas Keuangan' : canteenName,
+                              dateTime: tx.createdAt ?? DateTime.now(),
+                              items: itemsForPdf,
                             );
-                          }
-                        }
-                      },
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(CupertinoIcons.share, color: Nebula.teal, size: 16),
-                          SizedBox(width: 8),
-                          Text(
-                            'Bagikan Struk PDF',
-                            style: TextStyle(
-                              color: Nebula.teal,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                            ),
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Nebula.teal),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            padding: const EdgeInsets.symmetric(vertical: 13),
                           ),
-                        ],
+                          icon: const Icon(CupertinoIcons.share, size: 16, color: Nebula.teal),
+                          label: Text(
+                            'Bagikan Struk',
+                            style: GoogleFonts.inter(color: Nebula.teal, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                          onPressed: () async {
+                            final List<Map<String, dynamic>> itemsForPdf =
+                                (itemsAsync.asData?.value ?? []).map((item) => {
+                                      'product_name': item.productName,
+                                      'quantity': item.quantity,
+                                      'unit_price': item.unitPrice,
+                                    }).toList();
+
+                            await PdfService.shareReceipt(
+                              transactionId: txId,
+                              type: type,
+                              amount: amount,
+                              studentName: studentName,
+                              canteenOrLocation: type == 'topup' ? 'Koperasi / Petugas Keuangan' : canteenName,
+                              dateTime: tx.createdAt ?? DateTime.now(),
+                              items: itemsForPdf,
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Chat Section if online order
+                  if (isAppOrder) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Nebula.teal,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          elevation: 0,
+                        ),
+                        icon: const Icon(CupertinoIcons.chat_bubble_2_fill, color: Colors.white, size: 18),
+                        label: Text(
+                          'Diskusi & Chat Pesanan (Admin Verified)',
+                          style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          final dummyOrder = OrderItem(
+                            id: txId,
+                            studentId: tx.studentId ?? '',
+                            studentName: studentName,
+                            time: timeStr,
+                            status: status,
+                            items: const [],
+                            totalAmount: amount,
+                          );
+                          OrderChatSheet.show(context, order: dummyOrder);
+                        },
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                  ],
                 ],
               ),
             ),
@@ -316,15 +388,19 @@ void showTransactionDetailSheet(
   );
 }
 
-/// Internal helper — builds a label + value row.
 Widget _buildDataRow(BuildContext context, String label, String value) {
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
-      Text(label, style: TextStyle(color: context.textSecondary, fontSize: 13)),
-      Text(
-        value,
-        style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+      Text(label, style: GoogleFonts.inter(color: context.textSecondary, fontSize: 12.5)),
+      const SizedBox(width: 8),
+      Flexible(
+        child: Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12.5, color: context.textPrimary),
+        ),
       ),
     ],
   );

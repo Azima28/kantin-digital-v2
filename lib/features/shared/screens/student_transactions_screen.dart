@@ -1,4 +1,5 @@
-﻿import 'package:flutter/cupertino.dart';
+﻿import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,9 +8,11 @@ import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/core/utils/app_date_formatter.dart';
+import 'package:kantin_digital/features/siswa/widgets/siswa_transaction_detail_sheet.dart';
 
 class StudentTransactionsScreen extends ConsumerStatefulWidget {
   final String studentId;
@@ -517,69 +520,138 @@ class _StudentTransactionsScreenState
   }
 
   Widget _buildTransactionTile(Map<String, dynamic> tx) {
-    final amount =
-        double.tryParse(tx['total_amount']?.toString() ?? '0') ?? 0.0;
+    final amount = (tx['total_amount'] as num?)?.toInt() ??
+        (double.tryParse(tx['total_amount']?.toString() ?? '0') ?? 0.0).toInt();
     final type = tx['type']?.toString() ?? 'purchase';
     final status = tx['status']?.toString() ?? 'success';
     final isTopup = type == 'topup';
     final canteenData = tx['canteen_operators'];
-    final canteen = canteenData is Map<String, dynamic>
-        ? canteenData['canteen_name']?.toString() ?? 'Stan Kantin'
-        : 'Stan Kantin';
+    final canteen = tx['canteen_name']?.toString() ??
+        (canteenData is Map<String, dynamic>
+            ? canteenData['canteen_name']?.toString()
+            : null) ??
+        (isTopup ? 'Top-Up Saldo' : 'Stan Kantin');
     final date = tx['created_at'] != null
-        ? DateTime.tryParse(tx['created_at'].toString())?.toLocal() ??
-              DateTime.now()
+        ? DateTime.tryParse(tx['created_at'].toString())?.toLocal() ?? DateTime.now()
         : DateTime.now();
+    final String? imageUrl = tx['image_url']?.toString();
 
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      tileColor: context.cardBg,
-      leading: CircleAvatar(
-        backgroundColor: isTopup
-            ? Nebula.amber
-            : widget.primaryColor.withValues(alpha: 0.1),
-        child: Icon(
-          isTopup ? CupertinoIcons.creditcard : Icons.shopping_bag,
-          color: isTopup ? widget.accentColor : widget.primaryColor,
-          size: 18,
-        ),
+    final opTx = OperatorTransaction.fromSiswaJson(tx);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: context.cardBg,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: context.shadowColor.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
-      title: Text(
-        isTopup ? 'Top-up Saldo' : canteen,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: GoogleFonts.inter(
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      subtitle: Text(
-        '${DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(date)} WIB • ${isTopup ? "Koperasi" : (tx['purchase_method'] == 'app' || tx['purchase_method'] == 'app_order' ? "Aplikasi" : "Tap Kartu")}',
-        style: GoogleFonts.inter(fontSize: 11, color: context.textSecondary),
-      ),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(
-            '${isTopup ? "+" : "-"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: isTopup ? Nebula.teal : Nebula.rose,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => showTransactionDetailSheet(context, ref, opTx),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
+              children: [
+                // Avatar / Thumbnail
+                if (imageUrl != null && imageUrl.isNotEmpty)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: CachedNetworkImage(
+                      imageUrl: imageUrl,
+                      width: 42,
+                      height: 42,
+                      fit: BoxFit.cover,
+                      errorWidget: (_, __, ___) => _buildFallbackAvatar(isTopup),
+                    ),
+                  )
+                else
+                  _buildFallbackAvatar(isTopup),
+                const SizedBox(width: 12),
+
+                // Middle Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isTopup ? 'Top-up Saldo' : canteen,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: context.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        '${DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(date)} WIB • ${isTopup ? "Koperasi" : (tx['purchase_method'] == 'app' || tx['purchase_method'] == 'app_order' ? "Aplikasi" : "Tap Kartu")}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(fontSize: 11, color: context.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // Right Amount & Status
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '${isTopup ? "+" : "-"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: isTopup ? Nebula.teal : (status == 'refunded' ? Nebula.rose : context.textPrimary),
+                      ),
+                    ),
+                    if (status != 'success')
+                      Container(
+                        margin: const EdgeInsets.only(top: 3),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: Nebula.rose.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          status.toUpperCase(),
+                          style: GoogleFonts.inter(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: Nebula.rose,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
             ),
           ),
-          if (status != 'success')
-            Text(
-              status.toUpperCase(),
-              style: GoogleFonts.inter(
-                fontSize: 9,
-                fontWeight: FontWeight.bold,
-                color: Nebula.rose,
-              ),
-            ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFallbackAvatar(bool isTopup) {
+    return CircleAvatar(
+      radius: 21,
+      backgroundColor: isTopup
+          ? Nebula.amber.withValues(alpha: 0.12)
+          : widget.primaryColor.withValues(alpha: 0.1),
+      child: Icon(
+        isTopup ? CupertinoIcons.creditcard : Icons.shopping_bag_outlined,
+        color: isTopup ? widget.accentColor : widget.primaryColor,
+        size: 18,
       ),
     );
   }

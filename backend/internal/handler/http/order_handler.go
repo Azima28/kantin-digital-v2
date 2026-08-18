@@ -116,6 +116,8 @@ func (h *OrderHandler) SendMessage(c *fiber.Ctx) error {
 		roleStr = "canteen_operator"
 	} else if claims.Role == domain.RoleStudent {
 		roleStr = "student"
+	} else if claims.Role == domain.RolePetugasKeuangan || claims.Role == domain.RoleSuperAdmin || claims.Role == domain.RoleAdmin {
+		roleStr = "admin"
 	}
 	msg.SenderRole = roleStr
 	if msg.SenderName == "" {
