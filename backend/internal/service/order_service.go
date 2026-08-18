@@ -92,12 +92,10 @@ func (s *OrderService) SendMessage(ctx context.Context, msg *domain.OrderMessage
 		return nil, err
 	}
 
-	// Verify participant authorization
+	// Verify participant authorization strictly
 	if callerRole != domain.RoleSuperAdmin && callerRole != domain.RoleAdmin {
-		isParticipant := strings.EqualFold(msg.SenderID, order.StudentID) ||
-			callerRole == domain.RolePetugasKantin ||
-			callerRole == domain.RoleStudent ||
-			(order.OperatorID != nil && strings.EqualFold(msg.SenderID, *order.OperatorID))
+		isParticipant := (callerRole == domain.RoleStudent && strings.EqualFold(msg.SenderID, order.StudentID)) ||
+			(callerRole == domain.RolePetugasKantin && order.OperatorID != nil && strings.EqualFold(msg.SenderID, *order.OperatorID))
 		if !isParticipant {
 			return nil, errors.New("akses ditolak: Anda bukan partisipan dalam pesanan ini")
 		}
@@ -113,12 +111,10 @@ func (s *OrderService) GetMessages(ctx context.Context, orderID, callerUserID st
 		return nil, err
 	}
 
-	// Verify participant authorization
+	// Verify participant authorization strictly
 	if callerRole != domain.RoleSuperAdmin && callerRole != domain.RoleAdmin {
-		isParticipant := strings.EqualFold(callerUserID, order.StudentID) ||
-			callerRole == domain.RolePetugasKantin ||
-			callerRole == domain.RoleStudent ||
-			(order.OperatorID != nil && strings.EqualFold(callerUserID, *order.OperatorID))
+		isParticipant := (callerRole == domain.RoleStudent && strings.EqualFold(callerUserID, order.StudentID)) ||
+			(callerRole == domain.RolePetugasKantin && order.OperatorID != nil && strings.EqualFold(callerUserID, *order.OperatorID))
 		if !isParticipant {
 			return nil, errors.New("akses ditolak: Anda bukan partisipan dalam pesanan ini")
 		}

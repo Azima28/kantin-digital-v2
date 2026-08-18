@@ -299,7 +299,7 @@ func (r *OrderRepo) UpdateOrderStatus(ctx context.Context, orderID string, newSt
 	}
 	defer tx.Rollback(ctx)
 
-	// Fetch current order data
+	// Fetch current order data with row lock
 	var prevStatus domain.OrderStatus
 	var totalAmount int
 	var operatorID *string
@@ -311,19 +311,46 @@ func (r *OrderRepo) UpdateOrderStatus(ctx context.Context, orderID string, newSt
 		return err
 	}
 
-	// Update status
-	_, err = tx.Exec(ctx, `UPDATE public.orders SET status = $1 WHERE id = $2`, newStatus, orderID)
+	// 1. Idempotency Check: No-op if status is unchanged
+	if prevStatus == newStatus {
+		return nil
+	}
+
+	// 2. Strict State Machine Validation: Terminal states are immutable
+	if prevStatus == domain.OrderStatusSelesai {
+		return fmt.Errorf("pesanan sudah selesai dan tidak dapat diubah lagi")
+	}
+	if prevStatus == domain.OrderStatusDibatalkan {
+		return fmt.Errorf("pesanan sudah dibatalkan dan tidak dapat diubah lagi")
+	}
+
+	// 3. Update status in orders table
+	_, err = tx.Exec(ctx, `UPDATE public.orders SET status = $1, updated_at = NOW() WHERE id = $2`, newStatus, orderID)
 	if err != nil {
 		return err
 	}
 
-	// Escrow Release: If status becomes 'Selesai' and was not previously 'Selesai'
-	if newStatus == domain.OrderStatusSelesai && prevStatus != domain.OrderStatusSelesai {
+	// 4. Escrow Release: Transition to 'Selesai' exactly once
+	if newStatus == domain.OrderStatusSelesai {
 		if operatorID != nil && totalAmount > 0 {
-			_, _ = tx.Exec(ctx, `UPDATE public.canteen_operators SET balance_earned = balance_earned + $1 WHERE id = $2`, totalAmount, *operatorID)
-			res, _ := tx.Exec(ctx, `UPDATE public.transactions SET status = 'success', created_at = NOW() WHERE student_id = $1 AND operator_id = $2 AND status IN ('pending', 'pending_escrow')`, studentID, *operatorID)
+			// Credit canteen operator balance
+			_, err = tx.Exec(ctx, `UPDATE public.canteen_operators SET balance_earned = balance_earned + $1 WHERE id = $2`, totalAmount, *operatorID)
+			if err != nil {
+				return err
+			}
+
+			// Update corresponding transaction status to 'success'
+			res, _ := tx.Exec(ctx, `
+				UPDATE public.transactions
+				SET status = 'success', updated_at = NOW()
+				WHERE student_id = $1 AND operator_id = $2 AND total_amount = $3 AND status IN ('pending', 'pending_escrow')
+			`, studentID, *operatorID, totalAmount)
+
 			if res.RowsAffected() == 0 {
-				_, _ = tx.Exec(ctx, `INSERT INTO public.transactions (student_id, operator_id, total_amount, type, status, purchase_method, created_at) VALUES ($1, $2, $3, 'purchase', 'success', 'app_order', NOW())`, studentID, *operatorID, totalAmount)
+				_, _ = tx.Exec(ctx, `
+					INSERT INTO public.transactions (student_id, operator_id, total_amount, type, status, purchase_method, created_at)
+					VALUES ($1, $2, $3, 'purchase', 'success', 'app_order', NOW())
+				`, studentID, *operatorID, totalAmount)
 			}
 
 			notifMsg := fmt.Sprintf("Pesanan Anda senilai Rp %d telah selesai disiapkan oleh kantin.", totalAmount)
@@ -333,18 +360,28 @@ func (r *OrderRepo) UpdateOrderStatus(ctx context.Context, orderID string, newSt
 		}
 	}
 
-	// Automatic Refund: If status becomes 'Dibatalkan' and was not previously 'Dibatalkan'
-	if newStatus == domain.OrderStatusDibatalkan && prevStatus != domain.OrderStatusDibatalkan {
+	// 5. Automatic Refund: Transition to 'Dibatalkan' exactly once
+	if newStatus == domain.OrderStatusDibatalkan {
 		if totalAmount > 0 {
-			_, _ = tx.Exec(ctx, `UPDATE public.students SET balance = balance + $1 WHERE id = $2`, totalAmount, studentID)
-			if prevStatus == domain.OrderStatusSelesai && operatorID != nil {
-				_, _ = tx.Exec(ctx, `UPDATE public.canteen_operators SET balance_earned = GREATEST(0, balance_earned - $1) WHERE id = $2`, totalAmount, *operatorID)
+			// Refund student balance
+			_, err = tx.Exec(ctx, `UPDATE public.students SET balance = balance + $1 WHERE id = $2`, totalAmount, studentID)
+			if err != nil {
+				return err
 			}
 
 			if operatorID != nil {
-				res, _ := tx.Exec(ctx, `UPDATE public.transactions SET status = 'refunded' WHERE student_id = $1 AND operator_id = $2 AND status IN ('pending', 'pending_escrow', 'success')`, studentID, *operatorID)
+				// Mark corresponding transaction as refunded
+				res, _ := tx.Exec(ctx, `
+					UPDATE public.transactions
+					SET status = 'refunded', updated_at = NOW()
+					WHERE student_id = $1 AND operator_id = $2 AND total_amount = $3 AND status IN ('pending', 'pending_escrow')
+				`, studentID, *operatorID, totalAmount)
+
 				if res.RowsAffected() == 0 {
-					_, _ = tx.Exec(ctx, `INSERT INTO public.transactions (student_id, operator_id, total_amount, type, status, purchase_method, created_at) VALUES ($1, $2, $3, 'purchase', 'refunded', 'app_order', NOW())`, studentID, *operatorID, totalAmount)
+					_, _ = tx.Exec(ctx, `
+						INSERT INTO public.transactions (student_id, operator_id, total_amount, type, status, purchase_method, created_at)
+						VALUES ($1, $2, $3, 'purchase', 'refunded', 'app_order', NOW())
+					`, studentID, *operatorID, totalAmount)
 				}
 
 				_, _ = tx.Exec(ctx, `INSERT INTO public.audit_logs (user_id, action, entity_name, entity_id, created_at) VALUES ($1, 'BATAL_PESANAN', 'orders', $2, NOW())`, *operatorID, orderID)

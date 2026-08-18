@@ -101,19 +101,9 @@ func (h *Hub) BroadcastToRoom(room, event string, data interface{}) {
 		return
 	}
 
-	// Send to specific room clients
+	// Send only to specific room clients
 	if roomClients, ok := h.rooms[room]; ok {
 		for client := range roomClients {
-			select {
-			case client.send <- bytes:
-			default:
-			}
-		}
-	}
-
-	// Also send to global "all" room clients
-	if allClients, ok := h.rooms["all"]; ok {
-		for client := range allClients {
 			select {
 			case client.send <- bytes:
 			default:

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/jackc/pgx/v5"
 	"kantin-backend/internal/domain"
@@ -122,56 +123,84 @@ func (r *ProductRepo) Update(ctx context.Context, p *domain.Product) error {
 	}
 
 	optJSON, _ := json.Marshal(p.CustomizableOptions)
-	var query string
 
 	if p.OperatorID != "" {
-		query = `
+		query := `
 			UPDATE public.products
 			SET name = $1, price = $2, category = $3, is_available = $4, image_url = $5, customizable_options = $6::jsonb
 			WHERE id = $7::uuid AND operator_id = $8::uuid`
-		cmdTag, execErr := r.db.Pool.Exec(ctx, query,
+		cmdTag, err := r.db.Pool.Exec(ctx, query,
 			p.Name, p.Price, p.Category, p.IsAvailable, p.ImageURL, optJSON, p.ID, p.OperatorID,
 		)
-		err = execErr
-		if err == nil && cmdTag.RowsAffected() > 0 {
-			return nil
+		if err != nil {
+			return err
 		}
+		if cmdTag.RowsAffected() == 0 {
+			return fmt.Errorf("produk tidak ditemukan atau Anda tidak memiliki akses ke produk ini")
+		}
+		return nil
 	}
 
-	fallbackQuery := `
+	adminQuery := `
 		UPDATE public.products
 		SET name = $1, price = $2, category = $3, is_available = $4, image_url = $5, customizable_options = $6::jsonb
 		WHERE id = $7::uuid`
-	_, err = r.db.Pool.Exec(ctx, fallbackQuery,
+	cmdTag, err := r.db.Pool.Exec(ctx, adminQuery,
 		p.Name, p.Price, p.Category, p.IsAvailable, p.ImageURL, optJSON, p.ID,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+	if cmdTag.RowsAffected() == 0 {
+		return fmt.Errorf("produk tidak ditemukan")
+	}
+	return nil
 }
 
 func (r *ProductRepo) UpdateAvailability(ctx context.Context, id, operatorID string, isAvailable bool) error {
 	if operatorID != "" {
 		query := `UPDATE public.products SET is_available = $1 WHERE id = $2::uuid AND operator_id = $3::uuid`
 		cmdTag, err := r.db.Pool.Exec(ctx, query, isAvailable, id, operatorID)
-		if err == nil && cmdTag.RowsAffected() > 0 {
-			return nil
+		if err != nil {
+			return err
 		}
+		if cmdTag.RowsAffected() == 0 {
+			return fmt.Errorf("produk tidak ditemukan atau Anda tidak memiliki akses ke produk ini")
+		}
+		return nil
 	}
 
-	fallbackQuery := `UPDATE public.products SET is_available = $1 WHERE id = $2::uuid`
-	_, err := r.db.Pool.Exec(ctx, fallbackQuery, isAvailable, id)
-	return err
+	adminQuery := `UPDATE public.products SET is_available = $1 WHERE id = $2::uuid`
+	cmdTag, err := r.db.Pool.Exec(ctx, adminQuery, isAvailable, id)
+	if err != nil {
+		return err
+	}
+	if cmdTag.RowsAffected() == 0 {
+		return fmt.Errorf("produk tidak ditemukan")
+	}
+	return nil
 }
 
 func (r *ProductRepo) Delete(ctx context.Context, id, operatorID string) error {
 	if operatorID != "" {
 		query := `DELETE FROM public.products WHERE id = $1::uuid AND operator_id = $2::uuid`
 		cmdTag, err := r.db.Pool.Exec(ctx, query, id, operatorID)
-		if err == nil && cmdTag.RowsAffected() > 0 {
-			return nil
+		if err != nil {
+			return err
 		}
+		if cmdTag.RowsAffected() == 0 {
+			return fmt.Errorf("produk tidak ditemukan atau Anda tidak memiliki akses ke produk ini")
+		}
+		return nil
 	}
 
-	fallbackQuery := `DELETE FROM public.products WHERE id = $1::uuid`
-	_, err := r.db.Pool.Exec(ctx, fallbackQuery, id)
-	return err
+	adminQuery := `DELETE FROM public.products WHERE id = $1::uuid`
+	cmdTag, err := r.db.Pool.Exec(ctx, adminQuery, id)
+	if err != nil {
+		return err
+	}
+	if cmdTag.RowsAffected() == 0 {
+		return fmt.Errorf("produk tidak ditemukan")
+	}
+	return nil
 }
