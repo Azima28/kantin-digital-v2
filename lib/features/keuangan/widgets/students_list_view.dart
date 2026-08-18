@@ -173,31 +173,11 @@ class StudentsListView extends ConsumerWidget {
                                   ),
                                 ),
                                 const SizedBox(height: 6),
-                                Row(
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 4,
                                   children: [
-                                    if (!isActive)
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: Nebula.rose.withValues(alpha: 0.08),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            const Icon(CupertinoIcons.clear_circled_solid, size: 10, color: Nebula.rose),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              'AKUN DIBLOKIR',
-                                              style: GoogleFonts.inter(
-                                                fontSize: 9,
-                                                fontWeight: FontWeight.bold,
-                                                color: Nebula.rose,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      )
-                                    else if (!hasCard)
+                                    if (!hasCard)
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                         decoration: BoxDecoration(
@@ -205,6 +185,7 @@ class StudentsListView extends ConsumerWidget {
                                           borderRadius: BorderRadius.circular(12),
                                         ),
                                         child: Row(
+                                          mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Icon(CupertinoIcons.info_circle_fill, size: 10, color: context.textSecondary),
                                             const SizedBox(width: 4),
@@ -227,8 +208,9 @@ class StudentsListView extends ConsumerWidget {
                                           borderRadius: BorderRadius.circular(12),
                                         ),
                                         child: Row(
+                                          mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            const Icon(CupertinoIcons.exclamationmark_circle_fill, size: 10, color: Nebula.amber),
+                                            const Icon(CupertinoIcons.lock_circle_fill, size: 10, color: Nebula.amber),
                                             const SizedBox(width: 4),
                                             Text(
                                               'KARTU DIBLOKIR',
@@ -249,15 +231,39 @@ class StudentsListView extends ConsumerWidget {
                                           borderRadius: BorderRadius.circular(12),
                                         ),
                                         child: Row(
+                                          mainAxisSize: MainAxisSize.min,
                                           children: [
                                             const Icon(CupertinoIcons.checkmark_circle_fill, size: 10, color: Nebula.teal),
                                             const SizedBox(width: 4),
                                             Text(
-                                              'AKTIF',
+                                              'KARTU AKTIF',
                                               style: GoogleFonts.inter(
                                                 fontSize: 9,
                                                 fontWeight: FontWeight.bold,
                                                 color: Nebula.teal,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    if (!isActive)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: Nebula.rose.withValues(alpha: 0.08),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(CupertinoIcons.clear_circled_solid, size: 10, color: Nebula.rose),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'AKUN DIBLOKIR',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.bold,
+                                                color: Nebula.rose,
                                               ),
                                             ),
                                           ],

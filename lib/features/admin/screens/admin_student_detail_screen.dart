@@ -175,6 +175,7 @@ class _AdminStudentDetailScreenState
                           // 2. Student Info List Card
                           AdminStudentStatusCard(
                             isCardActive: isCardActive,
+                            isAccountActive: profile.isActive ?? true,
                             rfidUid: rfidUid,
                             username: username,
                             email: email,

@@ -9,6 +9,7 @@ import 'package:kantin_digital/core/utils/currency_formatter.dart';
 /// Styled according to the floating card detail design for Super Admin.
 class AdminStudentStatusCard extends StatelessWidget {
   final bool isCardActive;
+  final bool isAccountActive;
   final String rfidUid;
   final String username;
   final String email;
@@ -18,6 +19,7 @@ class AdminStudentStatusCard extends StatelessWidget {
   const AdminStudentStatusCard({
     super.key,
     required this.isCardActive,
+    this.isAccountActive = true,
     required this.rfidUid,
     required this.username,
     required this.email,
@@ -36,7 +38,9 @@ class AdminStudentStatusCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _buildInfoRow(context, 'Status Kartu', isCardActive),
+          _buildInfoRow(context, 'Status Akun Login', isAccountActive),
+          Divider(height: 20, thickness: 0.5, color: context.dividerCol.withValues(alpha: 0.7)),
+          _buildInfoRow(context, 'Status Kartu RFID', isCardActive),
           Divider(height: 20, thickness: 0.5, color: context.dividerCol.withValues(alpha: 0.7)),
           _buildTextInfoRow(context, 'UID RFID', rfidUid, isMonospace: true),
           Divider(height: 20, thickness: 0.5, color: context.dividerCol.withValues(alpha: 0.7)),

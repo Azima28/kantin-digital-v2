@@ -94,41 +94,91 @@ class StudentDetailHeader extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 4,
-            ),
-            decoration: BoxDecoration(
-              color: !isAccountActive
-                  ? Nebula.rose.withValues(alpha: 0.08)
-                  : (!hasCard
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            alignment: WrapAlignment.center,
+            children: [
+              // Badge Status Akun Login Siswa
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: isAccountActive
+                      ? Nebula.teal.withValues(alpha: 0.08)
+                      : Nebula.rose.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isAccountActive
+                          ? CupertinoIcons.person_crop_circle_badge_checkmark
+                          : CupertinoIcons.person_crop_circle_badge_xmark,
+                      size: 11,
+                      color: isAccountActive ? Nebula.teal : Nebula.rose,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      isAccountActive ? 'AKUN AKTIF' : 'AKUN DIBLOKIR',
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: isAccountActive ? Nebula.teal : Nebula.rose,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Badge Status Kartu Fisik RFID
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: !hasCard
                       ? context.dividerCol
                       : (!isCardActive
                           ? Nebula.amberLight
-                          : Nebula.teal
-                              .withValues(alpha: 0.08))),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              !isAccountActive
-                  ? 'AKUN DIBLOKIR'
-                  : (!hasCard
-                      ? 'KARTU BELUM TERDAFTAR'
-                      : (!isCardActive ? 'KARTU DIBLOKIR' : 'AKTIF')),
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: !isAccountActive
-                    ? Nebula.rose
-                    : (!hasCard
-                        ? context.textSecondary
-                        : (!isCardActive
-                            ? Nebula.amber
-                            : Nebula.teal)),
+                          : Nebula.teal.withValues(alpha: 0.08)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      !hasCard
+                          ? CupertinoIcons.creditcard
+                          : (!isCardActive
+                              ? CupertinoIcons.lock_fill
+                              : CupertinoIcons.checkmark_seal_fill),
+                      size: 11,
+                      color: !hasCard
+                          ? context.textSecondary
+                          : (!isCardActive ? Nebula.amber : Nebula.teal),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      !hasCard
+                          ? 'KARTU BELUM TERDAFTAR'
+                          : (!isCardActive ? 'KARTU DIBLOKIR' : 'KARTU AKTIF'),
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: !hasCard
+                            ? context.textSecondary
+                            : (!isCardActive ? Nebula.amber : Nebula.teal),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
           const SizedBox(height: 16),
           Divider(
@@ -209,7 +259,26 @@ class StudentDetailHeader extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Status Kartu',
+                'Status Akun Login',
+                style: GoogleFonts.inter(
+                  color: context.textSecondary,
+                ),
+              ),
+              Text(
+                isAccountActive ? 'AKTIF' : 'DIBLOKIR',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.bold,
+                  color: isAccountActive ? Nebula.teal : Nebula.rose,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Status Kartu Fisik',
                 style: GoogleFonts.inter(
                   color: context.textSecondary,
                 ),
@@ -217,16 +286,12 @@ class StudentDetailHeader extends StatelessWidget {
               Text(
                 !hasCard
                     ? 'BELUM TERDAFTAR'
-                    : (!isCardActive
-                        ? 'KARTU DIBLOKIR'
-                        : (!isAccountActive ? 'AKUN DIBLOKIR' : 'AKTIF')),
+                    : (isCardActive ? 'AKTIF' : 'DIBLOKIR'),
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
                   color: !hasCard
                       ? context.textSecondary
-                      : (!isCardActive || !isAccountActive
-                          ? Nebula.rose
-                          : Nebula.teal),
+                      : (isCardActive ? Nebula.teal : Nebula.amber),
                 ),
               ),
             ],

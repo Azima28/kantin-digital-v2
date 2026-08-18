@@ -155,16 +155,21 @@ class StudentWithProfile {
   /// Parse dari response REST API /finance/students:
   factory StudentWithProfile.fromApiJson(Map<String, dynamic> json) {
     final profile = json['profile'] is Map<String, dynamic> ? json['profile'] as Map<String, dynamic> : json;
+    final bool isAccountActive = (profile['is_active'] ?? json['is_active']) == true;
+    final bool isCardActive = json.containsKey('is_active')
+        ? json['is_active'] == true
+        : (profile['is_active'] == true);
+
     return StudentWithProfile(
       id: (json['id'] ?? profile['id'])?.toString() ?? '',
       fullName: (profile['full_name'] ?? json['full_name'] ?? 'Siswa').toString(),
       email: (profile['email'] ?? json['email'])?.toString(),
       nisn: (profile['nisn'] ?? json['nisn'])?.toString(),
-      isActive: (json['is_active'] ?? profile['is_active']) == true,
+      isActive: isAccountActive,
       class_: (json['class'] ?? profile['class'])?.toString(),
       balance: Student._parseBalance(json['balance'] ?? profile['balance']),
       rfidUid: (json['rfid_uid'] ?? profile['rfid_uid'])?.toString(),
-      cardIsActive: (json['is_active'] ?? profile['is_active']) == true,
+      cardIsActive: isCardActive,
     );
   }
 
