@@ -11,6 +11,7 @@ import 'package:kantin_digital/features/keuangan/widgets/student_detail_password
 import 'package:kantin_digital/features/keuangan/widgets/student_detail_status_toggle.dart';
 import 'package:kantin_digital/features/shared/screens/student_transactions_screen.dart';
 import 'package:kantin_digital/features/siswa/widgets/siswa_transaction_detail_sheet.dart';
+import 'package:kantin_digital/features/admin/widgets/admin_edit_student_sheet.dart';
 
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
@@ -135,6 +136,22 @@ class _KeuanganStudentDetailScreenState
             fontSize: 18,
           ),
         ),
+        actions: [
+          detailAsync.maybeWhen(
+            data: (data) => IconButton(
+              icon: const Icon(CupertinoIcons.pencil, color: Nebula.teal),
+              tooltip: 'Edit Profil & Ganti Rombel',
+              onPressed: () => showEditStudentSheet(
+                context,
+                ref,
+                data.profile,
+                data.student,
+              ),
+            ),
+            orElse: () => const SizedBox.shrink(),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: SafeArea(
         child: detailAsync.when(
@@ -213,6 +230,25 @@ class _KeuanganStudentDetailScreenState
                                 color: context.textPrimary,
                               ),
                             ),
+                          ),
+                          _buildActionTile(
+                            icon: CupertinoIcons.pencil_circle,
+                            iconColor: Nebula.teal,
+                            title: 'Edit Profil & Ganti Rombel',
+                            subtitle: 'Ubah kelas/rombel, nama, NISN, batas harian, dll.',
+                            isEnabled: true,
+                            onTap: () => showEditStudentSheet(
+                              context,
+                              ref,
+                              profile,
+                              student,
+                            ),
+                          ),
+                          Divider(
+                            height: 1,
+                            thickness: 0.5,
+                            indent: 56,
+                            color: context.dividerCol,
                           ),
                           _buildActionTile(
                             icon: CupertinoIcons.arrow_up_circle,

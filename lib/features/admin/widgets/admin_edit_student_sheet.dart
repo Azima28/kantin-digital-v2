@@ -7,6 +7,7 @@ import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
+import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 import 'package:kantin_digital/core/models/models.dart';
 
 /// Bottom sheet for editing an existing student user's profile and data.
@@ -239,11 +240,15 @@ void showEditStudentSheet(
                                 throw Exception(response.message ?? 'Gagal memperbarui profil siswa');
                               }
 
-                              // Invalidate details and user list providers
+                              // Invalidate details and user list providers for both Admin & Keuangan
                               ref.invalidate(
                                 adminStudentDetailProvider(profile.id),
                               );
                               ref.invalidate(adminUsersProvider);
+                              ref.invalidate(
+                                keuanganStudentDetailProvider(profile.id),
+                              );
+                              ref.invalidate(keuanganStudentsProvider);
 
                               if (ctx.mounted) Navigator.pop(ctx);
                               if (context.mounted) {

@@ -248,7 +248,126 @@ class _AdminStudentDetailScreenState
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
+
+                // 3b. Finance Quick Action Row for Super Admin (Top-Up & Koreksi Saldo)
+                Row(
+                  children: [
+                    // Top-Up Saldo Button
+                    Expanded(
+                      child: PressScale(
+                        onTap: () {
+                          final studentProfile = StudentWithProfile(
+                            id: profile.id,
+                            fullName: fullName,
+                            email: email,
+                            nisn: nisn,
+                            isActive: profile.isActive ?? true,
+                            class_: className,
+                            balance: balance,
+                            rfidUid: student.rfidUid,
+                            cardIsActive: isCardActive,
+                          );
+                          context.push(
+                            '/finance/topup',
+                            extra: studentProfile,
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 10,
+                            horizontal: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Nebula.teal.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Nebula.teal.withValues(alpha: 0.3),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                CupertinoIcons.arrow_up_circle_fill,
+                                color: Nebula.teal,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                'Top-Up Saldo',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Nebula.teal,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Koreksi Saldo Button
+                    Expanded(
+                      child: PressScale(
+                        onTap: () {
+                          final studentProfile = StudentWithProfile(
+                            id: profile.id,
+                            fullName: fullName,
+                            email: email,
+                            nisn: nisn,
+                            isActive: profile.isActive ?? true,
+                            class_: className,
+                            balance: balance,
+                            rfidUid: student.rfidUid,
+                            cardIsActive: isCardActive,
+                          );
+                          context.push(
+                            '/finance/correction',
+                            extra: studentProfile,
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 10,
+                            horizontal: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Nebula.rose.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Nebula.rose.withValues(alpha: 0.25),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                CupertinoIcons.arrow_right_arrow_left_circle,
+                                color: Nebula.rose,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                'Koreksi Saldo',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Nebula.rose,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
 
                 // 4. Riwayat Transaksi Header
                 Row(
