@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kantin_digital/core/services/storage_service.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
@@ -531,6 +532,84 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
             ],
           );
 
+          final academicAsync = ref.watch(academicStructureProvider);
+          final academic = academicAsync.asData?.value;
+
+          final Widget academicStructureCard = Container(
+            padding: const EdgeInsets.all(18),
+            margin: const EdgeInsets.only(bottom: 20),
+            decoration: BoxDecoration(
+              color: context.cardBg,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: context.cardBorder, width: 1.0),
+              boxShadow: [
+                BoxShadow(
+                  color: context.shadowColor,
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: Nebula.teal.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(CupertinoIcons.building_2_fill, color: Nebula.teal, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Struktur Akademik & Rombel',
+                            style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold, color: context.textPrimary),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            academic != null
+                                ? 'Jenjang ${academic.schoolType.toUpperCase()} • ${academic.majors.length} Jurusan • ${academic.rombels.length} Rombel'
+                                : 'Kelola jenjang, jurusan, dan kelas paralel',
+                            style: GoogleFonts.inter(fontSize: 11.5, color: context.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Divider(height: 1, color: context.dividerCol),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Nebula.teal,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    icon: const Icon(CupertinoIcons.slider_horizontal_3, size: 16, color: Colors.white),
+                    label: Text(
+                      'Kelola Jurusan & Rombel',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                    onPressed: () => context.push('/admin/settings/academic'),
+                  ),
+                ),
+              ],
+            ),
+          );
+
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -538,6 +617,9 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
               children: [
                 // ── Admin Profile Card with Avatar Upload ──
                 adminProfileCard,
+
+                // ── Master Academic Structure & Rombels Card ──
+                academicStructureCard,
 
                 // Top subtitle
                 Text(

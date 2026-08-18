@@ -189,3 +189,39 @@ final adminFinanceDetailProvider = FutureProvider
     'logs': <dynamic>[],
   });
 });
+
+// ============================================================================
+// ACADEMIC STRUCTURE PROVIDER (Master Jenjang, Jurusan, Kelas & Rombel)
+// ============================================================================
+
+final academicStructureProvider = FutureProvider<AcademicStructure>((ref) async {
+  ref.cacheFor(const Duration(minutes: 5));
+  final apiClient = ref.watch(apiClientProvider);
+
+  try {
+    final res = await apiClient.get('/academic-structure');
+    if (res.success && res.data != null) {
+      return AcademicStructure.fromJson(Map<String, dynamic>.from(res.data as Map));
+    }
+  } catch (e) {
+    debugPrint('[AcademicStructure] Provider error: $e');
+  }
+
+  return const AcademicStructure();
+});
+
+final saveAcademicStructureProvider = Provider<Future<bool> Function(AcademicStructure)>((ref) {
+  final apiClient = ref.read(apiClientProvider);
+  return (AcademicStructure structure) async {
+    try {
+      final res = await apiClient.post('/admin/academic-structure', body: structure.toJson());
+      if (res.success) {
+        ref.invalidate(academicStructureProvider);
+        return true;
+      }
+    } catch (e) {
+      debugPrint('[AcademicStructure] Save error: $e');
+    }
+    return false;
+  };
+});

@@ -219,3 +219,28 @@ func (h *AdminHandler) GetFinanceDetail(c *fiber.Ctx) error {
 	}
 	return response.Success(c, fiber.StatusOK, "Detail petugas keuangan", detail)
 }
+
+func (h *AdminHandler) GetAcademicStructure(c *fiber.Ctx) error {
+	structData, err := h.catalogService.GetAcademicStructure(c.Context())
+	if err != nil {
+		return response.Error(c, fiber.StatusInternalServerError, "Gagal memuat master struktur akademik", err.Error())
+	}
+	return response.Success(c, fiber.StatusOK, "Master struktur akademik sekolah", structData)
+}
+
+func (h *AdminHandler) SaveAcademicStructure(c *fiber.Ctx) error {
+	var req domain.AcademicStructure
+	if err := c.BodyParser(&req); err != nil {
+		return response.Error(c, fiber.StatusBadRequest, "Format master struktur akademik tidak valid", err.Error())
+	}
+
+	if err := h.catalogService.SaveAcademicStructure(c.Context(), &req); err != nil {
+		return response.Error(c, fiber.StatusInternalServerError, "Gagal menyimpan master struktur akademik: "+err.Error(), err.Error())
+	}
+
+	if h.hub != nil {
+		h.hub.BroadcastToRoom("all", "academic_structure_updated", req)
+	}
+
+	return response.Success(c, fiber.StatusOK, "Master struktur jenjang, jurusan, dan rombel sekolah berhasil disimpan", req)
+}

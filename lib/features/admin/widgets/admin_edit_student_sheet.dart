@@ -29,11 +29,14 @@ void showEditStudentSheet(
   String selectedClass = student.class_ ?? '7-A';
   bool isSaving = false;
 
-  final List<String> availableClasses = [
-    '7-A', '7-B', '7-C',
-    '8-A', '8-B', '8-C',
-    '9-A', '9-B', '9-C'
-  ];
+  final academic = ref.read(academicStructureProvider).asData?.value;
+  final List<String> availableClasses = (academic != null && academic.rombels.isNotEmpty)
+      ? List<String>.from(academic.rombels)
+      : [
+          '7-A', '7-B', '7-C',
+          '8-A', '8-B', '8-C',
+          '9-A', '9-B', '9-C'
+        ];
 
   if (!availableClasses.contains(selectedClass)) {
     availableClasses.add(selectedClass);

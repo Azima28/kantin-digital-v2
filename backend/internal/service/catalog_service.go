@@ -50,3 +50,11 @@ func (s *CatalogService) UpdateAvailability(ctx context.Context, id, operatorID 
 func (s *CatalogService) DeleteProduct(ctx context.Context, id, operatorID string) error {
 	return s.productRepo.Delete(ctx, id, operatorID)
 }
+
+func (s *CatalogService) GetAcademicStructure(ctx context.Context) (*domain.AcademicStructure, error) {
+	return s.userRepo.GetAcademicStructure(ctx)
+}
+
+func (s *CatalogService) SaveAcademicStructure(ctx context.Context, structData *domain.AcademicStructure) error {
+	return s.userRepo.SaveAcademicStructure(ctx, structData)
+}

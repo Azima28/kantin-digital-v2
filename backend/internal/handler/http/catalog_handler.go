@@ -130,3 +130,11 @@ func (h *CatalogHandler) DeleteProduct(c *fiber.Ctx) error {
 
 	return response.Success(c, fiber.StatusOK, "Produk berhasil dihapus", nil)
 }
+
+func (h *CatalogHandler) GetPublicAcademicStructure(c *fiber.Ctx) error {
+	structData, err := h.catalogService.GetAcademicStructure(c.Context())
+	if err != nil {
+		return response.Error(c, fiber.StatusInternalServerError, "Gagal memuat struktur akademik", err.Error())
+	}
+	return response.Success(c, fiber.StatusOK, "Master struktur akademik sekolah", structData)
+}

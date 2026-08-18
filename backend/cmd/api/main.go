@@ -1,4 +1,4 @@
-package main
+﻿package main
 
 import (
 	"context"
@@ -171,6 +171,7 @@ func main() {
 	api.Get("/canteens/:id/reviews", orderH.ListCanteenReviews)
 	api.Get("/products", catalogH.ListProducts)
 	api.Get("/student/lookup", studentH.LookupStudent)
+		api.Get("/academic-structure", catalogH.GetPublicAcademicStructure)
 
 	// Protected Routes
 	authRequired := api.Group("", middleware.AuthMiddleware(tokenMaker, userRepo))
@@ -273,6 +274,9 @@ func main() {
 			adminGroup.Get("/merchant/:id", adminH.GetMerchantDetail)
 			adminGroup.Get("/parent/:id", adminH.GetParentDetail)
 			adminGroup.Get("/finance/:id", adminH.GetFinanceDetail)
+			adminGroup.Get("/academic-structure", adminH.GetAcademicStructure)
+			adminGroup.Post("/academic-structure", adminH.SaveAcademicStructure)
+			adminGroup.Put("/academic-structure", adminH.SaveAcademicStructure)
 		}
 	}
 

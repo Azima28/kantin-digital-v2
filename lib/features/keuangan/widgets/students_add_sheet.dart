@@ -6,6 +6,7 @@ import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
+import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 
 /// Shows a modal bottom sheet for adding a new student.
@@ -17,7 +18,13 @@ void showAddStudentSheet(BuildContext context, WidgetRef ref) {
   final parentPhoneCtrl = TextEditingController();
   final passCtrl = TextEditingController(text: 'siswa${_randomSuffix()}');
   final rfidCtrl = TextEditingController();
-  String selectedClass = '7-A';
+
+  final academic = ref.read(academicStructureProvider).asData?.value;
+  final List<String> availableClasses = (academic != null && academic.rombels.isNotEmpty)
+      ? List<String>.from(academic.rombels)
+      : ['7-A', '7-B', '7-C', '8-A', '8-B', '8-C', '9-A', '9-B', '9-C'];
+
+  String selectedClass = availableClasses.isNotEmpty ? availableClasses.first : '7-A';
   bool isSaving = false;
 
   showModalBottomSheet(
@@ -68,9 +75,9 @@ void showAddStudentSheet(BuildContext context, WidgetRef ref) {
               const SizedBox(height: 12),
               _buildDropdownRow(
                 context: context,
-                label: 'Kelas *',
+                label: 'Kelas / Rombel *',
                 value: selectedClass,
-                items: ['7-A', '7-B', '7-C', '8-A', '8-B', '8-C', '9-A', '9-B', '9-C'],
+                items: availableClasses,
                 onChanged: (v) => setLocal(() => selectedClass = v ?? selectedClass),
               ),
               const SizedBox(height: 12),

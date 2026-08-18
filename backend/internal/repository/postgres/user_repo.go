@@ -2,8 +2,10 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"kantin-backend/internal/domain"
@@ -628,5 +630,77 @@ func (r *UserRepo) UpdateUserProfile(ctx context.Context, user *domain.UserProfi
 		SET full_name = $1, email = $2, username = $3, nisn = $4, phone_number = $5, avatar_url = $6, is_active = $7
 		WHERE id = $8`
 	_, err := r.db.Pool.Exec(ctx, query, user.FullName, user.Email, user.Username, user.NISN, user.PhoneNumber, user.AvatarURL, user.IsActive, user.ID)
+	return err
+}
+
+func defaultAcademicStructure() domain.AcademicStructure {
+	return domain.AcademicStructure{
+		SchoolType: "smk",
+		SchoolName: "SMK Negeri 1",
+		HasMajors:  true,
+		Majors: []domain.AcademicMajor{
+			{ID: "rpl", Name: "Rekayasa Perangkat Lunak", Code: "RPL"},
+			{ID: "tkj", Name: "Teknik Komputer & Jaringan", Code: "TKJ"},
+			{ID: "dkv", Name: "Desain Komunikasi Visual", Code: "DKV"},
+			{ID: "akl", Name: "Akuntansi & Keuangan Lembaga", Code: "AKL"},
+			{ID: "otkp", Name: "Otomatisasi & Tata Kelola Perkantoran", Code: "OTKP"},
+		},
+		GradeLevels: []string{"X", "XI", "XII"},
+		Rombels: []string{
+			"X RPL 1", "X RPL 2", "X TKJ 1", "X TKJ 2", "X DKV 1", "X AKL 1",
+			"XI RPL 1", "XI RPL 2", "XI TKJ 1", "XI TKJ 2", "XI DKV 1", "XI AKL 1",
+			"XII RPL 1", "XII RPL 2", "XII TKJ 1", "XII TKJ 2", "XII DKV 1", "XII AKL 1",
+		},
+		UpdatedAt: time.Now(),
+	}
+}
+
+// GetAcademicStructure retrieves configured school structure, majors, grade levels, and rombels
+func (r *UserRepo) GetAcademicStructure(ctx context.Context) (*domain.AcademicStructure, error) {
+	def := defaultAcademicStructure()
+	if r == nil || r.db == nil || r.db.Pool == nil {
+		return &def, nil
+	}
+
+	var valBytes []byte
+	var updatedAt time.Time
+	err := r.db.Pool.QueryRow(ctx, `SELECT value, updated_at FROM public.system_settings WHERE key = 'academic_structure'`).Scan(&valBytes, &updatedAt)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			_ = r.SaveAcademicStructure(ctx, &def)
+			return &def, nil
+		}
+		return &def, nil
+	}
+
+	var res domain.AcademicStructure
+	if err := json.Unmarshal(valBytes, &res); err != nil {
+		return &def, nil
+	}
+	res.UpdatedAt = updatedAt
+	return &res, nil
+}
+
+// SaveAcademicStructure persists school academic structure to PostgreSQL system_settings
+func (r *UserRepo) SaveAcademicStructure(ctx context.Context, structData *domain.AcademicStructure) error {
+	if r == nil || r.db == nil || r.db.Pool == nil {
+		return ErrDatabaseNotReady
+	}
+	if structData.SchoolName == "" {
+		structData.SchoolName = "Sekolah Digital"
+	}
+	structData.UpdatedAt = time.Now()
+	valBytes, err := json.Marshal(structData)
+	if err != nil {
+		return err
+	}
+
+	query := `
+		INSERT INTO public.system_settings (key, value, description, updated_at)
+		VALUES ('academic_structure', $1, 'Pengaturan master struktur jenjang, jurusan, kelas, dan rombel sekolah', NOW())
+		ON CONFLICT (key) DO UPDATE
+		SET value = EXCLUDED.value, updated_at = NOW()`
+
+	_, err = r.db.Pool.Exec(ctx, query, valBytes)
 	return err
 }

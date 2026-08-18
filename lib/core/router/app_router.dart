@@ -42,6 +42,7 @@ import 'package:kantin_digital/features/admin/screens/admin_finance_detail_scree
 import 'package:kantin_digital/features/admin/screens/admin_parent_detail_screen.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_main_layout.dart';
 import 'package:kantin_digital/features/admin/screens/admin_profile_screen.dart';
+import 'package:kantin_digital/features/admin/screens/admin_academic_settings_screen.dart';
 
 
 import 'package:kantin_digital/features/keuangan/screens/keuangan_dashboard_screen.dart';
@@ -104,6 +105,7 @@ class AppRouter {
   static const String adminUsers = '/admin/users';
   static const String adminAudit = '/admin/audit';
   static const String adminSettings = '/admin/settings';
+  static const String adminAcademicSettings = '/admin/settings/academic';
   static const String adminProfile = '/admin/profile';
   static const String adminStudentDetail = '/admin/users/student/:studentId';
   static const String adminMerchantDetail = '/admin/users/merchant/:merchantId';
@@ -518,6 +520,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             AdminFinanceDetailScreen(
           officerId: state.pathParameters['officerId']!,
         ),
+      ),
+      GoRoute(
+        path: AppRouter.adminAcademicSettings,
+        builder: (BuildContext context, GoRouterState state) =>
+            const AdminAcademicSettingsScreen(),
       ),
       GoRoute(
         path: AppRouter.adminParentDetail,

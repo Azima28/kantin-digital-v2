@@ -17,7 +17,13 @@ void showAddStudentSheet(BuildContext context, WidgetRef ref) {
   final parentPhoneCtrl = TextEditingController();
   final passCtrl = TextEditingController(text: 'siswa${_randomSuffix()}');
   final rfidCtrl = TextEditingController();
-  String selectedClass = '7-A';
+
+  final academic = ref.read(academicStructureProvider).asData?.value;
+  final List<String> availableClasses = (academic != null && academic.rombels.isNotEmpty)
+      ? List<String>.from(academic.rombels)
+      : ['7-A', '7-B', '7-C', '8-A', '8-B', '8-C', '9-A', '9-B', '9-C'];
+
+  String selectedClass = availableClasses.isNotEmpty ? availableClasses.first : '7-A';
   bool isSaving = false;
 
   showModalBottomSheet(
@@ -68,9 +74,9 @@ void showAddStudentSheet(BuildContext context, WidgetRef ref) {
               _buildFormField(nisnCtrl, 'NISN *', inputType: TextInputType.number),
               const SizedBox(height: 12),
               _buildDropdownRow(
-                label: 'Kelas *',
+                label: 'Kelas / Rombel *',
                 value: selectedClass,
-                items: ['7-A', '7-B', '7-C', '8-A', '8-B', '8-C', '9-A', '9-B', '9-C'],
+                items: availableClasses,
                 onChanged: (v) => setLocal(() => selectedClass = v ?? selectedClass),
               ),
               const SizedBox(height: 12),

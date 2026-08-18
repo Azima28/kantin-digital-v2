@@ -76,3 +76,19 @@ type UserSession struct {
 	ExpiresAt time.Time `json:"expires_at"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+type AcademicMajor struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Code string `json:"code"`
+}
+
+type AcademicStructure struct {
+	SchoolType  string          `json:"school_type"`
+	SchoolName  string          `json:"school_name"`
+	HasMajors   bool            `json:"has_majors"`
+	Majors      []AcademicMajor `json:"majors"`
+	GradeLevels []string        `json:"grade_levels"`
+	Rombels     []string        `json:"rombels"`
+	UpdatedAt   time.Time       `json:"updated_at"`
+}

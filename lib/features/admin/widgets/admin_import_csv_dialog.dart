@@ -19,14 +19,19 @@ void showImportUsersDialog(BuildContext context, WidgetRef ref, String roleFilte
   String templateText = '';
 
   if (roleFilter == 'Siswa') {
+    final academic = ref.read(academicStructureProvider).asData?.value;
+    final r1 = (academic != null && academic.rombels.isNotEmpty) ? academic.rombels.first : 'X RPL 1';
+    final r2 = (academic != null && academic.rombels.length > 1) ? academic.rombels[1] : 'X RPL 2';
+    final r3 = (academic != null && academic.rombels.length > 2) ? academic.rombels[2] : 'XI RPL 1';
+
     formatGuidance =
-        'Format CSV (tanpa spasi/koma berlebih):\nNama, Email, NISN, Kelas, Password';
+        'Format CSV (tanpa spasi/koma berlebih):\nNama, Email, NISN, Kelas/Rombel, Password';
     hintText =
-        'Ahmad Fauzi, ahmad@sekolah.sch.id, 20260001, 7-A, password123\nSiti Aminah, siti@sekolah.sch.id, 20260002, 7-B, password123';
+        'Ahmad Fauzi, ahmad@sekolah.sch.id, 20260001, $r1, password123\nSiti Aminah, siti@sekolah.sch.id, 20260002, $r2, password123';
     templateText =
-        'Ahmad Fauzi, ahmad@sekolah.sch.id, 20260001, 7-A, password123\n'
-            'Siti Aminah, siti@sekolah.sch.id, 20260002, 7-B, password123\n'
-            'Budi Santoso, budi@sekolah.sch.id, 20260003, 8-A, password123';
+        'Ahmad Fauzi, ahmad@sekolah.sch.id, 20260001, $r1, password123\n'
+            'Siti Aminah, siti@sekolah.sch.id, 20260002, $r2, password123\n'
+            'Budi Santoso, budi@sekolah.sch.id, 20260003, $r3, password123';
   } else if (roleFilter == 'Orang Tua') {
     formatGuidance =
         'Format CSV (tanpa spasi/koma berlebih):\nNama, Email, No Telepon, NISN Anak, Hubungan, Password';
