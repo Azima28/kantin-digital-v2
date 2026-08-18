@@ -125,7 +125,7 @@ class StudentsFilterPanel extends ConsumerWidget {
                             DropdownMenuItem(value: 'Aktif', child: Text('Aktif')),
                             DropdownMenuItem(value: 'Akun Diblokir', child: Text('Akun Diblokir')),
                             DropdownMenuItem(value: 'Kartu Diblokir', child: Text('Kartu Diblokir')),
-                            DropdownMenuItem(value: 'Belum Aktif', child: Text('Belum Aktif')),
+                            DropdownMenuItem(value: 'Kartu Belum Terdaftar', child: Text('Kartu Belum Terdaftar')),
                             DropdownMenuItem(value: 'Saldo Rendah', child: Text('Saldo Rendah (<5k)')),
                           ],
                         ),

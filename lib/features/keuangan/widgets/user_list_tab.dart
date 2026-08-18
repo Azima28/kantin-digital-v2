@@ -53,12 +53,15 @@ class _StudentsTabState extends ConsumerState<StudentsTab> {
             bool matchesStatus = true;
             final hasCard = student.hasRfid == true;
             final isAc = student.isActive == true;
+            final isCardAc = student.cardIsActive == true;
 
             if (_selectedStatus == 'Aktif') {
-              matchesStatus = hasCard && isAc;
-            } else if (_selectedStatus == 'Belum Aktif') {
+              matchesStatus = hasCard && isAc && isCardAc;
+            } else if (_selectedStatus == 'Kartu Belum Terdaftar' || _selectedStatus == 'Belum Aktif') {
               matchesStatus = !hasCard;
-            } else if (_selectedStatus == 'Diblokir') {
+            } else if (_selectedStatus == 'Kartu Diblokir') {
+              matchesStatus = hasCard && !isCardAc;
+            } else if (_selectedStatus == 'Akun Diblokir' || _selectedStatus == 'Diblokir') {
               matchesStatus = !isAc;
             }
 

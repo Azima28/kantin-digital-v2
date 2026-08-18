@@ -2,7 +2,6 @@
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
-import 'package:kantin_digital/core/constants/app_strings.dart';
 
 class KeuanganStatusFilter extends StatelessWidget {
   final String selectedStatus;
@@ -40,19 +39,23 @@ class KeuanganStatusFilter extends StatelessWidget {
           items: const [
             DropdownMenuItem(
               value: 'Semua',
-              child: Text(AppStrings.labelAll),
+              child: Text('Semua Status'),
             ),
             DropdownMenuItem(
               value: 'Aktif',
-              child: Text('Aktif'),
+              child: Text('Aktif Normal (Kartu & Akun)'),
             ),
             DropdownMenuItem(
-              value: 'Belum Aktif',
-              child: Text('Belum Aktif'),
+              value: 'Kartu Belum Terdaftar',
+              child: Text('Kartu Belum Terdaftar'),
             ),
             DropdownMenuItem(
-              value: 'Diblokir',
-              child: Text('Diblokir'),
+              value: 'Kartu Diblokir',
+              child: Text('Kartu Diblokir'),
+            ),
+            DropdownMenuItem(
+              value: 'Akun Diblokir',
+              child: Text('Akun Diblokir'),
             ),
           ],
         ),

@@ -63,19 +63,31 @@ func (r *TransactionRepo) ProcessPurchase(ctx context.Context, p CheckoutParams)
 
 	// 2. Lock student row to prevent concurrent race condition (double spending)
 	var currentBalance int
-	var isActive bool
+	var isCardActive bool
 	var dailyLimit int
+	var isProfileActive bool
+	var rfidUID *string
+
 	err = tx.QueryRow(ctx, `
-		SELECT balance, is_active, daily_limit
-		FROM public.students
-		WHERE id = $1
-		FOR UPDATE`, p.StudentID).Scan(&currentBalance, &isActive, &dailyLimit)
+		SELECT s.balance, s.is_active, s.daily_limit, p.is_active, s.rfid_uid
+		FROM public.students s
+		JOIN public.profiles p ON p.id = s.id
+		WHERE s.id = $1
+		FOR UPDATE`, p.StudentID).Scan(&currentBalance, &isCardActive, &dailyLimit, &isProfileActive, &rfidUID)
 	if err != nil {
 		return nil, fmt.Errorf("siswa tidak ditemukan: %w", err)
 	}
 
-	if !isActive {
-		return nil, ErrCardInactive
+	if !isProfileActive {
+		return nil, fmt.Errorf("transaksi ditolak: Akun siswa sedang dinonaktifkan oleh pihak sekolah")
+	}
+
+	if rfidUID == nil || *rfidUID == "" {
+		return nil, fmt.Errorf("transaksi ditolak: Kartu RFID siswa belum didaftarkan")
+	}
+
+	if !isCardActive {
+		return nil, fmt.Errorf("transaksi ditolak: Kartu RFID siswa sedang diblokir / dibekukan")
 	}
 
 	if currentBalance < p.TotalAmount {
@@ -182,6 +194,34 @@ func (r *TransactionRepo) ProcessTopup(ctx context.Context, studentID, officerID
 		return nil, err
 	}
 	defer tx.Rollback(ctx)
+
+	// Validate student state
+	var currentBalance int
+	var isCardActive bool
+	var isProfileActive bool
+	var rfidUID *string
+
+	err = tx.QueryRow(ctx, `
+		SELECT s.balance, s.is_active, p.is_active, s.rfid_uid
+		FROM public.students s
+		JOIN public.profiles p ON p.id = s.id
+		WHERE s.id = $1
+		FOR UPDATE`, studentID).Scan(&currentBalance, &isCardActive, &isProfileActive, &rfidUID)
+	if err != nil {
+		return nil, fmt.Errorf("siswa tidak ditemukan: %w", err)
+	}
+
+	if !isProfileActive {
+		return nil, fmt.Errorf("top-up ditolak: Akun siswa sedang dinonaktifkan oleh pihak sekolah")
+	}
+
+	if rfidUID == nil || *rfidUID == "" {
+		return nil, fmt.Errorf("top-up ditolak: Siswa belum memiliki kartu RFID yang terdaftar. Daftarkan kartu terlebih dahulu")
+	}
+
+	if !isCardActive {
+		return nil, fmt.Errorf("top-up ditolak: Kartu RFID siswa sedang diblokir / dibekukan. Buka blokir kartu terlebih dahulu")
+	}
 
 	// 1. Add balance to student
 	_, err = tx.Exec(ctx, `
@@ -591,9 +631,25 @@ func (r *TransactionRepo) ProcessCorrection(ctx context.Context, studentID, offi
 	defer tx.Rollback(ctx)
 
 	var currentBalance int
-	err = tx.QueryRow(ctx, `SELECT balance FROM public.students WHERE id = $1 FOR UPDATE`, studentID).Scan(&currentBalance)
+	var isProfileActive bool
+	var rfidUID *string
+
+	err = tx.QueryRow(ctx, `
+		SELECT s.balance, p.is_active, s.rfid_uid
+		FROM public.students s
+		JOIN public.profiles p ON p.id = s.id
+		WHERE s.id = $1
+		FOR UPDATE`, studentID).Scan(&currentBalance, &isProfileActive, &rfidUID)
 	if err != nil {
 		return nil, fmt.Errorf("siswa tidak ditemukan: %w", err)
+	}
+
+	if !isProfileActive {
+		return nil, fmt.Errorf("koreksi ditolak: Akun siswa sedang dinonaktifkan oleh pihak sekolah")
+	}
+
+	if rfidUID == nil || *rfidUID == "" {
+		return nil, fmt.Errorf("koreksi ditolak: Siswa belum memiliki kartu RFID yang terdaftar. Daftarkan kartu terlebih dahulu")
 	}
 
 	newBalance := currentBalance + amount

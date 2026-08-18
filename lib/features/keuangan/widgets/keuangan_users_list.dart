@@ -90,18 +90,27 @@ class KeuanganStudentCard extends StatelessWidget {
                         spacing: 8,
                         runSpacing: 4,
                         children: [
-                          _statusPill(
-                            hasCard ? 'AKTIF' : 'BELUM AKTIF',
-                            hasCard
-                                ? CupertinoIcons.checkmark_circle_fill
-                                : CupertinoIcons.clear_circled_solid,
-                            hasCard
-                                ? Nebula.teal
-                                : context.textSecondary,
-                          ),
+                          if (!hasCard)
+                            _statusPill(
+                              'KARTU BELUM TERDAFTAR',
+                              CupertinoIcons.clear_circled_solid,
+                              context.textSecondary,
+                            )
+                          else if (student.cardIsActive != true)
+                            _statusPill(
+                              'KARTU DIBLOKIR',
+                              CupertinoIcons.lock_circle_fill,
+                              Nebula.amber,
+                            )
+                          else
+                            _statusPill(
+                              'KARTU AKTIF',
+                              CupertinoIcons.checkmark_circle_fill,
+                              Nebula.teal,
+                            ),
                           if (student.isActive != true)
                             _statusPill(
-                              'DIBLOKIR',
+                              'AKUN DIBLOKIR',
                               CupertinoIcons.exclamationmark_circle_fill,
                               Nebula.rose,
                             ),

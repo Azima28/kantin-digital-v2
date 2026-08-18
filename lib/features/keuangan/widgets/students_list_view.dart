@@ -60,7 +60,7 @@ class StudentsListView extends ConsumerWidget {
               matchesStatus = !isAc && rfid != null && rfid.isNotEmpty;
             } else if (selectedStatus == 'Kartu Diblokir') {
               matchesStatus = isAc && !student.cardIsActive && rfid != null && rfid.isNotEmpty;
-            } else if (selectedStatus == 'Belum Aktif') {
+            } else if (selectedStatus == 'Kartu Belum Terdaftar' || selectedStatus == 'Belum Aktif') {
               matchesStatus = rfid == null || rfid.isEmpty;
             } else if (selectedStatus == 'Saldo Rendah') {
               matchesStatus = sBalance < 5000;
@@ -209,7 +209,7 @@ class StudentsListView extends ConsumerWidget {
                                             Icon(CupertinoIcons.info_circle_fill, size: 10, color: context.textSecondary),
                                             const SizedBox(width: 4),
                                             Text(
-                                              'BELUM AKTIF',
+                                              'KARTU BELUM TERDAFTAR',
                                               style: GoogleFonts.inter(
                                                 fontSize: 9,
                                                 fontWeight: FontWeight.bold,

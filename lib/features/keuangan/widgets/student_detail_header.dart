@@ -19,6 +19,8 @@ class StudentDetailHeader extends StatelessWidget {
   final String? rfid;
   final String lastTapStr;
   final NumberFormat fmt;
+  final VoidCallback? onToggleCardFreeze;
+  final VoidCallback? onRegisterCard;
 
   const StudentDetailHeader({
     super.key,
@@ -33,6 +35,8 @@ class StudentDetailHeader extends StatelessWidget {
     required this.rfid,
     required this.lastTapStr,
     required this.fmt,
+    this.onToggleCardFreeze,
+    this.onRegisterCard,
   });
 
   @override
@@ -265,6 +269,64 @@ class StudentDetailHeader extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          Divider(height: 1, thickness: 0.5, color: context.dividerCol),
+          const SizedBox(height: 14),
+          if (hasCard)
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onToggleCardFreeze,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: isCardActive ? Nebula.rose : Nebula.teal,
+                  side: BorderSide(
+                    color: (isCardActive ? Nebula.rose : Nebula.teal).withValues(alpha: 0.35),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                icon: Icon(
+                  isCardActive ? Icons.lock_outline_rounded : Icons.lock_open_rounded,
+                  size: 18,
+                ),
+                label: Text(
+                  isCardActive ? 'BEKUKAN KARTU RFID' : 'BUKA BLOKIR KARTU RFID',
+                  style: GoogleFonts.inter(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+            )
+          else
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: onRegisterCard,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Nebula.teal,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  elevation: 0,
+                ),
+                icon: const Icon(CupertinoIcons.wifi, size: 18, color: Colors.white),
+                label: Text(
+                  'DAFTARKAN KARTU RFID SEKARANG',
+                  style: GoogleFonts.inter(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

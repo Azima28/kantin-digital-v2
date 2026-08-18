@@ -18,6 +18,8 @@ import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/nebula_components.dart';
 import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 
 // keuanganStudentDetailProvider is defined in keuangan_providers.dart
 
@@ -36,13 +38,58 @@ class _KeuanganStudentDetailScreenState
   @override
   void initState() {
     super.initState();
-    // Ensure password controller is disposed when this screen is disposed
   }
 
   @override
   void dispose() {
     StudentDetailPasswordChange.dispose();
     super.dispose();
+  }
+
+  Future<void> _toggleCardFreeze(bool currentCardStatus) async {
+    final bool newStatus = !currentCardStatus;
+    final confirmed = await showAppConfirmationDialog(
+      context,
+      title: newStatus ? 'Aktifkan Kartu RFID' : 'Bekukan Kartu RFID',
+      message: newStatus
+          ? 'Apakah Anda yakin ingin mengaktifkan kembali kartu RFID ini? Kartu dapat digunakan jajan.'
+          : 'Apakah Anda yakin ingin membekukan kartu RFID ini? Siswa tidak dapat melakukan pembayaran atau topup dengan kartu ini untuk sementara.',
+      confirmLabel: newStatus ? 'Aktifkan Kartu' : 'Bekukan Kartu',
+      isDestructive: !newStatus,
+      icon: newStatus ? Icons.lock_open_rounded : Icons.lock_outline_rounded,
+    );
+
+    if (!confirmed) return;
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      await apiClient.patch('/student/card-status', body: {
+        'student_id': widget.studentId,
+        'is_active': newStatus,
+      });
+
+      ref.invalidate(keuanganStudentDetailProvider(widget.studentId));
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(newStatus ? 'Kartu RFID berhasil diaktifkan.' : 'Kartu RFID berhasil dibekukan.'),
+            backgroundColor: newStatus ? Nebula.teal : Nebula.amber,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${AppStrings.labelFailed} mengubah status kartu: $e'),
+            backgroundColor: Nebula.rose,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   void _openAllTransactionsScreen() {
@@ -134,6 +181,8 @@ class _KeuanganStudentDetailScreenState
                       rfid: rfid,
                       lastTapStr: lastTapStr,
                       fmt: fmt,
+                      onToggleCardFreeze: hasCard ? () => _toggleCardFreeze(isCardActive) : null,
+                      onRegisterCard: () => context.push('/finance/students/${widget.studentId}/card'),
                     ),
                     const SizedBox(height: 16),
 
@@ -163,6 +212,17 @@ class _KeuanganStudentDetailScreenState
                             icon: CupertinoIcons.arrow_up_circle,
                             iconColor: Nebula.teal,
                             title: 'Top-Up Saldo Tunai',
+                            isEnabled: hasCard && isCardActive && isAccountActive,
+                            subtitle: !hasCard
+                                ? 'Daftarkan kartu RFID terlebih dahulu'
+                                : (!isCardActive
+                                    ? 'Kartu RFID sedang diblokir'
+                                    : (!isAccountActive ? 'Akun siswa dinonaktifkan' : null)),
+                            disabledTooltip: !hasCard
+                                ? 'Siswa belum memiliki kartu RFID. Silakan daftarkan kartu terlebih dahulu.'
+                                : (!isCardActive
+                                    ? 'Kartu RFID sedang diblokir. Buka blokir kartu terlebih dahulu.'
+                                    : 'Akun siswa sedang dinonaktifkan.'),
                             onTap: () {
                               final studentProfile = StudentWithProfile(
                                 id: widget.studentId,
@@ -191,6 +251,13 @@ class _KeuanganStudentDetailScreenState
                             icon: CupertinoIcons.arrow_right_arrow_left_circle,
                             iconColor: Nebula.rose,
                             title: AppStrings.keuanganKoreksiSaldo,
+                            isEnabled: hasCard && isAccountActive,
+                            subtitle: !hasCard
+                                ? 'Daftarkan kartu RFID terlebih dahulu'
+                                : (!isAccountActive ? 'Akun siswa dinonaktifkan' : null),
+                            disabledTooltip: !hasCard
+                                ? 'Siswa belum memiliki kartu RFID. Silakan daftarkan kartu terlebih dahulu.'
+                                : 'Akun siswa sedang dinonaktifkan.',
                             onTap: () {
                               final studentProfile = StudentWithProfile(
                                 id: widget.studentId,
@@ -218,7 +285,10 @@ class _KeuanganStudentDetailScreenState
                           _buildActionTile(
                             icon: CupertinoIcons.wifi,
                             iconColor: Nebula.teal,
-                            title: 'Registrasi / Ganti Kartu NFC',
+                            title: hasCard ? 'Ganti Kartu RFID / NFC' : 'Registrasi Kartu RFID Baru',
+                            subtitle: hasCard ? 'UID: $rfid' : 'Belum memiliki kartu fisik',
+                            isEnabled: isAccountActive,
+                            disabledTooltip: 'Akun siswa sedang dinonaktifkan.',
                             onTap: () {
                               context.push(
                                 '/finance/students/${widget.studentId}/card',
@@ -235,6 +305,7 @@ class _KeuanganStudentDetailScreenState
                             icon: Icons.key,
                             iconColor: Nebula.amber,
                             title: AppStrings.adminChangePassword,
+                            isEnabled: true,
                             onTap: () => StudentDetailPasswordChange.show(
                               context, ref, profile.id,
                             ),
@@ -488,29 +559,61 @@ class _KeuanganStudentDetailScreenState
     required Color iconColor,
     required String title,
     required VoidCallback onTap,
+    bool isEnabled = true,
+    String? subtitle,
+    String? disabledTooltip,
   }) {
-    return PressScale(
-      onTap: onTap,
-      child: ListTile(
-        leading: CircleAvatar(
-          radius: 18,
-          backgroundColor: iconColor.withValues(alpha: 0.08),
-          child: Icon(icon, color: iconColor, size: 20),
-        ),
-        title: Text(
-          title,
-          style: GoogleFonts.inter(
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-            color: context.textPrimary,
+    final effectiveColor = isEnabled ? iconColor : context.textSecondary.withValues(alpha: 0.5);
+
+    return Opacity(
+      opacity: isEnabled ? 1.0 : 0.5,
+      child: PressScale(
+        onTap: () {
+          if (isEnabled) {
+            onTap();
+          } else if (disabledTooltip != null && mounted) {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(disabledTooltip),
+                backgroundColor: Nebula.rose,
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+        },
+        child: ListTile(
+          leading: CircleAvatar(
+            radius: 18,
+            backgroundColor: effectiveColor.withValues(alpha: 0.08),
+            child: Icon(icon, color: effectiveColor, size: 20),
           ),
+          title: Text(
+            title,
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              color: isEnabled ? context.textPrimary : context.textSecondary,
+            ),
+          ),
+          subtitle: subtitle != null
+              ? Text(
+                  subtitle,
+                  style: GoogleFonts.inter(
+                    fontSize: 11.5,
+                    color: isEnabled ? context.textSecondary : Nebula.rose,
+                    fontWeight: isEnabled ? FontWeight.normal : FontWeight.w500,
+                  ),
+                )
+              : null,
+          trailing: Icon(
+            isEnabled ? CupertinoIcons.chevron_forward : Icons.lock_outline_rounded,
+            size: 16,
+            color: isEnabled ? context.textSecondary : Nebula.rose.withValues(alpha: 0.6),
+          ),
+          onTap: null,
         ),
-        trailing: Icon(
-          CupertinoIcons.chevron_forward,
-          size: 16,
-          color: context.textSecondary,
-        ),
-        onTap: null,
       ),
     );
   }
