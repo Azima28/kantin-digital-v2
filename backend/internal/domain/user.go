@@ -31,15 +31,17 @@ type UserProfile struct {
 }
 
 type Student struct {
-	ID                     string      `json:"id"`
-	Balance                int         `json:"balance"`
-	RfidUID                *string     `json:"rfid_uid,omitempty"`
-	IsActive               bool        `json:"is_active"`
-	DailyLimit             int         `json:"daily_limit"`
-	WANotificationsEnabled bool        `json:"wa_notifications_enabled"`
-	ParentPhone            *string     `json:"parent_phone,omitempty"`
-	ClassID                *string     `json:"class_id,omitempty"`
-	RombelID               *string     `json:"rombel_id,omitempty"`
+	ID                     string       `json:"id"`
+	Balance                int          `json:"balance"`
+	RfidUID                *string      `json:"rfid_uid,omitempty"`
+	IsActive               bool         `json:"is_active"`
+	DailyLimit             int          `json:"daily_limit"`
+	WANotificationsEnabled bool         `json:"wa_notifications_enabled"`
+	ParentPhone            *string      `json:"parent_phone,omitempty"`
+	Class                  string       `json:"class"`
+	Rombel                 string       `json:"rombel"`
+	ClassID                *string      `json:"class_id,omitempty"`
+	RombelID               *string      `json:"rombel_id,omitempty"`
 	Profile                *UserProfile `json:"profile,omitempty"`
 }
 

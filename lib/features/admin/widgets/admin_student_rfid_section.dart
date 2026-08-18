@@ -9,7 +9,7 @@ import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 
 /// Card showing the RFID status with freeze/unfreeze toggle.
-/// Styled as a horizontal action button to match the user screenshot design.
+/// Responsive and overflow-proof.
 class AdminStudentRfidSection extends ConsumerStatefulWidget {
   final String studentId;
   final bool isCardActive;
@@ -68,7 +68,7 @@ class _AdminStudentRfidSectionState
     return GestureDetector(
       onTap: _toggleFreezeCard,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
           color: widget.isCardActive
               ? Nebula.rose.withValues(alpha: 0.1)
@@ -79,7 +79,7 @@ class _AdminStudentRfidSectionState
                 : Nebula.teal.withValues(alpha: 0.3),
             width: 1,
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -89,16 +89,21 @@ class _AdminStudentRfidSectionState
                   ? CupertinoIcons.snow
                   : CupertinoIcons.checkmark_circle,
               color: widget.isCardActive ? Nebula.rose : Nebula.teal,
-              size: 22,
+              size: 18,
             ),
-            const SizedBox(width: 10),
-            Text(
-              widget.isCardActive ? 'Bekukan\nKartu RFID' : 'Aktifkan\nKartu RFID',
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: widget.isCardActive ? Nebula.rose : Nebula.teal,
-                height: 1.2,
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                widget.isCardActive ? 'Bekukan\nKartu' : 'Aktifkan\nKartu',
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: widget.isCardActive ? Nebula.rose : Nebula.teal,
+                  height: 1.15,
+                ),
               ),
             ),
           ],

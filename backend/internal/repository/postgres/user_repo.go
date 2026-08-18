@@ -81,7 +81,8 @@ func (r *UserRepo) GetStudentDetail(ctx context.Context, studentID string) (*dom
 		return nil, ErrDatabaseNotReady
 	}
 	query := `
-		SELECT s.id, s.balance, s.rfid_uid, s.is_active, COALESCE(s.daily_limit, 0), COALESCE(s.wa_notifications_enabled, true), s.parent_phone, s.class_id, s.rombel_id,
+		SELECT s.id, s.balance, s.rfid_uid, s.is_active, COALESCE(s.daily_limit, 0), COALESCE(s.wa_notifications_enabled, true), s.parent_phone,
+		       COALESCE(s.class, 'X RPL 1'), COALESCE(s.rombel, 'X RPL 1'), s.class_id, s.rombel_id,
 		       p.email, p.full_name, p.role, p.username, p.nisn, p.phone_number, p.is_active, p.avatar_url, p.created_at
 		FROM public.students s
 		JOIN public.profiles p ON p.id = s.id
@@ -93,7 +94,8 @@ func (r *UserRepo) GetStudentDetail(ctx context.Context, studentID string) (*dom
 	p.ID = studentID
 
 	err := row.Scan(
-		&s.ID, &s.Balance, &s.RfidUID, &s.IsActive, &s.DailyLimit, &s.WANotificationsEnabled, &s.ParentPhone, &s.ClassID, &s.RombelID,
+		&s.ID, &s.Balance, &s.RfidUID, &s.IsActive, &s.DailyLimit, &s.WANotificationsEnabled, &s.ParentPhone,
+		&s.Class, &s.Rombel, &s.ClassID, &s.RombelID,
 		&p.Email, &p.FullName, &p.Role, &p.Username, &p.NISN, &p.PhoneNumber, &p.IsActive, &p.AvatarURL, &p.CreatedAt,
 	)
 	if err != nil {
@@ -112,7 +114,8 @@ func (r *UserRepo) FindStudentByRFID(ctx context.Context, rfidUID string) (*doma
 		return nil, ErrDatabaseNotReady
 	}
 	query := `
-		SELECT s.id, s.balance, s.rfid_uid, s.is_active, COALESCE(s.daily_limit, 0), COALESCE(s.wa_notifications_enabled, true), s.parent_phone, s.class_id, s.rombel_id,
+		SELECT s.id, s.balance, s.rfid_uid, s.is_active, COALESCE(s.daily_limit, 0), COALESCE(s.wa_notifications_enabled, true), s.parent_phone,
+		       COALESCE(s.class, 'X RPL 1'), COALESCE(s.rombel, 'X RPL 1'), s.class_id, s.rombel_id,
 		       p.email, p.full_name, p.role, p.username, p.nisn, p.phone_number, p.is_active, p.avatar_url, p.created_at
 		FROM public.students s
 		JOIN public.profiles p ON p.id = s.id
@@ -124,7 +127,8 @@ func (r *UserRepo) FindStudentByRFID(ctx context.Context, rfidUID string) (*doma
 	var p domain.UserProfile
 
 	err := row.Scan(
-		&s.ID, &s.Balance, &s.RfidUID, &s.IsActive, &s.DailyLimit, &s.WANotificationsEnabled, &s.ParentPhone, &s.ClassID, &s.RombelID,
+		&s.ID, &s.Balance, &s.RfidUID, &s.IsActive, &s.DailyLimit, &s.WANotificationsEnabled, &s.ParentPhone,
+		&s.Class, &s.Rombel, &s.ClassID, &s.RombelID,
 		&p.Email, &p.FullName, &p.Role, &p.Username, &p.NISN, &p.PhoneNumber, &p.IsActive, &p.AvatarURL, &p.CreatedAt,
 	)
 	if err != nil {
@@ -180,7 +184,8 @@ func (r *UserRepo) GetFirstStudentByParentID(ctx context.Context, parentID strin
 // SearchStudents searches students by name, NISN, or username
 func (r *UserRepo) SearchStudents(ctx context.Context, search string) ([]domain.Student, error) {
 	query := `
-		SELECT s.id, s.balance, s.rfid_uid, s.is_active, COALESCE(s.daily_limit, 0), COALESCE(s.wa_notifications_enabled, true), s.parent_phone, s.class_id, s.rombel_id,
+		SELECT s.id, s.balance, s.rfid_uid, s.is_active, COALESCE(s.daily_limit, 0), COALESCE(s.wa_notifications_enabled, true), s.parent_phone,
+		       COALESCE(s.class, 'X RPL 1'), COALESCE(s.rombel, 'X RPL 1'), s.class_id, s.rombel_id,
 		       p.email, p.full_name, p.role, p.username, p.nisn, p.phone_number, p.is_active, p.avatar_url, p.created_at
 		FROM public.students s
 		JOIN public.profiles p ON p.id = s.id
@@ -199,7 +204,8 @@ func (r *UserRepo) SearchStudents(ctx context.Context, search string) ([]domain.
 		var s domain.Student
 		var p domain.UserProfile
 		err := rows.Scan(
-			&s.ID, &s.Balance, &s.RfidUID, &s.IsActive, &s.DailyLimit, &s.WANotificationsEnabled, &s.ParentPhone, &s.ClassID, &s.RombelID,
+			&s.ID, &s.Balance, &s.RfidUID, &s.IsActive, &s.DailyLimit, &s.WANotificationsEnabled, &s.ParentPhone,
+			&s.Class, &s.Rombel, &s.ClassID, &s.RombelID,
 			&p.Email, &p.FullName, &p.Role, &p.Username, &p.NISN, &p.PhoneNumber, &p.IsActive, &p.AvatarURL, &p.CreatedAt,
 		)
 		if err != nil {
@@ -215,7 +221,8 @@ func (r *UserRepo) SearchStudents(ctx context.Context, search string) ([]domain.
 // FindStudentByNISN finds student by NISN or NIS
 func (r *UserRepo) FindStudentByNISN(ctx context.Context, nisn string) (*domain.Student, error) {
 	query := `
-		SELECT s.id, s.balance, s.rfid_uid, s.is_active, COALESCE(s.daily_limit, 0), COALESCE(s.wa_notifications_enabled, true), s.parent_phone, s.class_id, s.rombel_id,
+		SELECT s.id, s.balance, s.rfid_uid, s.is_active, COALESCE(s.daily_limit, 0), COALESCE(s.wa_notifications_enabled, true), s.parent_phone,
+		       COALESCE(s.class, 'X RPL 1'), COALESCE(s.rombel, 'X RPL 1'), s.class_id, s.rombel_id,
 		       p.email, p.full_name, p.role, p.username, p.nisn, p.phone_number, p.is_active, p.avatar_url, p.created_at
 		FROM public.students s
 		JOIN public.profiles p ON p.id = s.id
@@ -227,7 +234,8 @@ func (r *UserRepo) FindStudentByNISN(ctx context.Context, nisn string) (*domain.
 	var p domain.UserProfile
 
 	err := row.Scan(
-		&s.ID, &s.Balance, &s.RfidUID, &s.IsActive, &s.DailyLimit, &s.WANotificationsEnabled, &s.ParentPhone, &s.ClassID, &s.RombelID,
+		&s.ID, &s.Balance, &s.RfidUID, &s.IsActive, &s.DailyLimit, &s.WANotificationsEnabled, &s.ParentPhone,
+		&s.Class, &s.Rombel, &s.ClassID, &s.RombelID,
 		&p.Email, &p.FullName, &p.Role, &p.Username, &p.NISN, &p.PhoneNumber, &p.IsActive, &p.AvatarURL, &p.CreatedAt,
 	)
 	if err != nil {
@@ -360,7 +368,8 @@ func (r *UserRepo) UpdateAvatarURL(ctx context.Context, userID, avatarURL string
 // ListAllStudents retrieves all registered students with profile details
 func (r *UserRepo) ListAllStudents(ctx context.Context) ([]domain.Student, error) {
 	query := `
-		SELECT s.id, s.balance, s.rfid_uid, s.is_active, COALESCE(s.daily_limit, 0), COALESCE(s.wa_notifications_enabled, true), s.parent_phone, s.class_id, s.rombel_id,
+		SELECT s.id, s.balance, s.rfid_uid, s.is_active, COALESCE(s.daily_limit, 0), COALESCE(s.wa_notifications_enabled, true), s.parent_phone,
+		       COALESCE(s.class, 'X RPL 1'), COALESCE(s.rombel, 'X RPL 1'), s.class_id, s.rombel_id,
 		       p.email, p.full_name, p.role, p.username, p.nisn, p.phone_number, p.is_active, p.avatar_url, p.created_at
 		FROM public.students s
 		JOIN public.profiles p ON p.id = s.id
@@ -377,7 +386,8 @@ func (r *UserRepo) ListAllStudents(ctx context.Context) ([]domain.Student, error
 		var s domain.Student
 		var p domain.UserProfile
 		err := rows.Scan(
-			&s.ID, &s.Balance, &s.RfidUID, &s.IsActive, &s.DailyLimit, &s.WANotificationsEnabled, &s.ParentPhone, &s.ClassID, &s.RombelID,
+			&s.ID, &s.Balance, &s.RfidUID, &s.IsActive, &s.DailyLimit, &s.WANotificationsEnabled, &s.ParentPhone,
+			&s.Class, &s.Rombel, &s.ClassID, &s.RombelID,
 			&p.Email, &p.FullName, &p.Role, &p.Username, &p.NISN, &p.PhoneNumber, &p.IsActive, &p.AvatarURL, &p.CreatedAt,
 		)
 		if err != nil {
@@ -482,7 +492,8 @@ func (r *UserRepo) UpdateStudentSettings(ctx context.Context, studentID string, 
 // GetParentChildren retrieves all students linked to a parent
 func (r *UserRepo) GetParentChildren(ctx context.Context, parentID string) ([]domain.Student, error) {
 	query := `
-		SELECT s.id, s.balance, s.rfid_uid, s.is_active, COALESCE(s.daily_limit, 0), COALESCE(s.wa_notifications_enabled, true), s.parent_phone, s.class_id, s.rombel_id,
+		SELECT s.id, s.balance, s.rfid_uid, s.is_active, COALESCE(s.daily_limit, 0), COALESCE(s.wa_notifications_enabled, true), s.parent_phone,
+		       COALESCE(s.class, 'X RPL 1'), COALESCE(s.rombel, 'X RPL 1'), s.class_id, s.rombel_id,
 		       p.email, p.full_name, p.role, p.username, p.nisn, p.phone_number, p.is_active, p.avatar_url, p.created_at
 		FROM public.parent_students ps
 		JOIN public.students s ON s.id = ps.student_id
@@ -500,7 +511,8 @@ func (r *UserRepo) GetParentChildren(ctx context.Context, parentID string) ([]do
 		var s domain.Student
 		var p domain.UserProfile
 		err := rows.Scan(
-			&s.ID, &s.Balance, &s.RfidUID, &s.IsActive, &s.DailyLimit, &s.WANotificationsEnabled, &s.ParentPhone, &s.ClassID, &s.RombelID,
+			&s.ID, &s.Balance, &s.RfidUID, &s.IsActive, &s.DailyLimit, &s.WANotificationsEnabled, &s.ParentPhone,
+			&s.Class, &s.Rombel, &s.ClassID, &s.RombelID,
 			&p.Email, &p.FullName, &p.Role, &p.Username, &p.NISN, &p.PhoneNumber, &p.IsActive, &p.AvatarURL, &p.CreatedAt,
 		)
 		if err != nil {
@@ -514,7 +526,7 @@ func (r *UserRepo) GetParentChildren(ctx context.Context, parentID string) ([]do
 }
 
 // CreateUserProfile creates a new user profile with associated role sub-record
-func (r *UserRepo) CreateUserProfile(ctx context.Context, user *domain.UserProfile, passwordHash string, canteenName string, rfidUID *string, studentNISN *string) error {
+func (r *UserRepo) CreateUserProfile(ctx context.Context, user *domain.UserProfile, passwordHash string, canteenName string, rfidUID *string, studentNISN *string, studentClass *string) error {
 	tx, err := r.db.Pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -535,10 +547,14 @@ func (r *UserRepo) CreateUserProfile(ctx context.Context, user *domain.UserProfi
 
 	switch user.Role {
 	case domain.RoleStudent:
+		className := "X RPL 1"
+		if studentClass != nil && strings.TrimSpace(*studentClass) != "" {
+			className = strings.TrimSpace(*studentClass)
+		}
 		_, err = tx.Exec(ctx, `
-			INSERT INTO public.students (id, balance, rfid_uid, is_active, daily_limit, wa_notifications_enabled)
-			VALUES ($1, 0, $2, $3, 0, TRUE)`,
-			newID, rfidUID, user.IsActive,
+			INSERT INTO public.students (id, balance, rfid_uid, is_active, daily_limit, wa_notifications_enabled, class, rombel)
+			VALUES ($1, 0, $2, $3, 0, TRUE, $4, $4)`,
+			newID, rfidUID, user.IsActive, className,
 		)
 	case domain.RolePetugasKantin:
 		name := canteenName

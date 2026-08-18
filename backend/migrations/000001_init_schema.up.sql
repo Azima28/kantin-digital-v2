@@ -35,6 +35,8 @@ CREATE TABLE IF NOT EXISTS public.students (
     daily_limit INTEGER DEFAULT 0 CHECK (daily_limit >= 0),
     wa_notifications_enabled BOOLEAN NOT NULL DEFAULT TRUE,
     parent_phone TEXT,
+    class TEXT DEFAULT 'X RPL 1',
+    rombel TEXT DEFAULT 'X RPL 1',
     class_id UUID,
     rombel_id UUID
 );

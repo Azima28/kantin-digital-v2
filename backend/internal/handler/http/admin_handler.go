@@ -1,4 +1,4 @@
-package http
+﻿package http
 
 import (
 	"strconv"
@@ -86,7 +86,7 @@ func (h *AdminHandler) CreateUser(c *fiber.Ctx) error {
 		IsActive:    true,
 	}
 
-	if err := h.paymentService.CreateUser(c.Context(), user, req.Password, req.CanteenName, req.RfidUID, req.StudentNISN); err != nil {
+	if err := h.paymentService.CreateUser(c.Context(), user, req.Password, req.CanteenName, req.RfidUID, req.StudentNISN, req.Class); err != nil {
 		return response.Error(c, fiber.StatusInternalServerError, "Gagal menambahkan pengguna: "+err.Error(), err.Error())
 	}
 

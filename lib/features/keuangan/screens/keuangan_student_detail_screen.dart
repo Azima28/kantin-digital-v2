@@ -122,11 +122,16 @@ class _KeuanganStudentDetailScreenState
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(CupertinoIcons.left_chevron, color: Nebula.teal),
+          onPressed: () => context.pop(),
+        ),
         title: Text(
           'Profil Siswa',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
-            color: Nebula.teal,
+            color: context.textPrimary,
             fontSize: 18,
           ),
         ),

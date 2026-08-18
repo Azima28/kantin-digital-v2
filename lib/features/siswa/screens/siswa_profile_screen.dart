@@ -182,7 +182,7 @@ class SiswaProfileScreen extends ConsumerWidget {
     final apiClient = ref.read(apiClientProvider);
     final storageService = StorageService(apiClient);
 
-    final imageFile = await storageService.pickImage(source: source);
+    final imageFile = await storageService.pickImage(context: context, source: source);
     if (imageFile == null) return;
 
     if (context.mounted) {
@@ -244,7 +244,7 @@ class SiswaProfileScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       body: studentAsync.when(
         data: (student) {
-          final String studentClass = student?.class_ ?? '8-B';
+          final String studentClass = student?.class_ ?? 'X RPL 1';
 
           return SafeArea(
             child: Align(

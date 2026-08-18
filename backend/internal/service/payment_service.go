@@ -83,7 +83,7 @@ func (s *PaymentService) ListAllUsers(ctx context.Context, roleFilter string) ([
 	return s.userRepo.ListAllUsers(ctx, roleFilter)
 }
 
-func (s *PaymentService) CreateUser(ctx context.Context, user *domain.UserProfile, rawPassword string, canteenName string, rfidUID *string, studentNISN *string) error {
+func (s *PaymentService) CreateUser(ctx context.Context, user *domain.UserProfile, rawPassword string, canteenName string, rfidUID *string, studentNISN *string, studentClass *string) error {
 	if rawPassword == "" {
 		rawPassword = "password123"
 	}
@@ -91,7 +91,7 @@ func (s *PaymentService) CreateUser(ctx context.Context, user *domain.UserProfil
 	if err != nil {
 		return err
 	}
-	return s.userRepo.CreateUserProfile(ctx, user, hash, canteenName, rfidUID, studentNISN)
+	return s.userRepo.CreateUserProfile(ctx, user, hash, canteenName, rfidUID, studentNISN, studentClass)
 }
 
 func (s *PaymentService) UpdateUserStatus(ctx context.Context, id string, isActive bool) error {

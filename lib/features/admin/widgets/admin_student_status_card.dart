@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 
-/// Info card showing student status, RFID, username, email, balance, and daily limit.
-/// Styled according to the floating card detail design for Super Admin.
+/// Info card showing student status, RFID, username, email, class/rombel, balance, and daily limit.
 class AdminStudentStatusCard extends StatelessWidget {
   final bool isCardActive;
   final bool isAccountActive;
   final String rfidUid;
   final String username;
   final String email;
+  final String className;
   final int balance;
   final double? dailyLimit;
 
@@ -23,6 +22,7 @@ class AdminStudentStatusCard extends StatelessWidget {
     required this.rfidUid,
     required this.username,
     required this.email,
+    required this.className,
     required this.balance,
     this.dailyLimit,
   });
@@ -30,7 +30,7 @@ class AdminStudentStatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
@@ -39,23 +39,31 @@ class AdminStudentStatusCard extends StatelessWidget {
       child: Column(
         children: [
           _buildInfoRow(context, 'Status Akun Login', isAccountActive),
-          Divider(height: 20, thickness: 0.5, color: context.dividerCol.withValues(alpha: 0.7)),
+          Divider(height: 16, thickness: 0.5, color: context.dividerCol.withValues(alpha: 0.7)),
           _buildInfoRow(context, 'Status Kartu RFID', isCardActive),
-          Divider(height: 20, thickness: 0.5, color: context.dividerCol.withValues(alpha: 0.7)),
-          _buildTextInfoRow(context, 'UID RFID', rfidUid, isMonospace: true),
-          Divider(height: 20, thickness: 0.5, color: context.dividerCol.withValues(alpha: 0.7)),
+          Divider(height: 16, thickness: 0.5, color: context.dividerCol.withValues(alpha: 0.7)),
+          _buildTextInfoRow(
+            context,
+            'Kelas / Rombel',
+            className.isNotEmpty ? className : 'Belum Ditentukan',
+            highlightColor: Nebula.teal,
+            isBold: true,
+          ),
+          Divider(height: 16, thickness: 0.5, color: context.dividerCol.withValues(alpha: 0.7)),
+          _buildTextInfoRow(context, 'UID RFID', rfidUid.isNotEmpty ? rfidUid : '-', isMonospace: true),
+          Divider(height: 16, thickness: 0.5, color: context.dividerCol.withValues(alpha: 0.7)),
           _buildTextInfoRow(
             context,
             'Username',
             username.isNotEmpty ? username : '-',
           ),
-          Divider(height: 20, thickness: 0.5, color: context.dividerCol.withValues(alpha: 0.7)),
+          Divider(height: 16, thickness: 0.5, color: context.dividerCol.withValues(alpha: 0.7)),
           _buildTextInfoRow(
             context,
             'Email',
             email.isNotEmpty ? email : '-',
           ),
-          Divider(height: 20, thickness: 0.5, color: context.dividerCol.withValues(alpha: 0.7)),
+          Divider(height: 16, thickness: 0.5, color: context.dividerCol.withValues(alpha: 0.7)),
           _buildTextInfoRow(
             context,
             'Saldo',
@@ -63,7 +71,7 @@ class AdminStudentStatusCard extends StatelessWidget {
             highlightColor: Nebula.teal,
             isBold: true,
           ),
-          Divider(height: 20, thickness: 0.5, color: context.dividerCol.withValues(alpha: 0.7)),
+          Divider(height: 16, thickness: 0.5, color: context.dividerCol.withValues(alpha: 0.7)),
           _buildTextInfoRow(
             context,
             'Batas Harian',
@@ -84,7 +92,7 @@ class AdminStudentStatusCard extends StatelessWidget {
           child: Text(
             label,
             style: GoogleFonts.inter(
-              fontSize: 13,
+              fontSize: 12.5,
               fontWeight: FontWeight.w500,
               color: context.textSecondary,
             ),
@@ -93,17 +101,17 @@ class AdminStudentStatusCard extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
           decoration: BoxDecoration(
             color: isActive
                 ? Nebula.teal.withValues(alpha: 0.15)
                 : Nebula.rose.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Text(
             isActive ? 'ACTIVE' : 'BLOCKED',
             style: GoogleFonts.inter(
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: FontWeight.w700,
               color: isActive ? Nebula.teal : Nebula.rose,
               letterSpacing: 0.5,
@@ -131,7 +139,7 @@ class AdminStudentStatusCard extends StatelessWidget {
           child: Text(
             label,
             style: GoogleFonts.inter(
-              fontSize: 13,
+              fontSize: 12.5,
               fontWeight: FontWeight.w500,
               color: context.textSecondary,
             ),
@@ -148,12 +156,12 @@ class AdminStudentStatusCard extends StatelessWidget {
             style: isMonospace
                 ? TextStyle(
                     fontFamily: 'Courier',
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: highlightColor ?? context.textPrimary,
                   )
                 : GoogleFonts.inter(
-                    fontSize: isBold ? 14 : 13,
+                    fontSize: isBold ? 13.5 : 12.5,
                     fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
                     color: highlightColor ?? context.textPrimary,
                   ),

@@ -8,15 +8,15 @@ import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
-import 'package:kantin_digital/core/widgets/nebula_components.dart';
+import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
+import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/features/admin/widgets/admin_edit_student_sheet.dart';
+import 'package:kantin_digital/features/admin/widgets/admin_student_status_card.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_student_password_change.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_student_rfid_section.dart';
-import 'package:kantin_digital/features/admin/widgets/admin_student_status_card.dart';
-import 'package:kantin_digital/features/admin/widgets/admin_edit_student_sheet.dart';
-import 'package:kantin_digital/core/models/models.dart';
-import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/features/shared/screens/student_transactions_screen.dart';
+import 'package:kantin_digital/features/siswa/widgets/siswa_transaction_detail_sheet.dart';
 
 class AdminStudentDetailScreen extends ConsumerStatefulWidget {
   final String studentId;
@@ -29,24 +29,21 @@ class AdminStudentDetailScreen extends ConsumerStatefulWidget {
 
 class _AdminStudentDetailScreenState
     extends ConsumerState<AdminStudentDetailScreen> {
-
-  @override
-  void dispose() {
-    AdminStudentPasswordChange.dispose();
-    super.dispose();
-  }
-
   void _openAllTransactionsScreen({
     required String studentId,
     required Color primaryColor,
     required Color accentColor,
   }) {
+    final detail = ref.read(adminStudentDetailProvider(studentId)).asData?.value;
+    final String studentName = detail?.profile.fullName ?? AppStrings.adminStudents;
+
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => StudentTransactionsScreen(
           studentId: studentId,
-          primaryColor: Nebula.teal,
-          accentColor: Nebula.amber,
+          title: studentName,
+          primaryColor: primaryColor,
+          accentColor: accentColor,
         ),
       ),
     );
@@ -54,27 +51,25 @@ class _AdminStudentDetailScreenState
 
   @override
   Widget build(BuildContext context) {
-    final studentAsync = ref.watch(
-      adminStudentDetailProvider(widget.studentId),
-    );
+    final studentAsync = ref.watch(adminStudentDetailProvider(widget.studentId));
 
     return Scaffold(
-      backgroundColor: context.surfaceBg,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        centerTitle: true,
         leading: IconButton(
           icon: const Icon(CupertinoIcons.left_chevron, color: Nebula.teal),
           onPressed: () => context.pop(),
         ),
+        centerTitle: true,
         title: Text(
-          '${AppStrings.titleDetail} Siswa',
+          'Detail Siswa',
           style: GoogleFonts.inter(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Nebula.teal,
+            color: context.textPrimary,
           ),
         ),
         actions: [
@@ -91,6 +86,7 @@ class _AdminStudentDetailScreenState
             ),
             orElse: () => const SizedBox.shrink(),
           ),
+          const SizedBox(width: 4),
         ],
       ),
       body: studentAsync.when(
@@ -103,318 +99,137 @@ class _AdminStudentDetailScreenState
           final String email = profile.email ?? '';
           final String username = profile.username ?? '';
           final String nisn = profile.nisn ?? '';
-          final String className = student.class_ ?? 'Belum Diisi';
+          final String className = student.class_ ?? 'X RPL 1';
           final int balance = student.balance;
           final double? dailyLimit = student.dailyLimit;
           final String rfidUid = student.rfidUid ?? 'Belum Terdaftar';
           final bool isCardActive = student.isActive;
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 960),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.topCenter,
-                  children: [
-                    // Main White Card Container
-                    Container(
-                      margin: const EdgeInsets.only(top: 34),
-                      padding: const EdgeInsets.only(
-                        top: 48,
-                        left: 32,
-                        right: 32,
-                        bottom: 32,
-                      ),
-                      decoration: BoxDecoration(
-                        color: context.cardBg,
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(
-                          color: context.dividerCol.withValues(alpha: 0.6),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 24,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // 1. Name & Class / NISN Subtitle
-                          Center(
-                            child: Column(
-                              children: [
-                                Text(
-                                  fullName,
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: Nebula.teal,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  'Kelas $className • NISN: ${nisn.isNotEmpty ? nisn : "-"}',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    color: context.textSecondary,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-
-                          // 2. Student Info List Card
-                          AdminStudentStatusCard(
-                            isCardActive: isCardActive,
-                            isAccountActive: profile.isActive ?? true,
-                            rfidUid: rfidUid,
-                            username: username,
-                            email: email,
-                            balance: balance,
-                            dailyLimit: dailyLimit,
-                          ),
-                          const SizedBox(height: 20),
-
-                          // 3. Action Buttons Row (Ubah Kata Sandi & Bekukan/Aktifkan Kartu RFID)
-                          Row(
-                            children: [
-                              // Ubah Kata Sandi Button
-                              Expanded(
-                                child: PressScale(
-                                  onTap: () => AdminStudentPasswordChange.show(
-                                    context,
-                                    ref,
-                                    profile.id,
-                                  ),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 16,
-                                      horizontal: 16,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Nebula.teal.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(
-                                        color: Nebula.teal.withValues(alpha: 0.3),
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        const Icon(
-                                          Icons.key,
-                                          color: Nebula.teal,
-                                          size: 22,
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Text(
-                                          'Ubah\nKata Sandi',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            color: Nebula.teal,
-                                            height: 1.2,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-
-                              // Bekukan / Aktifkan Kartu RFID Button
-                              Expanded(
-                                child: AdminStudentRfidSection(
-                                  studentId: widget.studentId,
-                                  isCardActive: isCardActive,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 28),
-
-                          // 4. Riwayat Transaksi Header
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Riwayat Transaksi',
-                                style: GoogleFonts.inter(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: context.textPrimary,
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: () => _openAllTransactionsScreen(
-                                  studentId: widget.studentId,
-                                  primaryColor: Nebula.teal,
-                                  accentColor: Nebula.amber,
-                                ),
-                                child: Text(
-                                  'Lihat Semua',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Nebula.teal,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
-
-                          // 5. Transaction History List / Empty State
-                          if (txs.isEmpty)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 28,
-                                horizontal: 20,
-                              ),
-                              decoration: BoxDecoration(
-                                color: context.surfaceBg,
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  AppStrings.noTransactions,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    color: context.textSecondary,
-                                  ),
-                                ),
-                              ),
-                            )
-                          else
-                            Column(
-                              children: txs.take(5).map((tx) {
-                                final int amount = tx.totalAmount;
-                                final bool isTopup = tx.isTopup;
-                                final bool isRefund = tx.status?.toString().toLowerCase() == 'refunded' || tx.type == 'refund';
-                                final bool isIncoming = isTopup || isRefund;
-                                final String canteen =
-                                    tx.canteenName ?? 'Stan Kantin';
-                                final date =
-                                    tx.createdAt?.toLocal() ?? DateTime.now();
-
-                                return NebulaCard(
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  padding: const EdgeInsets.all(16),
-                                  child: Row(
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 20,
-                                        backgroundColor: isIncoming
-                                            ? Nebula.teal.withValues(alpha: 0.1)
-                                            : Nebula.teal.withValues(alpha: 0.1),
-                                        child: Icon(
-                                          isTopup
-                                              ? CupertinoIcons.creditcard
-                                              : (isRefund ? CupertinoIcons.arrow_uturn_left : Icons.shopping_bag),
-                                          color: isIncoming
-                                              ? Nebula.teal
-                                              : Nebula.teal,
-                                          size: 20,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 14),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              isTopup
-                                                  ? 'Top-up Saldo'
-                                                  : (isRefund ? 'Dana Dikembalikan (Refund)' : canteen),
-                                              style: GoogleFonts.inter(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold,
-                                                color: context.textPrimary,
-                                              ),
-                                            ),
-                                            Text(
-                                              DateFormat(
-                                                'dd MMM yyyy, HH:mm',
-                                                'id_ID',
-                                              ).format(date),
-                                              style: GoogleFonts.inter(
-                                                fontSize: 12,
-                                                color: context.textSecondary,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Text(
-                                        '${isIncoming ? "+" : "-"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold,
-                                          color: isIncoming
-                                              ? Nebula.teal
-                                              : context.textPrimary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                        ],
-                      ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 1. Student Avatar & Basic Profile Card
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: context.cardBg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: context.dividerCol.withValues(alpha: 0.6),
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: context.shadowColor,
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      CircleAvatar(
+                        radius: 36,
+                        backgroundColor: Nebula.teal.withValues(alpha: 0.12),
+                        child: Text(
+                          fullName.isNotEmpty ? fullName[0].toUpperCase() : 'S',
+                          style: GoogleFonts.inter(
+                            fontSize: 30,
+                            fontWeight: FontWeight.bold,
+                            color: Nebula.teal,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        fullName,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: context.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Nebula.teal.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '$className • NISN: ${nisn.isNotEmpty ? nisn : "-"}',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: Nebula.teal,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
 
-                    // Prominent Edit Profil Button on Top-Right Corner of White Card
-                    Positioned(
-                      top: 48,
-                      right: 20,
+                // 2. Student Info List Card
+                AdminStudentStatusCard(
+                  isCardActive: isCardActive,
+                  isAccountActive: profile.isActive ?? true,
+                  rfidUid: rfidUid,
+                  username: username,
+                  email: email,
+                  className: className,
+                  balance: balance,
+                  dailyLimit: dailyLimit,
+                ),
+                const SizedBox(height: 14),
+
+                // 3. Action Buttons Row (Ubah Kata Sandi & Bekukan/Aktifkan Kartu RFID)
+                Row(
+                  children: [
+                    // Ubah Kata Sandi Button
+                    Expanded(
                       child: PressScale(
-                        onTap: () => showEditStudentSheet(
+                        onTap: () => AdminStudentPasswordChange.show(
                           context,
                           ref,
-                          profile,
-                          student,
+                          profile.id,
                         ),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
+                            vertical: 12,
+                            horizontal: 8,
                           ),
                           decoration: BoxDecoration(
                             color: Nebula.teal.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: Nebula.teal.withValues(alpha: 0.3),
                               width: 1,
                             ),
                           ),
                           child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               const Icon(
-                                CupertinoIcons.pencil,
+                                Icons.key,
                                 color: Nebula.teal,
-                                size: 16,
+                                size: 18,
                               ),
                               const SizedBox(width: 6),
-                              Text(
-                                'Edit Profil',
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Nebula.teal,
+                              Flexible(
+                                child: Text(
+                                  'Ubah\nKata Sandi',
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: Nebula.teal,
+                                    height: 1.15,
+                                  ),
                                 ),
                               ),
                             ],
@@ -422,83 +237,186 @@ class _AdminStudentDetailScreenState
                         ),
                       ),
                     ),
+                    const SizedBox(width: 10),
 
-                    // Floating Avatar Badge at Top Center
-                    Positioned(
-                      top: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: context.cardBg,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
-                              blurRadius: 14,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+                    // Bekukan / Aktifkan Kartu RFID Button
+                    Expanded(
+                      child: AdminStudentRfidSection(
+                        studentId: widget.studentId,
+                        isCardActive: isCardActive,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // 4. Riwayat Transaksi Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Riwayat Transaksi',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: context.textPrimary,
                         ),
-                        child: CircleAvatar(
-                          radius: 34,
-                          backgroundColor: Nebula.teal.withValues(alpha: 0.1),
-                          child: const Icon(
-                            CupertinoIcons.person,
-                            color: Nebula.teal,
-                            size: 32,
-                          ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => _openAllTransactionsScreen(
+                        studentId: widget.studentId,
+                        primaryColor: Nebula.teal,
+                        accentColor: Nebula.amber,
+                      ),
+                      child: Text(
+                        'Lihat Semua',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Nebula.teal,
                         ),
                       ),
                     ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 10),
+
+                // 5. Transaction History List / Empty State
+                if (txs.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 28,
+                      horizontal: 20,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.cardBg,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: context.dividerCol, width: 0.6),
+                    ),
+                    child: Center(
+                      child: Text(
+                        AppStrings.noTransactions,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: context.textSecondary,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  Column(
+                    children: txs.take(5).map((tx) {
+                      final int amount = tx.totalAmount;
+                      final bool isTopup = tx.isTopup;
+                      final bool isRefund = tx.status?.toString().toLowerCase() == 'refunded' || tx.type == 'refund';
+                      final bool isIncoming = isTopup || isRefund;
+                      final String canteen =
+                          tx.canteenName ?? 'Stan Kantin';
+                      final date =
+                          tx.createdAt?.toLocal() ?? DateTime.now();
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: context.cardBg,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: context.dividerCol, width: 0.6),
+                        ),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(14),
+                          onTap: () => showTransactionDetailSheet(context, ref, tx),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 18,
+                                backgroundColor: isIncoming
+                                    ? Nebula.teal.withValues(alpha: 0.1)
+                                    : Nebula.teal.withValues(alpha: 0.1),
+                                child: Icon(
+                                  isTopup
+                                      ? CupertinoIcons.creditcard
+                                      : (isRefund ? CupertinoIcons.arrow_uturn_left : Icons.shopping_bag),
+                                  color: Nebula.teal,
+                                  size: 18,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      isTopup
+                                          ? 'Top-up Saldo'
+                                          : (isRefund ? 'Dana Dikembalikan (Refund)' : canteen),
+                                      style: GoogleFonts.inter(
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: context.textPrimary,
+                                      ),
+                                    ),
+                                    Text(
+                                      DateFormat(
+                                        'dd MMM yyyy, HH:mm',
+                                        'id_ID',
+                                      ).format(date),
+                                      style: GoogleFonts.inter(
+                                        fontSize: 11,
+                                        color: context.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                '${isIncoming ? "+" : "-"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: isIncoming
+                                      ? Nebula.teal
+                                      : context.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+              ],
             ),
           );
         },
         loading: () => Shimmer(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   width: double.infinity,
-                  height: 120,
+                  height: 180,
                   decoration: BoxDecoration(
                     color: context.cardBg,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: context.borderLight, width: 0.8),
                   ),
                 ),
                 const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  width: double.infinity,
+                  height: 240,
                   decoration: BoxDecoration(
                     color: context.cardBg,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: context.borderLight, width: 0.8),
-                  ),
-                  child: Column(
-                    children: List.generate(
-                      4,
-                      (i) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Row(
-                          children: const [
-                            SkeletonBox(width: 80, height: 14, borderRadius: 4),
-                            Spacer(),
-                            SkeletonBox(width: 120, height: 14, borderRadius: 4),
-                          ],
-                        ),
-                      ),
-                    ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                const SkeletonBox(width: 140, height: 14, borderRadius: 4),
-                const SizedBox(height: 12),
-                ...List.generate(3, (i) => const SkeletonListTile()),
               ],
             ),
           ),
@@ -509,12 +427,11 @@ class _AdminStudentDetailScreenState
             children: [
               const Icon(Icons.error_outline, size: 48, color: Nebula.rose),
               const SizedBox(height: 12),
-              Text('${AppStrings.labelFailed} memuat data'),
+              Text('${AppStrings.labelFailed} memuat detail siswa: $err'),
               const SizedBox(height: 8),
               ElevatedButton(
-                onPressed: () => ref.invalidate(
-                  adminStudentDetailProvider(widget.studentId),
-                ),
+                onPressed: () =>
+                    ref.invalidate(adminStudentDetailProvider(widget.studentId)),
                 child: const Text(AppStrings.buttonRetry),
               ),
             ],
