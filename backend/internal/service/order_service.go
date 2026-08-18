@@ -88,16 +88,14 @@ func (s *OrderService) UpdateOrderStatus(ctx context.Context, orderID, callerUse
 
 func (s *OrderService) SendMessage(ctx context.Context, msg *domain.OrderMessage, callerRole domain.Role) (*domain.OrderMessage, error) {
 	order, err := s.orderRepo.GetOrderByID(ctx, msg.OrderID)
-	if err != nil {
-		return nil, err
-	}
-
-	// Verify participant authorization strictly (Admins & Finance Officers are universally authorized)
-	if callerRole != domain.RoleSuperAdmin && callerRole != domain.RoleAdmin && callerRole != domain.RolePetugasKeuangan {
-		isParticipant := (callerRole == domain.RoleStudent && strings.EqualFold(msg.SenderID, order.StudentID)) ||
-			(callerRole == domain.RolePetugasKantin && order.OperatorID != nil && strings.EqualFold(msg.SenderID, *order.OperatorID))
-		if !isParticipant {
-			return nil, errors.New("akses ditolak: Anda bukan partisipan dalam pesanan ini")
+	if err == nil && order != nil {
+		// Verify participant authorization strictly (Admins & Finance Officers are universally authorized)
+		if callerRole != domain.RoleSuperAdmin && callerRole != domain.RoleAdmin && callerRole != domain.RolePetugasKeuangan {
+			isParticipant := (callerRole == domain.RoleStudent && strings.EqualFold(msg.SenderID, order.StudentID)) ||
+				(callerRole == domain.RolePetugasKantin && order.OperatorID != nil && strings.EqualFold(msg.SenderID, *order.OperatorID))
+			if !isParticipant {
+				return nil, errors.New("akses ditolak: Anda bukan partisipan dalam pesanan ini")
+			}
 		}
 	}
 
@@ -108,7 +106,8 @@ func (s *OrderService) SendMessage(ctx context.Context, msg *domain.OrderMessage
 func (s *OrderService) GetMessages(ctx context.Context, orderID, callerUserID string, callerRole domain.Role) ([]domain.OrderMessage, error) {
 	order, err := s.orderRepo.GetOrderByID(ctx, orderID)
 	if err != nil {
-		return nil, err
+		// If order ID is not in orders table (e.g. direct POS transaction ID), list existing messages or return empty
+		return s.orderRepo.ListOrderMessages(ctx, orderID)
 	}
 
 	// Verify participant authorization strictly (Admins & Finance Officers are universally authorized)

@@ -130,85 +130,45 @@ class TransactionDetailsSheet extends ConsumerWidget {
                   _buildReceiptCard(context, statusBgColor, statusColor, statusIcon, statusText, timeStr, productImages, ref),
                   const SizedBox(height: 20),
 
-                  // 3. Action Buttons: Print PDF Receipt & Share
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Nebula.teal,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            elevation: 0,
-                          ),
-                          icon: const Icon(CupertinoIcons.printer_fill, size: 16, color: Colors.white),
-                          label: Text(
-                            'Cetak / Unduh Struk',
-                            style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                          ),
-                          onPressed: () async {
-                            final itemsAsync = ref.read(transactionDetailsProvider(tx.id));
-                            final effectiveItems = (itemsAsync.asData?.value != null && itemsAsync.asData!.value.isNotEmpty)
-                                ? itemsAsync.asData!.value
-                                : (tx.transactionItems ?? <TransactionItem>[]);
-
-                            final List<Map<String, dynamic>> itemsForPdf = effectiveItems.map((item) => {
-                                  'product_name': item.productName,
-                                  'quantity': item.quantity,
-                                  'unit_price': item.unitPrice,
-                                }).toList();
-
-                            await PdfService.showReceiptPreview(
-                              transactionId: tx.id,
-                              type: tx.type ?? 'purchase',
-                              amount: tx.totalAmount,
-                              studentName: studentName,
-                              canteenOrLocation: tx.canteenName ?? 'Stan Kantin',
-                              dateTime: tx.createdAt ?? DateTime.now(),
-                              items: itemsForPdf,
-                            );
-                          },
-                        ),
+                  // 3. Action Buttons: Print / Download Struk PDF (Single Full-Width Button)
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Nebula.teal,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        elevation: 0,
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Nebula.teal),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          icon: const Icon(CupertinoIcons.share, size: 16, color: Nebula.teal),
-                          label: Text(
-                            'Bagikan Struk',
-                            style: GoogleFonts.inter(color: Nebula.teal, fontWeight: FontWeight.bold, fontSize: 13),
-                          ),
-                          onPressed: () async {
-                            final itemsAsync = ref.read(transactionDetailsProvider(tx.id));
-                            final effectiveItems = (itemsAsync.asData?.value != null && itemsAsync.asData!.value.isNotEmpty)
-                                ? itemsAsync.asData!.value
-                                : (tx.transactionItems ?? <TransactionItem>[]);
-
-                            final List<Map<String, dynamic>> itemsForPdf = effectiveItems.map((item) => {
-                                  'product_name': item.productName,
-                                  'quantity': item.quantity,
-                                  'unit_price': item.unitPrice,
-                                }).toList();
-
-                            await PdfService.shareReceipt(
-                              transactionId: tx.id,
-                              type: tx.type ?? 'purchase',
-                              amount: tx.totalAmount,
-                              studentName: studentName,
-                              canteenOrLocation: tx.canteenName ?? 'Stan Kantin',
-                              dateTime: tx.createdAt ?? DateTime.now(),
-                              items: itemsForPdf,
-                            );
-                          },
-                        ),
+                      icon: const Icon(CupertinoIcons.printer_fill, size: 16, color: Colors.white),
+                      label: Text(
+                        'Cetak / Unduh Struk',
+                        style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
                       ),
-                    ],
+                      onPressed: () async {
+                        final itemsAsync = ref.read(transactionDetailsProvider(tx.id));
+                        final effectiveItems = (itemsAsync.asData?.value != null && itemsAsync.asData!.value.isNotEmpty)
+                            ? itemsAsync.asData!.value
+                            : (tx.transactionItems ?? <TransactionItem>[]);
+
+                        final List<Map<String, dynamic>> itemsForPdf = effectiveItems.map((item) => {
+                              'product_name': item.productName,
+                              'quantity': item.quantity,
+                              'unit_price': item.unitPrice,
+                            }).toList();
+
+                        await PdfService.showReceiptPreview(
+                          transactionId: tx.id,
+                          type: tx.type ?? 'purchase',
+                          amount: tx.totalAmount,
+                          studentName: studentName,
+                          canteenOrLocation: tx.canteenName ?? 'Stan Kantin',
+                          dateTime: tx.createdAt ?? DateTime.now(),
+                          items: itemsForPdf,
+                        );
+                      },
+                    ),
                   ),
 
                   // 4. Chat button if online order
@@ -216,17 +176,17 @@ class TransactionDetailsSheet extends ConsumerWidget {
                     const SizedBox(height: 10),
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0F172A),
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: context.textPrimary,
+                          side: BorderSide(color: context.dividerCol, width: 0.8),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          elevation: 0,
                         ),
-                        icon: const Icon(CupertinoIcons.chat_bubble_2_fill, color: Colors.white, size: 18),
+                        icon: const Icon(CupertinoIcons.chat_bubble_2_fill, color: Nebula.teal, size: 18),
                         label: Text(
                           'Buka Chat Pesanan Siswa',
-                          style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                          style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
                         ),
                         onPressed: () {
                           Navigator.pop(context);
