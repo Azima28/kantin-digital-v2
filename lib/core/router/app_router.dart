@@ -557,8 +557,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: AppRouter.financeUsers,
-            builder: (BuildContext context, GoRouterState state) =>
-                KeuanganUsersScreen(),
+            builder: (BuildContext context, GoRouterState state) {
+              final tabStr = state.uri.queryParameters['tab'];
+              final initialIndex = int.tryParse(tabStr ?? '0') ?? 0;
+              return KeuanganUsersScreen(initialIndex: initialIndex);
+            },
           ),
           GoRoute(
             path: AppRouter.financeHistory,

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/cupertino.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -13,7 +13,12 @@ import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 // ── Main Screen ─────────────────────────────────────────────────────────────
 
 class KeuanganUsersScreen extends ConsumerStatefulWidget {
-  const KeuanganUsersScreen({super.key});
+  final int initialIndex;
+
+  const KeuanganUsersScreen({
+    super.key,
+    this.initialIndex = 0,
+  });
 
   @override
   ConsumerState<KeuanganUsersScreen> createState() =>
@@ -29,10 +34,25 @@ class _KeuanganUsersScreenState extends ConsumerState<KeuanganUsersScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: widget.initialIndex.clamp(0, 2),
+    );
     _tabController.addListener(() {
       if (mounted) setState(() {});
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant KeuanganUsersScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialIndex != widget.initialIndex) {
+      final target = widget.initialIndex.clamp(0, 2);
+      if (_tabController.index != target) {
+        _tabController.animateTo(target);
+      }
+    }
   }
 
   @override
@@ -49,7 +69,7 @@ class _KeuanganUsersScreenState extends ConsumerState<KeuanganUsersScreen>
       case 1:
         return 'Cari nama atau email...';
       default:
-        return 'Cari nama atau username...';
+        return 'Cari nama stan atau username...';
     }
   }
 
@@ -67,8 +87,10 @@ class _KeuanganUsersScreenState extends ConsumerState<KeuanganUsersScreen>
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
             color: context.textPrimary,
-            fontSize: 18,
+            fontSize: 17,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         actions: [
           if (_tabController.index != 1)
@@ -78,7 +100,7 @@ class _KeuanganUsersScreenState extends ConsumerState<KeuanganUsersScreen>
                 icon: const Icon(
                   CupertinoIcons.add_circled_solid,
                   color: Nebula.teal,
-                  size: 24,
+                  size: 22,
                 ),
                 tooltip: _tabController.index == 0
                     ? '${AppStrings.buttonAdd} Siswa'
@@ -86,7 +108,7 @@ class _KeuanganUsersScreenState extends ConsumerState<KeuanganUsersScreen>
                 onPressed: () => showAddUserBottomSheet(context, ref, _tabController.index),
               ),
             ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(44),
@@ -98,19 +120,19 @@ class _KeuanganUsersScreenState extends ConsumerState<KeuanganUsersScreen>
             ),
             child: TabBar(
               controller: _tabController,
-              isScrollable: true,
-              tabAlignment: TabAlignment.start,
+              isScrollable: false, // 3 tabs equally distributed across screen
               labelColor: Nebula.teal,
               unselectedLabelColor: context.textSecondary,
               indicatorColor: Nebula.teal,
               indicatorWeight: 2.5,
+              labelPadding: const EdgeInsets.symmetric(horizontal: 4),
               labelStyle: GoogleFonts.inter(
                 fontWeight: FontWeight.w700,
-                fontSize: 13,
+                fontSize: 12.5,
               ),
               unselectedLabelStyle: GoogleFonts.inter(
                 fontWeight: FontWeight.w500,
-                fontSize: 13,
+                fontSize: 12.5,
               ),
               tabs: const [
                 Tab(text: AppStrings.adminStudents),

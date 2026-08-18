@@ -332,7 +332,7 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
                 icon: CupertinoIcons.money_dollar_circle_fill,
                 color: const Color(0xFF0D9488),
                 label: 'Tarik Saldo\nStan',
-                route: '/finance/users',
+                route: '/finance/users?tab=2',
               ),
             ),
             const SizedBox(width: 10),
