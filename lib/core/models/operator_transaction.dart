@@ -82,6 +82,8 @@ class OperatorTransaction {
       operatorId: json['operator_id'] as String?,
       purchaseMethod: json['purchase_method'] as String? ?? 'rfid',
       canteenName: canteenName,
+      studentName: json['student_name'] as String?,
+      studentNisn: json['student_nisn'] as String?,
       imageUrl: extractedImage,
       transactionItems: transactionItems,
     );

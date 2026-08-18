@@ -154,8 +154,12 @@ void showTransactionDetailSheet(
                       ),
                     ),
                     const SizedBox(height: 10),
-                    itemsAsync.when(
-                      data: (items) {
+                    Builder(
+                      builder: (context) {
+                        final items = (itemsAsync.asData?.value != null && itemsAsync.asData!.value.isNotEmpty)
+                            ? itemsAsync.asData!.value
+                            : (tx.transactionItems ?? <TransactionItem>[]);
+
                         if (items.isEmpty) {
                           return Padding(
                             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -249,8 +253,6 @@ void showTransactionDetailSheet(
                           }).toList(),
                         );
                       },
-                      loading: () => const Center(child: Padding(padding: EdgeInsets.all(12), child: CupertinoActivityIndicator())),
-                      error: (_, __) => const SizedBox(),
                     ),
                   ],
 
@@ -274,28 +276,34 @@ void showTransactionDetailSheet(
                   ),
                   const SizedBox(height: 24),
 
-                  // Actions: Print PDF Receipt & Share
+                  // Actions: Print / Download Struk PDF & Bagikan Struk
                   Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Nebula.teal),
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Nebula.teal,
+                            foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            elevation: 0,
                           ),
-                          icon: const Icon(CupertinoIcons.doc_text, size: 16, color: Nebula.teal),
+                          icon: const Icon(CupertinoIcons.printer_fill, size: 16, color: Colors.white),
                           label: Text(
-                            'Lihat Nota / PDF',
-                            style: GoogleFonts.inter(color: Nebula.teal, fontWeight: FontWeight.bold, fontSize: 13),
+                            'Cetak / Unduh Struk',
+                            style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                           ),
                           onPressed: () async {
-                            final List<Map<String, dynamic>> itemsForPdf =
-                                (itemsAsync.asData?.value ?? []).map((item) => {
-                                      'product_name': item.productName,
-                                      'quantity': item.quantity,
-                                      'unit_price': item.unitPrice,
-                                    }).toList();
+                            final List<TransactionItem> effectiveItems =
+                                (itemsAsync.asData?.value != null && itemsAsync.asData!.value.isNotEmpty)
+                                    ? itemsAsync.asData!.value
+                                    : (tx.transactionItems ?? <TransactionItem>[]);
+
+                            final List<Map<String, dynamic>> itemsForPdf = effectiveItems.map((item) => {
+                                  'product_name': item.productName,
+                                  'quantity': item.quantity,
+                                  'unit_price': item.unitPrice,
+                                }).toList();
 
                             await PdfService.showReceiptPreview(
                               transactionId: txId,
@@ -315,7 +323,7 @@ void showTransactionDetailSheet(
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(color: Nebula.teal),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                           icon: const Icon(CupertinoIcons.share, size: 16, color: Nebula.teal),
                           label: Text(
@@ -323,12 +331,16 @@ void showTransactionDetailSheet(
                             style: GoogleFonts.inter(color: Nebula.teal, fontWeight: FontWeight.bold, fontSize: 13),
                           ),
                           onPressed: () async {
-                            final List<Map<String, dynamic>> itemsForPdf =
-                                (itemsAsync.asData?.value ?? []).map((item) => {
-                                      'product_name': item.productName,
-                                      'quantity': item.quantity,
-                                      'unit_price': item.unitPrice,
-                                    }).toList();
+                            final List<TransactionItem> effectiveItems =
+                                (itemsAsync.asData?.value != null && itemsAsync.asData!.value.isNotEmpty)
+                                    ? itemsAsync.asData!.value
+                                    : (tx.transactionItems ?? <TransactionItem>[]);
+
+                            final List<Map<String, dynamic>> itemsForPdf = effectiveItems.map((item) => {
+                                  'product_name': item.productName,
+                                  'quantity': item.quantity,
+                                  'unit_price': item.unitPrice,
+                                }).toList();
 
                             await PdfService.shareReceipt(
                               transactionId: txId,

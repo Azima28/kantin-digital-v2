@@ -11,6 +11,9 @@ import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
+import 'package:kantin_digital/features/kantin/models/order_item.dart';
+import 'package:kantin_digital/features/kantin/widgets/pos_order_chat_sheet.dart';
+import 'package:kantin_digital/core/services/pdf_service.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
@@ -125,7 +128,123 @@ class TransactionDetailsSheet extends ConsumerWidget {
 
                   // 2. Receipt Details Card
                   _buildReceiptCard(context, statusBgColor, statusColor, statusIcon, statusText, timeStr, productImages, ref),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 20),
+
+                  // 3. Action Buttons: Print PDF Receipt & Share
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Nebula.teal,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            elevation: 0,
+                          ),
+                          icon: const Icon(CupertinoIcons.printer_fill, size: 16, color: Colors.white),
+                          label: Text(
+                            'Cetak / Unduh Struk',
+                            style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                          onPressed: () async {
+                            final itemsAsync = ref.read(transactionDetailsProvider(tx.id));
+                            final effectiveItems = (itemsAsync.asData?.value != null && itemsAsync.asData!.value.isNotEmpty)
+                                ? itemsAsync.asData!.value
+                                : (tx.transactionItems ?? <TransactionItem>[]);
+
+                            final List<Map<String, dynamic>> itemsForPdf = effectiveItems.map((item) => {
+                                  'product_name': item.productName,
+                                  'quantity': item.quantity,
+                                  'unit_price': item.unitPrice,
+                                }).toList();
+
+                            await PdfService.showReceiptPreview(
+                              transactionId: tx.id,
+                              type: tx.type ?? 'purchase',
+                              amount: tx.totalAmount,
+                              studentName: studentName,
+                              canteenOrLocation: tx.canteenName ?? 'Stan Kantin',
+                              dateTime: tx.createdAt ?? DateTime.now(),
+                              items: itemsForPdf,
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Nebula.teal),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          icon: const Icon(CupertinoIcons.share, size: 16, color: Nebula.teal),
+                          label: Text(
+                            'Bagikan Struk',
+                            style: GoogleFonts.inter(color: Nebula.teal, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                          onPressed: () async {
+                            final itemsAsync = ref.read(transactionDetailsProvider(tx.id));
+                            final effectiveItems = (itemsAsync.asData?.value != null && itemsAsync.asData!.value.isNotEmpty)
+                                ? itemsAsync.asData!.value
+                                : (tx.transactionItems ?? <TransactionItem>[]);
+
+                            final List<Map<String, dynamic>> itemsForPdf = effectiveItems.map((item) => {
+                                  'product_name': item.productName,
+                                  'quantity': item.quantity,
+                                  'unit_price': item.unitPrice,
+                                }).toList();
+
+                            await PdfService.shareReceipt(
+                              transactionId: tx.id,
+                              type: tx.type ?? 'purchase',
+                              amount: tx.totalAmount,
+                              studentName: studentName,
+                              canteenOrLocation: tx.canteenName ?? 'Stan Kantin',
+                              dateTime: tx.createdAt ?? DateTime.now(),
+                              items: itemsForPdf,
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // 4. Chat button if online order
+                  if (tx.purchaseMethod == 'app' || tx.purchaseMethod == 'app_order') ...[
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0F172A),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          elevation: 0,
+                        ),
+                        icon: const Icon(CupertinoIcons.chat_bubble_2_fill, color: Colors.white, size: 18),
+                        label: Text(
+                          'Buka Chat Pesanan Siswa',
+                          style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          final dummyOrder = OrderItem(
+                            id: tx.id,
+                            studentId: tx.studentId ?? '',
+                            studentName: studentName,
+                            time: timeStr,
+                            status: tx.status ?? 'Selesai',
+                            items: const [],
+                            totalAmount: tx.totalAmount,
+                          );
+                          PosOrderChatSheet.show(context, order: dummyOrder);
+                        },
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
