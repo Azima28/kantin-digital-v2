@@ -74,15 +74,27 @@ func (h *StudentHandler) GetMyProfile(c *fiber.Ctx) error {
 
 func (h *StudentHandler) GetTransactions(c *fiber.Ctx) error {
 	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
-	targetStudentID := claims.UserID
-	if (claims.Role == domain.RoleSuperAdmin || claims.Role == domain.RoleAdmin || claims.Role == domain.RolePetugasKeuangan) && c.Query("student_id") != "" {
-		targetStudentID = c.Query("student_id")
+	targetStudentID := ""
+	if claims.Role == domain.RoleStudent {
+		targetStudentID = claims.UserID
+	} else if claims.Role == domain.RolePetugasKantin {
+		if c.Query("student_id") != "" {
+			targetStudentID = c.Query("student_id")
+		}
+	} else {
+		// SuperAdmin, Admin, PetugasKeuangan
+		targetStudentID = c.Query("student_id", "")
 	}
 
-	limitStr := c.Query("limit", "15")
+	operatorID := c.Query("operator_id", "")
+	if claims.Role == domain.RolePetugasKantin && operatorID == "" {
+		operatorID = claims.UserID
+	}
+
+	limitStr := c.Query("limit", "100")
 	limit, _ := strconv.Atoi(limitStr)
 	if limit <= 0 {
-		limit = 15
+		limit = 100
 	}
 
 	pageStr := c.Query("page", "1")
@@ -102,7 +114,6 @@ func (h *StudentHandler) GetTransactions(c *fiber.Ctx) error {
 	txType := c.Query("type", "")
 	status := c.Query("status", "")
 	search := c.Query("search", "")
-	operatorID := c.Query("operator_id", "")
 
 	txs, total, err := h.paymentService.ListStudentTransactionsPaged(c.Context(), targetStudentID, operatorID, limit, offset, txType, status, search)
 	if err != nil {

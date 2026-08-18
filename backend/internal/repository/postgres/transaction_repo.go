@@ -558,7 +558,7 @@ func (r *TransactionRepo) GetFinanceDashboardSummary(ctx context.Context) (*Fina
 	`).Scan(&s.KoreksiTodayCount, &s.KoreksiTodayNet)
 
 	// 4. Recent transactions
-	txs, _, err := r.ListTransactionsPaged(ctx, "", 10, 0, "", "", "")
+	txs, _, err := r.ListTransactionsPaged(ctx, "", "", 10, 0, "", "", "")
 	if err == nil {
 		s.RecentTransactions = txs
 	}
@@ -612,7 +612,7 @@ func (r *TransactionRepo) GetAdminDashboardSummary(ctx context.Context) (*AdminS
 	}
 
 	// 5. Recent transactions
-	txs, _, err := r.ListTransactionsPaged(ctx, "", 10, 0, "", "", "")
+	txs, _, err := r.ListTransactionsPaged(ctx, "", "", 10, 0, "", "", "")
 	if err == nil {
 		s.RecentActivity = txs
 	}

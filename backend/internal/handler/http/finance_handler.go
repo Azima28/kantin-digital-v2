@@ -49,7 +49,9 @@ func (h *FinanceHandler) History(c *fiber.Ctx) error {
 	status := c.Query("status", "")
 	search := c.Query("search", "")
 
-	txs, total, err := h.paymentService.ListTransactionsPaged(c.Context(), "", limit, offset, txType, status, search)
+	operatorID := c.Query("operator_id", "")
+	studentID := c.Query("student_id", "")
+	txs, total, err := h.paymentService.ListTransactionsPaged(c.Context(), studentID, operatorID, limit, offset, txType, status, search)
 	if err != nil {
 		return response.Error(c, fiber.StatusInternalServerError, "Gagal memuat riwayat transaksi", err.Error())
 	}
