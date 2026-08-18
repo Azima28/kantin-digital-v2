@@ -14,16 +14,20 @@ import 'package:kantin_digital/core/widgets/notification_bell.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
-// keuanganDashboardProvider is defined in keuangan_providers.dart
-
-class KeuanganDashboardScreen extends ConsumerWidget {
+class KeuanganDashboardScreen extends ConsumerStatefulWidget {
   const KeuanganDashboardScreen({super.key});
 
+  @override
+  ConsumerState<KeuanganDashboardScreen> createState() => _KeuanganDashboardScreenState();
+}
+
+class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScreen> {
+  int _selectedSegment = 0; // 0: Siswa (Top-Up & Jajan), 1: Petugas Kantin (Stan & Pencairan)
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final dashAsync = ref.watch(keuanganDashboardProvider);
-    final profile = ref.read(authNotifierProvider).profile;
+    final profile = ref.watch(authNotifierProvider).profile;
     final fullName = profile?['full_name'] ?? 'Admin Keuangan';
     final school = profile?['assigned_school'] ?? 'SMP Terpadu';
     final fmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
@@ -81,8 +85,8 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        NotificationBell(color: Nebula.teal),
-                        SizedBox(width: 8),
+                        const NotificationBell(color: Nebula.teal),
+                        const SizedBox(width: 8),
                         GestureDetector(
                           onTap: () => context.go('/finance/settings'),
                           child: CircleAvatar(
@@ -150,10 +154,10 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                         const SizedBox(height: 12),
                         Row(
                           children: List.generate(
-                            4,
+                            3,
                             (i) => Expanded(
                               child: Container(
-                                margin: EdgeInsets.only(right: i < 3 ? 8 : 0),
+                                margin: EdgeInsets.only(right: i < 2 ? 8 : 0),
                                 height: 75,
                                 decoration: BoxDecoration(
                                   color: context.cardBg,
@@ -203,6 +207,19 @@ class KeuanganDashboardScreen extends ConsumerWidget {
     final koreksNet = (data['koreksNet'] as num?)?.toDouble() ?? 0.0;
     final logs = data['recentLogs'] as List<Map<String, dynamic>>;
 
+    // Filter logs for Siswa vs Petugas Kantin
+    final studentLogs = logs.where((l) {
+      final t = (l['type'] ?? l['action_type'] ?? '').toString();
+      return t == 'topup' || t == 'purchase' || t == 'refund' || t.contains('TOPUP') || t.contains('BATAL') || t == 'correction';
+    }).toList();
+
+    final merchantLogs = logs.where((l) {
+      final t = (l['type'] ?? l['action_type'] ?? '').toString();
+      return t == 'withdrawal' || t == 'merchant_adjustment' || t.contains('MERCHANT') || t == 'purchase';
+    }).toList();
+
+    final activeLogs = _selectedSegment == 0 ? studentLogs : merchantLogs;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -211,8 +228,8 @@ class KeuanganDashboardScreen extends ConsumerWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Nebula.teal, Nebula.teal],
+            gradient: const LinearGradient(
+              colors: [Nebula.teal, Nebula.tealDark],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -226,7 +243,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                   const Icon(CupertinoIcons.money_dollar_circle_fill, color: Colors.white70, size: 16),
                   const SizedBox(width: 6),
                   Text(
-                    'Total Saldo Beredar',
+                    'Total Saldo Beredar Siswa',
                     style: GoogleFonts.inter(fontSize: 13, color: Colors.white70),
                   ),
                 ],
@@ -247,7 +264,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
-                      ' +${fmt.format(topupToday)} hari ini',
+                      ' +${fmt.format(topupToday)} top-up hari ini',
                       style: GoogleFonts.inter(fontSize: 12, color: Colors.white70),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -267,7 +284,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                 context,
                 icon: CupertinoIcons.arrow_up_circle_fill,
                 iconColor: Nebula.teal,
-                label: 'Top-Up Tunai',
+                label: 'Top-Up Siswa',
                 value: fmt.format(topupToday),
                 sub: '$topupCount Transaksi',
               ),
@@ -278,7 +295,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                 context,
                 icon: CupertinoIcons.arrow_right_arrow_left_circle_fill,
                 iconColor: Nebula.rose,
-                label: 'Koreksi Hari Ini',
+                label: 'Koreksi Saldo',
                 value: fmt.format(koreksNet.abs()),
                 sub: '$koreksCount Transaksi',
               ),
@@ -287,7 +304,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 20),
 
-        // ─── Aksi Cepat ───
+        // ─── Aksi Cepat (Top-Up Siswa, Tarik Saldo Stan, Laporan) ───
         Text(
           'Aksi Cepat',
           style: GoogleFonts.inter(
@@ -299,41 +316,131 @@ class KeuanganDashboardScreen extends ConsumerWidget {
         const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(child: _buildQuickAction(
-              context,
-              icon: CupertinoIcons.arrow_up_circle_fill,
-              color: Nebula.teal,
-              label: 'Top-Up\nTunai',
-              route: '/finance/topup',
-            )),
+            Expanded(
+              child: _buildQuickAction(
+                context,
+                icon: CupertinoIcons.arrow_up_circle_fill,
+                color: Nebula.teal,
+                label: 'Top-Up\nSiswa',
+                route: '/finance/topup',
+              ),
+            ),
             const SizedBox(width: 10),
-            Expanded(child: _buildQuickAction(
-              context,
-              icon: CupertinoIcons.arrow_right_arrow_left_circle_fill,
-              color: Nebula.rose,
-              label: 'Koreksi\nSaldo',
-              route: '/finance/correction',
-            )),
-            SizedBox(width: 10),
-            Expanded(child: _buildQuickAction(
-              context,
-              icon: CupertinoIcons.chart_bar_fill,
-              color: Nebula.teal,
-              label: 'Laporan\nKeuangan',
-              route: '/finance/report',
-            )),
+            Expanded(
+              child: _buildQuickAction(
+                context,
+                icon: CupertinoIcons.money_dollar_circle_fill,
+                color: const Color(0xFF0D9488),
+                label: 'Tarik Saldo\nStan',
+                route: '/finance/users',
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildQuickAction(
+                context,
+                icon: CupertinoIcons.chart_bar_fill,
+                color: Nebula.amber,
+                label: 'Laporan\nKeuangan',
+                route: '/finance/report',
+              ),
+            ),
           ],
         ),
-        SizedBox(height: 20),
+        const SizedBox(height: 22),
 
-        // ─── Aktivitas Terbaru ───
+        // ─── Slider / Tab Pemisah (Siswa vs Petugas Kantin) ───
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: context.cardBg,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: context.dividerCol, width: 0.8),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () => setState(() => _selectedSegment = 0),
+                  borderRadius: BorderRadius.circular(10),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: _selectedSegment == 0 ? Nebula.teal : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          CupertinoIcons.person_crop_circle_fill,
+                          size: 15,
+                          color: _selectedSegment == 0 ? Colors.white : context.textSecondary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Siswa (${studentLogs.length})',
+                          style: GoogleFonts.inter(
+                            fontSize: 12.5,
+                            fontWeight: _selectedSegment == 0 ? FontWeight.bold : FontWeight.w500,
+                            color: _selectedSegment == 0 ? Colors.white : context.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: InkWell(
+                  onTap: () => setState(() => _selectedSegment = 1),
+                  borderRadius: BorderRadius.circular(10),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: _selectedSegment == 1 ? Nebula.teal : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          CupertinoIcons.building_2_fill,
+                          size: 15,
+                          color: _selectedSegment == 1 ? Colors.white : context.textSecondary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Petugas Kantin (${merchantLogs.length})',
+                          style: GoogleFonts.inter(
+                            fontSize: 12.5,
+                            fontWeight: _selectedSegment == 1 ? FontWeight.bold : FontWeight.w500,
+                            color: _selectedSegment == 1 ? Colors.white : context.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        // ─── Header Aktivitas ───
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Aktivitas Terbaru',
+              _selectedSegment == 0 ? 'Aktivitas Transaksi Siswa' : 'Aktivitas & Mutasi Stan Kantin',
               style: GoogleFonts.inter(
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: context.textPrimary,
               ),
@@ -343,7 +450,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
               child: Text(
                 'Lihat Semua →',
                 style: GoogleFonts.inter(
-                  fontSize: 13,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w600,
                   color: Nebula.teal,
                 ),
@@ -353,33 +460,37 @@ class KeuanganDashboardScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 10),
 
-        if (logs.isEmpty)
+        if (activeLogs.isEmpty)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: context.cardBg,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: context.dividerCol, width: 0.6),
             ),
-            child: const EmptyStateWidget(
-              message: AppStrings.labelNoData,
+            child: EmptyStateWidget(
+              message: _selectedSegment == 0
+                  ? 'Belum ada aktivitas transaksi siswa.'
+                  : 'Belum ada aktivitas mutasi stan kantin.',
             ),
           )
         else
           Container(
             decoration: BoxDecoration(
               color: context.cardBg,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: context.dividerCol, width: 0.6),
               boxShadow: [
                 BoxShadow(
                   color: context.shadowColor,
-                  blurRadius: 20,
+                  blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: Column(
-              children: logs.take(5).toList().asMap().entries.map((entry) {
+              children: activeLogs.take(5).toList().asMap().entries.map((entry) {
                 final i = entry.key;
                 final log = entry.value;
                 final type = (log['type'] ?? log['action_type'] ?? '').toString();
@@ -393,8 +504,12 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                     desc = 'Top-up saldo $student sebesar ${fmt.format(amount)}';
                   } else if (type == 'correction' || type.contains('KOREKSI')) {
                     desc = 'Koreksi saldo $student sebesar ${fmt.format(amount)}';
+                  } else if (type == 'withdrawal' || type.contains('WITHDRAWAL') || type.contains('PAYOUT')) {
+                    desc = 'Pencairan kas $canteen sebesar ${fmt.format(amount)}';
+                  } else if (type == 'merchant_adjustment') {
+                    desc = 'Koreksi saldo $canteen sebesar ${fmt.format(amount)}';
                   } else if (type == 'purchase') {
-                    desc = 'Jajan di $canteen sebesar ${fmt.format(amount)}';
+                    desc = 'Penjualan di $canteen dari $student (${fmt.format(amount)})';
                   } else if (type == 'refund' || type.contains('BATAL')) {
                     desc = 'Refund pesanan $student sebesar ${fmt.format(amount)}';
                   } else {
@@ -412,6 +527,12 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                 if (type == 'topup' || type.contains('TOPUP') || type.contains('TOP')) {
                   dotColor = Nebula.teal;
                   dotIcon = CupertinoIcons.arrow_up_circle_fill;
+                } else if (type == 'withdrawal' || type.contains('WITHDRAWAL') || type.contains('PAYOUT')) {
+                  dotColor = Nebula.rose;
+                  dotIcon = CupertinoIcons.money_dollar_circle_fill;
+                } else if (type == 'merchant_adjustment') {
+                  dotColor = Nebula.amber;
+                  dotIcon = CupertinoIcons.arrow_right_arrow_left_circle_fill;
                 } else if (type == 'correction' || type.contains('KOREKSI')) {
                   dotColor = Nebula.rose;
                   dotIcon = CupertinoIcons.arrow_right_arrow_left_circle_fill;
@@ -422,7 +543,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                   dotColor = Nebula.rose;
                   dotIcon = CupertinoIcons.arrow_counterclockwise_circle_fill;
                 } else if (type.contains('REGISTRASI')) {
-                  dotColor = Nebula.amber;
+                  dotColor = Nebula.teal;
                   dotIcon = CupertinoIcons.creditcard_fill;
                 }
 
@@ -434,7 +555,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                         children: [
                           CircleAvatar(
                             radius: 16,
-                            backgroundColor: dotColor.withValues(alpha: 0.1),
+                            backgroundColor: dotColor.withValues(alpha: 0.12),
                             child: Icon(dotIcon, color: dotColor, size: 16),
                           ),
                           const SizedBox(width: 12),
@@ -442,7 +563,8 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                             child: Text(
                               desc,
                               style: GoogleFonts.inter(
-                                fontSize: 13,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w500,
                                 color: context.textPrimary,
                               ),
                               maxLines: 2,
@@ -460,7 +582,7 @@ class KeuanganDashboardScreen extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    if (i < logs.length - 1)
+                    if (i < activeLogs.length - 1)
                       Divider(height: 1, thickness: 0.5, indent: 16, color: context.dividerCol),
                   ],
                 );
@@ -484,7 +606,8 @@ class KeuanganDashboardScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: context.cardBg,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: context.dividerCol, width: 0.6),
         boxShadow: [
           BoxShadow(
             color: context.shadowColor,
@@ -497,21 +620,22 @@ class KeuanganDashboardScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, color: iconColor, size: 22),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             label,
-            style: GoogleFonts.inter(fontSize: 11, color: context.textSecondary),
+            style: GoogleFonts.inter(fontSize: 12, color: context.textSecondary),
           ),
           const SizedBox(height: 4),
           Text(
             value,
             style: GoogleFonts.inter(
-              fontSize: 15,
+              fontSize: 17,
               fontWeight: FontWeight.bold,
               color: context.textPrimary,
             ),
             overflow: TextOverflow.ellipsis,
           ),
+          const SizedBox(height: 2),
           Text(
             sub,
             style: GoogleFonts.inter(fontSize: 11, color: context.textSecondary),
@@ -528,28 +652,42 @@ class KeuanganDashboardScreen extends ConsumerWidget {
     required String label,
     required String route,
   }) {
-    return GestureDetector(
+    return InkWell(
       onTap: () => context.push(route),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withValues(alpha: 0.15)),
+          color: context.cardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: context.dividerCol, width: 0.6),
+          boxShadow: [
+            BoxShadow(
+              color: context.shadowColor,
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           children: [
-            Icon(icon, color: color, size: 28),
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: color.withValues(alpha: 0.12),
+              child: Icon(icon, color: color, size: 18),
+            ),
             const SizedBox(height: 8),
             Text(
               label,
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: color,
-                height: 1.3,
+                fontSize: 11.5,
+                fontWeight: FontWeight.bold,
+                color: context.textPrimary,
+                height: 1.15,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

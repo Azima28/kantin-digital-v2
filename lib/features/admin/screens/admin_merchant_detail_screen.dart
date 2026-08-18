@@ -905,37 +905,44 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: Nebula.teal.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(8),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(5),
+                                  decoration: BoxDecoration(
+                                    color: Nebula.teal.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(CupertinoIcons.money_dollar_circle_fill, color: Nebula.teal, size: 16),
                                 ),
-                                child: const Icon(CupertinoIcons.money_dollar_circle_fill, color: Nebula.teal, size: 18),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Saldo Pendapatan Stan',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: context.textPrimary,
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    'Saldo Pendapatan Stan',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: context.textPrimary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
+                          const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                             decoration: BoxDecoration(
                               color: Nebula.teal.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(14),
                             ),
                             child: Text(
                               'Siap Dicairkan',
                               style: GoogleFonts.inter(
-                                fontSize: 10.5,
+                                fontSize: 10,
                                 fontWeight: FontWeight.bold,
                                 color: Nebula.teal,
                               ),
@@ -947,7 +954,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                       Text(
                         'Rp ${NumberFormat('#,###', 'id_ID').format(balanceEarned)}',
                         style: GoogleFonts.inter(
-                          fontSize: 24,
+                          fontSize: 22,
                           fontWeight: FontWeight.w800,
                           color: Nebula.teal,
                         ),
@@ -961,7 +968,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                             child: PressScale(
                               onTap: () => _showWithdrawalDialog(profile.id, canteenName, balanceEarned),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                                padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
                                 decoration: BoxDecoration(
                                   color: Nebula.teal,
                                   borderRadius: BorderRadius.circular(10),
@@ -969,14 +976,17 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Icon(CupertinoIcons.arrow_down_circle_fill, size: 15, color: Colors.white),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      'Tarik / Cairkan Kas',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
+                                    const Icon(CupertinoIcons.arrow_down_circle_fill, size: 14, color: Colors.white),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        'Tarik Saldo',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
@@ -984,12 +994,12 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           Expanded(
                             child: PressScale(
                               onTap: () => _showAdjustmentDialog(profile.id, canteenName, balanceEarned),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                                padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
                                 decoration: BoxDecoration(
                                   color: Nebula.amber.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(10),
@@ -998,14 +1008,17 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Icon(CupertinoIcons.arrow_right_arrow_left, size: 15, color: Nebula.amber),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      'Koreksi Saldo',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.bold,
-                                        color: Nebula.amber,
+                                    const Icon(CupertinoIcons.arrow_right_arrow_left, size: 14, color: Nebula.amber),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        'Koreksi Saldo',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: Nebula.amber,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
