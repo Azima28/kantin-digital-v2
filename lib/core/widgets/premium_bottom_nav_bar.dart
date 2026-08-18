@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 class PremiumBottomNavBarItem {
@@ -36,7 +37,7 @@ class PremiumBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color actualActiveColor = activeColor ?? (isDark ? const Color(0xFF0D9488) : Theme.of(context).colorScheme.primary);
+    final Color actualActiveColor = activeColor ?? Nebula.teal;
     final Color actualInactiveColor = inactiveColor ?? (isDark ? const Color(0xFF94A3B8) : context.textSecondary);
 
     final double tabWidth = MediaQuery.of(context).size.width / items.length;

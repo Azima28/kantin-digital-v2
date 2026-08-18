@@ -108,7 +108,7 @@ class _KeuanganMainLayoutState extends ConsumerState<KeuanganMainLayout> {
         bottomNavigationBar: PremiumBottomNavBar(
           currentIndex: selectedIndex,
           onTap: (int index) => _onItemTapped(index, context),
-          activeColor: Nebula.blue,
+          activeColor: Nebula.teal,
           items: const [
             PremiumBottomNavBarItem(
               icon: Icons.home_outlined,
