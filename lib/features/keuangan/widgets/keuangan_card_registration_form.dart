@@ -48,16 +48,28 @@ class KeuanganCardRegistrationForm extends StatelessWidget {
           ),
           child: Column(
             children: [
-              Text(
-                '📶 SIAP MEMINDAI',
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Nebula.teal,
-                  letterSpacing: 0.5,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    CupertinoIcons.radiowaves_right,
+                    color: Nebula.teal,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'SIAP MEMINDAI',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Nebula.teal,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Text(
                 'Tempelkan kartu siswa ke sensor NFC perangkat ini atau gunakan tombol simulasi di bawah.',
                 style: GoogleFonts.inter(
@@ -67,7 +79,7 @@ class KeuanganCardRegistrationForm extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               // Animated ripple design
               GestureDetector(
                 onTap: onSimulateNfcScan,
@@ -81,7 +93,7 @@ class KeuanganCardRegistrationForm extends StatelessWidget {
                         color: Nebula.teal.withValues(alpha: 0.15),
                         width: 1.5),
                   ),
-                  child: Center(
+                  child: const Center(
                     child: Icon(
                       CupertinoIcons.antenna_radiowaves_left_right,
                       color: Nebula.teal,
@@ -93,7 +105,7 @@ class KeuanganCardRegistrationForm extends StatelessWidget {
               const SizedBox(height: 16),
               TextButton.icon(
                 onPressed: onSimulateNfcScan,
-                icon: Icon(CupertinoIcons.play_circle_fill, size: 18),
+                icon: const Icon(CupertinoIcons.play_circle_fill, size: 18),
                 label: Text(
                   'Simulasikan Tap Kartu',
                   style: GoogleFonts.inter(fontWeight: FontWeight.bold),
@@ -134,8 +146,8 @@ class KeuanganCardRegistrationForm extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: context.dividerCol),
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+            focusedBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12)),
               borderSide:
                   BorderSide(color: Nebula.teal, width: 1.5),
             ),
@@ -143,13 +155,22 @@ class KeuanganCardRegistrationForm extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         if (oldRfid != null && oldRfid!.isNotEmpty)
-          Text(
-            'ℹ UID Lama: $oldRfid (aktif)',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: context.textSecondary,
-              fontStyle: FontStyle.italic,
-            ),
+          Row(
+            children: [
+              Icon(CupertinoIcons.info_circle, size: 14, color: context.textSecondary),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  'UID Sebelumnya: $oldRfid',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: context.textSecondary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
         SizedBox(height: 32),
 

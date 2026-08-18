@@ -110,18 +110,32 @@ class _StudentDetailStatusToggleState
         ),
         child: _isUpdatingStatus
             ? const CupertinoActivityIndicator()
-            : Text(
-                widget.isAccountActive
-                    ? '🚫 BLOKIR AKUN SISWA'
-                    : '✔ AKTIFKAN AKUN SISWA',
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: widget.isAccountActive
-                      ? Nebula.rose
-                      : Nebula.teal,
-                  letterSpacing: 0.5,
-                ),
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    widget.isAccountActive
+                        ? CupertinoIcons.lock_circle
+                        : CupertinoIcons.checkmark_circle,
+                    size: 18,
+                    color: widget.isAccountActive ? Nebula.rose : Nebula.teal,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    widget.isAccountActive
+                        ? 'BLOKIR AKUN SISWA'
+                        : 'AKTIFKAN AKUN SISWA',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: widget.isAccountActive
+                          ? Nebula.rose
+                          : Nebula.teal,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ),
       ),
     );

@@ -131,7 +131,7 @@ class KeuanganCorrectionStepConfirm extends StatelessWidget {
             child: isLoading
                 ? const CupertinoActivityIndicator(color: Colors.white)
                 : Text(
-                    '✔ KUNCI & PROSES KOREKSI',
+                    'KUNCI & PROSES KOREKSI',
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,

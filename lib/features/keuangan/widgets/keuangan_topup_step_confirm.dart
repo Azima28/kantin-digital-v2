@@ -133,7 +133,7 @@ class KeuanganTopupStepConfirm extends StatelessWidget {
             child: isLoading
                 ? const CupertinoActivityIndicator(color: Colors.white)
                 : Text(
-                    '✔ PROSES TOP-UP',
+                    'PROSES TOP-UP',
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,

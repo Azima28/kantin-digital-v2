@@ -56,12 +56,13 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
       final response = await apiClient.get('/student/lookup', queryParams: {'id': widget.studentId});
 
       if (response.success && response.data != null) {
-        final profile = response.data as Map<String, dynamic>;
+        final data = response.data as Map<String, dynamic>;
+        final profile = data['profile'] is Map<String, dynamic> ? data['profile'] as Map<String, dynamic> : data;
         setState(() {
-          _fullName = profile['full_name']?.toString() ?? '';
-          _nisn = profile['nisn']?.toString() ?? '';
-          _class = profile['class']?.toString() ?? '';
-          _oldRfid = profile['rfid_uid']?.toString();
+          _fullName = (profile['full_name'] ?? data['full_name'] ?? 'Siswa').toString();
+          _nisn = (profile['nisn'] ?? data['nisn'] ?? '').toString();
+          _class = (data['class'] ?? profile['class'] ?? 'Belum Diisi').toString();
+          _oldRfid = (data['rfid_uid'] ?? profile['rfid_uid'])?.toString();
         });
       }
     } catch (e) {
@@ -265,14 +266,19 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Siswa: $_fullName (NISN: $_nisn)',
+                    _fullName.isNotEmpty
+                        ? 'Siswa: $_fullName (${_nisn.isNotEmpty ? "NISN: $_nisn" : "-"})'
+                        : 'Memuat Data Siswa...',
                     style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: context.textPrimary),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
+                  const SizedBox(height: 2),
                   Text(
-                    'Kelas: $_class · SMP Terpadu',
+                    'Kelas: $_class',
                     style: GoogleFonts.inter(
                         fontSize: 13, color: context.textSecondary),
                   ),

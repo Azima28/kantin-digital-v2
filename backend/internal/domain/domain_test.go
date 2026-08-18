@@ -48,3 +48,45 @@ func TestOrderLifecycleConstants(t *testing.T) {
 		t.Errorf("Expected 6 main statuses, got %d", len(statuses))
 	}
 }
+
+func TestStudentBlockedAccountWithActiveCard(t *testing.T) {
+	rfid := "04:2A:B5:E2"
+	student := Student{
+		ID:       "std-001",
+		Balance:  50000,
+		RfidUID:  &rfid,
+		IsActive: true, // Physical RFID card is ACTIVE
+		Profile: &UserProfile{
+			ID:       "std-001",
+			FullName: "Budi Santoso",
+			Role:     RoleStudent,
+			IsActive: false, // Student digital account is BLOCKED
+		},
+	}
+
+	// Verify that physical card is active even if account is blocked
+	if !student.IsActive {
+		t.Errorf("Expected student physical card to be active (IsActive == true)")
+	}
+	if student.Profile.IsActive {
+		t.Errorf("Expected student profile account to be blocked (Profile.IsActive == false)")
+	}
+
+	// Verify JSON serialization maintains both fields
+	bytes, err := json.Marshal(student)
+	if err != nil {
+		t.Fatalf("Failed to marshal student: %v", err)
+	}
+
+	var parsed Student
+	if err := json.Unmarshal(bytes, &parsed); err != nil {
+		t.Fatalf("Failed to unmarshal student: %v", err)
+	}
+
+	if !parsed.IsActive {
+		t.Errorf("Parsed student card should remain active")
+	}
+	if parsed.Profile.IsActive {
+		t.Errorf("Parsed student profile should remain inactive/blocked")
+	}
+}

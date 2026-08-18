@@ -24,6 +24,18 @@ func NewStudentHandler(paymentService *service.PaymentService, notifService *ser
 }
 
 func (h *StudentHandler) LookupStudent(c *fiber.Ctx) error {
+	studentID := c.Query("id", "")
+	if studentID == "" {
+		studentID = c.Query("student_id", "")
+	}
+	if studentID != "" {
+		student, err := h.paymentService.GetStudentDetail(c.Context(), studentID)
+		if err != nil {
+			return response.Error(c, fiber.StatusNotFound, "Data siswa tidak ditemukan", err.Error())
+		}
+		return response.Success(c, fiber.StatusOK, "Data detail siswa ditemukan", student)
+	}
+
 	search := c.Query("search", "")
 	if search == "" {
 		search = c.Query("q", "")
