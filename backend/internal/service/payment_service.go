@@ -114,6 +114,10 @@ func (s *PaymentService) UpdateUser(ctx context.Context, user *domain.UserProfil
 	return s.userRepo.UpdateUserProfile(ctx, user)
 }
 
+func (s *PaymentService) UpdateStudentFull(ctx context.Context, p postgres.UpdateStudentFullParams) error {
+	return s.userRepo.UpdateStudentFull(ctx, p)
+}
+
 func (s *PaymentService) DeleteUser(ctx context.Context, id string) error {
 	return s.userRepo.DeleteUser(ctx, id)
 }

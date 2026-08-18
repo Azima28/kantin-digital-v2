@@ -649,6 +649,78 @@ func (r *UserRepo) UpdateUserProfile(ctx context.Context, user *domain.UserProfi
 	return err
 }
 
+type UpdateStudentFullParams struct {
+	ID          string
+	FullName    string
+	Email       *string
+	Username    *string
+	NISN        *string
+	PhoneNumber *string
+	DailyLimit  *int
+	RfidUID     *string
+	Class       *string
+	IsActive    *bool
+}
+
+// UpdateStudentFull updates both profile and student specific data (class, rombel, balance limit, etc.)
+func (r *UserRepo) UpdateStudentFull(ctx context.Context, p UpdateStudentFullParams) error {
+	if r == nil || r.db == nil || r.db.Pool == nil {
+		return ErrDatabaseNotReady
+	}
+
+	tx, err := r.db.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	// 1. Update public.profiles
+	_, err = tx.Exec(ctx, `
+		UPDATE public.profiles
+		SET full_name = COALESCE(NULLIF($1, ''), full_name),
+		    email = COALESCE($2, email),
+		    username = COALESCE($3, username),
+		    nisn = COALESCE($4, nisn),
+		    phone_number = COALESCE($5, phone_number),
+		    is_active = COALESCE($6, is_active)
+		WHERE id = $7`,
+		p.FullName, p.Email, p.Username, p.NISN, p.PhoneNumber, p.IsActive, p.ID,
+	)
+	if err != nil {
+		return err
+	}
+
+	// 2. Update public.students
+	var cleanUID *string
+	if p.RfidUID != nil {
+		trimmed := strings.TrimSpace(*p.RfidUID)
+		if trimmed != "" {
+			cleanUID = &trimmed
+		}
+	}
+
+	className := "X RPL 1"
+	if p.Class != nil && strings.TrimSpace(*p.Class) != "" {
+		className = strings.TrimSpace(*p.Class)
+	}
+
+	_, err = tx.Exec(ctx, `
+		UPDATE public.students
+		SET class = $1,
+		    rombel = $1,
+		    daily_limit = COALESCE($2, daily_limit),
+		    rfid_uid = COALESCE($3, rfid_uid),
+		    is_active = COALESCE($4, is_active)
+		WHERE id = $5`,
+		className, p.DailyLimit, cleanUID, p.IsActive, p.ID,
+	)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
 func defaultAcademicStructure() domain.AcademicStructure {
 	return domain.AcademicStructure{
 		SchoolType: "smk",

@@ -7,6 +7,7 @@ import (
 	"kantin-backend/internal/domain"
 	ws "kantin-backend/internal/handler/websocket"
 	"kantin-backend/internal/pkg/response"
+	"kantin-backend/internal/repository/postgres"
 	"kantin-backend/internal/service"
 )
 
@@ -140,6 +141,50 @@ func (h *AdminHandler) AdminChangePassword(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusInternalServerError, "Gagal mengubah kata sandi: "+err.Error(), err.Error())
 	}
 	return response.Success(c, fiber.StatusOK, "Kata sandi berhasil diperbarui", nil)
+}
+
+type UpdateStudentRequest struct {
+	FullName    string  `json:"full_name"`
+	Email       *string `json:"email"`
+	Username    *string `json:"username"`
+	NISN        *string `json:"nisn"`
+	PhoneNumber *string `json:"phone_number"`
+	DailyLimit  *int    `json:"daily_limit"`
+	RfidUID     *string `json:"rfid_uid"`
+	Class       *string `json:"class"`
+	IsActive    *bool   `json:"is_active"`
+}
+
+func (h *AdminHandler) UpdateStudent(c *fiber.Ctx) error {
+	id := c.Params("id")
+	var req UpdateStudentRequest
+	if err := c.BodyParser(&req); err != nil {
+		return response.Error(c, fiber.StatusBadRequest, "Payload update siswa tidak valid", err.Error())
+	}
+
+	params := postgres.UpdateStudentFullParams{
+		ID:          id,
+		FullName:    req.FullName,
+		Email:       req.Email,
+		Username:    req.Username,
+		NISN:        req.NISN,
+		PhoneNumber: req.PhoneNumber,
+		DailyLimit:  req.DailyLimit,
+		RfidUID:     req.RfidUID,
+		Class:       req.Class,
+		IsActive:    req.IsActive,
+	}
+
+	if err := h.paymentService.UpdateStudentFull(c.Context(), params); err != nil {
+		return response.Error(c, fiber.StatusInternalServerError, "Gagal memperbarui data siswa: "+err.Error(), err.Error())
+	}
+
+	if h.hub != nil {
+		h.hub.BroadcastToRoom("all", "student_updated", fiber.Map{"student_id": id})
+		h.hub.BroadcastToRoom(id, "student_updated", fiber.Map{"student_id": id})
+	}
+
+	return response.Success(c, fiber.StatusOK, "Profil siswa berhasil diperbarui", nil)
 }
 
 func (h *AdminHandler) UpdateUser(c *fiber.Ctx) error {

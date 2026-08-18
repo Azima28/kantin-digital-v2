@@ -265,6 +265,8 @@ func main() {
 			adminGroup.Get("/users", adminH.ListUsers)
 			adminGroup.Post("/users", adminH.CreateUser)
 			adminGroup.Post("/students", adminH.CreateUser)
+			adminGroup.Put("/students/:id", adminH.UpdateStudent)
+			adminGroup.Patch("/students/:id", adminH.UpdateStudent)
 			adminGroup.Put("/users/:id", adminH.UpdateUser)
 			adminGroup.Patch("/users/:id", adminH.UpdateUser)
 			adminGroup.Post("/users/password", adminH.AdminChangePassword)
