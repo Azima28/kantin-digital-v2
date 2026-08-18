@@ -2,6 +2,7 @@ package http
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -73,6 +74,26 @@ func (h *OrderHandler) ListOperatorOrders(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusInternalServerError, "Gagal mengambil pesanan kasir", err.Error())
 	}
 	return response.Success(c, fiber.StatusOK, "Daftar pesanan masuk", orders)
+}
+
+func (h *OrderHandler) GetOrderByID(c *fiber.Ctx) error {
+	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
+	orderID := c.Params("id")
+	order, err := h.orderService.GetOrderByID(c.Context(), orderID)
+	if err != nil {
+		return response.Error(c, fiber.StatusNotFound, "Pesanan tidak ditemukan", err.Error())
+	}
+
+	// Verify participant authorization
+	if claims.Role != domain.RoleSuperAdmin && claims.Role != domain.RoleAdmin && claims.Role != domain.RolePetugasKeuangan {
+		isParticipant := (claims.Role == domain.RoleStudent && strings.EqualFold(claims.UserID, order.StudentID)) ||
+			(claims.Role == domain.RolePetugasKantin && order.OperatorID != nil && strings.EqualFold(claims.UserID, *order.OperatorID))
+		if !isParticipant {
+			return response.Error(c, fiber.StatusForbidden, "Akses ditolak: Anda bukan partisipan dalam pesanan ini", nil)
+		}
+	}
+
+	return response.Success(c, fiber.StatusOK, "Detail pesanan", order)
 }
 
 type UpdateStatusRequest struct {

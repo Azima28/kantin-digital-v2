@@ -257,22 +257,66 @@ void showTransactionDetailSheet(
                   ],
 
                   const Divider(height: 22, thickness: 0.5),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        type == 'topup' ? 'Total Masuk Saldo:' : 'Total Tagihan:',
-                        style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: context.textPrimary),
-                      ),
-                      Text(
-                        CurrencyFormatter.format(amount),
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 17,
-                          color: type == 'topup' ? Nebula.teal : context.textPrimary,
-                        ),
-                      ),
-                    ],
+
+                  Builder(
+                    builder: (context) {
+                      final items = (itemsAsync.asData?.value != null && itemsAsync.asData!.value.isNotEmpty)
+                          ? itemsAsync.asData!.value
+                          : (tx.transactionItems ?? <TransactionItem>[]);
+                      final int itemsSubtotal = items.fold<int>(0, (sum, it) => sum + (it.unitPrice * it.quantity));
+                      final int feeDifference = amount - itemsSubtotal;
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (type == 'purchase' && items.isNotEmpty && itemsSubtotal > 0 && feeDifference != 0) ...[
+                            Text(
+                              'Rincian Pembayaran:',
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: context.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            _buildDataRow(context, 'Subtotal Menu & Produk', CurrencyFormatter.format(itemsSubtotal)),
+                            const SizedBox(height: 6),
+                            if (feeDifference > 0)
+                              _buildDataRow(
+                                context,
+                                isAppOrder ? 'Biaya Pengantaran (Ongkir)' : 'Biaya Layanan / Tambahan',
+                                '+${CurrencyFormatter.format(feeDifference)}',
+                              ),
+                            if (feeDifference < 0)
+                              _buildDataRow(
+                                context,
+                                'Potongan Harga / Diskon',
+                                '-${CurrencyFormatter.format(feeDifference.abs())}',
+                              ),
+                            const Divider(height: 18, thickness: 0.5),
+                          ],
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                type == 'topup'
+                                    ? 'Total Masuk Saldo:'
+                                    : (status == 'refunded' ? 'Total Dana Dikembalikan:' : 'Total Tagihan:'),
+                                style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: context.textPrimary),
+                              ),
+                              Text(
+                                CurrencyFormatter.format(amount),
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 17,
+                                  color: (type == 'topup' || status == 'refunded') ? Nebula.teal : context.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
 

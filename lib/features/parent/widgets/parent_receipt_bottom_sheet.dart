@@ -155,7 +155,37 @@ class ParentReceiptBottomSheet extends ConsumerWidget {
                   );
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
+              Builder(
+                builder: (context) {
+                  final int itemsSubtotal = items.fold<int>(0, (sum, it) => sum + (it.unitPrice * it.quantity));
+                  final int feeDifference = amount - itemsSubtotal;
+                  if (itemsSubtotal > 0 && feeDifference != 0) {
+                    return Column(
+                      children: [
+                        Divider(color: context.dividerCol, height: 1),
+                        const SizedBox(height: 10),
+                        _buildReceiptRow(context, 'Subtotal Menu', CurrencyFormatter.format(itemsSubtotal)),
+                        const SizedBox(height: 6),
+                        if (feeDifference > 0)
+                          _buildReceiptRow(
+                            context,
+                            transaction.isApp ? 'Biaya Pengantaran (Ongkir)' : 'Biaya Layanan / Tambahan',
+                            '+${CurrencyFormatter.format(feeDifference)}',
+                          ),
+                        if (feeDifference < 0)
+                          _buildReceiptRow(
+                            context,
+                            'Potongan Harga / Diskon',
+                            '-${CurrencyFormatter.format(feeDifference.abs())}',
+                          ),
+                        const SizedBox(height: 6),
+                      ],
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
               Divider(color: context.dividerCol, height: 1),
               const SizedBox(height: 16),
             ],

@@ -531,30 +531,63 @@ class TransactionDetailsSheet extends ConsumerWidget {
           _buildDashedDivider(context),
 
           // Receipt Footer Totals
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  tx.status == 'cancelled' ? 'TOTAL PENGEMBALIAN' : 'TOTAL PENDAPATAN',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: context.textPrimary,
-                  ),
+          Builder(
+            builder: (context) {
+              final effectiveItems = (itemsAsync.asData?.value != null && itemsAsync.asData!.value.isNotEmpty)
+                  ? itemsAsync.asData!.value
+                  : (tx.transactionItems ?? <TransactionItem>[]);
+              final int itemsSubtotal = effectiveItems.fold<int>(0, (sum, it) => sum + (it.unitPrice * it.quantity));
+              final int feeDifference = tx.totalAmount - itemsSubtotal;
+
+              return Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    if (effectiveItems.isNotEmpty && itemsSubtotal > 0 && feeDifference != 0) ...[
+                      _buildReceiptMetaRow(context, 'Subtotal Menu & Produk', CurrencyFormatter.format(itemsSubtotal)),
+                      const SizedBox(height: 6),
+                      if (feeDifference > 0)
+                        _buildReceiptMetaRow(
+                          context,
+                          tx.isApp ? 'Biaya Pengantaran (Ongkir)' : 'Biaya Layanan / Tambahan',
+                          '+${CurrencyFormatter.format(feeDifference)}',
+                        ),
+                      if (feeDifference < 0)
+                        _buildReceiptMetaRow(
+                          context,
+                          'Potongan Harga / Diskon',
+                          '-${CurrencyFormatter.format(feeDifference.abs())}',
+                        ),
+                      const SizedBox(height: 10),
+                      _buildDashedDivider(context),
+                      const SizedBox(height: 10),
+                    ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          tx.status == 'cancelled' || tx.status == 'refunded' ? 'TOTAL PENGEMBALIAN' : 'TOTAL PENDAPATAN',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: context.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          CurrencyFormatter.format(tx.totalAmount),
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            color: (tx.status == 'cancelled' || tx.status == 'refunded') ? Nebula.rose : Nebula.teal,
+                            decoration: (tx.status == 'cancelled' || tx.status == 'refunded') ? null : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                Text(
-                  CurrencyFormatter.format(tx.totalAmount),
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    color: tx.status == 'cancelled' ? context.textSecondary : Nebula.teal,
-                    decoration: tx.status == 'cancelled' ? TextDecoration.lineThrough : null,
-                  ),
-                ),
-              ],
-            ),
+              );
+            },
           ),
         ],
       ),

@@ -258,6 +258,25 @@ void main() {
       expect(blockedAccountStudent.hasRfid, isTrue);
       expect(blockedAccountStudent.isActive, isFalse);
       expect(blockedAccountStudent.cardIsActive, isTrue);
+
+      // 5. REST API format - Akun diblokir tapi kartu fisik tetap aktif
+      final apiBlockedAccountJson = {
+        'id': 'std-002',
+        'balance': 45000,
+        'rfid_uid': '04:2A:B5:E2',
+        'is_active': true, // Card is ACTIVE
+        'profile': {
+          'id': 'std-002',
+          'full_name': 'Ahmad Dahlan',
+          'nisn': '99887766',
+          'is_active': false, // Profile account is BLOCKED
+        }
+      };
+      final apiStudent = StudentWithProfile.fromApiJson(apiBlockedAccountJson);
+      expect(apiStudent.hasRfid, isTrue);
+      expect(apiStudent.cardIsActive, isTrue);
+      expect(apiStudent.isActive, isFalse);
+      expect(apiStudent.balance, equals(45000));
     });
   });
 }

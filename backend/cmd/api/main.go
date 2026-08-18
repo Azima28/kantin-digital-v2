@@ -202,6 +202,7 @@ func main() {
 		authRequired.Post("/orders", orderH.CreateOrder)
 		authRequired.Get("/orders/student", orderH.ListStudentOrders)
 		authRequired.Get("/orders/operator", middleware.RequireRoles(domain.RolePetugasKantin, domain.RoleSuperAdmin, domain.RoleAdmin, domain.RolePetugasKeuangan), orderH.ListOperatorOrders)
+		authRequired.Get("/orders/:id", orderH.GetOrderByID)
 		authRequired.Patch("/orders/:id/status", middleware.RequireRoles(domain.RolePetugasKantin, domain.RoleSuperAdmin, domain.RoleAdmin), orderH.UpdateStatus)
 		authRequired.Post("/orders/:id/messages", orderH.SendMessage)
 		authRequired.Get("/orders/:id/messages", orderH.GetMessages)

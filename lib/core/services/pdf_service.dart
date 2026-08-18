@@ -254,6 +254,57 @@ class PdfService {
                   );
                 }),
                 pw.Divider(color: _lightBg, thickness: 1),
+                ...(() {
+                  int itemsSubtotal = 0;
+                  for (final item in items) {
+                    final int qty = item['quantity'] as int? ?? 1;
+                    final double price = double.tryParse(
+                            item['unit_price']?.toString() ?? '0') ??
+                        0;
+                    itemsSubtotal += (price * qty).toInt();
+                  }
+                  final int feeDiff = amount - itemsSubtotal;
+
+                  if (itemsSubtotal > 0 && feeDiff != 0) {
+                    return [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.symmetric(vertical: 2),
+                        child: pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Text('Subtotal Menu', style: baseStyle),
+                            pw.Text(_currencyFmt.format(itemsSubtotal), style: baseStyle),
+                          ],
+                        ),
+                      ),
+                      if (feeDiff > 0)
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.symmetric(vertical: 2),
+                          child: pw.Row(
+                            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                            children: [
+                              pw.Text('Biaya Pengantaran / Layanan', style: baseStyle),
+                              pw.Text('+${_currencyFmt.format(feeDiff)}', style: baseStyle),
+                            ],
+                          ),
+                        ),
+                      if (feeDiff < 0)
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.symmetric(vertical: 2),
+                          child: pw.Row(
+                            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                            children: [
+                              pw.Text('Potongan Harga / Diskon', style: baseStyle),
+                              pw.Text('-${_currencyFmt.format(feeDiff.abs())}', style: baseStyle),
+                            ],
+                          ),
+                        ),
+                      pw.SizedBox(height: 4),
+                      pw.Divider(color: _lightBg, thickness: 1),
+                    ];
+                  }
+                  return <pw.Widget>[];
+                })(),
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [

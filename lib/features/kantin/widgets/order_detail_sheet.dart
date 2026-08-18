@@ -636,34 +636,65 @@ class OrderDetailSheet extends ConsumerWidget {
           _buildDashedDivider(context),
 
           // Receipt Footer Totals
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    'TOTAL PEMBAYARAN',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: context.textPrimary,
+          Builder(
+            builder: (context) {
+              final bool isDeliveryOrder = order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty;
+              final int itemsSubtotal = order.items.fold<int>(0, (sum, it) => sum + (it.price * it.qty));
+              final int feeDifference = order.totalAmount - itemsSubtotal;
+
+              return Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    if (order.items.isNotEmpty && itemsSubtotal > 0 && feeDifference != 0) ...[
+                      _buildReceiptMetaRow(context, 'Subtotal Menu & Produk', CurrencyFormatter.format(itemsSubtotal)),
+                      const SizedBox(height: 6),
+                      if (feeDifference > 0)
+                        _buildReceiptMetaRow(
+                          context,
+                          isDeliveryOrder ? 'Biaya Pengantaran (Ongkir)' : 'Biaya Layanan / Tambahan',
+                          '+${CurrencyFormatter.format(feeDifference)}',
+                        ),
+                      if (feeDifference < 0)
+                        _buildReceiptMetaRow(
+                          context,
+                          'Potongan Harga / Diskon',
+                          '-${CurrencyFormatter.format(feeDifference.abs())}',
+                        ),
+                      const SizedBox(height: 10),
+                      _buildDashedDivider(context),
+                      const SizedBox(height: 10),
+                    ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'TOTAL PEMBAYARAN',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: context.textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          CurrencyFormatter.format(order.totalAmount),
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            color: Nebula.teal,
+                          ),
+                        ),
+                      ],
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  CurrencyFormatter.format(order.totalAmount),
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    color: Nebula.teal,
-                  ),
-                ),
-              ],
-            ),
+              );
+            },
           ),
         ],
       ),

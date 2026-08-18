@@ -261,12 +261,13 @@ func (r *UserRepo) ListCanteenOperators(ctx context.Context) ([]domain.CanteenOp
 // GetCanteenOperatorDetail retrieves canteen operator and profile by ID
 func (r *UserRepo) GetCanteenOperatorDetail(ctx context.Context, id string) (*domain.CanteenOperator, error) {
 	query := `
-		SELECT c.id, c.canteen_name, c.balance_earned, c.is_delivery_enabled, c.delivery_fee,
+		SELECT COALESCE(c.id, p.id), COALESCE(c.canteen_name, p.full_name), COALESCE(c.balance_earned, 0),
+		       COALESCE(c.is_delivery_enabled, true), COALESCE(c.delivery_fee, 2000),
 		       COALESCE(c.rating, 0.0), COALESCE(c.total_reviews, 0),
 		       p.email, p.full_name, p.role, p.username, p.phone_number, p.is_active, p.avatar_url, p.created_at
-		FROM public.canteen_operators c
-		JOIN public.profiles p ON p.id = c.id
-		WHERE c.id = $1`
+		FROM public.profiles p
+		LEFT JOIN public.canteen_operators c ON c.id = p.id
+		WHERE p.id = $1 OR c.id = $1`
 
 	row := r.db.Pool.QueryRow(ctx, query, id)
 	var c domain.CanteenOperator
