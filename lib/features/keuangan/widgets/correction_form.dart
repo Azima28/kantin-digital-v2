@@ -246,40 +246,58 @@ class _CorrectionFormState extends State<CorrectionForm> {
           ),
         ),
         const SizedBox(height: 8),
-        TextField(
-          controller: _amountController,
-          keyboardType: TextInputType.number,
-          onChanged: (_) => setState(() {}),
-          decoration: InputDecoration(
-            prefixText: 'Rp ',
-            prefixStyle: GoogleFonts.inter(
-              fontWeight: FontWeight.bold,
-              color: context.textPrimary,
-            ),
-            hintText: '0',
-            hintStyle: GoogleFonts.inter(
-              color: context.textSecondary,
-              fontSize: 14,
-            ),
-            filled: true,
-            fillColor: context.cardBg,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: context.dividerCol),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: context.dividerCol),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  BorderSide(color: Nebula.teal, width: 1.5),
-            ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          decoration: BoxDecoration(
+            color: context.cardBg,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: context.dividerCol),
+          ),
+          child: Row(
+            children: [
+              Text(
+                'Rp',
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: context.textPrimary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  controller: _amountController,
+                  keyboardType: TextInputType.number,
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: context.textPrimary,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: '0',
+                    hintStyle: GoogleFonts.inter(
+                      color: context.textSecondary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+              if (_amountController.text.isNotEmpty)
+                IconButton(
+                  icon: Icon(Icons.clear_rounded, color: context.textSecondary, size: 20),
+                  onPressed: () {
+                    setState(() {
+                      _amountController.clear();
+                    });
+                  },
+                ),
+            ],
           ),
         ),
         const SizedBox(height: 12),

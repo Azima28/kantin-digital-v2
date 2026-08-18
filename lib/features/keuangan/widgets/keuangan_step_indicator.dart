@@ -41,6 +41,8 @@ class KeuanganStepIndicator extends StatelessWidget {
               fontWeight: FontWeight.bold,
               color: context.textSecondary,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           SizedBox(height: 6),
           Row(
