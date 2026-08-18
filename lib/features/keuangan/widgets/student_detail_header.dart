@@ -165,7 +165,7 @@ class StudentDetailHeader extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       !hasCard
-                          ? 'KARTU BELUM TERDAFTAR'
+                          ? 'BELUM TERDAFTAR'
                           : (!isCardActive ? 'KARTU DIBLOKIR' : 'KARTU AKTIF'),
                       style: GoogleFonts.inter(
                         fontSize: 10,
@@ -240,16 +240,23 @@ class StudentDetailHeader extends StatelessWidget {
               Text(
                 'Saldo Aktif',
                 style: GoogleFonts.inter(
+                  fontSize: 13,
                   color: context.textSecondary,
                 ),
               ),
-              Text(
-                fmt.format(balance),
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.bold,
-                  color: balance < 5000
-                      ? Nebula.rose
-                      : context.textPrimary,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  fmt.format(balance),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13.5,
+                    color: balance < 5000
+                        ? Nebula.rose
+                        : context.textPrimary,
+                  ),
                 ),
               ),
             ],
@@ -259,16 +266,23 @@ class StudentDetailHeader extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Status Akun Login',
+                'Status Akun',
                 style: GoogleFonts.inter(
+                  fontSize: 13,
                   color: context.textSecondary,
                 ),
               ),
-              Text(
-                isAccountActive ? 'AKTIF' : 'DIBLOKIR',
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.bold,
-                  color: isAccountActive ? Nebula.teal : Nebula.rose,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  isAccountActive ? 'AKTIF' : 'DIBLOKIR',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: isAccountActive ? Nebula.teal : Nebula.rose,
+                  ),
                 ),
               ),
             ],
@@ -278,20 +292,27 @@ class StudentDetailHeader extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Status Kartu Fisik',
+                'Status Kartu',
                 style: GoogleFonts.inter(
+                  fontSize: 13,
                   color: context.textSecondary,
                 ),
               ),
-              Text(
-                !hasCard
-                    ? 'BELUM TERDAFTAR'
-                    : (isCardActive ? 'AKTIF' : 'DIBLOKIR'),
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.bold,
-                  color: !hasCard
-                      ? context.textSecondary
-                      : (isCardActive ? Nebula.teal : Nebula.amber),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  !hasCard
+                      ? 'BELUM TERDAFTAR'
+                      : (isCardActive ? 'AKTIF' : 'DIBLOKIR'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: !hasCard
+                        ? context.textSecondary
+                        : (isCardActive ? Nebula.teal : Nebula.amber),
+                  ),
                 ),
               ),
             ],
@@ -303,14 +324,21 @@ class StudentDetailHeader extends StatelessWidget {
               Text(
                 'UID Kartu',
                 style: GoogleFonts.inter(
+                  fontSize: 13,
                   color: context.textSecondary,
                 ),
               ),
-              Text(
-                rfid ?? '-',
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.bold,
-                  color: context.textPrimary,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  rfid ?? '-',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: context.textPrimary,
+                  ),
                 ),
               ),
             ],
@@ -322,14 +350,21 @@ class StudentDetailHeader extends StatelessWidget {
               Text(
                 'Terakhir Tap',
                 style: GoogleFonts.inter(
+                  fontSize: 13,
                   color: context.textSecondary,
                 ),
               ),
-              Text(
-                lastTapStr,
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.bold,
-                  color: context.textPrimary,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  lastTapStr,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: context.textPrimary,
+                  ),
                 ),
               ),
             ],
@@ -409,13 +444,18 @@ class StudentDetailHeader extends StatelessWidget {
             color: context.textSecondary,
           ),
         ),
-        const Spacer(),
-        Text(
-          value,
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: context.textPrimary,
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: context.textPrimary,
+            ),
           ),
         ),
       ],

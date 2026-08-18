@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,6 +19,12 @@ void main() async {
   // Ini fix "Zone mismatch" — WidgetsFlutterBinding & runApp harus di zone yg sama.
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
+
+    // Heningkan peringatan internal buffer discarded pada Flutter Web saat loading awal
+    ui.channelBuffers.allowOverflow('flutter/keyevent', true);
+    ui.channelBuffers.allowOverflow('flutter/mousecursor', true);
+    ui.channelBuffers.allowOverflow('flutter/lifecycle', true);
+    ui.channelBuffers.allowOverflow('flutter/navigation', true);
 
     // Konfigurasi ImageCache Memory Bounds untuk HP Low-End hingga Mid-Range
     // Batasi decoded image cache ke 120 items & 30MB RAM agar super ringan, anti-lag, & bebas OOM
