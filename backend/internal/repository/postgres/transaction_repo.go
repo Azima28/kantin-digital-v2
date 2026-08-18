@@ -265,17 +265,17 @@ func (r *TransactionRepo) ProcessTopup(ctx context.Context, studentID, officerID
 
 // ListTransactionsByStudent retrieves student transaction ledger
 func (r *TransactionRepo) ListTransactionsByStudent(ctx context.Context, studentID string, limit int) ([]domain.Transaction, error) {
-	list, _, err := r.ListTransactionsPaged(ctx, studentID, limit, 0, "", "", "")
+	list, _, err := r.ListTransactionsPaged(ctx, studentID, "", limit, 0, "", "", "")
 	return list, err
 }
 
 // ListTransactionsByStudentPaged retrieves student transaction ledger with pagination, filters, and total count
-func (r *TransactionRepo) ListTransactionsByStudentPaged(ctx context.Context, studentID string, limit, offset int, txType, status, search string) ([]domain.Transaction, int, error) {
-	return r.ListTransactionsPaged(ctx, studentID, limit, offset, txType, status, search)
+func (r *TransactionRepo) ListTransactionsByStudentPaged(ctx context.Context, studentID, operatorID string, limit, offset int, txType, status, search string) ([]domain.Transaction, int, error) {
+	return r.ListTransactionsPaged(ctx, studentID, operatorID, limit, offset, txType, status, search)
 }
 
-// ListTransactionsPaged retrieves transaction ledger with pagination, filters, and total count (optional studentID)
-func (r *TransactionRepo) ListTransactionsPaged(ctx context.Context, studentID string, limit, offset int, txType, status, search string) ([]domain.Transaction, int, error) {
+// ListTransactionsPaged retrieves transaction ledger with pagination, filters, and total count (optional studentID, optional operatorID)
+func (r *TransactionRepo) ListTransactionsPaged(ctx context.Context, studentID, operatorID string, limit, offset int, txType, status, search string) ([]domain.Transaction, int, error) {
 	if limit <= 0 {
 		limit = 15
 	}
@@ -290,6 +290,12 @@ func (r *TransactionRepo) ListTransactionsPaged(ctx context.Context, studentID s
 	if studentID != "" {
 		whereClause += fmt.Sprintf(` AND t.student_id = $%d`, argIdx)
 		args = append(args, studentID)
+		argIdx++
+	}
+
+	if operatorID != "" {
+		whereClause += fmt.Sprintf(` AND t.operator_id = $%d`, argIdx)
+		args = append(args, operatorID)
 		argIdx++
 	}
 

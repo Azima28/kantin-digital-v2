@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
@@ -15,8 +16,9 @@ import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/admin/widgets/merchant_profile_header.dart';
 import 'package:kantin_digital/features/admin/widgets/merchant_stats_card.dart';
 import 'package:kantin_digital/features/admin/widgets/merchant_product_list_item.dart';
-import 'package:kantin_digital/features/admin/widgets/merchant_transaction_list_item.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_edit_merchant_sheet.dart';
+import 'package:kantin_digital/features/shared/screens/student_transactions_screen.dart';
+import 'package:kantin_digital/features/siswa/widgets/siswa_transaction_detail_sheet.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 class AdminMerchantDetailScreen extends ConsumerStatefulWidget {
@@ -315,14 +317,14 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _buildRecentSales(txs),
+                        child: _buildRecentSales(txs, canteenName),
                       ),
                     ],
                   )
                 else ...[
                   _buildProductCatalog(products),
                   const SizedBox(height: 16),
-                  _buildRecentSales(txs),
+                  _buildRecentSales(txs, canteenName),
                 ],
               ],
             ),
@@ -439,21 +441,50 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
     );
   }
 
-  Widget _buildRecentSales(List<OperatorTransaction> txs) {
+  Widget _buildRecentSales(List<OperatorTransaction> txs, String canteenName) {
     return NebulaCard(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Recent Sales',
-            style: GoogleFonts.inter(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: Nebula.teal,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  'Riwayat Penjualan (10 Terakhir)',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Nebula.teal,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => StudentTransactionsScreen(
+                        operatorId: widget.merchantId,
+                        title: 'Penjualan $canteenName',
+                        primaryColor: Nebula.teal,
+                      ),
+                    ),
+                  );
+                },
+                child: Text(
+                  'Lihat Semua',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Nebula.teal,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           if (txs.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24.0),
@@ -463,14 +494,83 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: txs.length,
-              separatorBuilder: (context, i) => Divider(height: 16, color: context.dividerCol),
+              itemCount: txs.take(10).length,
+              separatorBuilder: (context, i) => Divider(height: 14, color: context.dividerCol),
               itemBuilder: (context, i) {
                 final tx = txs[i];
-                return MerchantTransactionListItem(
-                  nisn: tx.studentNisn ?? '-',
-                  date: tx.createdAt?.toLocal() ?? DateTime.now(),
-                  amount: tx.totalAmount,
+                final bool isRefund = tx.status?.toString().toLowerCase() == 'refunded' || tx.type == 'refund';
+
+                return Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () => showTransactionDetailSheet(context, ref, tx),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 16,
+                            backgroundColor: isRefund ? Nebula.rose.withValues(alpha: 0.1) : Nebula.teal.withValues(alpha: 0.08),
+                            child: Icon(
+                              isRefund ? CupertinoIcons.arrow_uturn_left : CupertinoIcons.cart,
+                              size: 14,
+                              color: isRefund ? Nebula.rose : Nebula.teal,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  tx.studentName ?? 'Siswa (NISN: ${tx.studentNisn ?? "-"})',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: context.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  DateFormat('dd MMM, HH:mm', 'id_ID').format(tx.createdAt?.toLocal() ?? DateTime.now()),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    color: context.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '${isRefund ? "-" : "+"}Rp ${NumberFormat('#,###', 'id_ID').format(tx.totalAmount)}',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: isRefund ? Nebula.rose : Nebula.teal,
+                                ),
+                              ),
+                              if (isRefund)
+                                Text(
+                                  'REFUNDED',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 8.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Nebula.rose,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 );
               },
             ),

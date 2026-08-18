@@ -17,13 +17,15 @@ import 'package:kantin_digital/features/siswa/widgets/siswa_transaction_detail_s
 
 class StudentTransactionsScreen extends ConsumerStatefulWidget {
   final String studentId;
+  final String? operatorId;
   final String title;
   final Color primaryColor;
   final Color accentColor;
 
   const StudentTransactionsScreen({
     super.key,
-    required this.studentId,
+    this.studentId = '',
+    this.operatorId,
     this.title = 'Semua Transaksi',
     this.primaryColor = Nebula.teal,
     this.accentColor = Nebula.amber,
@@ -53,7 +55,8 @@ class _StudentTransactionsScreenState
       final apiClient = ref.read(apiClientProvider);
       final response = await apiClient.get('/student/transactions', queryParams: {
         if (widget.studentId.isNotEmpty) 'student_id': widget.studentId,
-        'limit': '50',
+        if (widget.operatorId != null && widget.operatorId!.isNotEmpty) 'operator_id': widget.operatorId,
+        'limit': '100',
       });
       if (response.success && response.data != null) {
         final data = response.data;

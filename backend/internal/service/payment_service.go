@@ -138,12 +138,12 @@ func (s *PaymentService) ListStudentTransactions(ctx context.Context, studentID 
 	return s.txRepo.ListTransactionsByStudent(ctx, studentID, limit)
 }
 
-func (s *PaymentService) ListStudentTransactionsPaged(ctx context.Context, studentID string, limit, offset int, txType, status, search string) ([]domain.Transaction, int, error) {
-	return s.txRepo.ListTransactionsByStudentPaged(ctx, studentID, limit, offset, txType, status, search)
+func (s *PaymentService) ListStudentTransactionsPaged(ctx context.Context, studentID, operatorID string, limit, offset int, txType, status, search string) ([]domain.Transaction, int, error) {
+	return s.txRepo.ListTransactionsByStudentPaged(ctx, studentID, operatorID, limit, offset, txType, status, search)
 }
 
-func (s *PaymentService) ListTransactionsPaged(ctx context.Context, studentID string, limit, offset int, txType, status, search string) ([]domain.Transaction, int, error) {
-	return s.txRepo.ListTransactionsPaged(ctx, studentID, limit, offset, txType, status, search)
+func (s *PaymentService) ListTransactionsPaged(ctx context.Context, studentID, operatorID string, limit, offset int, txType, status, search string) ([]domain.Transaction, int, error) {
+	return s.txRepo.ListTransactionsPaged(ctx, studentID, operatorID, limit, offset, txType, status, search)
 }
 
 func (s *PaymentService) ListOperatorTransactions(ctx context.Context, operatorID string, limit int) ([]domain.Transaction, error) {

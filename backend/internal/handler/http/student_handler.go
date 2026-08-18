@@ -102,8 +102,9 @@ func (h *StudentHandler) GetTransactions(c *fiber.Ctx) error {
 	txType := c.Query("type", "")
 	status := c.Query("status", "")
 	search := c.Query("search", "")
+	operatorID := c.Query("operator_id", "")
 
-	txs, total, err := h.paymentService.ListStudentTransactionsPaged(c.Context(), targetStudentID, limit, offset, txType, status, search)
+	txs, total, err := h.paymentService.ListStudentTransactionsPaged(c.Context(), targetStudentID, operatorID, limit, offset, txType, status, search)
 	if err != nil {
 		return response.Error(c, fiber.StatusInternalServerError, "Gagal mengambil riwayat", err.Error())
 	}
