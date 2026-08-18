@@ -35,7 +35,7 @@ func setupTestApp() *fiber.App {
 	authService := service.NewAuthService(userRepo, tokenMaker)
 	catalogService := service.NewCatalogService(productRepo, userRepo)
 	orderService := service.NewOrderService(orderRepo)
-	paymentService := service.NewPaymentService(txRepo, userRepo, auditRepo)
+	paymentService := service.NewPaymentService(txRepo, userRepo, auditRepo, productRepo)
 	notifService := service.NewNotificationService(notifRepo)
 
 	authH := httpHandler.NewAuthHandler(authService)

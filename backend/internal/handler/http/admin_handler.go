@@ -173,3 +173,30 @@ func (h *AdminHandler) GetStudentDetail(c *fiber.Ctx) error {
 		"transactions": txs,
 	})
 }
+
+func (h *AdminHandler) GetMerchantDetail(c *fiber.Ctx) error {
+	id := c.Params("id")
+	detail, err := h.paymentService.GetMerchantDetail(c.Context(), id)
+	if err != nil {
+		return response.Error(c, fiber.StatusNotFound, "Data stan / operator tidak ditemukan", err.Error())
+	}
+	return response.Success(c, fiber.StatusOK, "Detail operator stan", detail)
+}
+
+func (h *AdminHandler) GetParentDetail(c *fiber.Ctx) error {
+	id := c.Params("id")
+	detail, err := h.paymentService.GetParentDetail(c.Context(), id)
+	if err != nil {
+		return response.Error(c, fiber.StatusNotFound, "Data orang tua tidak ditemukan", err.Error())
+	}
+	return response.Success(c, fiber.StatusOK, "Detail orang tua", detail)
+}
+
+func (h *AdminHandler) GetFinanceDetail(c *fiber.Ctx) error {
+	id := c.Params("id")
+	detail, err := h.paymentService.GetFinanceOfficerDetail(c.Context(), id)
+	if err != nil {
+		return response.Error(c, fiber.StatusNotFound, "Data petugas keuangan tidak ditemukan", err.Error())
+	}
+	return response.Success(c, fiber.StatusOK, "Detail petugas keuangan", detail)
+}

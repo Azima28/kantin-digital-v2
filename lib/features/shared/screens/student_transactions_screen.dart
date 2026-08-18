@@ -47,9 +47,17 @@ class _StudentTransactionsScreenState
   Future<List<Map<String, dynamic>>> _fetchTransactions() async {
     try {
       final apiClient = ref.read(apiClientProvider);
-      final response = await apiClient.get('/student/transactions');
+      final response = await apiClient.get('/student/transactions', queryParams: {
+        if (widget.studentId.isNotEmpty) 'student_id': widget.studentId,
+        'limit': '50',
+      });
       if (response.success && response.data != null) {
-        return List<Map<String, dynamic>>.from(response.data as List<dynamic>);
+        final data = response.data;
+        if (data is Map<String, dynamic> && data['items'] is List) {
+          return List<Map<String, dynamic>>.from(data['items'] as List);
+        } else if (data is List) {
+          return List<Map<String, dynamic>>.from(data);
+        }
       }
       return <Map<String, dynamic>>[];
     } catch (_) {

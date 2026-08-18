@@ -6,7 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
-import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/nebula_components.dart';
 import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
@@ -172,28 +171,24 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                   canteenName: canteenName,
                   username: username,
                 ),
-                SizedBox(height: 12),
-                PressScale(
-                  onTap: () => _showChangePasswordDialog(profile.id),
-                  child: ElevatedButton.icon(
-                    onPressed: null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Nebula.teal,
-                      foregroundColor: context.cardBg,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: () => _showChangePasswordDialog(profile.id),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Nebula.teal,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    icon: const Icon(CupertinoIcons.lock_shield),
-                    label: const Text(
-                      AppStrings.adminChangePassword,
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  icon: const Icon(CupertinoIcons.lock_shield, size: 18),
+                  label: const Text(
+                    AppStrings.adminChangePassword,
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
-                const GradientLine(),
-                const SizedBox(height: 16),
+                const GradientLine(margin: EdgeInsets.symmetric(vertical: 16)),
                 Row(
                   children: [
                     Expanded(child: MerchantDailySalesCard(dailySales: dailySales)),
@@ -201,19 +196,25 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                     Expanded(child: MerchantMonthlySalesCard(monthlySales: monthlySales)),
                   ],
                 ),
-                const SizedBox(height: 24),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: _buildProductCatalog(products),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildRecentSales(txs),
-                    ),
-                  ],
-                ),
+                const SizedBox(height: 20),
+                if (MediaQuery.of(context).size.width >= 640)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _buildProductCatalog(products),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildRecentSales(txs),
+                      ),
+                    ],
+                  )
+                else ...[
+                  _buildProductCatalog(products),
+                  const SizedBox(height: 16),
+                  _buildRecentSales(txs),
+                ],
               ],
             ),
           );

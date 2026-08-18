@@ -228,7 +228,7 @@ func (r *UserRepo) ListCanteenOperators(ctx context.Context) ([]domain.CanteenOp
 	query := `
 		SELECT c.id, c.canteen_name, c.balance_earned, c.is_delivery_enabled, c.delivery_fee,
 		       COALESCE(c.rating, 0.0), COALESCE(c.total_reviews, 0),
-		       p.email, p.full_name, p.role, p.phone_number, p.is_active, p.avatar_url, p.created_at
+		       p.email, p.full_name, p.role, p.username, p.phone_number, p.is_active, p.avatar_url, p.created_at
 		FROM public.canteen_operators c
 		JOIN public.profiles p ON p.id = c.id
 		ORDER BY c.canteen_name ASC`
@@ -246,7 +246,7 @@ func (r *UserRepo) ListCanteenOperators(ctx context.Context) ([]domain.CanteenOp
 		err := rows.Scan(
 			&c.ID, &c.CanteenName, &c.BalanceEarned, &c.IsDeliveryEnabled, &c.DeliveryFee,
 			&c.Rating, &c.TotalReviews,
-			&p.Email, &p.FullName, &p.Role, &p.PhoneNumber, &p.IsActive, &p.AvatarURL, &p.CreatedAt,
+			&p.Email, &p.FullName, &p.Role, &p.Username, &p.PhoneNumber, &p.IsActive, &p.AvatarURL, &p.CreatedAt,
 		)
 		if err != nil {
 			return nil, err
@@ -256,6 +256,62 @@ func (r *UserRepo) ListCanteenOperators(ctx context.Context) ([]domain.CanteenOp
 		list = append(list, c)
 	}
 	return list, nil
+}
+
+// GetCanteenOperatorDetail retrieves canteen operator and profile by ID
+func (r *UserRepo) GetCanteenOperatorDetail(ctx context.Context, id string) (*domain.CanteenOperator, error) {
+	query := `
+		SELECT c.id, c.canteen_name, c.balance_earned, c.is_delivery_enabled, c.delivery_fee,
+		       COALESCE(c.rating, 0.0), COALESCE(c.total_reviews, 0),
+		       p.email, p.full_name, p.role, p.username, p.phone_number, p.is_active, p.avatar_url, p.created_at
+		FROM public.canteen_operators c
+		JOIN public.profiles p ON p.id = c.id
+		WHERE c.id = $1`
+
+	row := r.db.Pool.QueryRow(ctx, query, id)
+	var c domain.CanteenOperator
+	var p domain.UserProfile
+	err := row.Scan(
+		&c.ID, &c.CanteenName, &c.BalanceEarned, &c.IsDeliveryEnabled, &c.DeliveryFee,
+		&c.Rating, &c.TotalReviews,
+		&p.Email, &p.FullName, &p.Role, &p.Username, &p.PhoneNumber, &p.IsActive, &p.AvatarURL, &p.CreatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, err
+	}
+	p.ID = c.ID
+	c.Profile = &p
+	return &c, nil
+}
+
+// GetFinanceOfficerDetail retrieves finance officer and profile by ID
+func (r *UserRepo) GetFinanceOfficerDetail(ctx context.Context, id string) (*domain.FinanceOfficer, error) {
+	query := `
+		SELECT p.id, COALESCE(f.total_managed_funds, 0),
+		       p.email, p.full_name, p.role, p.username, p.phone_number, p.is_active, p.avatar_url, p.created_at
+		FROM public.profiles p
+		LEFT JOIN public.finance_officers f ON f.id = p.id
+		WHERE p.id = $1`
+
+	row := r.db.Pool.QueryRow(ctx, query, id)
+	var f domain.FinanceOfficer
+	var p domain.UserProfile
+	err := row.Scan(
+		&f.ID, &f.TotalManagedFunds,
+		&p.Email, &p.FullName, &p.Role, &p.Username, &p.PhoneNumber, &p.IsActive, &p.AvatarURL, &p.CreatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, err
+	}
+	p.ID = f.ID
+	f.Profile = &p
+	return &f, nil
 }
 
 // UpdateDeliverySettings updates stall delivery configurations

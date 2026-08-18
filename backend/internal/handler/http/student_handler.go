@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
+	"kantin-backend/internal/domain"
 	"kantin-backend/internal/handler/http/middleware"
 	"kantin-backend/internal/pkg/response"
 	"kantin-backend/internal/pkg/token"
@@ -61,6 +62,11 @@ func (h *StudentHandler) GetMyProfile(c *fiber.Ctx) error {
 
 func (h *StudentHandler) GetTransactions(c *fiber.Ctx) error {
 	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
+	targetStudentID := claims.UserID
+	if (claims.Role == domain.RoleSuperAdmin || claims.Role == domain.RoleAdmin || claims.Role == domain.RolePetugasKeuangan) && c.Query("student_id") != "" {
+		targetStudentID = c.Query("student_id")
+	}
+
 	limitStr := c.Query("limit", "15")
 	limit, _ := strconv.Atoi(limitStr)
 	if limit <= 0 {
@@ -85,7 +91,7 @@ func (h *StudentHandler) GetTransactions(c *fiber.Ctx) error {
 	status := c.Query("status", "")
 	search := c.Query("search", "")
 
-	txs, total, err := h.paymentService.ListStudentTransactionsPaged(c.Context(), claims.UserID, limit, offset, txType, status, search)
+	txs, total, err := h.paymentService.ListStudentTransactionsPaged(c.Context(), targetStudentID, limit, offset, txType, status, search)
 	if err != nil {
 		return response.Error(c, fiber.StatusInternalServerError, "Gagal mengambil riwayat", err.Error())
 	}

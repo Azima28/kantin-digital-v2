@@ -127,23 +127,16 @@ final adminParentDetailProvider = FutureProvider
     .family<AdminParentDetail, String>((ref, id) async {
   final apiClient = ref.watch(apiClientProvider);
   try {
-    final userRes = await apiClient.get('/admin/users');
-    if (userRes.success && userRes.data != null) {
-      final list = userRes.data as List<dynamic>;
-      final user = list.firstWhere((e) => e['id'] == id, orElse: () => null);
-      if (user != null) {
-        return AdminParentDetail.fromJson({
-          'profile': user,
-          'children': <dynamic>[],
-        });
-      }
+    final res = await apiClient.get('/admin/parent/$id');
+    if (res.success && res.data != null) {
+      return AdminParentDetail.fromJson(res.data as Map<String, dynamic>);
     }
   } catch (e) {
     debugPrint('adminParentDetailProvider error: $e');
   }
 
   return AdminParentDetail.fromJson({
-    'profile': <String, dynamic>{},
+    'profile': <String, dynamic>{'id': id},
     'children': <dynamic>[],
   });
 });
@@ -156,30 +149,16 @@ final adminMerchantDetailProvider = FutureProvider
     .family<AdminMerchantDetail, String>((ref, id) async {
   final apiClient = ref.watch(apiClientProvider);
   try {
-    final prodRes = await apiClient.get('/products', queryParams: {'canteen_id': id});
-    final List<dynamic> products = prodRes.success && prodRes.data != null ? prodRes.data as List<dynamic> : [];
-
-    final canteensRes = await apiClient.get('/canteens');
-    Map<String, dynamic>? canteen;
-    if (canteensRes.success && canteensRes.data != null) {
-      final list = canteensRes.data as List<dynamic>;
-      canteen = list.firstWhere((e) => e['id'] == id, orElse: () => null) as Map<String, dynamic>?;
+    final res = await apiClient.get('/admin/merchant/$id');
+    if (res.success && res.data != null) {
+      return AdminMerchantDetail.fromJson(res.data as Map<String, dynamic>);
     }
-
-    return AdminMerchantDetail.fromJson({
-      'profile': canteen?['profile'] ?? <String, dynamic>{},
-      'operator': canteen ?? <String, dynamic>{'id': id, 'canteen_name': 'Stan Kantin'},
-      'products': products,
-      'transactions': <dynamic>[],
-      'daily_sales_aggregated': 0.0,
-      'monthly_sales_aggregated': 0.0,
-    });
   } catch (e) {
     debugPrint('adminMerchantDetailProvider error: $e');
   }
 
   return AdminMerchantDetail.fromJson({
-    'profile': <String, dynamic>{},
+    'profile': <String, dynamic>{'id': id},
     'operator': <String, dynamic>{'id': id, 'canteen_name': 'Stan Kantin'},
     'products': <dynamic>[],
     'transactions': <dynamic>[],
@@ -196,25 +175,17 @@ final adminFinanceDetailProvider = FutureProvider
     .family<AdminFinanceDetail, String>((ref, id) async {
   final apiClient = ref.watch(apiClientProvider);
   try {
-    final usersRes = await apiClient.get('/admin/users');
-    if (usersRes.success && usersRes.data != null) {
-      final list = usersRes.data as List<dynamic>;
-      final user = list.firstWhere((e) => e['id'] == id, orElse: () => null);
-      if (user != null) {
-        return AdminFinanceDetail.fromJson({
-          'profile': user,
-          'officer': <String, dynamic>{'id': id},
-          'logs': <dynamic>[],
-        });
-      }
+    final res = await apiClient.get('/admin/finance/$id');
+    if (res.success && res.data != null) {
+      return AdminFinanceDetail.fromJson(res.data as Map<String, dynamic>);
     }
   } catch (e) {
     debugPrint('adminFinanceDetailProvider error: $e');
   }
 
   return AdminFinanceDetail.fromJson({
-    'profile': <String, dynamic>{},
-    'officer': <String, dynamic>{},
+    'profile': <String, dynamic>{'id': id},
+    'officer': <String, dynamic>{'id': id},
     'logs': <dynamic>[],
   });
 });

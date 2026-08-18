@@ -48,9 +48,12 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
   Future<List<Map<String, dynamic>>> _fetchActivities() async {
     try {
       final apiClient = ref.read(apiClientProvider);
-      final response = await apiClient.get('/pos/sales-history');
+      final response = await apiClient.get('/pos/sales-history', queryParams: {
+        if (widget.officerId.isNotEmpty) 'operator_id': widget.officerId,
+        'limit': '50',
+      });
       if (response.success && response.data != null) {
-        return List<Map<String, dynamic>>.from(response.data as List<dynamic>);
+        return List<Map<String, dynamic>>.from(response.data as List);
       }
       return <Map<String, dynamic>>[];
     } catch (_) {

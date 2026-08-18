@@ -377,6 +377,23 @@ func (r *TransactionRepo) ListTransactionsPaged(ctx context.Context, studentID s
 	return list, totalCount, nil
 }
 
+// GetOperatorSalesStats computes daily and monthly sales aggregated for an operator
+func (r *TransactionRepo) GetOperatorSalesStats(ctx context.Context, operatorID string) (dailySales, monthlySales float64, err error) {
+	dailyQuery := `
+		SELECT COALESCE(SUM(total_amount), 0)
+		FROM public.transactions
+		WHERE operator_id = $1 AND type = 'purchase' AND status = 'success' AND created_at >= CURRENT_DATE`
+	_ = r.db.Pool.QueryRow(ctx, dailyQuery, operatorID).Scan(&dailySales)
+
+	monthlyQuery := `
+		SELECT COALESCE(SUM(total_amount), 0)
+		FROM public.transactions
+		WHERE operator_id = $1 AND type = 'purchase' AND status = 'success' AND created_at >= date_trunc('month', CURRENT_DATE)`
+	_ = r.db.Pool.QueryRow(ctx, monthlyQuery, operatorID).Scan(&monthlySales)
+
+	return dailySales, monthlySales, nil
+}
+
 // ListTransactionsByOperator retrieves canteen stall transaction history
 func (r *TransactionRepo) ListTransactionsByOperator(ctx context.Context, operatorID string, limit int) ([]domain.Transaction, error) {
 	if limit <= 0 {

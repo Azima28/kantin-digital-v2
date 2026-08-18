@@ -11,16 +11,18 @@ import (
 )
 
 type PaymentService struct {
-	txRepo    *postgres.TransactionRepo
-	userRepo  *postgres.UserRepo
-	auditRepo *postgres.AuditRepo
+	txRepo      *postgres.TransactionRepo
+	userRepo    *postgres.UserRepo
+	auditRepo   *postgres.AuditRepo
+	productRepo *postgres.ProductRepo
 }
 
-func NewPaymentService(txRepo *postgres.TransactionRepo, userRepo *postgres.UserRepo, auditRepo *postgres.AuditRepo) *PaymentService {
+func NewPaymentService(txRepo *postgres.TransactionRepo, userRepo *postgres.UserRepo, auditRepo *postgres.AuditRepo, productRepo *postgres.ProductRepo) *PaymentService {
 	return &PaymentService{
-		txRepo:    txRepo,
-		userRepo:  userRepo,
-		auditRepo: auditRepo,
+		txRepo:      txRepo,
+		userRepo:    userRepo,
+		auditRepo:   auditRepo,
+		productRepo: productRepo,
 	}
 }
 
@@ -150,4 +152,51 @@ func (s *PaymentService) ListOperatorTransactions(ctx context.Context, operatorI
 
 func (s *PaymentService) ListOperatorActivities(ctx context.Context, operatorID string, limit int) ([]domain.AuditLog, error) {
 	return s.auditRepo.ListByOperator(ctx, operatorID, limit)
+}
+
+func (s *PaymentService) GetMerchantDetail(ctx context.Context, merchantID string) (map[string]interface{}, error) {
+	operator, err := s.userRepo.GetCanteenOperatorDetail(ctx, merchantID)
+	if err != nil {
+		return nil, err
+	}
+
+	products, _ := s.productRepo.ListProducts(ctx, "", merchantID, "")
+	txs, _ := s.txRepo.ListTransactionsByOperator(ctx, merchantID, 30)
+	dailySales, monthlySales, _ := s.txRepo.GetOperatorSalesStats(ctx, merchantID)
+
+	return map[string]interface{}{
+		"profile":                  operator.Profile,
+		"operator":                 operator,
+		"products":                 products,
+		"transactions":             txs,
+		"daily_sales_aggregated":   dailySales,
+		"monthly_sales_aggregated": monthlySales,
+	}, nil
+}
+
+func (s *PaymentService) GetParentDetail(ctx context.Context, parentID string) (map[string]interface{}, error) {
+	parent, err := s.userRepo.FindByID(ctx, parentID)
+	if err != nil {
+		return nil, err
+	}
+
+	children, _ := s.userRepo.GetParentChildren(ctx, parentID)
+	return map[string]interface{}{
+		"profile":  parent,
+		"children": children,
+	}, nil
+}
+
+func (s *PaymentService) GetFinanceOfficerDetail(ctx context.Context, officerID string) (map[string]interface{}, error) {
+	officer, err := s.userRepo.GetFinanceOfficerDetail(ctx, officerID)
+	if err != nil {
+		return nil, err
+	}
+
+	logs, _ := s.auditRepo.List(ctx, 30)
+	return map[string]interface{}{
+		"profile": officer.Profile,
+		"officer": officer,
+		"logs":    logs,
+	}, nil
 }

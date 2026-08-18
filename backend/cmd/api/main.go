@@ -60,7 +60,7 @@ func main() {
 	authService := service.NewAuthService(userRepo, tokenMaker)
 	catalogService := service.NewCatalogService(productRepo, userRepo)
 	orderService := service.NewOrderService(orderRepo)
-	paymentService := service.NewPaymentService(txRepo, userRepo, auditRepo)
+	paymentService := service.NewPaymentService(txRepo, userRepo, auditRepo, productRepo)
 	notifService := service.NewNotificationService(notifRepo)
 
 	// 6. HTTP Handlers
@@ -191,17 +191,18 @@ func main() {
 		authRequired.Patch("/notifications/:id/read", studentH.MarkNotificationRead)
 
 		// Student Routes
-		studentGroup := authRequired.Group("/student", middleware.RequireRoles(domain.RoleStudent))
+		studentGroup := authRequired.Group("/student", middleware.RequireRoles(domain.RoleStudent, domain.RoleSuperAdmin, domain.RoleAdmin, domain.RolePetugasKeuangan))
 		{
 			studentGroup.Get("/me", studentH.GetMyProfile)
 			studentGroup.Get("/transactions", studentH.GetTransactions)
+			studentGroup.Post("/topup", financeH.Topup)
 		}
 
 		// Orders
 		authRequired.Post("/orders", orderH.CreateOrder)
 		authRequired.Get("/orders/student", orderH.ListStudentOrders)
-		authRequired.Get("/orders/operator", middleware.RequireRoles(domain.RolePetugasKantin), orderH.ListOperatorOrders)
-		authRequired.Patch("/orders/:id/status", middleware.RequireRoles(domain.RolePetugasKantin), orderH.UpdateStatus)
+		authRequired.Get("/orders/operator", middleware.RequireRoles(domain.RolePetugasKantin, domain.RoleSuperAdmin, domain.RoleAdmin, domain.RolePetugasKeuangan), orderH.ListOperatorOrders)
+		authRequired.Patch("/orders/:id/status", middleware.RequireRoles(domain.RolePetugasKantin, domain.RoleSuperAdmin, domain.RoleAdmin), orderH.UpdateStatus)
 		authRequired.Post("/orders/:id/messages", orderH.SendMessage)
 		authRequired.Get("/orders/:id/messages", orderH.GetMessages)
 		authRequired.Patch("/orders/:id/messages/read", orderH.MarkMessagesAsRead)
@@ -211,7 +212,7 @@ func main() {
 		authRequired.Get("/orders/:id/review", orderH.GetReview)
 
 		// Canteen Operator & POS
-		posGroup := authRequired.Group("/pos", middleware.RequireRoles(domain.RolePetugasKantin))
+		posGroup := authRequired.Group("/pos", middleware.RequireRoles(domain.RolePetugasKantin, domain.RoleSuperAdmin, domain.RoleAdmin, domain.RolePetugasKeuangan))
 		{
 			posGroup.Get("/scan-card", posH.ScanCard)
 			posGroup.Post("/checkout", posH.Checkout)
@@ -234,6 +235,8 @@ func main() {
 			financeGroup.Get("/audit-logs", adminH.ListAuditLogs)
 			financeGroup.Get("/users", adminH.ListUsers)
 			financeGroup.Get("/student/:id", adminH.GetStudentDetail)
+			financeGroup.Get("/merchant/:id", adminH.GetMerchantDetail)
+			financeGroup.Get("/parent/:id", adminH.GetParentDetail)
 			financeGroup.Post("/topup", financeH.Topup)
 			financeGroup.Post("/correction", financeH.Correction)
 			financeGroup.Get("/report", financeH.Report)
@@ -262,6 +265,9 @@ func main() {
 			adminGroup.Delete("/users/:id", adminH.DeleteUser)
 			adminGroup.Get("/audit-logs", adminH.ListAuditLogs)
 			adminGroup.Get("/student/:id", adminH.GetStudentDetail)
+			adminGroup.Get("/merchant/:id", adminH.GetMerchantDetail)
+			adminGroup.Get("/parent/:id", adminH.GetParentDetail)
+			adminGroup.Get("/finance/:id", adminH.GetFinanceDetail)
 		}
 	}
 

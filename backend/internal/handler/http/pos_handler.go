@@ -78,7 +78,16 @@ func (h *POSHandler) SalesHistory(c *fiber.Ctx) error {
 	limitStr := c.Query("limit", "100")
 	limit, _ := strconv.Atoi(limitStr)
 
-	transactions, err := h.paymentService.ListOperatorTransactions(c.Context(), claims.UserID, limit)
+	operatorID := claims.UserID
+	if (claims.Role == domain.RoleSuperAdmin || claims.Role == domain.RoleAdmin || claims.Role == domain.RolePetugasKeuangan) {
+		if qOp := c.Query("operator_id"); qOp != "" {
+			operatorID = qOp
+		} else if qOff := c.Query("officer_id"); qOff != "" {
+			operatorID = qOff
+		}
+	}
+
+	transactions, err := h.paymentService.ListOperatorTransactions(c.Context(), operatorID, limit)
 	if err != nil {
 		return response.Error(c, fiber.StatusInternalServerError, "Gagal mengambil riwayat transaksi", err.Error())
 	}
@@ -91,7 +100,16 @@ func (h *POSHandler) Activities(c *fiber.Ctx) error {
 	limitStr := c.Query("limit", "50")
 	limit, _ := strconv.Atoi(limitStr)
 
-	activities, err := h.paymentService.ListOperatorActivities(c.Context(), claims.UserID, limit)
+	operatorID := claims.UserID
+	if (claims.Role == domain.RoleSuperAdmin || claims.Role == domain.RoleAdmin || claims.Role == domain.RolePetugasKeuangan) {
+		if qOp := c.Query("operator_id"); qOp != "" {
+			operatorID = qOp
+		} else if qOff := c.Query("officer_id"); qOff != "" {
+			operatorID = qOff
+		}
+	}
+
+	activities, err := h.paymentService.ListOperatorActivities(c.Context(), operatorID, limit)
 	if err != nil {
 		return response.Error(c, fiber.StatusInternalServerError, "Gagal mengambil aktivitas stan", err.Error())
 	}
