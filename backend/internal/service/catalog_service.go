@@ -58,3 +58,11 @@ func (s *CatalogService) GetAcademicStructure(ctx context.Context) (*domain.Acad
 func (s *CatalogService) SaveAcademicStructure(ctx context.Context, structData *domain.AcademicStructure) error {
 	return s.userRepo.SaveAcademicStructure(ctx, structData)
 }
+
+func (s *CatalogService) GetGlobalSettings(ctx context.Context) (map[string]interface{}, error) {
+	return s.userRepo.GetGlobalSettings(ctx)
+}
+
+func (s *CatalogService) SaveGlobalSettings(ctx context.Context, settings map[string]interface{}) error {
+	return s.userRepo.SaveGlobalSettings(ctx, settings)
+}

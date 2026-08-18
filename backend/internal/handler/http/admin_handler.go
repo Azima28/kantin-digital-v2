@@ -289,3 +289,28 @@ func (h *AdminHandler) SaveAcademicStructure(c *fiber.Ctx) error {
 
 	return response.Success(c, fiber.StatusOK, "Master struktur jenjang, jurusan, dan rombel sekolah berhasil disimpan", req)
 }
+
+func (h *AdminHandler) GetSettings(c *fiber.Ctx) error {
+	settings, err := h.catalogService.GetGlobalSettings(c.Context())
+	if err != nil {
+		return response.Error(c, fiber.StatusInternalServerError, "Gagal memuat setelan sistem", err.Error())
+	}
+	return response.Success(c, fiber.StatusOK, "Setelan sistem", settings)
+}
+
+func (h *AdminHandler) SaveSettings(c *fiber.Ctx) error {
+	var req map[string]interface{}
+	if err := c.BodyParser(&req); err != nil {
+		return response.Error(c, fiber.StatusBadRequest, "Payload setelan tidak valid", err.Error())
+	}
+
+	if err := h.catalogService.SaveGlobalSettings(c.Context(), req); err != nil {
+		return response.Error(c, fiber.StatusInternalServerError, "Gagal menyimpan setelan: "+err.Error(), err.Error())
+	}
+
+	if h.hub != nil {
+		h.hub.BroadcastToRoom("all", "system_settings_updated", req)
+	}
+
+	return response.Success(c, fiber.StatusOK, "Setelan sistem berhasil disimpan", req)
+}

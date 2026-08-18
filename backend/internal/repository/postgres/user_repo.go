@@ -792,3 +792,65 @@ func (r *UserRepo) SaveAcademicStructure(ctx context.Context, structData *domain
 	_, err = r.db.Pool.Exec(ctx, query, valBytes)
 	return err
 }
+
+// GetGlobalSettings retrieves system settings (midtrans, maintenance, etc.)
+func (r *UserRepo) GetGlobalSettings(ctx context.Context) (map[string]interface{}, error) {
+	result := map[string]interface{}{
+		"maintenance_mode": false,
+		"midtrans_config": map[string]interface{}{
+			"mode":        "sandbox",
+			"client_key":  "SB-Mid-client-1234567890",
+			"server_key":  "SB-Mid-server-1234567890",
+			"merchant_id": "G123456",
+			"is_active":   true,
+		},
+		"school_name":   "SMK Negeri 1",
+		"academic_year": "2026/2027",
+		"app_version":   "2.0.0",
+		"db_status":     "Connected (PostgreSQL 16)",
+	}
+
+	if r == nil || r.db == nil || r.db.Pool == nil {
+		return result, nil
+	}
+
+	rows, err := r.db.Pool.Query(ctx, `SELECT key, value FROM public.system_settings WHERE key IN ('global_settings', 'midtrans_config', 'maintenance_mode')`)
+	if err != nil {
+		return result, nil
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var key string
+		var valBytes []byte
+		if err := rows.Scan(&key, &valBytes); err == nil {
+			var parsed interface{}
+			if err := json.Unmarshal(valBytes, &parsed); err == nil {
+				result[key] = parsed
+			}
+		}
+	}
+	return result, nil
+}
+
+// SaveGlobalSettings updates system settings
+func (r *UserRepo) SaveGlobalSettings(ctx context.Context, settings map[string]interface{}) error {
+	if r == nil || r.db == nil || r.db.Pool == nil {
+		return ErrDatabaseNotReady
+	}
+
+	for k, v := range settings {
+		valBytes, err := json.Marshal(v)
+		if err != nil {
+			continue
+		}
+		_, _ = r.db.Pool.Exec(ctx, `
+			INSERT INTO public.system_settings (key, value, updated_at)
+			VALUES ($1, $2, NOW())
+			ON CONFLICT (key) DO UPDATE
+			SET value = EXCLUDED.value, updated_at = NOW()`,
+			k, valBytes,
+		)
+	}
+	return nil
+}

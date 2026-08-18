@@ -279,6 +279,9 @@ func main() {
 			adminGroup.Get("/academic-structure", adminH.GetAcademicStructure)
 			adminGroup.Post("/academic-structure", adminH.SaveAcademicStructure)
 			adminGroup.Put("/academic-structure", adminH.SaveAcademicStructure)
+			adminGroup.Get("/settings", adminH.GetSettings)
+			adminGroup.Post("/settings", adminH.SaveSettings)
+			adminGroup.Put("/settings", adminH.SaveSettings)
 		}
 	}
 

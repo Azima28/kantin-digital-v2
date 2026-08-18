@@ -9,7 +9,6 @@ import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kantin_digital/core/services/storage_service.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
-import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 import 'package:kantin_digital/core/utils/responsive.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
@@ -30,13 +29,16 @@ class AdminSettingsScreen extends ConsumerStatefulWidget {
 
 class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
   final _broadcastController = TextEditingController();
+  final _clientKeyController = TextEditingController();
+  final _serverKeyController = TextEditingController();
+  final _merchantIdController = TextEditingController();
   String _selectedAudience = 'all';
 
   // API State
   bool _isSandbox = true;
-  final String _mockClientKey = 'SB-Mid-client-1234567890';
-  final String _mockProdKey = 'PR-Mid-client-0987654321';
-  bool _obscureKey = true;
+  bool _isPaymentApiActive = true;
+  bool _obscureClientKey = true;
+  bool _obscureServerKey = true;
 
   // Maintenance State
   bool _isMaintenanceMode = false;
@@ -46,6 +48,9 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
   @override
   void dispose() {
     _broadcastController.dispose();
+    _clientKeyController.dispose();
+    _serverKeyController.dispose();
+    _merchantIdController.dispose();
     super.dispose();
   }
 
@@ -55,9 +60,13 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
     // Load maintenance mode
     _isMaintenanceMode = settings['maintenance_mode'] == true;
 
-    // Load midtrans mode
-    final midtrans = settings['midtrans_config'] ?? {};
+    // Load midtrans config
+    final midtrans = settings['midtrans_config'] is Map ? Map<String, dynamic>.from(settings['midtrans_config'] as Map) : <String, dynamic>{};
     _isSandbox = midtrans['mode'] != 'production';
+    _isPaymentApiActive = midtrans['is_active'] != false;
+    _clientKeyController.text = midtrans['client_key']?.toString() ?? 'SB-Mid-client-1234567890';
+    _serverKeyController.text = midtrans['server_key']?.toString() ?? 'SB-Mid-server-1234567890';
+    _merchantIdController.text = midtrans['merchant_id']?.toString() ?? 'G123456';
 
     _stateLoaded = true;
   }
@@ -119,12 +128,13 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
     try {
       final apiClient = ref.read(apiClientProvider);
       final String mode = _isSandbox ? 'sandbox' : 'production';
-      final String clientKey = _isSandbox ? _mockClientKey : _mockProdKey;
 
       final Map<String, dynamic> newMidtrans = {
         'mode': mode,
-        'client_key': clientKey,
-        'is_active': true,
+        'client_key': _clientKeyController.text.trim(),
+        'server_key': _serverKeyController.text.trim(),
+        'merchant_id': _merchantIdController.text.trim(),
+        'is_active': _isPaymentApiActive,
       };
 
       await apiClient.post('/admin/settings', body: {
@@ -376,28 +386,50 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
 
           final Widget paymentApiCard = SettingSectionWidget(
             icon: CupertinoIcons.link,
-            title: 'Payment API',
+            title: 'Payment Gateway (Midtrans)',
             horizontalPadding: 16,
             verticalPadding: 16,
             iconRadius: 16,
-            iconBackgroundColor: Nebula.amber.withValues(alpha: 0.3),
-            iconColor: Nebula.amber,
+            iconBackgroundColor: Nebula.teal.withValues(alpha: 0.12),
+            iconColor: Nebula.teal,
             shadowBlurRadius: 15,
             children: [
-              // Logo & Status
+              // Logo & Status Toggle
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Midtrans', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Nebula.teal.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                    child: const Text(
-                      'Active',
-                      style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Nebula.teal),
+                  Row(
+                    children: [
+                      Text(
+                        'Midtrans',
+                        style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13.5, color: context.textPrimary),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: _isPaymentApiActive
+                              ? Nebula.teal.withValues(alpha: 0.12)
+                              : Nebula.rose.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          _isPaymentApiActive ? 'ACTIVE' : 'INACTIVE',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: _isPaymentApiActive ? Nebula.teal : Nebula.rose,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Transform.scale(
+                    scale: 0.8,
+                    child: CupertinoSwitch(
+                      value: _isPaymentApiActive,
+                      activeTrackColor: Nebula.teal,
+                      onChanged: (val) => setState(() => _isPaymentApiActive = val),
                     ),
                   ),
                 ],
@@ -405,87 +437,150 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
               const SizedBox(height: 12),
 
               // Env Mode switcher
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Text(
+                'Mode Lingkungan (Environment)',
+                style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: context.textSecondary),
+              ),
+              const SizedBox(height: 6),
+              Row(
                 children: [
-                  Text('Env', style: TextStyle(fontSize: 11, color: context.textSecondary)),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 4,
-                    runSpacing: 4,
-                    children: [
-                      PressScale(
-                        onTap: () => setState(() => _isSandbox = true),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _isSandbox ? Nebula.teal : context.surfaceBg,
-                            borderRadius: BorderRadius.circular(4),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => setState(() => _isSandbox = true),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: _isSandbox ? Nebula.teal : context.surfaceBg,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: _isSandbox ? Nebula.teal : context.dividerCol,
+                            width: 1,
                           ),
-                          child: Text(
-                            'Sandbox',
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              color: _isSandbox ? context.textPrimary : context.textPrimary,
-                            ),
+                        ),
+                        child: Text(
+                          'Sandbox (Uji Coba)',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: _isSandbox ? Colors.white : context.textPrimary,
                           ),
                         ),
                       ),
-                      PressScale(
-                        onTap: () => setState(() => _isSandbox = false),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: !_isSandbox ? Nebula.teal : context.surfaceBg,
-                            borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => setState(() => _isSandbox = false),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: !_isSandbox ? Nebula.teal : context.surfaceBg,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: !_isSandbox ? Nebula.teal : context.dividerCol,
+                            width: 1,
                           ),
-                          child: Text(
-                            'Prod',
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              color: !_isSandbox ? context.textPrimary : context.textPrimary,
-                            ),
+                        ),
+                        child: Text(
+                          'Production (Live)',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: !_isSandbox ? Colors.white : context.textPrimary,
                           ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),
+              const SizedBox(height: 14),
+
+              // Client Key field
+              Text(
+                'Client Key',
+                style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: context.textSecondary),
+              ),
+              const SizedBox(height: 5),
+              TextFormField(
+                controller: _clientKeyController,
+                obscureText: _obscureClientKey,
+                style: const TextStyle(fontFamily: 'Courier', fontSize: 12),
+                decoration: InputDecoration(
+                  hintText: _isSandbox ? 'SB-Mid-client-...' : 'Mid-client-...',
+                  hintStyle: GoogleFonts.inter(fontSize: 12, color: context.textSecondary.withValues(alpha: 0.6)),
+                  filled: true,
+                  fillColor: context.surfaceBg,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.dividerCol)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.dividerCol)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Nebula.teal, width: 1.5)),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscureClientKey ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
+                      size: 16,
+                      color: Nebula.teal,
+                    ),
+                    onPressed: () => setState(() => _obscureClientKey = !_obscureClientKey),
+                  ),
+                ),
+              ),
               const SizedBox(height: 12),
 
-              // Key field
-              Text('Client Key', style: TextStyle(fontSize: 10, color: context.textSecondary)),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                decoration: BoxDecoration(
-                  color: context.surfaceBg,
-                  borderRadius: BorderRadius.circular(8),
+              // Server Key field
+              Text(
+                'Server Key (Secret)',
+                style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: context.textSecondary),
+              ),
+              const SizedBox(height: 5),
+              TextFormField(
+                controller: _serverKeyController,
+                obscureText: _obscureServerKey,
+                style: const TextStyle(fontFamily: 'Courier', fontSize: 12),
+                decoration: InputDecoration(
+                  hintText: _isSandbox ? 'SB-Mid-server-...' : 'Mid-server-...',
+                  hintStyle: GoogleFonts.inter(fontSize: 12, color: context.textSecondary.withValues(alpha: 0.6)),
+                  filled: true,
+                  fillColor: context.surfaceBg,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.dividerCol)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.dividerCol)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Nebula.teal, width: 1.5)),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscureServerKey ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
+                      size: 16,
+                      color: Nebula.teal,
+                    ),
+                    onPressed: () => setState(() => _obscureServerKey = !_obscureServerKey),
+                  ),
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _obscureKey
-                            ? '••••••••••••••••••••'
-                            : (_isSandbox ? _mockClientKey : _mockProdKey),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontFamily: 'Courier', fontSize: 10),
-                      ),
-                    ),
-                    PressScale(
-                      onTap: () => setState(() => _obscureKey = !_obscureKey),
-                      child: Icon(
-                        _obscureKey ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
-                        size: 14,
-                        color: Nebula.teal,
-                      ),
-                    ),
-                  ],
+              ),
+              const SizedBox(height: 12),
+
+              // Merchant ID field
+              Text(
+                'Merchant ID',
+                style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: context.textSecondary),
+              ),
+              const SizedBox(height: 5),
+              TextFormField(
+                controller: _merchantIdController,
+                style: const TextStyle(fontFamily: 'Courier', fontSize: 12),
+                decoration: InputDecoration(
+                  hintText: 'Contoh: G123456789',
+                  hintStyle: GoogleFonts.inter(fontSize: 12, color: context.textSecondary.withValues(alpha: 0.6)),
+                  filled: true,
+                  fillColor: context.surfaceBg,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.dividerCol)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.dividerCol)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Nebula.teal, width: 1.5)),
                 ),
               ),
             ],

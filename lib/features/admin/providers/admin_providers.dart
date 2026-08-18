@@ -88,8 +88,26 @@ final adminAuditLogsProvider = FutureProvider.autoDispose<List<AuditLog>>((
 final adminSettingsProvider = FutureProvider<Map<String, dynamic>>((
   ref,
 ) async {
+  final apiClient = ref.watch(apiClientProvider);
+  try {
+    final res = await apiClient.get('/admin/settings');
+    if (res.success && res.data != null) {
+      return Map<String, dynamic>.from(res.data as Map);
+    }
+  } catch (e) {
+    debugPrint('adminSettingsProvider error: $e');
+  }
+
   return <String, dynamic>{
-    'school_name': 'SMP Terpadu Digital',
+    'maintenance_mode': false,
+    'midtrans_config': {
+      'mode': 'sandbox',
+      'client_key': 'SB-Mid-client-1234567890',
+      'server_key': 'SB-Mid-server-1234567890',
+      'merchant_id': 'G123456',
+      'is_active': true,
+    },
+    'school_name': 'SMK Negeri 1',
     'academic_year': '2026/2027',
     'app_version': '2.0.0',
     'db_status': 'Connected (PostgreSQL 16)',
