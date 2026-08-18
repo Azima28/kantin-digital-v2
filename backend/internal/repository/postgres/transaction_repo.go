@@ -292,10 +292,13 @@ func (r *TransactionRepo) ListTransactionsPaged(ctx context.Context, studentID s
 	// 2. Data Query
 	dataQuery := `
 		SELECT t.id, t.student_id, t.operator_id, t.total_amount, t.type, t.status, t.purchase_method, t.created_at,
-		       COALESCE(c.canteen_name, p.full_name, 'Kantin Sekolah') AS canteen_name
+		       COALESCE(c.canteen_name, p.full_name, 'Kantin Sekolah') AS canteen_name,
+		       COALESCE(p_st.full_name, 'Siswa') AS student_name,
+		       p_st.nisn AS student_nisn
 		FROM public.transactions t
 		LEFT JOIN public.canteen_operators c ON c.id = t.operator_id
-		LEFT JOIN public.profiles p ON p.id = t.operator_id` + whereClause +
+		LEFT JOIN public.profiles p ON p.id = t.operator_id
+		LEFT JOIN public.profiles p_st ON p_st.id = t.student_id` + whereClause +
 		fmt.Sprintf(` ORDER BY t.created_at DESC LIMIT $%d OFFSET $%d`, argIdx, argIdx+1)
 
 	args = append(args, limit, offset)
@@ -311,7 +314,7 @@ func (r *TransactionRepo) ListTransactionsPaged(ctx context.Context, studentID s
 		var t domain.Transaction
 		err := rows.Scan(
 			&t.ID, &t.StudentID, &t.OperatorID, &t.TotalAmount, &t.Type, &t.Status, &t.PurchaseMethod, &t.CreatedAt,
-			&t.CanteenName,
+			&t.CanteenName, &t.StudentName, &t.StudentNISN,
 		)
 		if err != nil {
 			return nil, 0, err
@@ -402,7 +405,8 @@ func (r *TransactionRepo) ListTransactionsByOperator(ctx context.Context, operat
 
 	query := `
 		SELECT t.id, t.student_id, t.operator_id, t.total_amount, t.type, t.status, t.purchase_method, t.created_at,
-		       p.full_name AS student_name
+		       p.full_name AS student_name,
+		       p.nisn AS student_nisn
 		FROM public.transactions t
 		LEFT JOIN public.profiles p ON p.id = t.student_id
 		WHERE t.operator_id = $1
@@ -420,7 +424,7 @@ func (r *TransactionRepo) ListTransactionsByOperator(ctx context.Context, operat
 		var t domain.Transaction
 		err := rows.Scan(
 			&t.ID, &t.StudentID, &t.OperatorID, &t.TotalAmount, &t.Type, &t.Status, &t.PurchaseMethod, &t.CreatedAt,
-			&t.StudentName,
+			&t.StudentName, &t.StudentNISN,
 		)
 		if err != nil {
 			return nil, err

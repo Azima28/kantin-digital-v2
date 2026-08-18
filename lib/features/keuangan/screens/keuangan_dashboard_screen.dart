@@ -243,10 +243,14 @@ class KeuanganDashboardScreen extends ConsumerWidget {
               const SizedBox(height: 4),
               Row(
                 children: [
-                  const Icon(Icons.arrow_upward, color: Nebula.teal, size: 14),
-                  Text(
-                    ' +${fmt.format(topupToday)} hari ini',
-                    style: GoogleFonts.inter(fontSize: 12, color: Nebula.teal),
+                  const Icon(Icons.arrow_upward, color: Colors.white70, size: 14),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      ' +${fmt.format(topupToday)} hari ini',
+                      style: GoogleFonts.inter(fontSize: 12, color: Colors.white70),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
@@ -378,22 +382,46 @@ class KeuanganDashboardScreen extends ConsumerWidget {
               children: logs.asMap().entries.map((entry) {
                 final i = entry.key;
                 final log = entry.value;
-                final actionType = log['action_type']?.toString() ?? '';
-                final desc = log['description']?.toString() ?? '';
+                final type = (log['type'] ?? log['action_type'] ?? '').toString();
+                final amount = (log['total_amount'] as num?)?.toInt() ?? 0;
+                final student = log['student_name']?.toString() ?? 'Siswa';
+                final canteen = log['canteen_name']?.toString() ?? 'Kantin';
+                String desc = log['description']?.toString() ?? '';
+
+                if (desc.isEmpty) {
+                  if (type == 'topup' || type.contains('TOPUP')) {
+                    desc = 'Top-up saldo $student sebesar ${fmt.format(amount)}';
+                  } else if (type == 'correction' || type.contains('KOREKSI')) {
+                    desc = 'Koreksi saldo $student sebesar ${fmt.format(amount)}';
+                  } else if (type == 'purchase') {
+                    desc = 'Jajan di $canteen sebesar ${fmt.format(amount)}';
+                  } else if (type == 'refund' || type.contains('BATAL')) {
+                    desc = 'Refund pesanan $student sebesar ${fmt.format(amount)}';
+                  } else {
+                    desc = 'Transaksi $student sebesar ${fmt.format(amount)}';
+                  }
+                }
+
                 final date = log['created_at'] != null
-                    ? DateTime.parse(log['created_at']).toLocal()
+                    ? DateTime.parse(log['created_at'].toString()).toLocal()
                     : DateTime.now();
                 final timeStr = DateFormat('HH:mm', 'id_ID').format(date);
 
                 Color dotColor = Nebula.teal;
                 IconData dotIcon = CupertinoIcons.doc_text_fill;
-                if (actionType.contains('TOPUP') || actionType.contains('TOP')) {
+                if (type == 'topup' || type.contains('TOPUP') || type.contains('TOP')) {
                   dotColor = Nebula.teal;
                   dotIcon = CupertinoIcons.arrow_up_circle_fill;
-                } else if (actionType.contains('KOREKSI')) {
+                } else if (type == 'correction' || type.contains('KOREKSI')) {
                   dotColor = Nebula.rose;
                   dotIcon = CupertinoIcons.arrow_right_arrow_left_circle_fill;
-                } else if (actionType.contains('REGISTRASI')) {
+                } else if (type == 'purchase') {
+                  dotColor = Nebula.amber;
+                  dotIcon = CupertinoIcons.bag_fill;
+                } else if (type == 'refund' || type.contains('BATAL')) {
+                  dotColor = Nebula.rose;
+                  dotIcon = CupertinoIcons.arrow_counterclockwise_circle_fill;
+                } else if (type.contains('REGISTRASI')) {
                   dotColor = Nebula.amber;
                   dotIcon = CupertinoIcons.creditcard_fill;
                 }

@@ -43,6 +43,7 @@ type Transaction struct {
 	PurchaseMethod string            `json:"purchase_method"`
 	CreatedAt      time.Time         `json:"created_at"`
 	StudentName    *string           `json:"student_name,omitempty"`
+	StudentNISN    *string           `json:"student_nisn,omitempty"`
 	CanteenName    *string           `json:"canteen_name,omitempty"`
 	ImageURL       *string           `json:"image_url,omitempty"`
 	Items          []TransactionItem `json:"items,omitempty"`
