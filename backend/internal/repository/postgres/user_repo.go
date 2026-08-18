@@ -441,10 +441,6 @@ func (r *UserRepo) UpdateStudentSettings(ctx context.Context, studentID string, 
 		if err != nil {
 			return err
 		}
-		_, err = tx.Exec(ctx, `UPDATE public.profiles SET is_active = $1 WHERE id = $2`, *isActive, studentID)
-		if err != nil {
-			return err
-		}
 	}
 
 	if waEnabled != nil {
@@ -562,23 +558,13 @@ func (r *UserRepo) CreateUserProfile(ctx context.Context, user *domain.UserProfi
 	return tx.Commit(ctx)
 }
 
-// UpdateUserStatus updates is_active flag on profile and related sub-tables
+// UpdateUserStatus updates is_active flag strictly on user profile (digital login account)
 func (r *UserRepo) UpdateUserStatus(ctx context.Context, id string, isActive bool) error {
-	tx, err := r.db.Pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(ctx)
-
-	_, err = tx.Exec(ctx, `UPDATE public.profiles SET is_active = $1 WHERE id = $2`, isActive, id)
-	if err != nil {
-		return err
-	}
-	_, _ = tx.Exec(ctx, `UPDATE public.students SET is_active = $1 WHERE id = $2`, isActive, id)
-	return tx.Commit(ctx)
+	_, err := r.db.Pool.Exec(ctx, `UPDATE public.profiles SET is_active = $1 WHERE id = $2`, isActive, id)
+	return err
 }
 
-// UpdateStudentCardStatus links or unlinks RFID UID from student
+// UpdateStudentCardStatus links or unlinks RFID UID from student, or toggles card freeze state
 func (r *UserRepo) UpdateStudentCardStatus(ctx context.Context, studentID string, rfidUID *string, isActive *bool) error {
 	tx, err := r.db.Pool.Begin(ctx)
 	if err != nil {
@@ -586,21 +572,26 @@ func (r *UserRepo) UpdateStudentCardStatus(ctx context.Context, studentID string
 	}
 	defer tx.Rollback(ctx)
 
-	if rfidUID != nil && *rfidUID != "" {
-		_, err = tx.Exec(ctx, `UPDATE public.students SET rfid_uid = $1 WHERE id = $2`, *rfidUID, studentID)
-		if err != nil {
-			return err
-		}
-	} else {
-		_, err = tx.Exec(ctx, `UPDATE public.students SET rfid_uid = NULL WHERE id = $1`, studentID)
-		if err != nil {
-			return err
+	if rfidUID != nil {
+		cleanUID := strings.TrimSpace(*rfidUID)
+		if cleanUID != "" {
+			_, err = tx.Exec(ctx, `UPDATE public.students SET rfid_uid = $1 WHERE id = $2`, cleanUID, studentID)
+			if err != nil {
+				return err
+			}
+		} else {
+			_, err = tx.Exec(ctx, `UPDATE public.students SET rfid_uid = NULL WHERE id = $1`, studentID)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
 	if isActive != nil {
-		_, _ = tx.Exec(ctx, `UPDATE public.students SET is_active = $1 WHERE id = $2`, *isActive, studentID)
-		_, _ = tx.Exec(ctx, `UPDATE public.profiles SET is_active = $1 WHERE id = $2`, *isActive, studentID)
+		_, err = tx.Exec(ctx, `UPDATE public.students SET is_active = $1 WHERE id = $2`, *isActive, studentID)
+		if err != nil {
+			return err
+		}
 	}
 
 	return tx.Commit(ctx)
