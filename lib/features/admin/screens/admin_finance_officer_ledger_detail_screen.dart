@@ -259,7 +259,7 @@ class _AdminFinanceOfficerLedgerDetailScreenState
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Kas Fisik Wajib di Tangan:',
+                                'Uang Kas Fisik di Tangan Petugas:',
                                 style: GoogleFonts.inter(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
@@ -270,7 +270,7 @@ class _AdminFinanceOfficerLedgerDetailScreenState
                               Text(
                                 fmt.format(officer.netCashHandled),
                                 style: GoogleFonts.inter(
-                                  fontSize: 18,
+                                  fontSize: 19,
                                   fontWeight: FontWeight.bold,
                                   color: officer.netCashHandled >= 0
                                       ? Nebula.teal
@@ -279,88 +279,146 @@ class _AdminFinanceOfficerLedgerDetailScreenState
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 12),
+                              // 2 Clean Tiles for Inflow and Outflow
                               Row(
                                 children: [
+                                  // Uang Masuk (Top-Up)
                                   Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          '🟢 Top-Up',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 10,
-                                            color: context.textSecondary,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: Nebula.teal.withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: Nebula.teal.withValues(alpha: 0.2),
+                                          width: 0.8,
                                         ),
-                                        Text(
-                                          fmt.format(officer.totalCashInflow),
-                                          style: GoogleFonts.inter(
-                                            fontSize: 11.5,
-                                            fontWeight: FontWeight.bold,
-                                            color: Nebula.teal,
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              const Icon(
+                                                CupertinoIcons.arrow_down_left_circle_fill,
+                                                size: 13,
+                                                color: Nebula.teal,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Flexible(
+                                                child: Text(
+                                                  'Uang Masuk',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Nebula.teal,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ],
+                                          const SizedBox(height: 3),
+                                          Text(
+                                            fmt.format(officer.totalCashInflow),
+                                            style: GoogleFonts.inter(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: Nebula.teal,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
+                                  const SizedBox(width: 8),
+                                  // Uang Keluar (Tarik Stan)
                                   Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          '🔴 Tarik Kas',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 10,
-                                            color: context.textSecondary,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: Nebula.rose.withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: Nebula.rose.withValues(alpha: 0.2),
+                                          width: 0.8,
                                         ),
-                                        Text(
-                                          fmt.format(officer.totalCashOutflow),
-                                          style: GoogleFonts.inter(
-                                            fontSize: 11.5,
-                                            fontWeight: FontWeight.bold,
-                                            color: Nebula.rose,
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              const Icon(
+                                                CupertinoIcons.arrow_up_right_circle_fill,
+                                                size: 13,
+                                                color: Nebula.rose,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Flexible(
+                                                child: Text(
+                                                  'Uang Keluar',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Nebula.rose,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ],
+                                          const SizedBox(height: 3),
+                                          Text(
+                                            fmt.format(officer.totalCashOutflow),
+                                            style: GoogleFonts.inter(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: Nebula.rose,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          '⚖️ Koreksi',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 10,
-                                            color: context.textSecondary,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              // Koreksi & Total Transaksi Footer
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        CupertinoIcons.arrow_right_arrow_left_circle_fill,
+                                        size: 13,
+                                        color: Nebula.amber,
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        'Koreksi Saldo: ${officer.totalCorrectionsCount}x',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.w500,
+                                          color: context.textSecondary,
                                         ),
-                                        Text(
-                                          '${officer.totalCorrectionsCount} Kali',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 11.5,
-                                            fontWeight: FontWeight.bold,
-                                            color: Nebula.amber,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ],
+                                      ),
+                                    ],
+                                  ),
+                                  Text(
+                                    '${allJournals.length} Transaksi',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: context.textPrimary,
                                     ),
                                   ),
                                 ],
