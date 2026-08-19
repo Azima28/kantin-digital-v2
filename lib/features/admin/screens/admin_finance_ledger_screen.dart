@@ -52,9 +52,9 @@ class _AdminFinanceLedgerScreenState
           onPressed: () => context.pop(),
         ),
         title: Text(
-          'Pembukuan Petugas Keuangan',
+          'Pembukuan Petugas',
           style: GoogleFonts.inter(
-            fontSize: 17,
+            fontSize: 16.5,
             fontWeight: FontWeight.bold,
             color: context.textPrimary,
           ),
@@ -603,27 +603,31 @@ class _AdminFinanceLedgerScreenState
               border: Border.all(color: context.dividerCol, width: 0.5),
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Uang Kas di Tangan:',
                       style: GoogleFonts.inter(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
                         color: context.textSecondary,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       fmt.format(officer.netCashHandled),
                       style: GoogleFonts.inter(
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: officer.netCashHandled >= 0
                             ? Nebula.teal
                             : Nebula.rose,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -637,7 +641,7 @@ class _AdminFinanceLedgerScreenState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Top-Up (Masuk)',
+                            'Top-Up',
                             style: GoogleFonts.inter(
                               fontSize: 10,
                               color: context.textSecondary,
@@ -646,7 +650,7 @@ class _AdminFinanceLedgerScreenState
                           Text(
                             fmt.format(officer.totalCashInflow),
                             style: GoogleFonts.inter(
-                              fontSize: 12,
+                              fontSize: 11.5,
                               fontWeight: FontWeight.bold,
                               color: Nebula.teal,
                             ),
@@ -661,7 +665,7 @@ class _AdminFinanceLedgerScreenState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Tarik Stan (Keluar)',
+                            'Tarik Stan',
                             style: GoogleFonts.inter(
                               fontSize: 10,
                               color: context.textSecondary,
@@ -670,7 +674,7 @@ class _AdminFinanceLedgerScreenState
                           Text(
                             fmt.format(officer.totalCashOutflow),
                             style: GoogleFonts.inter(
-                              fontSize: 12,
+                              fontSize: 11.5,
                               fontWeight: FontWeight.bold,
                               color: Nebula.rose,
                             ),
@@ -685,7 +689,7 @@ class _AdminFinanceLedgerScreenState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Total Transaksi',
+                            'Transaksi',
                             style: GoogleFonts.inter(
                               fontSize: 10,
                               color: context.textSecondary,
@@ -694,7 +698,7 @@ class _AdminFinanceLedgerScreenState
                           Text(
                             '${officer.totalTransactions} Tx',
                             style: GoogleFonts.inter(
-                              fontSize: 12,
+                              fontSize: 11.5,
                               fontWeight: FontWeight.bold,
                               color: context.textPrimary,
                             ),

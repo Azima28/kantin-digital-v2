@@ -50,9 +50,9 @@ class _AdminFinanceOfficerLedgerDetailScreenState
           onPressed: () => context.pop(),
         ),
         title: Text(
-          'Buku Kas & Jurnal Petugas',
+          'Buku Kas Petugas',
           style: GoogleFonts.inter(
-            fontSize: 17,
+            fontSize: 16.5,
             fontWeight: FontWeight.bold,
             color: context.textPrimary,
           ),
@@ -258,29 +258,26 @@ class _AdminFinanceOfficerLedgerDetailScreenState
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Kas Fisik Wajib di Tangan:',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: context.textSecondary,
-                                    ),
-                                  ),
-                                  Text(
-                                    fmt.format(officer.netCashHandled),
-                                    style: GoogleFonts.inter(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.bold,
-                                      color: officer.netCashHandled >= 0
-                                          ? Nebula.teal
-                                          : Nebula.rose,
-                                    ),
-                                  ),
-                                ],
+                              Text(
+                                'Kas Fisik Wajib di Tangan:',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: context.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                fmt.format(officer.netCashHandled),
+                                style: GoogleFonts.inter(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: officer.netCashHandled >= 0
+                                      ? Nebula.teal
+                                      : Nebula.rose,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                               const SizedBox(height: 10),
                               Row(
@@ -291,9 +288,9 @@ class _AdminFinanceOfficerLedgerDetailScreenState
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          '🟢 Top-Up Tunai',
+                                          '🟢 Top-Up',
                                           style: GoogleFonts.inter(
-                                            fontSize: 10.5,
+                                            fontSize: 10,
                                             color: context.textSecondary,
                                           ),
                                           maxLines: 1,
@@ -302,7 +299,7 @@ class _AdminFinanceOfficerLedgerDetailScreenState
                                         Text(
                                           fmt.format(officer.totalCashInflow),
                                           style: GoogleFonts.inter(
-                                            fontSize: 12.5,
+                                            fontSize: 11.5,
                                             fontWeight: FontWeight.bold,
                                             color: Nebula.teal,
                                           ),
@@ -318,9 +315,9 @@ class _AdminFinanceOfficerLedgerDetailScreenState
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          '🔴 Tarik Kas Stan',
+                                          '🔴 Tarik Kas',
                                           style: GoogleFonts.inter(
-                                            fontSize: 10.5,
+                                            fontSize: 10,
                                             color: context.textSecondary,
                                           ),
                                           maxLines: 1,
@@ -329,7 +326,7 @@ class _AdminFinanceOfficerLedgerDetailScreenState
                                         Text(
                                           fmt.format(officer.totalCashOutflow),
                                           style: GoogleFonts.inter(
-                                            fontSize: 12.5,
+                                            fontSize: 11.5,
                                             fontWeight: FontWeight.bold,
                                             color: Nebula.rose,
                                           ),
@@ -347,7 +344,7 @@ class _AdminFinanceOfficerLedgerDetailScreenState
                                         Text(
                                           '⚖️ Koreksi',
                                           style: GoogleFonts.inter(
-                                            fontSize: 10.5,
+                                            fontSize: 10,
                                             color: context.textSecondary,
                                           ),
                                           maxLines: 1,
@@ -356,7 +353,7 @@ class _AdminFinanceOfficerLedgerDetailScreenState
                                         Text(
                                           '${officer.totalCorrectionsCount} Kali',
                                           style: GoogleFonts.inter(
-                                            fontSize: 12.5,
+                                            fontSize: 11.5,
                                             fontWeight: FontWeight.bold,
                                             color: Nebula.amber,
                                           ),
@@ -596,6 +593,11 @@ class _AdminFinanceOfficerLedgerDetailScreenState
         ? DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(j.createdAt!.toLocal())
         : '-';
 
+    String targetDisplay = j.targetName;
+    if (j.type == 'KOREKSI_SALDO' || targetDisplay == 'students' || targetDisplay == 'keuangan' || targetDisplay == 'Sistem') {
+      targetDisplay = 'Koreksi Saldo Siswa';
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
@@ -629,7 +631,7 @@ class _AdminFinanceOfficerLedgerDetailScreenState
                   children: [
                     Flexible(
                       child: Text(
-                        j.targetName,
+                        targetDisplay,
                         style: GoogleFonts.inter(
                           fontSize: 13.5,
                           fontWeight: FontWeight.bold,
