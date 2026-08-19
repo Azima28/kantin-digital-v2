@@ -288,43 +288,6 @@ class _KeuanganStudentDetailScreenState
                             color: context.dividerCol,
                           ),
                           _buildActionTile(
-                            icon: CupertinoIcons.arrow_right_arrow_left_circle,
-                            iconColor: Nebula.rose,
-                            title: AppStrings.keuanganKoreksiSaldo,
-                            isEnabled: hasCard && isCardActive,
-                            subtitle: !hasCard
-                                ? 'Daftarkan kartu RFID terlebih dahulu'
-                                : (!isCardActive
-                                    ? 'Kartu RFID sedang diblokir'
-                                    : null),
-                            disabledTooltip: !hasCard
-                                ? 'Siswa belum memiliki kartu RFID. Silakan daftarkan kartu terlebih dahulu.'
-                                : 'Kartu RFID sedang diblokir. Buka blokir kartu terlebih dahulu.',
-                            onTap: () {
-                              final studentProfile = StudentWithProfile(
-                                id: widget.studentId,
-                                fullName: fullName,
-                                email: email,
-                                nisn: nisn,
-                                isActive: isAccountActive,
-                                class_: sClass,
-                                balance: balance,
-                                rfidUid: rfid,
-                                cardIsActive: isCardActive,
-                              );
-                              context.push(
-                                '/finance/correction',
-                                extra: studentProfile,
-                              );
-                            },
-                          ),
-                          Divider(
-                            height: 1,
-                            thickness: 0.5,
-                            indent: 56,
-                            color: context.dividerCol,
-                          ),
-                          _buildActionTile(
                             icon: CupertinoIcons.wifi,
                             iconColor: Nebula.teal,
                             title: hasCard ? 'Ganti Kartu RFID / NFC' : 'Registrasi Kartu RFID Baru',

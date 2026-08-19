@@ -647,9 +647,7 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                           items: const [
                             DropdownMenuItem(value: 'Semua', child: Text('Semua Pembukuan')),
                             DropdownMenuItem(value: 'Top-Up', child: Text('Top-Up Saldo Siswa')),
-                            DropdownMenuItem(value: 'Koreksi', child: Text('Koreksi Saldo Siswa')),
                             DropdownMenuItem(value: 'Pencairan-Stan', child: Text('Pencairan Kas Stan (Payout)')),
-                            DropdownMenuItem(value: 'Koreksi-Stan', child: Text('Koreksi Saldo Stan')),
                             DropdownMenuItem(value: 'Kartu', child: Text('Registrasi & Kartu RFID')),
                           ],
                         ),
@@ -687,12 +685,8 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                       bool matchesType = true;
                       if (_selectedType == 'Top-Up') {
                         matchesType = type == 'TOPUP' || type == 'TOPUP_TUNAI';
-                      } else if (_selectedType == 'Koreksi') {
-                        matchesType = type == 'KOREKSI_SALDO';
                       } else if (_selectedType == 'Pencairan-Stan') {
                         matchesType = type == 'MERCHANT_PAYOUT';
-                      } else if (_selectedType == 'Koreksi-Stan') {
-                        matchesType = type == 'MERCHANT_BALANCE_ADJUSTMENT';
                       } else if (_selectedType == 'Kartu') {
                         matchesType = type == 'REGISTRASI_KARTU' || type == 'UNLINK_KARTU';
                       }
@@ -714,7 +708,7 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
 
                     // Calculation for header stats of the day
                     double topupSum = 0.0;
-                    double correctionSum = 0.0;
+                    double payoutSum = 0.0;
                     for (var log in filtered) {
                       final type = log.actionType;
                       final created = log.createdAt?.toLocal() ?? DateTime.now();
@@ -727,10 +721,9 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                           final int currentB = int.tryParse(oldValue['balance']?.toString() ?? '0') ?? 0;
                           final int newB = int.tryParse(newValue['balance']?.toString() ?? '0') ?? 0;
                           topupSum += (newB - currentB);
-                        } else if (type == 'KOREKSI_SALDO') {
-                          final int currentB = int.tryParse(oldValue['balance']?.toString() ?? '0') ?? 0;
-                          final int newB = int.tryParse(newValue['balance']?.toString() ?? '0') ?? 0;
-                          correctionSum += (newB - currentB);
+                        } else if (type == 'MERCHANT_PAYOUT') {
+                          final int amt = int.tryParse(newValue['amount']?.toString() ?? '0') ?? 0;
+                          payoutSum += amt;
                         }
                       }
                     }
@@ -740,8 +733,8 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                         // Statistics Summary Banner (Sticky Header)
                         if (_dateFilter == null || _dateFilter!.isAllTime || _dateFilter?.label == 'Hari Ini')
                           Container(
-                            margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                            padding: EdgeInsets.all(16),
+                            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                            padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               color: Nebula.teal.withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(20),
@@ -762,14 +755,14 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
-                                    Text('Koreksi Net Hari Ini', style: GoogleFonts.inter(fontSize: 11, color: context.textSecondary)),
+                                    Text('Pencairan Stan Hari Ini', style: GoogleFonts.inter(fontSize: 11, color: context.textSecondary)),
                                     const SizedBox(height: 2),
                                     Text(
-                                      '${correctionSum >= 0 ? "+" : ""}${fmt.format(correctionSum)}',
+                                      fmt.format(payoutSum),
                                       style: GoogleFonts.inter(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
-                                        color: correctionSum >= 0 ? Nebula.teal : Nebula.rose,
+                                        color: Nebula.rose,
                                       ),
                                     ),
                                   ],

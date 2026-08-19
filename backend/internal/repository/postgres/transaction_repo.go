@@ -531,9 +531,7 @@ type FinanceSummary struct {
 	TotalCirculatingBalance int                  `json:"total_circulating_balance"`
 	TopupTodayAmount        int                  `json:"topup_today_amount"`
 	TopupTodayCount         int                  `json:"topup_today_count"`
-	KoreksiTodayCount       int                  `json:"koreksi_today_count"`
-	KoreksiTodayNet         int                  `json:"koreksi_today_net"`
-	RecentTransactions      []domain.Transaction `json:"recent_transactions"`
+			RecentTransactions      []domain.Transaction `json:"recent_transactions"`
 }
 
 // GetFinanceDashboardSummary aggregates statistics for finance dashboard
@@ -550,13 +548,7 @@ func (r *TransactionRepo) GetFinanceDashboardSummary(ctx context.Context) (*Fina
 		WHERE type = 'topup' AND created_at >= CURRENT_DATE
 	`).Scan(&s.TopupTodayAmount, &s.TopupTodayCount)
 
-	// 3. Corrections today
-	_ = r.db.Pool.QueryRow(ctx, `
-		SELECT COUNT(*), COALESCE(SUM(total_amount), 0)
-		FROM public.transactions
-		WHERE type = 'correction' AND created_at >= CURRENT_DATE
-	`).Scan(&s.KoreksiTodayCount, &s.KoreksiTodayNet)
-
+	
 	// 4. Recent transactions
 	txs, _, err := r.ListTransactionsPaged(ctx, "", "", 10, 0, "", "", "")
 	if err == nil {
@@ -646,85 +638,6 @@ func (r *TransactionRepo) GetAdminDashboardSummary(ctx context.Context) (*AdminS
 }
 
 // ProcessCorrection executes balance correction with audit and transaction records
-func (r *TransactionRepo) ProcessCorrection(ctx context.Context, studentID, officerID string, amount int, reason string) (*domain.Transaction, error) {
-	tx, err := r.db.Pool.Begin(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(ctx)
-
-	var currentBalance int
-	var isProfileActive bool
-	var rfidUID *string
-
-	err = tx.QueryRow(ctx, `
-		SELECT s.balance, p.is_active, s.rfid_uid
-		FROM public.students s
-		JOIN public.profiles p ON p.id = s.id
-		WHERE s.id = $1
-		FOR UPDATE`, studentID).Scan(&currentBalance, &isProfileActive, &rfidUID)
-	if err != nil {
-		return nil, fmt.Errorf("siswa tidak ditemukan: %w", err)
-	}
-
-	if !isProfileActive {
-		return nil, fmt.Errorf("koreksi ditolak: Akun siswa sedang dinonaktifkan oleh pihak sekolah")
-	}
-
-	if rfidUID == nil || *rfidUID == "" {
-		return nil, fmt.Errorf("koreksi ditolak: Siswa belum memiliki kartu RFID yang terdaftar. Daftarkan kartu terlebih dahulu")
-	}
-
-	newBalance := currentBalance + amount
-	if newBalance < 0 {
-		return nil, fmt.Errorf("koreksi ditolak: saldo tidak boleh menjadi negatif (saldo saat ini: Rp %d, koreksi: Rp %d)", currentBalance, amount)
-	}
-
-	_, err = tx.Exec(ctx, `UPDATE public.students SET balance = $1 WHERE id = $2`, newBalance, studentID)
-	if err != nil {
-		return nil, err
-	}
-
-	absAmount := amount
-	if absAmount < 0 {
-		absAmount = -absAmount
-	}
-
-	var txID string
-	var createdAt time.Time
-	err = tx.QueryRow(ctx, `
-		INSERT INTO public.transactions (student_id, operator_id, total_amount, type, status, purchase_method, created_at)
-		VALUES ($1, $2, $3, 'correction', 'success', 'manual_adjustment', NOW())
-		RETURNING id, created_at`,
-		studentID, officerID, absAmount,
-	).Scan(&txID, &createdAt)
-	if err != nil {
-		return nil, err
-	}
-
-	notifMsg := fmt.Sprintf("Koreksi saldo sebesar Rp %d (%s). Saldo Anda sekarang Rp %d.", amount, reason, newBalance)
-	_, _ = tx.Exec(ctx, `INSERT INTO public.notifications (student_id, title, message, type) VALUES ($1, 'Penyesuaian Saldo ℹ️', $2, 'correction')`, studentID, notifMsg)
-
-	_, _ = tx.Exec(ctx, `
-		INSERT INTO public.audit_logs (user_id, action, entity_name, entity_id, old_data, new_data, created_at)
-		VALUES ($1, 'KOREKSI_SALDO', 'students', $2, $3, $4, NOW())
-	`, officerID, studentID, fmt.Sprintf(`{"balance": %d}`, currentBalance), fmt.Sprintf(`{"balance": %d, "amount": %d, "reason": "%s"}`, newBalance, amount, reason))
-
-	if err := tx.Commit(ctx); err != nil {
-		return nil, err
-	}
-
-	return &domain.Transaction{
-		ID:             txID,
-		StudentID:      studentID,
-		OperatorID:     officerID,
-		TotalAmount:    absAmount,
-		Type:           domain.TxTypeCorrection,
-		Status:         domain.TxStatusSuccess,
-		PurchaseMethod: "manual_adjustment",
-		CreatedAt:      createdAt,
-	}, nil
-}
 
 // ProcessMerchantWithdrawal processes a cashier withdrawal / payout of earned balance
 func (r *TransactionRepo) ProcessMerchantWithdrawal(ctx context.Context, operatorID, actorID string, amount int, notes, method string) (*domain.Transaction, error) {
@@ -801,89 +714,11 @@ func (r *TransactionRepo) ProcessMerchantWithdrawal(ctx context.Context, operato
 }
 
 // ProcessMerchantAdjustment processes balance adjustment (addition or deduction) on a canteen operator
-func (r *TransactionRepo) ProcessMerchantAdjustment(ctx context.Context, operatorID, actorID string, amount int, isAddition bool, reason string) (*domain.Transaction, error) {
-	if amount <= 0 {
-		return nil, fmt.Errorf("nominal penyesuaian harus lebih dari 0")
-	}
-
-	tx, err := r.db.Pool.Begin(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(ctx)
-
-	var currentEarned int
-	var canteenName string
-	err = tx.QueryRow(ctx, `
-		SELECT balance_earned, canteen_name
-		FROM public.canteen_operators
-		WHERE id = $1
-		FOR UPDATE`, operatorID).Scan(&currentEarned, &canteenName)
-	if err != nil {
-		return nil, fmt.Errorf("operator kantin tidak ditemukan: %w", err)
-	}
-
-	var newBalance int
-	if isAddition {
-		newBalance = currentEarned + amount
-	} else {
-		if currentEarned < amount {
-			return nil, fmt.Errorf("koreksi ditolak: saldo stan tidak mencukupi untuk pengurangan (saldo saat ini: Rp %d, pengurangan: Rp %d)", currentEarned, amount)
-		}
-		newBalance = currentEarned - amount
-	}
-
-	_, err = tx.Exec(ctx, `UPDATE public.canteen_operators SET balance_earned = $1 WHERE id = $2`, newBalance, operatorID)
-	if err != nil {
-		return nil, err
-	}
-
-	var txID string
-	var createdAt time.Time
-	err = tx.QueryRow(ctx, `
-		INSERT INTO public.transactions (student_id, operator_id, total_amount, type, status, purchase_method, created_at)
-		VALUES ($1, $2, $3, 'merchant_adjustment', 'success', 'merchant_adjustment', NOW())
-		RETURNING id, created_at`,
-		actorID, operatorID, amount,
-	).Scan(&txID, &createdAt)
-	if err != nil {
-		return nil, err
-	}
-
-	actionStr := "Koreksi Tambah"
-	if !isAddition {
-		actionStr = "Koreksi Kurang"
-	}
-	notifMsg := fmt.Sprintf("%s saldo stan %s sebesar Rp %d (%s). Sisa saldo pendapatan: Rp %d.", actionStr, canteenName, amount, reason, newBalance)
-	_, _ = tx.Exec(ctx, `INSERT INTO public.notifications (student_id, title, message, type) VALUES ($1, 'Koreksi Saldo Stan ℹ️', $2, 'general')`, operatorID, notifMsg)
-
-	_, _ = tx.Exec(ctx, `
-		INSERT INTO public.audit_logs (user_id, action, entity_name, entity_id, old_data, new_data, created_at)
-		VALUES ($1, 'MERCHANT_BALANCE_ADJUSTMENT', 'canteen_operators', $2, $3, $4, NOW())
-	`, actorID, operatorID, fmt.Sprintf(`{"balance_earned": %d}`, currentEarned), fmt.Sprintf(`{"balance_earned": %d, "amount": %d, "is_addition": %t, "reason": "%s"}`, newBalance, amount, isAddition, reason))
-
-	if err := tx.Commit(ctx); err != nil {
-		return nil, err
-	}
-
-	return &domain.Transaction{
-		ID:             txID,
-		StudentID:      actorID,
-		OperatorID:     operatorID,
-		TotalAmount:    amount,
-		Type:           domain.TxTypeMerchantAdjustment,
-		Status:         domain.TxStatusSuccess,
-		PurchaseMethod: "merchant_adjustment",
-		CanteenName:    &canteenName,
-		CreatedAt:      createdAt,
-	}, nil
-}
 
 type FinanceReport struct {
 	TotalTopup              int                      `json:"total_topup"`
 	TotalPurchase           int                      `json:"total_purchase"`
-	TotalCorrection         int                      `json:"total_correction"`
-	TotalWithdrawal         int                      `json:"total_withdrawal"`
+		TotalWithdrawal         int                      `json:"total_withdrawal"`
 	TopupCount              int                      `json:"topup_count"`
 	PurchaseCount           int                      `json:"purchase_count"`
 	WithdrawalCount         int                      `json:"withdrawal_count"`
@@ -909,13 +744,6 @@ func (r *TransactionRepo) GetFinanceReport(ctx context.Context, startDate, endDa
 		FROM public.transactions
 		WHERE type = 'purchase' AND status = 'success' AND created_at >= $1 AND created_at <= $2
 	`, startDate, endDate).Scan(&rep.TotalPurchase, &rep.PurchaseCount)
-
-	// 3. Total correction
-	_ = r.db.Pool.QueryRow(ctx, `
-		SELECT COALESCE(SUM(total_amount), 0)
-		FROM public.transactions
-		WHERE type = 'correction' AND created_at >= $1 AND created_at <= $2
-	`, startDate, endDate).Scan(&rep.TotalCorrection)
 
 	// 4. Total merchant withdrawal / payout
 	_ = r.db.Pool.QueryRow(ctx, `

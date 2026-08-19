@@ -296,10 +296,10 @@ class AdminDashboardScreen extends ConsumerWidget {
                           Expanded(
                             child: _buildQuickActionBtn(
                               context,
-                              icon: CupertinoIcons.arrow_right_arrow_left_circle_fill,
-                              color: Nebula.rose,
-                              label: 'Koreksi\nSaldo',
-                              onTap: () => context.push('/finance/correction'),
+                              icon: Icons.storefront_rounded,
+                              color: const Color(0xFFE11D48),
+                              label: 'Kelola\nStan',
+                              onTap: () => context.go('/admin/users'),
                             ),
                           ),
                           const SizedBox(width: 8),

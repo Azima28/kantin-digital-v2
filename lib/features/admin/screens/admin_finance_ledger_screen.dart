@@ -744,13 +744,13 @@ class _AdminFinanceLedgerScreenState
                     Row(
                       children: [
                         const Icon(
-                          CupertinoIcons.arrow_right_arrow_left_circle_fill,
+                          CupertinoIcons.checkmark_seal_fill,
                           size: 12,
-                          color: Nebula.amber,
+                          color: Nebula.teal,
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'Koreksi: ${officer.totalCorrectionsCount}x',
+                          officer.assignedSchool,
                           style: GoogleFonts.inter(
                             fontSize: 10,
                             fontWeight: FontWeight.w500,

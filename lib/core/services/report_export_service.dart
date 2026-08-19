@@ -20,7 +20,6 @@ class ReportExportService {
     required String period,
     required double totalTopup,
     required double totalPurchase,
-    required double totalCorrection,
     required int topupCount,
     required int purchaseCount,
     required List<Map<String, dynamic>> canteens,
@@ -215,50 +214,33 @@ class ReportExportService {
         .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 7))
         .cellStyle = cellRight;
 
-    // Row 8: Total Koreksi
+    // Row 8: Total Row - Net Aliran Kas Masuk
     summarySheet.appendRow([
-      TextCellValue('Total Koreksi Saldo'),
-      TextCellValue('-'),
-      TextCellValue(
-          '${totalCorrection >= 0 ? "+" : ""}${_currencyFmt.format(totalCorrection)}'),
+      TextCellValue('Total Kas Masuk (Top-Up)'),
+      IntCellValue(topupCount),
+      TextCellValue(_currencyFmt.format(totalTopup)),
     ]);
     summarySheet
         .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 8))
-        .cellStyle = cellLeft;
-    summarySheet
-        .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 8))
-        .cellStyle = cellCenter;
-    summarySheet
-        .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 8))
-        .cellStyle = cellRight;
-
-    // Row 9: Total Row - Net Aliran
-    summarySheet.appendRow([
-      TextCellValue('Net Aliran Masuk'),
-      TextCellValue('-'),
-      TextCellValue(_currencyFmt.format(totalTopup + totalCorrection)),
-    ]);
-    summarySheet
-        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 9))
         .cellStyle = totalStyle;
     summarySheet
-        .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 9))
+        .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 8))
         .cellStyle = totalStyleCenter;
     summarySheet
-        .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 9))
+        .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 8))
         .cellStyle = totalStyleRight;
 
-    // Row 10: Blank
+    // Row 9: Blank
     summarySheet.appendRow([TextCellValue('')]);
 
-    // Row 11: Section Header Stan Kantin
+    // Row 10: Section Header Stan Kantin
     summarySheet.appendRow([
       TextCellValue('II. PENDAPATAN PER STAN KANTIN'),
       TextCellValue(''),
       TextCellValue(''),
     ]);
     summarySheet
-        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 11))
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 10))
         .cellStyle = sectionHeaderStyle;
 
     // Row 12: Table Header Stan
@@ -563,7 +545,6 @@ class ReportExportService {
     required String period,
     required double totalTopup,
     required double totalPurchase,
-    required double totalCorrection,
     required int topupCount,
     required int purchaseCount,
     required List<Map<String, dynamic>> canteens,
@@ -598,7 +579,6 @@ class ReportExportService {
     final titleStyle = pw.TextStyle(font: ttfBold, fontSize: 11, fontWeight: pw.FontWeight.bold, color: darkText);
     final tableHeaderStyle = pw.TextStyle(font: ttfBold, fontSize: 8.5, fontWeight: pw.FontWeight.bold, color: PdfColors.white);
 
-    final netInflow = totalTopup + totalCorrection;
     final dateStr = DateFormat('dd MMMM yyyy HH:mm', 'id_ID').format(DateTime.now());
 
     pdf.addPage(
@@ -729,22 +709,9 @@ class ReportExportService {
               children: [
                 pw.Expanded(
                   child: _pdfKpiCard(
-                    label: 'TOTAL KOREKSI SALDO',
-                    value: '${totalCorrection >= 0 ? "+" : ""}${_currencyFmt.format(totalCorrection)}',
-                    subtext: 'Penyesuaian & audit system',
-                    baseStyle: baseStyle,
-                    boldStyle: boldStyle,
-                    grayStyle: grayText,
-                    borderCol: borderCol,
-                    bgCol: lightBg,
-                  ),
-                ),
-                pw.SizedBox(width: 10),
-                pw.Expanded(
-                  child: _pdfKpiCard(
-                    label: 'NET ALIRAN MASUK',
-                    value: _currencyFmt.format(netInflow),
-                    subtext: 'Total saldo masuk bersih',
+                    label: 'TOTAL KAS MASUK BERSIH',
+                    value: _currencyFmt.format(totalTopup),
+                    subtext: 'Kas masuk resmi loket',
                     baseStyle: baseStyle,
                     boldStyle: boldStyle,
                     grayStyle: grayText,

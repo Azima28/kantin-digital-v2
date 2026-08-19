@@ -543,286 +543,6 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
     );
   }
 
-  // ── Dialog: Koreksi / Tambah Saldo Stan ─────────────────────────────────────
-  void _showAdjustmentDialog(String operatorId, String canteenName, int currentBalance) {
-    final amountCtrl = TextEditingController();
-    final reasonCtrl = TextEditingController();
-    bool isAddition = true;
-    final formKey = GlobalKey<FormState>();
-    bool isSaving = false;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setLocal) => Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 440),
-            child: Container(
-              decoration: BoxDecoration(
-                color: ctx.cardBg,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: ctx.dividerCol, width: 0.8),
-                boxShadow: [
-                  BoxShadow(
-                    color: ctx.shadowColor,
-                    blurRadius: 28,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.all(22),
-              child: Form(
-                key: formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: Nebula.amber.withValues(alpha: 0.15),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(CupertinoIcons.arrow_right_arrow_left_circle_fill, color: Nebula.amber, size: 24),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Koreksi Saldo Stan',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 15.5,
-                                    fontWeight: FontWeight.bold,
-                                    color: ctx.textPrimary,
-                                  ),
-                                ),
-                                Text(
-                                  canteenName,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    color: Nebula.amber,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Mode Tambah vs Kurang Toggle
-                      Row(
-                        children: [
-                          Expanded(
-                            child: InkWell(
-                              onTap: () => setLocal(() => isAddition = true),
-                              borderRadius: BorderRadius.circular(10),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: isAddition ? Nebula.teal : ctx.surfaceBg,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: isAddition ? Nebula.teal : ctx.dividerCol),
-                                ),
-                                child: Text(
-                                  '+ Tambah Saldo',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: isAddition ? Colors.white : ctx.textPrimary,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: InkWell(
-                              onTap: () => setLocal(() => isAddition = false),
-                              borderRadius: BorderRadius.circular(10),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: !isAddition ? Nebula.rose : ctx.surfaceBg,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: !isAddition ? Nebula.rose : ctx.dividerCol),
-                                ),
-                                child: Text(
-                                  '- Kurangi Saldo',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: !isAddition ? Colors.white : ctx.textPrimary,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Nominal
-                      Text(
-                        'Nominal Penyesuaian (Rp)',
-                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: ctx.textSecondary),
-                      ),
-                      const SizedBox(height: 6),
-                      TextFormField(
-                        controller: amountCtrl,
-                        keyboardType: TextInputType.number,
-                        autofocus: true,
-                        style: GoogleFonts.inter(fontSize: 14, color: ctx.textPrimary, fontWeight: FontWeight.bold),
-                        validator: (v) {
-                          if (v == null || v.trim().isEmpty) return 'Nominal wajib diisi';
-                          final val = int.tryParse(v.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
-                          if (val <= 0) return 'Nominal harus lebih dari 0';
-                          if (!isAddition && val > currentBalance) {
-                            return 'Pengurangan melebihi saldo stan saat ini';
-                          }
-                          return null;
-                        },
-                        decoration: InputDecoration(
-                          hintText: 'Contoh: 10000',
-                          prefixText: 'Rp ',
-                          prefixStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, color: isAddition ? Nebula.teal : Nebula.rose),
-                          filled: true,
-                          fillColor: ctx.surfaceBg,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Alasan Pembukuan
-                      Text(
-                        'Alasan Koreksi Pembukuan',
-                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: ctx.textSecondary),
-                      ),
-                      const SizedBox(height: 6),
-                      TextFormField(
-                        controller: reasonCtrl,
-                        style: GoogleFonts.inter(fontSize: 13, color: ctx.textPrimary),
-                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Alasan wajib diisi' : null,
-                        decoration: InputDecoration(
-                          hintText: 'Contoh: Koreksi selisih kas / subsidi kantin',
-                          hintStyle: GoogleFonts.inter(color: ctx.textSecondary, fontSize: 12),
-                          filled: true,
-                          fillColor: ctx.surfaceBg,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
-                        ),
-                      ),
-                      const SizedBox(height: 22),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: isSaving ? null : () => Navigator.pop(ctx),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                side: BorderSide(color: ctx.dividerCol),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              ),
-                              child: Text(
-                                AppStrings.buttonCancel,
-                                style: GoogleFonts.inter(color: ctx.textSecondary, fontWeight: FontWeight.w600, fontSize: 13),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: isSaving
-                                  ? null
-                                  : () async {
-                                      if (!formKey.currentState!.validate()) return;
-                                      final rawAmt = int.tryParse(amountCtrl.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
-                                      if (rawAmt <= 0) return;
-
-                                      setLocal(() => isSaving = true);
-                                      try {
-                                        final apiClient = ref.read(apiClientProvider);
-                                        final res = await apiClient.post(
-                                          '/finance/merchant/adjust',
-                                          body: {
-                                            'operator_id': operatorId,
-                                            'amount': rawAmt,
-                                            'is_addition': isAddition,
-                                            'reason': reasonCtrl.text.trim(),
-                                          },
-                                        );
-
-                                        if (!res.success) {
-                                          throw Exception(res.message ?? 'Gagal menyesuaikan saldo');
-                                        }
-
-                                        ref.invalidate(adminMerchantDetailProvider(widget.merchantId));
-                                        ref.invalidate(keuanganDashboardProvider);
-
-                                        if (ctx.mounted) Navigator.pop(ctx);
-                                        if (mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text('Koreksi saldo stan berhasil diproses.'),
-                                              backgroundColor: isAddition ? Nebula.teal : Nebula.amber,
-                                              behavior: SnackBarBehavior.floating,
-                                            ),
-                                          );
-                                        }
-                                      } catch (e) {
-                                        setLocal(() => isSaving = false);
-                                        if (mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text('Gagal: $e'),
-                                              backgroundColor: Nebula.rose,
-                                              behavior: SnackBarBehavior.floating,
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: isAddition ? Nebula.teal : Nebula.rose,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              ),
-                              child: isSaving
-                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                  : Text(
-                                      isAddition ? 'Simpan (+)' : 'Simpan (-)',
-                                      style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                                    ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final detailAsync = ref.watch(adminMerchantDetailProvider(widget.merchantId));
@@ -968,72 +688,32 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                       ),
                       const SizedBox(height: 14),
 
-                      // Tombol Aksi Finansial: Tarik Saldo & Koreksi
-                      Row(
-                        children: [
-                          Expanded(
-                            child: PressScale(
-                              onTap: () => _showWithdrawalDialog(profile.id, canteenName, balanceEarned),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
-                                decoration: BoxDecoration(
-                                  color: Nebula.teal,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(CupertinoIcons.arrow_down_circle_fill, size: 14, color: Colors.white),
-                                    const SizedBox(width: 4),
-                                    Flexible(
-                                      child: Text(
-                                        'Tarik Saldo',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
+                      // Tombol Aksi Finansial: Tarik Saldo
+                      PressScale(
+                        onTap: () => _showWithdrawalDialog(profile.id, canteenName, balanceEarned),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: Nebula.teal,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(CupertinoIcons.money_dollar_circle_fill, size: 16, color: Colors.white),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Cairkan Kas Stan (Tarik Saldo)',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
                                 ),
                               ),
-                            ),
+                            ],
                           ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: PressScale(
-                              onTap: () => _showAdjustmentDialog(profile.id, canteenName, balanceEarned),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
-                                decoration: BoxDecoration(
-                                  color: Nebula.amber.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: Nebula.amber.withValues(alpha: 0.4), width: 0.8),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(CupertinoIcons.arrow_right_arrow_left, size: 14, color: Nebula.amber),
-                                    const SizedBox(width: 4),
-                                    Flexible(
-                                      child: Text(
-                                        'Koreksi Saldo',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: Nebula.amber,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ],
                   ),

@@ -205,19 +205,17 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
     final totalSaldo = (data['totalSaldo'] as num?)?.toDouble() ?? 0.0;
     final topupToday = (data['topupToday'] as num?)?.toDouble() ?? 0.0;
     final topupCount = (data['topupCount'] as num?)?.toInt() ?? 0;
-    final koreksCount = (data['koreksCount'] as num?)?.toInt() ?? 0;
-    final koreksNet = (data['koreksNet'] as num?)?.toDouble() ?? 0.0;
     final logs = data['recentLogs'] as List<Map<String, dynamic>>;
 
     // Filter logs for Siswa vs Petugas Kantin
     final studentLogs = logs.where((l) {
       final t = (l['type'] ?? l['action_type'] ?? '').toString();
-      return t == 'topup' || t == 'purchase' || t == 'refund' || t.contains('TOPUP') || t.contains('BATAL') || t == 'correction';
+      return t == 'topup' || t == 'purchase' || t == 'refund' || t.contains('TOPUP') || t.contains('BATAL');
     }).toList();
 
     final merchantLogs = logs.where((l) {
       final t = (l['type'] ?? l['action_type'] ?? '').toString();
-      return t == 'withdrawal' || t == 'merchant_adjustment' || t.contains('MERCHANT') || t == 'purchase';
+      return t == 'withdrawal' || t.contains('PAYOUT') || t.contains('MERCHANT') || t == 'purchase';
     }).toList();
 
     final activeLogs = _selectedSegment == 0 ? studentLogs : merchantLogs;
@@ -278,15 +276,15 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
         ),
         const SizedBox(height: 12),
 
-        // ─── 2 Mini Stats Cards ───
+        // ─── 2 Mini Stats Cards (Top-Up Masuk & Tarik Stan Keluar) ───
         Row(
           children: [
             Expanded(
               child: _buildStatCard(
                 context,
-                icon: CupertinoIcons.arrow_up_circle_fill,
+                icon: CupertinoIcons.arrow_down_left_circle_fill,
                 iconColor: Nebula.teal,
-                label: 'Top-Up Siswa',
+                label: 'Top-Up Hari Ini',
                 value: fmt.format(topupToday),
                 sub: '$topupCount Transaksi',
               ),
@@ -295,11 +293,11 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
             Expanded(
               child: _buildStatCard(
                 context,
-                icon: CupertinoIcons.arrow_right_arrow_left_circle_fill,
+                icon: CupertinoIcons.arrow_up_right_circle_fill,
                 iconColor: Nebula.rose,
-                label: 'Koreksi Saldo',
-                value: fmt.format(koreksNet.abs()),
-                sub: '$koreksCount Transaksi',
+                label: 'Pencairan Stan',
+                value: fmt.format(data['payoutToday'] ?? 0),
+                sub: '${data['payoutCount'] ?? 0} Transaksi',
               ),
             ),
           ],

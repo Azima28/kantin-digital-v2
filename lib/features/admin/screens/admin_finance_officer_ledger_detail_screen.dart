@@ -103,13 +103,6 @@ class _AdminFinanceOfficerLedgerDetailScreenState
                 .where(
                     (j) => j.category == 'OUTFLOW' || j.type == 'WITHDRAWAL')
                 .toList();
-          } else if (_selectedCategoryTab == 3) {
-            filteredJournals = filteredJournals
-                .where((j) =>
-                    j.category == 'ADJUSTMENT' ||
-                    j.type.contains('KOREKSI') ||
-                    j.type.contains('ADJUSTMENT'))
-                .toList();
           }
 
           return RefreshIndicator(
@@ -391,20 +384,20 @@ class _AdminFinanceOfficerLedgerDetailScreenState
                                 ],
                               ),
                               const SizedBox(height: 8),
-                              // Koreksi & Total Transaksi Footer
+                              // Loket & Total Transaksi Footer
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Row(
                                     children: [
                                       const Icon(
-                                        CupertinoIcons.arrow_right_arrow_left_circle_fill,
+                                        CupertinoIcons.checkmark_seal_fill,
                                         size: 13,
-                                        color: Nebula.amber,
+                                        color: Nebula.teal,
                                       ),
                                       const SizedBox(width: 5),
                                       Text(
-                                        'Koreksi Saldo: ${officer.totalCorrectionsCount}x',
+                                        officer.assignedSchool,
                                         style: GoogleFonts.inter(
                                           fontSize: 10.5,
                                           fontWeight: FontWeight.w500,
@@ -469,14 +462,9 @@ class _AdminFinanceOfficerLedgerDetailScreenState
                           activeColor: Nebula.teal,
                         ),
                         _buildCategoryTab(
-                          'Tarik (-)',
+                          'Tarik Stan (-)',
                           2,
                           activeColor: Nebula.rose,
-                        ),
-                        _buildCategoryTab(
-                          'Koreksi (±)',
-                          3,
-                          activeColor: Nebula.amber,
                         ),
                       ],
                     ),

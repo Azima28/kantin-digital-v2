@@ -62,45 +62,6 @@ func (h *FinanceHandler) History(c *fiber.Ctx) error {
 	})
 }
 
-type CorrectionRequest struct {
-	StudentID  string `json:"student_id"`
-	Amount     int    `json:"amount"`
-	NewBalance *int   `json:"new_balance"`
-	Reason     string `json:"reason"`
-}
-
-func (h *FinanceHandler) Correction(c *fiber.Ctx) error {
-	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
-	var req CorrectionRequest
-	if err := c.BodyParser(&req); err != nil {
-		return response.Error(c, fiber.StatusBadRequest, "Payload koreksi tidak valid", err.Error())
-	}
-
-	if req.StudentID == "" {
-		return response.Error(c, fiber.StatusBadRequest, "Student ID wajib diisi", nil)
-	}
-
-	amount := req.Amount
-	if amount == 0 && req.NewBalance != nil {
-		student, err := h.paymentService.GetStudentDetail(c.Context(), req.StudentID)
-		if err != nil {
-			return response.Error(c, fiber.StatusNotFound, "Data siswa tidak ditemukan", err.Error())
-		}
-		amount = *req.NewBalance - student.Balance
-	}
-
-	if amount == 0 {
-		return response.Error(c, fiber.StatusBadRequest, "Nominal koreksi tidak boleh 0", nil)
-	}
-
-	tx, err := h.paymentService.ProcessCorrection(c.Context(), req.StudentID, claims.UserID, amount, req.Reason)
-	if err != nil {
-		return response.Error(c, fiber.StatusBadRequest, err.Error(), nil)
-	}
-
-	return response.Success(c, fiber.StatusOK, "Koreksi saldo berhasil diproses", tx)
-}
-
 func (h *FinanceHandler) Report(c *fiber.Ctx) error {
 	startStr := c.Query("start_date", "")
 	endStr := c.Query("end_date", "")
@@ -180,30 +141,4 @@ func (h *FinanceHandler) MerchantWithdraw(c *fiber.Ctx) error {
 	}
 
 	return response.Success(c, fiber.StatusOK, "Pencairan dana stan berhasil diproses", tx)
-}
-
-type MerchantAdjustRequest struct {
-	OperatorID string `json:"operator_id"`
-	Amount     int    `json:"amount"`
-	IsAddition bool   `json:"is_addition"`
-	Reason     string `json:"reason"`
-}
-
-func (h *FinanceHandler) MerchantAdjust(c *fiber.Ctx) error {
-	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
-	var req MerchantAdjustRequest
-	if err := c.BodyParser(&req); err != nil {
-		return response.Error(c, fiber.StatusBadRequest, "Payload penyesuaian saldo stan tidak valid", err.Error())
-	}
-
-	if req.OperatorID == "" || req.Amount <= 0 {
-		return response.Error(c, fiber.StatusBadRequest, "Operator ID dan nominal penyesuaian wajib diisi", nil)
-	}
-
-	tx, err := h.paymentService.ProcessMerchantAdjustment(c.Context(), req.OperatorID, claims.UserID, req.Amount, req.IsAddition, req.Reason)
-	if err != nil {
-		return response.Error(c, fiber.StatusBadRequest, err.Error(), nil)
-	}
-
-	return response.Success(c, fiber.StatusOK, "Penyesuaian saldo stan berhasil diproses", tx)
 }

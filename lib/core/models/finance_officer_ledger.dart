@@ -12,7 +12,6 @@ class FinanceOfficerLedgerItem {
   final int totalCashInflow;
   final int totalCashOutflow;
   final int netCashHandled;
-  final int totalCorrectionsCount;
   final int totalTransactions;
   final int todayCashInflow;
   final int todayCashOutflow;
@@ -33,7 +32,6 @@ class FinanceOfficerLedgerItem {
     this.totalCashInflow = 0,
     this.totalCashOutflow = 0,
     this.netCashHandled = 0,
-    this.totalCorrectionsCount = 0,
     this.totalTransactions = 0,
     this.todayCashInflow = 0,
     this.todayCashOutflow = 0,
@@ -56,7 +54,6 @@ class FinanceOfficerLedgerItem {
       totalCashInflow: int.tryParse(json['total_cash_inflow']?.toString() ?? '0') ?? 0,
       totalCashOutflow: int.tryParse(json['total_cash_outflow']?.toString() ?? '0') ?? 0,
       netCashHandled: int.tryParse(json['net_cash_handled']?.toString() ?? '0') ?? 0,
-      totalCorrectionsCount: int.tryParse(json['total_corrections_count']?.toString() ?? '0') ?? 0,
       totalTransactions: int.tryParse(json['total_transactions']?.toString() ?? '0') ?? 0,
       todayCashInflow: int.tryParse(json['today_cash_inflow']?.toString() ?? '0') ?? 0,
       todayCashOutflow: int.tryParse(json['today_cash_outflow']?.toString() ?? '0') ?? 0,
@@ -79,7 +76,6 @@ class FinanceOfficerLedgerItem {
         'total_cash_inflow': totalCashInflow,
         'total_cash_outflow': totalCashOutflow,
         'net_cash_handled': netCashHandled,
-        'total_corrections_count': totalCorrectionsCount,
         'total_transactions': totalTransactions,
         'today_cash_inflow': todayCashInflow,
         'today_cash_outflow': todayCashOutflow,

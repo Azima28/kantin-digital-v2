@@ -53,7 +53,6 @@ import 'package:kantin_digital/features/keuangan/screens/keuangan_student_detail
 import 'package:kantin_digital/features/keuangan/screens/keuangan_users_screen.dart';
 import 'package:kantin_digital/features/keuangan/screens/keuangan_card_registration_screen.dart';
 import 'package:kantin_digital/features/keuangan/screens/keuangan_topup_screen.dart';
-import 'package:kantin_digital/features/keuangan/screens/keuangan_correction_screen.dart';
 import 'package:kantin_digital/features/keuangan/screens/keuangan_history_screen.dart';
 import 'package:kantin_digital/features/keuangan/screens/keuangan_report_screen.dart';
 import 'package:kantin_digital/features/keuangan/screens/keuangan_profile_screen.dart';
@@ -125,7 +124,6 @@ class AppRouter {
   static const String financeMerchantDetail = '/finance/users/merchant/:merchantId';
   static const String financeParentDetail = '/finance/users/parent/:parentId';
   static const String financeTopUp = '/finance/topup';
-  static const String financeCorrection = '/finance/correction';
   static const String financeHistory = '/finance/history';
   static const String financeReport = '/finance/report';
   static const String financeProfile = '/finance/profile';
@@ -642,13 +640,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (BuildContext context, GoRouterState state) {
           final student = state.extra as StudentWithProfile?;
           return KeuanganTopupScreen(prefilledStudent: student);
-        },
-      ),
-      GoRoute(
-        path: AppRouter.financeCorrection,
-        builder: (BuildContext context, GoRouterState state) {
-          final student = state.extra as StudentWithProfile?;
-          return KeuanganCorrectionScreen(prefilledStudent: student);
         },
       ),
       GoRoute(

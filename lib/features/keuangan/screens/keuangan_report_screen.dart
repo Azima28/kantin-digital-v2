@@ -359,10 +359,6 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                       (reportData['totalPurchase'] as num?)
                                               ?.toDouble() ??
                                           0.0;
-                                  final totalCorrection =
-                                      (reportData['totalCorrection'] as num?)
-                                              ?.toDouble() ??
-                                          0.0;
                                   final topupCount =
                                       (reportData['topupCount'] as num?)
                                               ?.toInt() ??
@@ -418,7 +414,6 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                       period: _currentFilterParam.formattedPeriodLabel,
                                       totalTopup: totalTopup,
                                       totalPurchase: totalPurchase,
-                                      totalCorrection: totalCorrection,
                                       topupCount: topupCount,
                                       purchaseCount: purchaseCount,
                                       canteens: canteens,
@@ -432,7 +427,6 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                       period: _currentFilterParam.formattedPeriodLabel,
                                       totalTopup: totalTopup,
                                       totalPurchase: totalPurchase,
-                                      totalCorrection: totalCorrection,
                                       topupCount: topupCount,
                                       purchaseCount: purchaseCount,
                                       canteens: canteens,
@@ -1379,14 +1373,13 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                         .toList();
                     final totalTopup = (data['totalTopup'] as num?)?.toDouble() ?? 0.0;
                     final totalPurchase = (data['totalPurchase'] as num?)?.toDouble() ?? 0.0;
-                    final totalCorrection = (data['totalCorrection'] as num?)?.toDouble() ?? 0.0;
                     final totalWithdrawal = (data['totalWithdrawal'] as num?)?.toDouble() ?? 0.0;
                     final topupCount = (data['topupCount'] as num?)?.toInt() ?? 0;
                     final purchaseCount = (data['purchaseCount'] as num?)?.toInt() ?? 0;
                     final withdrawalCount = (data['withdrawalCount'] as num?)?.toInt() ?? 0;
 
-                    // Calculate net cash balance in school
-                    final netInflow = totalTopup - totalWithdrawal + totalCorrection;
+                    // Calculate net cash balance in school (Inflow - Outflow)
+                    final netInflow = totalTopup - totalWithdrawal;
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1429,8 +1422,6 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                               _buildReportRow('Total Belanja Siswa (Omzet)', fmt.format(totalPurchase), detail: '$purchaseCount transaksi', valueColor: Nebula.amber),
                               Divider(height: 16, thickness: 0.5, color: context.dividerCol),
                               _buildReportRow('Pencairan Kas Stan (Kas Keluar)', '-${fmt.format(totalWithdrawal)}', detail: '$withdrawalCount penarikan', valueColor: Nebula.rose),
-                              Divider(height: 16, thickness: 0.5, color: context.dividerCol),
-                              _buildReportRow('Total Koreksi Saldo', '${totalCorrection >= 0 ? "+" : ""}${fmt.format(totalCorrection)}', valueColor: totalCorrection >= 0 ? Nebula.teal : Nebula.rose),
                               Divider(height: 16, thickness: 0.5, color: context.dividerCol),
                               _buildReportRow(
                                 'Sisa Kas Mengendap Bersih',

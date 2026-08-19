@@ -656,12 +656,6 @@ func (r *UserRepo) ListFinanceOfficersLedger(ctx context.Context) ([]domain.Fina
 		           FROM public.transactions t
 		           WHERE t.type = 'withdrawal' AND t.student_id = p.id
 		       ), 0) AS total_cash_outflow,
-		       -- Total Corrections count
-		       COALESCE((
-		           SELECT COUNT(*)
-		           FROM public.audit_logs a
-		           WHERE a.user_id = p.id AND a.action IN ('KOREKSI_SALDO', 'MERCHANT_BALANCE_ADJUSTMENT', 'REFUND_TRANSAKSI')
-		       ), 0) AS total_corrections,
 		       -- Total Transactions count
 		       COALESCE((
 		           SELECT COUNT(*)
@@ -702,7 +696,7 @@ func (r *UserRepo) ListFinanceOfficersLedger(ctx context.Context) ([]domain.Fina
 		err := rows.Scan(
 			&item.ID, &item.FullName, &item.Email, &item.Username, &item.PhoneNumber, &item.IsActive, &item.AvatarURL, &item.CreatedAt,
 			&item.AssignedSchool, &item.AuthorityLevel,
-			&item.TotalCashInflow, &item.TotalCashOutflow, &item.TotalCorrectionsCount, &item.TotalTransactions,
+			&item.TotalCashInflow, &item.TotalCashOutflow, &item.TotalTransactions,
 			&item.TodayCashInflow, &item.TodayCashOutflow, &item.TodayTxCount,
 		)
 		if err != nil {
@@ -792,15 +786,6 @@ func (r *UserRepo) GetFinanceOfficerLedgerDetail(ctx context.Context, officerID 
 			LEFT JOIN public.canteen_operators c ON c.id = t.operator_id
 			LEFT JOIN public.profiles p ON p.id = t.operator_id
 			WHERE t.type = 'withdrawal' AND t.student_id = $1
-		)
-		UNION ALL
-		(
-			SELECT a.id::text, a.entity_id as transaction_id, a.action as tx_type, 'ADJUSTMENT' as category,
-			       0 as amount, COALESCE(a.entity_name, 'Sistem') as target_name, 'system' as target_role,
-			       COALESCE(a.entity_id, '') as target_id, a.action as notes, 'Sistem' as method,
-			       a.created_at
-			FROM public.audit_logs a
-			WHERE a.user_id = $1 AND a.action IN ('KOREKSI_SALDO', 'MERCHANT_BALANCE_ADJUSTMENT', 'REFUND_TRANSAKSI')
 		)
 		ORDER BY created_at DESC
 		LIMIT 100`

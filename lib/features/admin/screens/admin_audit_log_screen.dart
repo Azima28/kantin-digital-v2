@@ -31,8 +31,6 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
     'Semua Aksi',
     'Top-Up Siswa',
     'Tarik Saldo Stan (Payout)',
-    'Koreksi Saldo Siswa',
-    'Koreksi Saldo Stan',
     'Refund Transaksi',
     'Registrasi Kartu',
     'Tautan Kartu',
@@ -55,10 +53,6 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
         return 'TOPUP_TUNAI';
       case 'Tarik Saldo Stan (Payout)':
         return 'MERCHANT_PAYOUT';
-      case 'Koreksi Saldo Siswa':
-        return 'KOREKSI_SALDO';
-      case 'Koreksi Saldo Stan':
-        return 'MERCHANT_BALANCE_ADJUSTMENT';
       case 'Refund Transaksi':
         return 'REFUND_TRANSAKSI';
       case 'Registrasi Kartu':
@@ -267,11 +261,10 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
 
               // Filter Category Chips
               if (_selectedCategoryIndex == 1) {
-                // Mutasi Finansial: TOPUP, PAYOUT, KOREKSI, REFUND
+                // Mutasi Finansial: TOPUP, PAYOUT, REFUND
                 filtered = filtered.where((l) {
                   final a = l.actionType;
                   return a == 'TOPUP_TUNAI' || a == 'TOPUP' || a == 'MERCHANT_PAYOUT' ||
-                      a == 'KOREKSI_SALDO' || a == 'MERCHANT_BALANCE_ADJUSTMENT' ||
                       a == 'REFUND_TRANSAKSI' || a == 'BATAL_PESANAN';
                 }).toList();
               } else if (_selectedCategoryIndex == 2) {
