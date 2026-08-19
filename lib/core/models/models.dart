@@ -20,6 +20,7 @@ export 'system_setting.dart';
 export 'order_message.dart';
 export 'order_review.dart';
 export 'academic_structure.dart';
+export 'finance_officer_ledger.dart';
 
 // ── Composite models ─────────────────────────────────────────
 export 'operator_transaction.dart';

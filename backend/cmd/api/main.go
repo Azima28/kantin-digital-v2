@@ -278,6 +278,8 @@ func main() {
 			adminGroup.Get("/merchant/:id", adminH.GetMerchantDetail)
 			adminGroup.Get("/parent/:id", adminH.GetParentDetail)
 			adminGroup.Get("/finance/:id", adminH.GetFinanceDetail)
+			adminGroup.Get("/finance-officers/ledger", adminH.ListFinanceOfficersLedger)
+			adminGroup.Get("/finance-officers/:id/ledger", adminH.GetFinanceOfficerLedgerDetail)
 			adminGroup.Post("/merchant/withdraw", financeH.MerchantWithdraw)
 			adminGroup.Post("/merchant/adjust", financeH.MerchantAdjust)
 			adminGroup.Get("/academic-structure", adminH.GetAcademicStructure)

@@ -639,6 +639,199 @@ func (r *UserRepo) DeleteUser(ctx context.Context, id string) error {
 	return err
 }
 
+// ListFinanceOfficersLedger retrieves all finance officers with comprehensive cash flow & transaction aggregates
+func (r *UserRepo) ListFinanceOfficersLedger(ctx context.Context) ([]domain.FinanceOfficerLedgerItem, error) {
+	query := `
+		SELECT p.id, p.full_name, p.email, p.username, p.phone_number, p.is_active, p.avatar_url, p.created_at,
+		       'SMP Terpadu' AS assigned_school, 'L1' AS authority_level,
+		       -- Total Cash Inflow (Topup by this officer)
+		       COALESCE((
+		           SELECT SUM(t.total_amount)
+		           FROM public.transactions t
+		           WHERE t.type = 'topup' AND (t.operator_id = p.id OR t.student_id = p.id)
+		       ), 0) AS total_cash_inflow,
+		       -- Total Cash Outflow (Withdrawal payout to merchant by this officer)
+		       COALESCE((
+		           SELECT SUM(t.total_amount)
+		           FROM public.transactions t
+		           WHERE t.type = 'withdrawal' AND t.student_id = p.id
+		       ), 0) AS total_cash_outflow,
+		       -- Total Corrections count
+		       COALESCE((
+		           SELECT COUNT(*)
+		           FROM public.audit_logs a
+		           WHERE a.user_id = p.id AND a.action IN ('KOREKSI_SALDO', 'MERCHANT_BALANCE_ADJUSTMENT', 'REFUND_TRANSAKSI')
+		       ), 0) AS total_corrections,
+		       -- Total Transactions count
+		       COALESCE((
+		           SELECT COUNT(*)
+		           FROM public.transactions t
+		           WHERE t.operator_id = p.id OR (t.type = 'withdrawal' AND t.student_id = p.id)
+		       ), 0) AS total_tx_count,
+		       -- Today Cash Inflow
+		       COALESCE((
+		           SELECT SUM(t.total_amount)
+		           FROM public.transactions t
+		           WHERE t.type = 'topup' AND (t.operator_id = p.id OR t.student_id = p.id) AND t.created_at >= CURRENT_DATE
+		       ), 0) AS today_cash_inflow,
+		       -- Today Cash Outflow
+		       COALESCE((
+		           SELECT SUM(t.total_amount)
+		           FROM public.transactions t
+		           WHERE t.type = 'withdrawal' AND t.student_id = p.id AND t.created_at >= CURRENT_DATE
+		       ), 0) AS today_cash_outflow,
+		       -- Today Transaction Count
+		       COALESCE((
+		           SELECT COUNT(*)
+		           FROM public.transactions t
+		           WHERE (t.operator_id = p.id OR (t.type = 'withdrawal' AND t.student_id = p.id)) AND t.created_at >= CURRENT_DATE
+		       ), 0) AS today_tx_count
+		FROM public.profiles p
+		WHERE p.role = 'petugas_keuangan'
+		ORDER BY p.full_name ASC`
+
+	rows, err := r.db.Pool.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []domain.FinanceOfficerLedgerItem
+	for rows.Next() {
+		var item domain.FinanceOfficerLedgerItem
+		err := rows.Scan(
+			&item.ID, &item.FullName, &item.Email, &item.Username, &item.PhoneNumber, &item.IsActive, &item.AvatarURL, &item.CreatedAt,
+			&item.AssignedSchool, &item.AuthorityLevel,
+			&item.TotalCashInflow, &item.TotalCashOutflow, &item.TotalCorrectionsCount, &item.TotalTransactions,
+			&item.TodayCashInflow, &item.TodayCashOutflow, &item.TodayTxCount,
+		)
+		if err != nil {
+			return nil, err
+		}
+		item.NetCashHandled = item.TotalCashInflow - item.TotalCashOutflow
+		item.TodayNetCash = item.TodayCashInflow - item.TodayCashOutflow
+		list = append(list, item)
+	}
+	return list, nil
+}
+
+// GetFinanceOfficerLedgerDetail retrieves complete ledger details, 7-day trend, and journals for an officer
+func (r *UserRepo) GetFinanceOfficerLedgerDetail(ctx context.Context, officerID string) (*domain.FinanceOfficerLedgerDetail, error) {
+	list, err := r.ListFinanceOfficersLedger(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var officerItem *domain.FinanceOfficerLedgerItem
+	for _, it := range list {
+		if it.ID == officerID {
+			officerItem = &it
+			break
+		}
+	}
+	if officerItem == nil {
+		prof, err := r.FindByID(ctx, officerID)
+		if err != nil {
+			return nil, err
+		}
+		officerItem = &domain.FinanceOfficerLedgerItem{
+			ID:             prof.ID,
+			FullName:       prof.FullName,
+			Email:          prof.Email,
+			Username:       prof.Username,
+			PhoneNumber:    prof.PhoneNumber,
+			IsActive:       prof.IsActive,
+			AvatarURL:      prof.AvatarURL,
+			AssignedSchool: "SMP Terpadu",
+			AuthorityLevel: "L1",
+			CreatedAt:      prof.CreatedAt,
+		}
+	}
+
+	weeklyInflow := make([]int, 7)
+	weeklyOutflow := make([]int, 7)
+
+	trendQuery := `
+		SELECT (CURRENT_DATE - created_at::date) as day_diff,
+		       COALESCE(SUM(CASE WHEN type = 'topup' AND (operator_id = $1 OR student_id = $1) THEN total_amount ELSE 0 END), 0) as inflow,
+		       COALESCE(SUM(CASE WHEN type = 'withdrawal' AND student_id = $1 THEN total_amount ELSE 0 END), 0) as outflow
+		FROM public.transactions
+		WHERE created_at >= (CURRENT_DATE - INTERVAL '6 days')
+		  AND (operator_id = $1 OR student_id = $1)
+		GROUP BY day_diff
+		ORDER BY day_diff ASC`
+
+	tRows, err := r.db.Pool.Query(ctx, trendQuery, officerID)
+	if err == nil {
+		defer tRows.Close()
+		for tRows.Next() {
+			var dayDiff, inf, outf int
+			if err := tRows.Scan(&dayDiff, &inf, &outf); err == nil && dayDiff >= 0 && dayDiff < 7 {
+				weeklyInflow[6-dayDiff] = inf
+				weeklyOutflow[6-dayDiff] = outf
+			}
+		}
+	}
+
+	journalQuery := `
+		(
+			SELECT t.id::text, t.id::text AS transaction_id, 'TOPUP' as tx_type, 'INFLOW' as category,
+			       t.total_amount as amount, COALESCE(p.full_name, 'Siswa') as target_name, 'student' as target_role,
+			       t.student_id as target_id, COALESCE(t.purchase_method, 'Tunai') as notes, COALESCE(t.purchase_method, 'Tunai') as method,
+			       t.created_at
+			FROM public.transactions t
+			LEFT JOIN public.profiles p ON p.id = t.student_id
+			WHERE t.type = 'topup' AND (t.operator_id = $1 OR t.student_id = $1)
+		)
+		UNION ALL
+		(
+			SELECT t.id::text, t.id::text AS transaction_id, 'WITHDRAWAL' as tx_type, 'OUTFLOW' as category,
+			       t.total_amount as amount, COALESCE(c.canteen_name, p.full_name, 'Stan Kantin') as target_name, 'canteen' as target_role,
+			       t.operator_id as target_id, 'Pencairan Kas Stan (Payout)' as notes, COALESCE(t.purchase_method, 'Tunai') as method,
+			       t.created_at
+			FROM public.transactions t
+			LEFT JOIN public.canteen_operators c ON c.id = t.operator_id
+			LEFT JOIN public.profiles p ON p.id = t.operator_id
+			WHERE t.type = 'withdrawal' AND t.student_id = $1
+		)
+		UNION ALL
+		(
+			SELECT a.id::text, a.entity_id as transaction_id, a.action as tx_type, 'ADJUSTMENT' as category,
+			       0 as amount, COALESCE(a.entity_name, 'Sistem') as target_name, 'system' as target_role,
+			       COALESCE(a.entity_id, '') as target_id, COALESCE(a.description, a.action) as notes, 'Sistem' as method,
+			       a.created_at
+			FROM public.audit_logs a
+			WHERE a.user_id = $1 AND a.action IN ('KOREKSI_SALDO', 'MERCHANT_BALANCE_ADJUSTMENT', 'REFUND_TRANSAKSI')
+		)
+		ORDER BY created_at DESC
+		LIMIT 100`
+
+	jRows, err := r.db.Pool.Query(ctx, journalQuery, officerID)
+	var journals []domain.OfficerJournalEntry
+	if err == nil {
+		defer jRows.Close()
+		for jRows.Next() {
+			var j domain.OfficerJournalEntry
+			err := jRows.Scan(
+				&j.ID, &j.TransactionID, &j.Type, &j.Category,
+				&j.Amount, &j.TargetName, &j.TargetRole,
+				&j.TargetID, &j.Notes, &j.Method,
+				&j.CreatedAt,
+			)
+			if err == nil {
+				journals = append(journals, j)
+			}
+		}
+	}
+
+	return &domain.FinanceOfficerLedgerDetail{
+		Officer:        *officerItem,
+		RecentJournals: journals,
+		WeeklyInflow:   weeklyInflow,
+		WeeklyOutflow:  weeklyOutflow,
+	}, nil
+}
+
+
 // UpdateUserProfile updates basic profile attributes
 func (r *UserRepo) UpdateUserProfile(ctx context.Context, user *domain.UserProfile) error {
 	query := `

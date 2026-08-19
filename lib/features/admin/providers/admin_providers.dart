@@ -243,3 +243,50 @@ final saveAcademicStructureProvider = Provider<Future<bool> Function(AcademicStr
     return false;
   };
 });
+
+// ============================================================================
+// ADMIN FINANCE OFFICERS LEDGER PROVIDERS (Monitoring Kas & Pembukuan Lengkap)
+// ============================================================================
+
+final adminFinanceOfficersLedgerProvider = FutureProvider.autoDispose<List<FinanceOfficerLedgerItem>>((
+  ref,
+) async {
+  ref.cacheFor(const Duration(minutes: 2));
+  final apiClient = ref.watch(apiClientProvider);
+  try {
+    final res = await apiClient.get('/admin/finance-officers/ledger');
+    if (res.success && res.data != null) {
+      final list = res.data as List<dynamic>;
+      return list.map((e) => FinanceOfficerLedgerItem.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+    }
+  } catch (e) {
+    debugPrint('adminFinanceOfficersLedgerProvider error: $e');
+  }
+
+  return <FinanceOfficerLedgerItem>[];
+});
+
+final adminFinanceOfficerLedgerDetailProvider = FutureProvider.autoDispose
+    .family<FinanceOfficerLedgerDetail, String>((ref, officerId) async {
+  ref.cacheFor(const Duration(minutes: 2));
+  final apiClient = ref.watch(apiClientProvider);
+  try {
+    final res = await apiClient.get('/admin/finance-officers/$officerId/ledger');
+    if (res.success && res.data != null) {
+      return FinanceOfficerLedgerDetail.fromJson(Map<String, dynamic>.from(res.data as Map));
+    }
+  } catch (e) {
+    debugPrint('adminFinanceOfficerLedgerDetailProvider error: $e');
+  }
+
+  return FinanceOfficerLedgerDetail(
+    officer: FinanceOfficerLedgerItem(
+      id: officerId,
+      fullName: 'Petugas Keuangan',
+    ),
+    recentJournals: const [],
+    weeklyInflow: List.generate(7, (_) => 0),
+    weeklyOutflow: List.generate(7, (_) => 0),
+  );
+});
+

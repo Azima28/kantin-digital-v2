@@ -94,3 +94,47 @@ type AcademicStructure struct {
 	Rombels     []string        `json:"rombels"`
 	UpdatedAt   time.Time       `json:"updated_at"`
 }
+
+type FinanceOfficerLedgerItem struct {
+	ID                    string       `json:"id"`
+	FullName              string       `json:"full_name"`
+	Email                 *string      `json:"email,omitempty"`
+	Username              *string      `json:"username,omitempty"`
+	PhoneNumber           *string      `json:"phone_number,omitempty"`
+	IsActive              bool         `json:"is_active"`
+	AvatarURL             *string      `json:"avatar_url,omitempty"`
+	AssignedSchool        string       `json:"assigned_school"`
+	AuthorityLevel        string       `json:"authority_level"`
+	TotalCashInflow       int          `json:"total_cash_inflow"`
+	TotalCashOutflow      int          `json:"total_cash_outflow"`
+	NetCashHandled        int          `json:"net_cash_handled"`
+	TotalCorrectionsCount int          `json:"total_corrections_count"`
+	TotalTransactions     int          `json:"total_transactions"`
+	TodayCashInflow       int          `json:"today_cash_inflow"`
+	TodayCashOutflow      int          `json:"today_cash_outflow"`
+	TodayNetCash          int          `json:"today_net_cash"`
+	TodayTxCount          int          `json:"today_tx_count"`
+	CreatedAt             time.Time    `json:"created_at"`
+}
+
+type OfficerJournalEntry struct {
+	ID            string    `json:"id"`
+	TransactionID *string   `json:"transaction_id,omitempty"`
+	Type          string    `json:"type"`     // TOPUP, WITHDRAWAL, CORRECTION, ADJUSTMENT
+	Category      string    `json:"category"` // INFLOW, OUTFLOW, ADJUSTMENT
+	Amount        int       `json:"amount"`
+	TargetName    string    `json:"target_name"`
+	TargetRole    string    `json:"target_role"`
+	TargetID      string    `json:"target_id"`
+	Notes         string    `json:"notes"`
+	Method        string    `json:"method"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
+type FinanceOfficerLedgerDetail struct {
+	Officer        FinanceOfficerLedgerItem `json:"officer"`
+	RecentJournals []OfficerJournalEntry    `json:"recent_journals"`
+	WeeklyInflow   []int                    `json:"weekly_inflow"`
+	WeeklyOutflow  []int                    `json:"weekly_outflow"`
+}
+

@@ -286,10 +286,10 @@ class AdminDashboardScreen extends ConsumerWidget {
                           Expanded(
                             child: _buildQuickActionBtn(
                               context,
-                              icon: CupertinoIcons.money_dollar_circle_fill,
+                              icon: CupertinoIcons.book_fill,
                               color: const Color(0xFF0D9488),
-                              label: 'Kelola\nStan',
-                              onTap: () => context.go('/admin/users'),
+                              label: 'Buku Kas\nPetugas',
+                              onTap: () => context.push('/admin/finance-ledger'),
                             ),
                           ),
                           const SizedBox(width: 8),

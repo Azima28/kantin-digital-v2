@@ -265,6 +265,23 @@ func (h *AdminHandler) GetFinanceDetail(c *fiber.Ctx) error {
 	return response.Success(c, fiber.StatusOK, "Detail petugas keuangan", detail)
 }
 
+func (h *AdminHandler) ListFinanceOfficersLedger(c *fiber.Ctx) error {
+	list, err := h.paymentService.ListFinanceOfficersLedger(c.Context())
+	if err != nil {
+		return response.Error(c, fiber.StatusInternalServerError, "Gagal memuat rekap pembukuan petugas keuangan", err.Error())
+	}
+	return response.Success(c, fiber.StatusOK, "Rekap pembukuan kas petugas keuangan", list)
+}
+
+func (h *AdminHandler) GetFinanceOfficerLedgerDetail(c *fiber.Ctx) error {
+	id := c.Params("id")
+	detail, err := h.paymentService.GetFinanceOfficerLedgerDetail(c.Context(), id)
+	if err != nil {
+		return response.Error(c, fiber.StatusNotFound, "Detail buku kas petugas keuangan tidak ditemukan", err.Error())
+	}
+	return response.Success(c, fiber.StatusOK, "Buku kas dan jurnal transaksi petugas keuangan", detail)
+}
+
 func (h *AdminHandler) GetAcademicStructure(c *fiber.Ctx) error {
 	structData, err := h.catalogService.GetAcademicStructure(c.Context())
 	if err != nil {

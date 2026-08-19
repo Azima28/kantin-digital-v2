@@ -218,3 +218,12 @@ func (s *PaymentService) GetFinanceOfficerDetail(ctx context.Context, officerID 
 		"logs":    logs,
 	}, nil
 }
+
+func (s *PaymentService) ListFinanceOfficersLedger(ctx context.Context) ([]domain.FinanceOfficerLedgerItem, error) {
+	return s.userRepo.ListFinanceOfficersLedger(ctx)
+}
+
+func (s *PaymentService) GetFinanceOfficerLedgerDetail(ctx context.Context, officerID string) (*domain.FinanceOfficerLedgerDetail, error) {
+	return s.userRepo.GetFinanceOfficerLedgerDetail(ctx, officerID)
+}
+
