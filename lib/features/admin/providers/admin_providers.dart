@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/utils/riverpod_cache_extensions.dart';
+import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 // ============================================================================
 // ADMIN DASHBOARD PROVIDER
@@ -12,6 +13,17 @@ final adminDashboardProvider = FutureProvider.autoDispose<AdminDashboardData>((
   ref,
 ) async {
   ref.cacheFor(const Duration(minutes: 2));
+  final authState = ref.watch(authNotifierProvider);
+  if (!authState.isAuthenticated) {
+    return AdminDashboardData.fromJson({
+      'user_count': 0,
+      'global_balance': 0,
+      'daily_volume': 0,
+      'tx_count_today': 0,
+      'daily_trend': List.generate(30, (index) => 0),
+    });
+  }
+
   final apiClient = ref.watch(apiClientProvider);
   try {
     final res = await apiClient.get('/admin/dashboard');
@@ -41,6 +53,9 @@ final adminUsersProvider = FutureProvider<List<UserProfile>>((
   ref,
 ) async {
   ref.cacheFor(const Duration(minutes: 3));
+  final authState = ref.watch(authNotifierProvider);
+  if (!authState.isAuthenticated) return <UserProfile>[];
+
   final apiClient = ref.watch(apiClientProvider);
   final roleFilter = ref.watch(adminRoleFilterProvider);
 
@@ -67,6 +82,9 @@ final adminAuditLogsProvider = FutureProvider.autoDispose<List<AuditLog>>((
   ref,
 ) async {
   ref.cacheFor(const Duration(minutes: 2));
+  final authState = ref.watch(authNotifierProvider);
+  if (!authState.isAuthenticated) return <AuditLog>[];
+
   final apiClient = ref.watch(apiClientProvider);
   try {
     final res = await apiClient.get('/admin/audit-logs');
@@ -252,6 +270,9 @@ final adminFinanceOfficersLedgerProvider = FutureProvider.autoDispose<List<Finan
   ref,
 ) async {
   ref.cacheFor(const Duration(minutes: 2));
+  final authState = ref.watch(authNotifierProvider);
+  if (!authState.isAuthenticated) return <FinanceOfficerLedgerItem>[];
+
   final apiClient = ref.watch(apiClientProvider);
   try {
     final res = await apiClient.get('/admin/finance-officers/ledger');
@@ -269,6 +290,19 @@ final adminFinanceOfficersLedgerProvider = FutureProvider.autoDispose<List<Finan
 final adminFinanceOfficerLedgerDetailProvider = FutureProvider.autoDispose
     .family<FinanceOfficerLedgerDetail, String>((ref, officerId) async {
   ref.cacheFor(const Duration(minutes: 2));
+  final authState = ref.watch(authNotifierProvider);
+  if (!authState.isAuthenticated) {
+    return FinanceOfficerLedgerDetail(
+      officer: FinanceOfficerLedgerItem(
+        id: officerId,
+        fullName: 'Petugas Keuangan',
+      ),
+      recentJournals: const [],
+      weeklyInflow: List.generate(7, (_) => 0),
+      weeklyOutflow: List.generate(7, (_) => 0),
+    );
+  }
+
   final apiClient = ref.watch(apiClientProvider);
   try {
     final res = await apiClient.get('/admin/finance-officers/$officerId/ledger');
