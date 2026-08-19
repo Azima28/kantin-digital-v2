@@ -776,7 +776,7 @@ func (r *UserRepo) GetFinanceOfficerLedgerDetail(ctx context.Context, officerID 
 		(
 			SELECT t.id::text, t.id::text AS transaction_id, 'TOPUP' as tx_type, 'INFLOW' as category,
 			       t.total_amount as amount, COALESCE(p.full_name, 'Siswa') as target_name, 'student' as target_role,
-			       t.student_id as target_id, COALESCE(t.purchase_method, 'Tunai') as notes, COALESCE(t.purchase_method, 'Tunai') as method,
+			       COALESCE(t.student_id::text, '') as target_id, COALESCE(t.purchase_method, 'Tunai') as notes, COALESCE(t.purchase_method, 'Tunai') as method,
 			       t.created_at
 			FROM public.transactions t
 			LEFT JOIN public.profiles p ON p.id = t.student_id
@@ -786,7 +786,7 @@ func (r *UserRepo) GetFinanceOfficerLedgerDetail(ctx context.Context, officerID 
 		(
 			SELECT t.id::text, t.id::text AS transaction_id, 'WITHDRAWAL' as tx_type, 'OUTFLOW' as category,
 			       t.total_amount as amount, COALESCE(c.canteen_name, p.full_name, 'Stan Kantin') as target_name, 'canteen' as target_role,
-			       t.operator_id as target_id, 'Pencairan Kas Stan (Payout)' as notes, COALESCE(t.purchase_method, 'Tunai') as method,
+			       COALESCE(t.operator_id::text, '') as target_id, 'Pencairan Kas Stan (Payout)' as notes, COALESCE(t.purchase_method, 'Tunai') as method,
 			       t.created_at
 			FROM public.transactions t
 			LEFT JOIN public.canteen_operators c ON c.id = t.operator_id
@@ -797,7 +797,7 @@ func (r *UserRepo) GetFinanceOfficerLedgerDetail(ctx context.Context, officerID 
 		(
 			SELECT a.id::text, a.entity_id as transaction_id, a.action as tx_type, 'ADJUSTMENT' as category,
 			       0 as amount, COALESCE(a.entity_name, 'Sistem') as target_name, 'system' as target_role,
-			       COALESCE(a.entity_id, '') as target_id, COALESCE(a.description, a.action) as notes, 'Sistem' as method,
+			       COALESCE(a.entity_id, '') as target_id, a.action as notes, 'Sistem' as method,
 			       a.created_at
 			FROM public.audit_logs a
 			WHERE a.user_id = $1 AND a.action IN ('KOREKSI_SALDO', 'MERCHANT_BALANCE_ADJUSTMENT', 'REFUND_TRANSAKSI')
@@ -806,7 +806,7 @@ func (r *UserRepo) GetFinanceOfficerLedgerDetail(ctx context.Context, officerID 
 		LIMIT 100`
 
 	jRows, err := r.db.Pool.Query(ctx, journalQuery, officerID)
-	var journals []domain.OfficerJournalEntry
+	journals := make([]domain.OfficerJournalEntry, 0)
 	if err == nil {
 		defer jRows.Close()
 		for jRows.Next() {
