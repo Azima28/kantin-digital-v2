@@ -1481,7 +1481,9 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                           ),
                                           title: Text(
                                             name,
-                                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: context.textPrimary),
+                                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13.5, color: context.textPrimary),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                           trailing: Text(
                                             fmt.format(earned),
@@ -1640,26 +1642,37 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: GoogleFonts.inter(color: context.textSecondary, fontSize: 13),
-            ),
-            if (detail != null)
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Text(
-                detail,
-                style: GoogleFonts.inter(color: context.textSecondary, fontSize: 11),
+                label,
+                style: GoogleFonts.inter(
+                  color: isBold ? context.textPrimary : context.textSecondary,
+                  fontSize: 12.5,
+                  fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-          ],
+              if (detail != null)
+                Text(
+                  detail,
+                  style: GoogleFonts.inter(color: context.textSecondary, fontSize: 10.5),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+            ],
+          ),
         ),
+        const SizedBox(width: 8),
         Text(
           value,
           style: GoogleFonts.inter(
             fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
             color: valueColor ?? context.textPrimary,
-            fontSize: 13,
+            fontSize: isBold ? 13.5 : 12.5,
           ),
         ),
       ],
