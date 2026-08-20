@@ -14,6 +14,9 @@ class KeuanganTopupStepSearch extends StatefulWidget {
   final bool isSearching;
   final bool hasSearched;
   final List<StudentWithProfile> searchResults;
+  final bool isLoadingMore;
+  final bool hasMore;
+  final int totalMatches;
   final ValueChanged<String> onSearchChanged;
   final ValueChanged<String> onSearchSubmitted;
   final VoidCallback onSearchCleared;
@@ -25,6 +28,9 @@ class KeuanganTopupStepSearch extends StatefulWidget {
     required this.isSearching,
     required this.hasSearched,
     required this.searchResults,
+    this.isLoadingMore = false,
+    this.hasMore = false,
+    this.totalMatches = 0,
     required this.onSearchChanged,
     required this.onSearchSubmitted,
     required this.onSearchCleared,
@@ -142,30 +148,29 @@ class _KeuanganTopupStepSearchState extends State<KeuanganTopupStepSearch> {
             children: [
               Text(
                 widget.searchController.text.trim().isNotEmpty
-                    ? 'Hasil Pencarian (${widget.searchResults.length}):'
-                    : 'Siswa Rekomendasi / Terdaftar (${widget.searchResults.length}):',
+                    ? 'Hasil Pencarian (${widget.searchResults.length}${widget.hasMore ? "/${widget.totalMatches}" : ""}):'
+                    : 'Siswa Rekomendasi / Terdaftar (${widget.searchResults.length}${widget.hasMore ? "/${widget.totalMatches}" : ""}):',
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                   color: context.textSecondary,
                 ),
               ),
-              if (widget.searchController.text.trim().isEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Nebula.teal.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    '10 Siswa',
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: Nebula.teal,
-                    ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Nebula.teal.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '${widget.searchResults.length} Siswa',
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: Nebula.teal,
                   ),
                 ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -195,7 +200,7 @@ class _KeuanganTopupStepSearchState extends State<KeuanganTopupStepSearch> {
                   ],
                 ),
                 child: ListTile(
-                  contentPadding: EdgeInsets.symmetric(
+                  contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 4,
                   ),
@@ -215,7 +220,7 @@ class _KeuanganTopupStepSearchState extends State<KeuanganTopupStepSearch> {
                     ),
                   ),
                   trailing: Container(
-                    padding: EdgeInsets.symmetric(
+                    padding: const EdgeInsets.symmetric(
                       horizontal: 10,
                       vertical: 6,
                     ),
@@ -239,10 +244,52 @@ class _KeuanganTopupStepSearchState extends State<KeuanganTopupStepSearch> {
               );
             },
           ),
-        ] else
+          if (widget.isLoadingMore) ...[
+            const SizedBox(height: 14),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Nebula.teal,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Memuat siswa berikutnya...',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Nebula.teal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ] else if (widget.hasMore) ...[
+            const SizedBox(height: 12),
+            Center(
+              child: Text(
+                'Gulir ke bawah untuk memuat ${widget.totalMatches - widget.searchResults.length} siswa lainnya...',
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  color: context.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ] else ...[
           Center(
             child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 40),
+              padding: const EdgeInsets.symmetric(vertical: 40),
               child: Column(
                 children: [
                   Icon(
@@ -263,6 +310,7 @@ class _KeuanganTopupStepSearchState extends State<KeuanganTopupStepSearch> {
               ),
             ),
           ),
+        ],
       ],
     );
   }

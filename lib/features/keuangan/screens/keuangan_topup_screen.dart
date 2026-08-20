@@ -36,8 +36,14 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
   // Master Cache & In-Memory Filter Pool
   static List<StudentWithProfile> _globalStudentPool = [];
   List<StudentWithProfile> _allStudents = [];
+  List<StudentWithProfile> _allMatchingList = [];
   List<StudentWithProfile> _initialStudents = [];
   List<StudentWithProfile> _searchResults = [];
+
+  // Infinite Scroll & Pagination State
+  final ScrollController _scrollController = ScrollController();
+  int _currentDisplayLimit = 10;
+  bool _isLoadingMore = false;
 
   // Step 1: Search
   final TextEditingController _searchController = TextEditingController();
@@ -58,6 +64,8 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
+
     if (widget.prefilledStudent != null) {
       _selectedStudent = widget.prefilledStudent;
       _currentStep = 2; // Skip search step
@@ -69,12 +77,42 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
     }
   }
 
+  void _onScroll() {
+    if (_currentStep != 1) return;
+    if (_scrollController.hasClients &&
+        _scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 60) {
+      _loadMoreStudents();
+    }
+  }
+
+  void _loadMoreStudents() {
+    if (_isLoadingMore) return;
+    if (_currentDisplayLimit >= _allMatchingList.length) return;
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        setState(() {
+          _currentDisplayLimit += 10;
+          _searchResults = _allMatchingList.take(_currentDisplayLimit).toList();
+          _isLoadingMore = false;
+        });
+      }
+    });
+  }
+
   void _applyStudentPool(List<StudentWithProfile> list) {
     _allStudents = List.from(list);
     final shuffled = List<StudentWithProfile>.from(list)..shuffle();
-    _initialStudents = shuffled.take(10).toList();
+    _initialStudents = shuffled;
     if (_searchController.text.trim().isEmpty) {
-      _searchResults = _initialStudents;
+      _allMatchingList = shuffled;
+      _currentDisplayLimit = 10;
+      _searchResults = _allMatchingList.take(_currentDisplayLimit).toList();
     } else {
       _filterLocally(_searchController.text.trim());
     }
@@ -110,6 +148,8 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _debounce?.cancel();
     _searchController.dispose();
     _amountController.dispose();
@@ -132,7 +172,9 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
     final clean = query.trim().toLowerCase();
     if (clean.isEmpty) {
       setState(() {
-        _searchResults = _initialStudents;
+        _allMatchingList = _initialStudents;
+        _currentDisplayLimit = 10;
+        _searchResults = _allMatchingList.take(_currentDisplayLimit).toList();
         _hasSearched = false;
         _isSearching = false;
       });
@@ -157,7 +199,9 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
     }).toList();
 
     setState(() {
-      _searchResults = filtered;
+      _allMatchingList = filtered;
+      _currentDisplayLimit = 10;
+      _searchResults = _allMatchingList.take(_currentDisplayLimit).toList();
       _hasSearched = true;
       _isSearching = false;
     });
@@ -189,7 +233,9 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
 
         if (mounted && _searchController.text.trim().toLowerCase() == clean) {
           setState(() {
-            _searchResults = results;
+            _allMatchingList = results;
+            _currentDisplayLimit = 10;
+            _searchResults = _allMatchingList.take(_currentDisplayLimit).toList();
             _hasSearched = true;
           });
         }
@@ -327,6 +373,7 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
 
                 Expanded(
                   child: SingleChildScrollView(
+                    controller: _scrollController,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 16,
@@ -369,11 +416,15 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
   }
 
   Widget _buildStep1Search() {
+    final bool hasMore = _currentDisplayLimit < _allMatchingList.length;
     return KeuanganTopupStepSearch(
       searchController: _searchController,
       isSearching: _isSearching,
       hasSearched: _hasSearched,
       searchResults: _searchResults,
+      isLoadingMore: _isLoadingMore,
+      hasMore: hasMore,
+      totalMatches: _allMatchingList.length,
       onSearchChanged: _onSearchChanged,
       onSearchSubmitted: (val) {
         _debounce?.cancel();
@@ -383,7 +434,9 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
         _debounce?.cancel();
         _searchController.clear();
         setState(() {
-          _searchResults = _initialStudents;
+          _allMatchingList = _initialStudents;
+          _currentDisplayLimit = 10;
+          _searchResults = _allMatchingList.take(_currentDisplayLimit).toList();
           _hasSearched = false;
           _isSearching = false;
         });
