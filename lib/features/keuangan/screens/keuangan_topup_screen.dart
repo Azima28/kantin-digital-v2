@@ -81,9 +81,10 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
   }
 
   Future<void> _loadStudents() async {
+    setState(() => _isSearching = _searchResults.isEmpty);
     try {
       final apiClient = ref.read(apiClientProvider);
-      final response = await apiClient.get('/student/lookup', queryParams: {'search': ''});
+      final response = await apiClient.get('/student/lookup');
 
       if (response.success && response.data != null) {
         final list = response.data as List<dynamic>;
@@ -96,11 +97,14 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
         if (mounted) {
           setState(() {
             _applyStudentPool(students);
+            _isSearching = false;
           });
         }
+      } else {
+        if (mounted) setState(() => _isSearching = false);
       }
     } catch (_) {
-      // Fallback
+      if (mounted) setState(() => _isSearching = false);
     }
   }
 
@@ -135,6 +139,12 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
       return;
     }
 
+    if (_allStudents.isEmpty) {
+      _debounce?.cancel();
+      _debounce = Timer(const Duration(milliseconds: 300), () => _fallbackNetworkSearch(clean));
+      return;
+    }
+
     final filtered = _allStudents.where((s) {
       final name = s.fullName.toLowerCase();
       final nisn = (s.nisn ?? '').toLowerCase();
@@ -151,6 +161,40 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
       _hasSearched = true;
       _isSearching = false;
     });
+
+    if (filtered.isEmpty) {
+      _debounce?.cancel();
+      _debounce = Timer(const Duration(milliseconds: 400), () => _fallbackNetworkSearch(clean));
+    }
+  }
+
+  Future<void> _fallbackNetworkSearch(String clean) async {
+    if (clean.isEmpty) return;
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient.get('/student/lookup', queryParams: {'search': clean});
+      if (response.success && response.data != null) {
+        final list = response.data as List<dynamic>;
+        final results = list
+            .map((item) => StudentWithProfile.fromApiJson(
+                Map<String, dynamic>.from(item as Map)))
+            .toList();
+
+        for (final r in results) {
+          if (!_allStudents.any((s) => s.id == r.id)) {
+            _allStudents.add(r);
+            _globalStudentPool.add(r);
+          }
+        }
+
+        if (mounted && _searchController.text.trim().toLowerCase() == clean) {
+          setState(() {
+            _searchResults = results;
+            _hasSearched = true;
+          });
+        }
+      }
+    } catch (_) {}
   }
 
   void _onSearchChanged(String query) {

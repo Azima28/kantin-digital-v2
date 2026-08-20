@@ -52,15 +52,20 @@ func (h *StudentHandler) LookupStudent(c *fiber.Ctx) error {
 	if nisn == "" {
 		nisn = c.Query("nis", "")
 	}
-	if nisn == "" {
-		return response.Error(c, fiber.StatusBadRequest, "NISN / Kode Siswa wajib disertakan", nil)
+	if nisn != "" {
+		student, err := h.paymentService.GetStudentByNISN(c.Context(), nisn)
+		if err != nil {
+			return response.Error(c, fiber.StatusNotFound, "Data siswa tidak ditemukan", err.Error())
+		}
+		return response.Success(c, fiber.StatusOK, "Data siswa ditemukan", student.Profile)
 	}
 
-	student, err := h.paymentService.GetStudentByNISN(c.Context(), nisn)
+	// Default fallback: return student list
+	students, err := h.paymentService.SearchStudents(c.Context(), "")
 	if err != nil {
-		return response.Error(c, fiber.StatusNotFound, "Data siswa tidak ditemukan", err.Error())
+		return response.Error(c, fiber.StatusInternalServerError, "Gagal memuat data siswa", err.Error())
 	}
-	return response.Success(c, fiber.StatusOK, "Data siswa ditemukan", student.Profile)
+	return response.Success(c, fiber.StatusOK, "Daftar siswa", students)
 }
 
 func (h *StudentHandler) GetMyProfile(c *fiber.Ctx) error {
