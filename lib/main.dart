@@ -34,17 +34,25 @@ void main() async {
 
     // Custom error handler & widget builder
     FlutterError.onError = (FlutterErrorDetails details) {
-      debugPrint('[FlutterError] ${details.exceptionAsString()}');
+      final msg = details.exceptionAsString();
+      if (msg.contains('EngineFlutterView') || msg.contains('isDisposed') || msg.contains('discarded')) {
+        return; // Filter web engine teardown / resize artifacts
+      }
+      debugPrint('[FlutterError] $msg');
     };
     ui.PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+      final msg = error.toString();
+      if (msg.contains('EngineFlutterView') || msg.contains('isDisposed') || msg.contains('discarded')) {
+        return true;
+      }
       debugPrint('[PlatformDispatcher Error] $error');
       return true;
     };
 
     ErrorWidget.builder = (FlutterErrorDetails details) {
-      return Material(
-        color: AppColors.systemBackground,
-        child: Center(
+      return Scaffold(
+        backgroundColor: AppColors.systemBackground,
+        body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -58,9 +66,23 @@ void main() async {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Silakan tutup dan buka kembali aplikasi',
+                  'Terjadi kendala visual sementara pada sesi ini.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textSecondary),
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    runApp(const ProviderScope(child: MainApp()));
+                  },
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: const Text('Muat Ulang Halaman'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0D9488),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
               ],
             ),
