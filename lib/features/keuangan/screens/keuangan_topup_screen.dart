@@ -455,6 +455,7 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
   Widget _buildStep2Amount(NumberFormat fmt) {
     return KeuanganTopupStepAmount(
       fmt: fmt,
+      student: _selectedStudent,
       studentName: _studentName,
       studentNisn: _studentNisn,
       studentClass: _studentClass,
@@ -468,6 +469,7 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
         });
       },
       onContinue: () {
+        if (_selectedStudent?.isAccountBlocked == true) return;
         setState(() {
           _currentStep = 3;
         });

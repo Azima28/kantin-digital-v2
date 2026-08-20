@@ -201,7 +201,9 @@ class StudentWithProfile {
     );
   }
 
-  bool get hasRfid => rfidUid != null && rfidUid!.isNotEmpty;
+  bool get hasRfid => rfidUid != null && rfidUid!.trim().isNotEmpty;
+  bool get isCardBlocked => hasRfid && !cardIsActive;
+  bool get isAccountBlocked => !isActive;
   bool get isLowBalance => balance < 5000;
 
   @override

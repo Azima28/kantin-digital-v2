@@ -185,12 +185,22 @@ class _KeuanganTopupStepSearchState extends State<KeuanganTopupStepSearch> {
               final name = student.fullName;
               final nisn = student.nisn ?? '-';
               final className = student.class_ ?? '-';
+              final isAccountBlocked = student.isAccountBlocked;
+              final isCardBlocked = student.isCardBlocked;
+              final hasRfid = student.hasRfid;
 
               return Container(
                 decoration: BoxDecoration(
                   color: context.cardBg,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: context.dividerCol),
+                  border: Border.all(
+                    color: isAccountBlocked
+                        ? Nebula.rose.withValues(alpha: 0.5)
+                        : (isCardBlocked
+                            ? Nebula.amber.withValues(alpha: 0.4)
+                            : context.dividerCol),
+                    width: isAccountBlocked || isCardBlocked ? 1.2 : 0.8,
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: context.shadowColor,
@@ -202,22 +212,105 @@ class _KeuanganTopupStepSearchState extends State<KeuanganTopupStepSearch> {
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 4,
+                    vertical: 6,
                   ),
-                  title: Text(
-                    name,
-                    style: GoogleFonts.inter(
-                      fontWeight: FontWeight.bold,
-                      color: Nebula.teal,
-                      fontSize: 14,
-                    ),
+                  title: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          name,
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.bold,
+                            color: isAccountBlocked ? Nebula.rose : Nebula.teal,
+                            fontSize: 14,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
-                  subtitle: Text(
-                    'NISN: $nisn • Kelas $className',
-                    style: GoogleFonts.inter(
-                      color: context.textSecondary,
-                      fontSize: 12,
-                    ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 2),
+                      Text(
+                        'NISN: $nisn • Kelas $className',
+                        style: GoogleFonts.inter(
+                          color: context.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          if (isAccountBlocked)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Nebula.rose.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                'AKUN DIBLOKIR',
+                                style: GoogleFonts.inter(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Nebula.rose,
+                                ),
+                              ),
+                            )
+                          else if (isCardBlocked)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Nebula.amber.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                'KARTU DIBEKUKAN',
+                                style: GoogleFonts.inter(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Nebula.amber,
+                                ),
+                              ),
+                            )
+                          else if (!hasRfid)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: context.dividerCol,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                'BELUM ADA KARTU',
+                                style: GoogleFonts.inter(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: context.textSecondary,
+                                ),
+                              ),
+                            )
+                          else
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Nebula.teal.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                'KARTU AKTIF',
+                                style: GoogleFonts.inter(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Nebula.teal,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
                   ),
                   trailing: Container(
                     padding: const EdgeInsets.symmetric(
@@ -225,13 +318,15 @@ class _KeuanganTopupStepSearchState extends State<KeuanganTopupStepSearch> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Nebula.teal.withValues(alpha: 0.08),
+                      color: isAccountBlocked
+                          ? Nebula.rose.withValues(alpha: 0.1)
+                          : Nebula.teal.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      AppStrings.buttonSelect,
+                      isAccountBlocked ? 'Lihat' : AppStrings.buttonSelect,
                       style: GoogleFonts.inter(
-                        color: Nebula.teal,
+                        color: isAccountBlocked ? Nebula.rose : Nebula.teal,
                         fontWeight: FontWeight.bold,
                         fontSize: 11,
                       ),

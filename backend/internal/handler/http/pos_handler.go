@@ -34,6 +34,10 @@ func (h *POSHandler) ScanCard(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusNotFound, "Kartu RFID tidak terdaftar pada sistem", nil)
 	}
 
+	if student.Profile != nil && !student.Profile.IsActive {
+		return response.Error(c, fiber.StatusForbidden, "Akun siswa ini sedang dinonaktifkan / diblokir oleh admin", nil)
+	}
+
 	if !student.IsActive {
 		return response.Error(c, fiber.StatusForbidden, "Kartu RFID siswa ini sedang diblokir / dibekukan", nil)
 	}

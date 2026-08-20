@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/models/models.dart';
 
 /// Formatter untuk input nominal dengan pemisah ribuan titik (.) khas Indonesia
 class _ThousandsSeparatorInputFormatter extends TextInputFormatter {
@@ -42,6 +43,7 @@ class _ThousandsSeparatorInputFormatter extends TextInputFormatter {
 /// and a "Lanjut → Konfirmasi" button.
 class KeuanganTopupStepAmount extends StatelessWidget {
   final NumberFormat fmt;
+  final StudentWithProfile? student;
   final String studentName;
   final String studentNisn;
   final String studentClass;
@@ -55,6 +57,7 @@ class KeuanganTopupStepAmount extends StatelessWidget {
   const KeuanganTopupStepAmount({
     super.key,
     required this.fmt,
+    this.student,
     required this.studentName,
     required this.studentNisn,
     required this.studentClass,
@@ -72,6 +75,10 @@ class KeuanganTopupStepAmount extends StatelessWidget {
     final int amount = int.tryParse(clean) ?? 0;
     final int newBalance = studentBalance + amount;
 
+    final isAccountBlocked = student?.isAccountBlocked ?? false;
+    final isCardBlocked = student?.isCardBlocked ?? false;
+    final hasRfid = student?.hasRfid ?? false;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -82,6 +89,14 @@ class KeuanganTopupStepAmount extends StatelessWidget {
           decoration: BoxDecoration(
             color: context.cardBg,
             borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isAccountBlocked
+                  ? Nebula.rose.withValues(alpha: 0.5)
+                  : (isCardBlocked
+                      ? Nebula.amber.withValues(alpha: 0.4)
+                      : context.dividerCol),
+              width: isAccountBlocked || isCardBlocked ? 1.2 : 0.8,
+            ),
             boxShadow: [
               BoxShadow(
                 color: context.shadowColor,
@@ -94,18 +109,42 @@ class KeuanganTopupStepAmount extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(
-                    CupertinoIcons.checkmark_circle_fill,
-                    color: Nebula.teal,
+                  Icon(
+                    isAccountBlocked
+                        ? CupertinoIcons.xmark_octagon_fill
+                        : (isCardBlocked
+                            ? CupertinoIcons.exclamationmark_triangle_fill
+                            : (!hasRfid
+                                ? CupertinoIcons.info_circle_fill
+                                : CupertinoIcons.checkmark_circle_fill)),
+                    color: isAccountBlocked
+                        ? Nebula.rose
+                        : (isCardBlocked
+                            ? Nebula.amber
+                            : (!hasRfid ? Colors.blueGrey : Nebula.teal)),
                     size: 18,
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    'Siswa Ditemukan',
-                    style: GoogleFonts.inter(
-                      fontWeight: FontWeight.bold,
-                      color: Nebula.teal,
-                      fontSize: 13,
+                  Expanded(
+                    child: Text(
+                      isAccountBlocked
+                          ? 'Akun Siswa Dinonaktifkan / Diblokir'
+                          : (isCardBlocked
+                              ? 'Kartu RFID Sedang Dibekukan'
+                              : (!hasRfid
+                                  ? 'Siswa Belum Memiliki Kartu RFID'
+                                  : 'Siswa Ditemukan & Kartu Aktif')),
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.bold,
+                        color: isAccountBlocked
+                            ? Nebula.rose
+                            : (isCardBlocked
+                                ? Nebula.amber
+                                : (!hasRfid ? Colors.blueGrey : Nebula.teal)),
+                        fontSize: 13,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -129,10 +168,123 @@ class KeuanganTopupStepAmount extends StatelessWidget {
                 thickness: 0.5,
                 color: context.dividerCol,
               ),
+              _buildInfoRow(
+                context,
+                'Status Akun',
+                isAccountBlocked ? 'Diblokir (Nonaktif)' : 'Aktif',
+                customColor: isAccountBlocked ? Nebula.rose : Nebula.teal,
+              ),
+              Divider(
+                height: 16,
+                thickness: 0.5,
+                color: context.dividerCol,
+              ),
+              _buildInfoRow(
+                context,
+                'Status Kartu RFID',
+                isCardBlocked
+                    ? 'Dibekukan / Hilang'
+                    : (!hasRfid
+                        ? 'Belum Terdaftar'
+                        : 'Terdaftar (${student?.rfidUid})'),
+                customColor: isCardBlocked
+                    ? Nebula.amber
+                    : (!hasRfid ? Colors.blueGrey : Nebula.teal),
+              ),
+              Divider(
+                height: 16,
+                thickness: 0.5,
+                color: context.dividerCol,
+              ),
               _buildInfoRow(context, 'Saldo Saat Ini', fmt.format(studentBalance)),
             ],
           ),
         ),
+
+        // Warning Alert Banner
+        if (isAccountBlocked) ...[
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Nebula.rose.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Nebula.rose.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                const Icon(CupertinoIcons.xmark_octagon_fill, color: Nebula.rose, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Akun siswa ini sedang dinonaktifkan oleh admin. Top-up saldo dan transaksi tidak dapat diproses demi keamanan.',
+                    style: GoogleFonts.inter(
+                      fontSize: 11.5,
+                      color: Nebula.rose,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ] else if (isCardBlocked) ...[
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Nebula.amber.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Nebula.amber.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                const Icon(CupertinoIcons.exclamationmark_triangle_fill, color: Nebula.amber, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Perhatian: Kartu RFID siswa sedang dibekukan / diblokir. Siswa tidak dapat bertransaksi di kasir kantin sebelum kartu diaktifkan kembali.',
+                    style: GoogleFonts.inter(
+                      fontSize: 11.5,
+                      color: Nebula.amber,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ] else if (!hasRfid) ...[
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.blueGrey.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.blueGrey.withValues(alpha: 0.25)),
+            ),
+            child: Row(
+              children: [
+                const Icon(CupertinoIcons.info_circle_fill, color: Colors.blueGrey, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Siswa belum memiliki kartu RFID aktif. Saldo akan tersimpan di akun, namun daftarkan kartu di menu "Registrasi Kartu" agar dapat digunakan di kasir.',
+                    style: GoogleFonts.inter(
+                      fontSize: 11.5,
+                      color: context.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+
         const SizedBox(height: 20),
 
         Text(
@@ -254,11 +406,11 @@ class KeuanganTopupStepAmount extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: amount <= 0 || amount % 1000 != 0
+            onPressed: (isAccountBlocked || amount <= 0 || amount % 1000 != 0)
                 ? null
                 : onContinue,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Nebula.teal,
+              backgroundColor: isAccountBlocked ? Nebula.rose : Nebula.teal,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -266,7 +418,9 @@ class KeuanganTopupStepAmount extends StatelessWidget {
               elevation: 0,
             ),
             child: Text(
-              'LANJUT → KONFIRMASI',
+              isAccountBlocked
+                  ? 'TIDAK DAPAT TOP-UP (AKUN DIBLOKIR)'
+                  : 'LANJUT → KONFIRMASI',
               style: GoogleFonts.inter(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
@@ -279,7 +433,7 @@ class KeuanganTopupStepAmount extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(BuildContext context, String label, String value) {
+  Widget _buildInfoRow(BuildContext context, String label, String value, {Color? customColor}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -295,7 +449,7 @@ class KeuanganTopupStepAmount extends StatelessWidget {
             value,
             style: GoogleFonts.inter(
               fontWeight: FontWeight.w600,
-              color: context.textPrimary,
+              color: customColor ?? context.textPrimary,
               fontSize: 13,
             ),
             textAlign: TextAlign.right,
