@@ -1,11 +1,20 @@
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 /// Minimal connectivity checker for Kantin Digital Go Backend.
 class ConnectivityService {
-  static const String _healthUrl = String.fromEnvironment(
-    'BACKEND_HEALTH_URL',
-    defaultValue: 'http://127.0.0.1:8000/health',
-  );
+  static String get _healthUrl {
+    if (kIsWeb) {
+      final origin = Uri.base.origin;
+      if (origin.isNotEmpty && !origin.startsWith('file://')) {
+        return '$origin/health';
+      }
+    }
+    return const String.fromEnvironment(
+      'BACKEND_HEALTH_URL',
+      defaultValue: 'https://kantin.zitech.web.id/health',
+    );
+  }
 
   /// Returns `true` when the app can reach the Go backend.
   static Future<bool> isOnline() async {
