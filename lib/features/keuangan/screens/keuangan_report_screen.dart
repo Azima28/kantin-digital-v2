@@ -528,25 +528,31 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
     required VoidCallback onTap,
     required BuildContext context,
   }) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
+        alignment: Alignment.center,
         decoration: BoxDecoration(
           color: isSelected ? Nebula.teal : context.cardBg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected ? Nebula.teal : context.dividerCol,
+            width: isSelected ? 1.2 : 0.8,
           ),
         ),
         child: Text(
           label,
+          textAlign: TextAlign.center,
           style: GoogleFonts.inter(
-            fontSize: 12,
+            fontSize: 11.5,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             color: isSelected ? Colors.white : context.textPrimary,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ),
     );
@@ -703,10 +709,10 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                 borderRadius: BorderRadius.circular(20),
               ),
               insetPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
               child: Container(
-                constraints: const BoxConstraints(maxWidth: 460),
-                padding: const EdgeInsets.all(20),
+                constraints: const BoxConstraints(maxWidth: 440),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -718,7 +724,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                         Text(
                           'Filter Periode',
                           style: GoogleFonts.inter(
-                            fontSize: 17,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: context.textPrimary,
                           ),
@@ -737,7 +743,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
 
                     // Section 1: PILIHAN CEPAT
                     Text(
@@ -749,59 +755,65 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                         letterSpacing: 0.5,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
-                        _buildQuickChoiceChip(
-                          label: 'Hari Ini',
-                          isSelected: tempQuickChoice == 'Hari Ini',
-                          onTap: () {
-                            setDialogState(() {
-                              tempQuickChoice = 'Hari Ini';
-                              tempStartDate =
-                                  DateTime(now.year, now.month, now.day);
-                              tempEndDate =
-                                  DateTime(now.year, now.month, now.day);
-                            });
-                          },
-                          context: context,
+                        Expanded(
+                          child: _buildQuickChoiceChip(
+                            label: 'Hari Ini',
+                            isSelected: tempQuickChoice == 'Hari Ini',
+                            onTap: () {
+                              setDialogState(() {
+                                tempQuickChoice = 'Hari Ini';
+                                tempStartDate =
+                                    DateTime(now.year, now.month, now.day);
+                                tempEndDate =
+                                    DateTime(now.year, now.month, now.day);
+                              });
+                            },
+                            context: context,
+                          ),
                         ),
-                        const SizedBox(width: 8),
-                        _buildQuickChoiceChip(
-                          label: 'Minggu Ini',
-                          isSelected: tempQuickChoice == 'Minggu Ini',
-                          onTap: () {
-                            setDialogState(() {
-                              tempQuickChoice = 'Minggu Ini';
-                              final startOfWeek = now
-                                  .subtract(Duration(days: now.weekday - 1));
-                              tempStartDate = DateTime(startOfWeek.year,
-                                  startOfWeek.month, startOfWeek.day);
-                              tempEndDate =
-                                  DateTime(now.year, now.month, now.day);
-                            });
-                          },
-                          context: context,
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: _buildQuickChoiceChip(
+                            label: 'Minggu Ini',
+                            isSelected: tempQuickChoice == 'Minggu Ini',
+                            onTap: () {
+                              setDialogState(() {
+                                tempQuickChoice = 'Minggu Ini';
+                                final startOfWeek = now
+                                    .subtract(Duration(days: now.weekday - 1));
+                                tempStartDate = DateTime(startOfWeek.year,
+                                    startOfWeek.month, startOfWeek.day);
+                                tempEndDate =
+                                    DateTime(now.year, now.month, now.day);
+                              });
+                            },
+                            context: context,
+                          ),
                         ),
-                        const SizedBox(width: 8),
-                        _buildQuickChoiceChip(
-                          label: 'Bulan Ini',
-                          isSelected: tempQuickChoice == 'Bulan Ini',
-                          onTap: () {
-                            setDialogState(() {
-                              tempQuickChoice = 'Bulan Ini';
-                              tempYear = now.year;
-                              tempStartDate =
-                                  DateTime(now.year, now.month, 1);
-                              tempEndDate =
-                                  DateTime(now.year, now.month + 1, 0);
-                            });
-                          },
-                          context: context,
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: _buildQuickChoiceChip(
+                            label: 'Bulan Ini',
+                            isSelected: tempQuickChoice == 'Bulan Ini',
+                            onTap: () {
+                              setDialogState(() {
+                                tempQuickChoice = 'Bulan Ini';
+                                tempYear = now.year;
+                                tempStartDate =
+                                    DateTime(now.year, now.month, 1);
+                                tempEndDate =
+                                    DateTime(now.year, now.month + 1, 0);
+                              });
+                            },
+                            context: context,
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
 
                     // Section 2: RENTANG WAKTU
                     Text(
@@ -850,7 +862,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                 borderRadius: BorderRadius.circular(10),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 10),
+                                      horizontal: 8, vertical: 8),
                                   decoration: BoxDecoration(
                                     color: context.cardBg,
                                     borderRadius: BorderRadius.circular(10),
@@ -861,15 +873,15 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                     children: [
                                       Icon(
                                         Icons.calendar_today_outlined,
-                                        size: 16,
+                                        size: 14,
                                         color: context.textSecondary,
                                       ),
-                                      const SizedBox(width: 8),
+                                      const SizedBox(width: 6),
                                       Expanded(
                                         child: Text(
                                           fmtDate.format(tempStartDate),
                                           style: GoogleFonts.inter(
-                                            fontSize: 12,
+                                            fontSize: 11.5,
                                             fontWeight: FontWeight.w600,
                                             color: context.textPrimary,
                                           ),
@@ -883,7 +895,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                             ],
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
 
                         // Sampai Box
                         Expanded(
@@ -919,7 +931,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                 borderRadius: BorderRadius.circular(10),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 10),
+                                      horizontal: 8, vertical: 8),
                                   decoration: BoxDecoration(
                                     color: context.cardBg,
                                     borderRadius: BorderRadius.circular(10),
@@ -930,15 +942,15 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                     children: [
                                       Icon(
                                         Icons.calendar_today_outlined,
-                                        size: 16,
+                                        size: 14,
                                         color: context.textSecondary,
                                       ),
-                                      const SizedBox(width: 8),
+                                      const SizedBox(width: 6),
                                       Expanded(
                                         child: Text(
                                           fmtDate.format(tempEndDate),
                                           style: GoogleFonts.inter(
-                                            fontSize: 12,
+                                            fontSize: 11.5,
                                             fontWeight: FontWeight.w600,
                                             color: context.textPrimary,
                                           ),
