@@ -15,14 +15,16 @@ type PaymentService struct {
 	userRepo    *postgres.UserRepo
 	auditRepo   *postgres.AuditRepo
 	productRepo *postgres.ProductRepo
+	shiftRepo   *postgres.ShiftRepo
 }
 
-func NewPaymentService(txRepo *postgres.TransactionRepo, userRepo *postgres.UserRepo, auditRepo *postgres.AuditRepo, productRepo *postgres.ProductRepo) *PaymentService {
+func NewPaymentService(txRepo *postgres.TransactionRepo, userRepo *postgres.UserRepo, auditRepo *postgres.AuditRepo, productRepo *postgres.ProductRepo, shiftRepo *postgres.ShiftRepo) *PaymentService {
 	return &PaymentService{
 		txRepo:      txRepo,
 		userRepo:    userRepo,
 		auditRepo:   auditRepo,
 		productRepo: productRepo,
+		shiftRepo:   shiftRepo,
 	}
 }
 
@@ -114,6 +116,38 @@ func (s *PaymentService) UpdateStudentCardStatus(ctx context.Context, studentID 
 
 func (s *PaymentService) UpdateUser(ctx context.Context, user *domain.UserProfile) error {
 	return s.userRepo.UpdateUserProfile(ctx, user)
+}
+
+func (s *PaymentService) GetCurrentShiftSummary(ctx context.Context, officerID string) (*domain.CurrentShiftSummary, error) {
+	if s.shiftRepo == nil {
+		return nil, errors.New("shift repository not initialized")
+	}
+	return s.shiftRepo.GetCurrentShiftSummary(ctx, officerID)
+}
+
+func (s *PaymentService) CloseCurrentShift(ctx context.Context, officerID string, actualPhysicalCash int, notes string) (*domain.CashierShift, error) {
+	if s.shiftRepo == nil {
+		return nil, errors.New("shift repository not initialized")
+	}
+	return s.shiftRepo.CloseCurrentShift(ctx, postgres.CloseShiftParams{
+		OfficerID:          officerID,
+		ActualPhysicalCash: actualPhysicalCash,
+		Notes:              notes,
+	})
+}
+
+func (s *PaymentService) ListShifts(ctx context.Context, officerID string, limit, offset int) ([]domain.CashierShift, int, error) {
+	if s.shiftRepo == nil {
+		return nil, 0, errors.New("shift repository not initialized")
+	}
+	return s.shiftRepo.ListShifts(ctx, officerID, limit, offset)
+}
+
+func (s *PaymentService) VerifyShift(ctx context.Context, shiftID, adminID string) (*domain.CashierShift, error) {
+	if s.shiftRepo == nil {
+		return nil, errors.New("shift repository not initialized")
+	}
+	return s.shiftRepo.VerifyShift(ctx, shiftID, adminID)
 }
 
 func (s *PaymentService) UpdateStudentFull(ctx context.Context, p postgres.UpdateStudentFullParams) error {

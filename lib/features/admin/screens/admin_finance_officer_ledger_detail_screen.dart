@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/services/api_client.dart';
 import 'package:kantin_digital/core/services/report_export_service.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
@@ -27,8 +28,34 @@ class AdminFinanceOfficerLedgerDetailScreen extends ConsumerStatefulWidget {
 
 class _AdminFinanceOfficerLedgerDetailScreenState
     extends ConsumerState<AdminFinanceOfficerLedgerDetailScreen> {
-  int _selectedCategoryTab = 0; // 0: Semua, 1: Inflow (+), 2: Outflow (-), 3: Koreksi (±)
+  int _selectedCategoryTab = 0; // 0: Semua, 1: Inflow (+), 2: Outflow (-), 3: Sesi Shift
   int _selectedDateFilter = 0; // 0: Semua Waktu, 1: Hari Ini, 2: 7 Hari Terakhir, 3: 30 Hari Terakhir
+
+  Future<void> _verifyShift(String shiftId, int shiftNumber) async {
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final res = await apiClient.post('/admin/finance/shift/$shiftId/verify');
+      if (res.success) {
+        ref.invalidate(adminAllShiftsProvider(widget.officerId));
+        ref.invalidate(adminFinanceOfficersLedgerProvider);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Shift #$shiftNumber berhasil diverifikasi & setoran fisik disahkan.'),
+              backgroundColor: Nebula.teal,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memverifikasi shift: $e'), backgroundColor: Nebula.rose),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -523,13 +550,20 @@ class _AdminFinanceOfficerLedgerDetailScreenState
                           2,
                           activeColor: Nebula.rose,
                         ),
+                        _buildCategoryTab(
+                          'Sesi Shift',
+                          3,
+                          activeColor: const Color(0xFF0284C7),
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 16),
 
-                  // ─── 4. List Jurnal Transaksi ───
-                  if (filteredJournals.isEmpty) ...[
+                  // ─── 4. List Jurnal Transaksi / Sesi Shift ───
+                  if (_selectedCategoryTab == 3) ...[
+                    _buildShiftsSection(context, fmt, officer),
+                  ] else if (filteredJournals.isEmpty) ...[
                     Center(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 40),
@@ -793,6 +827,252 @@ class _AdminFinanceOfficerLedgerDetailScreenState
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildShiftsSection(
+    BuildContext context,
+    NumberFormat fmt,
+    FinanceOfficerLedgerItem officer,
+  ) {
+    final shiftsAsync = ref.watch(adminAllShiftsProvider(widget.officerId));
+
+    return shiftsAsync.when(
+      data: (shifts) {
+        if (shifts.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Column(
+                children: [
+                  Icon(
+                    CupertinoIcons.lock_shield,
+                    size: 48,
+                    color: context.textSecondary,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Belum ada riwayat sesi tutup kasir untuk petugas ini.',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: context.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: shifts.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final shift = shifts[index];
+            final isVerified = shift.isVerified;
+            final isMatched = shift.isBalanced;
+            final isShort = shift.isDeficit;
+
+            return Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: context.cardBg,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: isVerified
+                      ? Nebula.teal.withValues(alpha: 0.3)
+                      : (isMatched
+                          ? const Color(0xFF0284C7).withValues(alpha: 0.3)
+                          : Nebula.amber.withValues(alpha: 0.4)),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: context.shadowColor,
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0284C7).withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              CupertinoIcons.lock_shield_fill,
+                              color: Color(0xFF0284C7),
+                              size: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Sesi Shift #${shift.shiftNumber}',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: context.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: isVerified
+                              ? Nebula.teal.withValues(alpha: 0.12)
+                              : Colors.amber.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          isVerified ? 'TERVERIFIKASI' : 'MENUNGGU AUDIT',
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: isVerified ? Nebula.teal : Colors.amber.shade800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Periode: ${shift.formattedStartedAt} s/d ${shift.formattedClosedAt}',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: context.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Divider(height: 1, thickness: 0.5),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Uang Masuk (+):', style: GoogleFonts.inter(fontSize: 11.5, color: context.textSecondary)),
+                      Text('+${fmt.format(shift.totalInflow)} (${shift.topupCount} tx)',
+                          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Nebula.teal)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Uang Keluar (-):', style: GoogleFonts.inter(fontSize: 11.5, color: context.textSecondary)),
+                      Text('-${fmt.format(shift.totalOutflow)} (${shift.payoutCount} tx)',
+                          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Nebula.rose)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Target Sistem:', style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w600, color: context.textPrimary)),
+                      Text(fmt.format(shift.expectedCash),
+                          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: context.textPrimary)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Fisik Diserahkan:', style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.bold, color: const Color(0xFF0284C7))),
+                      Text(fmt.format(shift.actualPhysicalCash),
+                          style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF0284C7))),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isMatched
+                          ? Nebula.teal.withValues(alpha: 0.08)
+                          : (isShort
+                              ? Nebula.rose.withValues(alpha: 0.08)
+                              : Nebula.amber.withValues(alpha: 0.08)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Status Rekonsiliasi:',
+                            style: GoogleFonts.inter(fontSize: 11, color: context.textSecondary)),
+                        Text(
+                          isMatched
+                              ? 'PAS / Rp 0 Selisih'
+                              : (isShort
+                                  ? 'KURANG -${fmt.format(shift.difference.abs())}'
+                                  : 'LEBIH +${fmt.format(shift.difference.abs())}'),
+                          style: GoogleFonts.inter(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.bold,
+                            color: isMatched
+                                ? Nebula.teal
+                                : (isShort ? Nebula.rose : Nebula.amber),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (shift.notes.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Catatan: "${shift.notes}"',
+                      style: GoogleFonts.inter(fontSize: 11, fontStyle: FontStyle.italic, color: context.textSecondary),
+                    ),
+                  ],
+                  if (!isVerified) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 38,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _verifyShift(shift.id, shift.shiftNumber),
+                        icon: const Icon(CupertinoIcons.checkmark_seal_fill, size: 16),
+                        label: Text(
+                          'Verifikasi & Terima Amplop Fisik',
+                          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Nebula.teal,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ),
+                  ] else ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(CupertinoIcons.checkmark_alt_circle_fill, color: Nebula.teal, size: 14),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Diverifikasi oleh ${shift.verifierName ?? "Super Admin"}',
+                          style: GoogleFonts.inter(fontSize: 10.5, color: Nebula.teal, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            );
+          },
+        );
+      },
+      loading: () => const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: Nebula.teal))),
+      error: (err, _) => Center(child: Text('Gagal memuat sesi shift: $err', style: GoogleFonts.inter(color: Nebula.rose))),
     );
   }
 

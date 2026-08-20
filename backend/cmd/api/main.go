@@ -61,12 +61,13 @@ func main() {
 	txRepo := postgres.NewTransactionRepo(db)
 	notifRepo := postgres.NewNotificationRepo(db)
 	auditRepo := postgres.NewAuditRepo(db)
+	shiftRepo := postgres.NewShiftRepo(db)
 
 	// 5. Services
 	authService := service.NewAuthService(userRepo, tokenMaker)
 	catalogService := service.NewCatalogService(productRepo, userRepo)
 	orderService := service.NewOrderService(orderRepo)
-	paymentService := service.NewPaymentService(txRepo, userRepo, auditRepo, productRepo)
+	paymentService := service.NewPaymentService(txRepo, userRepo, auditRepo, productRepo, shiftRepo)
 	notifService := service.NewNotificationService(notifRepo)
 
 	// 6. HTTP Handlers
@@ -252,6 +253,11 @@ func main() {
 			financeGroup.Post("/topup", financeH.Topup)
 			financeGroup.Post("/merchant/withdraw", financeH.MerchantWithdraw)
 			financeGroup.Get("/report", financeH.Report)
+
+			// Continuous Shift Ledger Routes
+			financeGroup.Get("/shift/current", financeH.GetCurrentShift)
+			financeGroup.Post("/shift/close", financeH.CloseShift)
+			financeGroup.Get("/shift/history", financeH.ListShiftHistory)
 		}
 
 		// Parent Portal & Student Management
@@ -291,6 +297,10 @@ func main() {
 			adminGroup.Get("/settings", adminH.GetSettings)
 			adminGroup.Post("/settings", adminH.SaveSettings)
 			adminGroup.Put("/settings", adminH.SaveSettings)
+
+			// Super Admin Shift Review & Verification Routes
+			adminGroup.Get("/finance/shifts", financeH.AdminListAllShifts)
+			adminGroup.Post("/finance/shift/:id/verify", financeH.AdminVerifyShift)
 		}
 	}
 

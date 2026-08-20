@@ -306,3 +306,50 @@ final dailyTrendChartProvider =
     FutureProvider.autoDispose<DailyTrendChartData>((ref) async {
   return DailyTrendChartData.empty();
 });
+
+// ============================================================================
+// CONTINUOUS SHIFT LEDGER PROVIDERS (Keuangan)
+// ============================================================================
+
+final keuanganCurrentShiftProvider =
+    FutureProvider.autoDispose<CurrentShiftSummary>((ref) async {
+  ref.cacheFor(const Duration(seconds: 30));
+  final apiClient = ref.watch(apiClientProvider);
+  try {
+    final res = await apiClient.get('/finance/shift/current');
+    if (res.success && res.data != null) {
+      return CurrentShiftSummary.fromJson(Map<String, dynamic>.from(res.data as Map));
+    }
+  } catch (e) {
+    debugPrint('keuanganCurrentShiftProvider error: $e');
+  }
+  return CurrentShiftSummary(
+    officerId: '',
+    officerName: 'Petugas Keuangan',
+    shiftNumber: 1,
+    startedAt: DateTime.now(),
+    totalInflow: 0,
+    totalOutflow: 0,
+    expectedCash: 0,
+    topupCount: 0,
+    payoutCount: 0,
+  );
+});
+
+final keuanganShiftHistoryProvider =
+    FutureProvider.autoDispose<List<CashierShift>>((ref) async {
+  ref.cacheFor(const Duration(minutes: 1));
+  final apiClient = ref.watch(apiClientProvider);
+  try {
+    final res = await apiClient.get('/finance/shift/history');
+    if (res.success && res.data != null) {
+      final data = res.data as Map<String, dynamic>;
+      final list = data['shifts'] as List<dynamic>? ?? [];
+      return list.map((e) => CashierShift.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+    }
+  } catch (e) {
+    debugPrint('keuanganShiftHistoryProvider error: $e');
+  }
+  return <CashierShift>[];
+});
+

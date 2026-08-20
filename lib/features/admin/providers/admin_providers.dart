@@ -324,3 +324,29 @@ final adminFinanceOfficerLedgerDetailProvider = FutureProvider.autoDispose
   );
 });
 
+// ============================================================================
+// ADMIN ALL CASHIER SHIFTS PROVIDER (Review & Verifikasi Tutup Kasir)
+// ============================================================================
+
+final adminAllShiftsProvider = FutureProvider.autoDispose
+    .family<List<CashierShift>, String?>((ref, officerId) async {
+  ref.cacheFor(const Duration(minutes: 1));
+  final apiClient = ref.watch(apiClientProvider);
+  try {
+    final query = <String, dynamic>{'limit': '50'};
+    if (officerId != null && officerId.isNotEmpty) {
+      query['officer_id'] = officerId;
+    }
+    final res = await apiClient.get('/admin/finance/shifts', queryParams: query);
+    if (res.success && res.data != null) {
+      final data = res.data as Map<String, dynamic>;
+      final list = data['shifts'] as List<dynamic>? ?? [];
+      return list.map((e) => CashierShift.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+    }
+  } catch (e) {
+    debugPrint('adminAllShiftsProvider error: $e');
+  }
+  return <CashierShift>[];
+});
+
+

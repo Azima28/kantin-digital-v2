@@ -31,11 +31,12 @@ func setupTestApp() *fiber.App {
 	txRepo := postgres.NewTransactionRepo(&postgres.DB{})
 	notifRepo := postgres.NewNotificationRepo(&postgres.DB{})
 	auditRepo := postgres.NewAuditRepo(&postgres.DB{})
+	shiftRepo := postgres.NewShiftRepo(&postgres.DB{})
 
 	authService := service.NewAuthService(userRepo, tokenMaker)
 	catalogService := service.NewCatalogService(productRepo, userRepo)
 	orderService := service.NewOrderService(orderRepo)
-	paymentService := service.NewPaymentService(txRepo, userRepo, auditRepo, productRepo)
+	paymentService := service.NewPaymentService(txRepo, userRepo, auditRepo, productRepo, shiftRepo)
 	notifService := service.NewNotificationService(notifRepo)
 
 	authH := httpHandler.NewAuthHandler(authService)

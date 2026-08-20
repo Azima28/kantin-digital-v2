@@ -142,3 +142,97 @@ func (h *FinanceHandler) MerchantWithdraw(c *fiber.Ctx) error {
 
 	return response.Success(c, fiber.StatusOK, "Pencairan dana stan berhasil diproses", tx)
 }
+
+// ── Sesi Shift Kasir (Continuous Shift Ledger) ──────────────────────────────
+
+func (h *FinanceHandler) GetCurrentShift(c *fiber.Ctx) error {
+	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
+	summary, err := h.paymentService.GetCurrentShiftSummary(c.Context(), claims.UserID)
+	if err != nil {
+		return response.Error(c, fiber.StatusInternalServerError, "Gagal memuat sesi shift kasir", err.Error())
+	}
+	return response.Success(c, fiber.StatusOK, "Sesi shift kasir aktif", summary)
+}
+
+type CloseShiftRequest struct {
+	ActualPhysicalCash int    `json:"actual_physical_cash"`
+	Notes              string `json:"notes"`
+}
+
+func (h *FinanceHandler) CloseShift(c *fiber.Ctx) error {
+	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
+	var req CloseShiftRequest
+	if err := c.BodyParser(&req); err != nil {
+		return response.Error(c, fiber.StatusBadRequest, "Payload tutup kasir tidak valid", err.Error())
+	}
+
+	if req.ActualPhysicalCash < 0 {
+		return response.Error(c, fiber.StatusBadRequest, "Nominal fisik uang tidak boleh negatif", nil)
+	}
+
+	shift, err := h.paymentService.CloseCurrentShift(c.Context(), claims.UserID, req.ActualPhysicalCash, req.Notes)
+	if err != nil {
+		return response.Error(c, fiber.StatusBadRequest, err.Error(), nil)
+	}
+
+	return response.Success(c, fiber.StatusOK, "Sesi shift kasir berhasil ditutup dan disetor", shift)
+}
+
+func (h *FinanceHandler) ListShiftHistory(c *fiber.Ctx) error {
+	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
+	limitStr := c.Query("limit", "20")
+	limit, _ := strconv.Atoi(limitStr)
+	if limit <= 0 {
+		limit = 20
+	}
+	offsetStr := c.Query("offset", "0")
+	offset, _ := strconv.Atoi(offsetStr)
+
+	shifts, total, err := h.paymentService.ListShifts(c.Context(), claims.UserID, limit, offset)
+	if err != nil {
+		return response.Error(c, fiber.StatusInternalServerError, "Gagal memuat riwayat sesi shift", err.Error())
+	}
+
+	return response.Success(c, fiber.StatusOK, "Riwayat sesi shift kasir", map[string]interface{}{
+		"shifts": shifts,
+		"total":  total,
+	})
+}
+
+// ── Super Admin Shift Endpoints ────────────────────────────────────────────
+
+func (h *FinanceHandler) AdminListAllShifts(c *fiber.Ctx) error {
+	officerID := c.Query("officer_id", "")
+	limitStr := c.Query("limit", "50")
+	limit, _ := strconv.Atoi(limitStr)
+	if limit <= 0 {
+		limit = 50
+	}
+	offsetStr := c.Query("offset", "0")
+	offset, _ := strconv.Atoi(offsetStr)
+
+	shifts, total, err := h.paymentService.ListShifts(c.Context(), officerID, limit, offset)
+	if err != nil {
+		return response.Error(c, fiber.StatusInternalServerError, "Gagal memuat daftar shift kasir", err.Error())
+	}
+
+	return response.Success(c, fiber.StatusOK, "Daftar seluruh sesi shift kasir", map[string]interface{}{
+		"shifts": shifts,
+		"total":  total,
+	})
+}
+
+func (h *FinanceHandler) AdminVerifyShift(c *fiber.Ctx) error {
+	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
+	shiftID := c.Params("id", "")
+	if shiftID == "" {
+		return response.Error(c, fiber.StatusBadRequest, "ID shift wajib disertakan", nil)
+	}
+
+	shift, err := h.paymentService.VerifyShift(c.Context(), shiftID, claims.UserID)
+	if err != nil {
+		return response.Error(c, fiber.StatusBadRequest, err.Error(), nil)
+	}
+
+	return response.Success(c, fiber.StatusOK, "Serah terima shift berhasil diverifikasi", shift)
+}

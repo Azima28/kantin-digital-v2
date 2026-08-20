@@ -1716,6 +1716,8 @@ class ReportExportService {
     required String officerName,
     required String schoolName,
     required String authorityLevel,
+    int shiftNumber = 1,
+    String? startedAtStr,
     required int totalInflow,
     required int totalOutflow,
     required int systemNetCash,
@@ -1770,7 +1772,7 @@ class ReportExportService {
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
-                  'Sistem Kantin Digital | Berita Acara Sah Tutup Kasir & Rekonsiliasi Laci',
+                  'Sistem Kantin Digital | Berita Acara Sah Tutup Kasir (Shift #$shiftNumber)',
                   style: pw.TextStyle(font: ttfRegular, fontSize: 8, color: subtleText),
                 ),
                 pw.Text(
@@ -1809,10 +1811,10 @@ class ReportExportService {
                       ),
                       pw.SizedBox(height: 3),
                       pw.Text(
-                        'BERITA ACARA SERAH TERIMA & TUTUP KASIR',
+                        'BERITA ACARA SERAH TERIMA & TUTUP KASIR (SHIFT #$shiftNumber)',
                         style: pw.TextStyle(
                           font: ttfRegular,
-                          fontSize: 9,
+                          fontSize: 8.5,
                           color: const PdfColor.fromInt(0xFFCCFBF1),
                           letterSpacing: 0.5,
                         ),
@@ -1835,7 +1837,7 @@ class ReportExportService {
                         ),
                         pw.SizedBox(height: 3),
                         pw.Text(
-                          'Waktu Cetak: $printDateStr',
+                          'Waktu Tutup: $printDateStr',
                           style: pw.TextStyle(font: ttfRegular, fontSize: 8, color: const PdfColor.fromInt(0xFFCCFBF1)),
                         ),
                       ],
@@ -1878,7 +1880,9 @@ class ReportExportService {
                     children: [
                       pw.Text('WEWENANG / SHIFT:', style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: subtleText)),
                       pw.SizedBox(height: 2),
-                      pw.Text('Level $authorityLevel | Tutup Kasir', style: boldStyle.copyWith(fontSize: 10, color: primaryTeal)),
+                      pw.Text('Shift #$shiftNumber (Level $authorityLevel)', style: boldStyle.copyWith(fontSize: 10, color: primaryTeal)),
+                      if (startedAtStr != null)
+                        pw.Text('Aktif sejak: $startedAtStr', style: pw.TextStyle(font: ttfRegular, fontSize: 7, color: subtleText)),
                     ],
                   ),
                 ],
@@ -2080,6 +2084,8 @@ class ReportExportService {
     required String officerName,
     required String schoolName,
     required String authorityLevel,
+    int shiftNumber = 1,
+    String? startedAtStr,
     required int totalInflow,
     required int totalOutflow,
     required int systemNetCash,
@@ -2090,13 +2096,16 @@ class ReportExportService {
     String notes = '',
   }) async {
     final buffer = StringBuffer();
-    buffer.writeln('🔒 *BERITA ACARA TUTUP KASIR (CLOSING SHIFT)*');
+    buffer.writeln('🔒 *BERITA ACARA TUTUP KASIR (SHIFT #$shiftNumber)*');
     buffer.writeln('Kantin Digital — Sistem Akuntabilitas Sah');
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
     buffer.writeln('👤 *Petugas Kasir:* $officerName');
     buffer.writeln('🏫 *Sekolah:* $schoolName');
-    buffer.writeln('📅 *Tanggal:* ${DateFormat('dd MMMM yyyy', 'id_ID').format(DateTime.now())}');
-    buffer.writeln('⏰ *Waktu Tutup:* ${DateFormat('HH:mm:ss', 'id_ID').format(DateTime.now())} WIB');
+    buffer.writeln('🛡️ *Sesi Shift:* Shift #$shiftNumber (Level $authorityLevel)');
+    if (startedAtStr != null) {
+      buffer.writeln('⏰ *Aktif Sejak:* $startedAtStr');
+    }
+    buffer.writeln('📅 *Tanggal Tutup:* ${DateFormat('dd MMMM yyyy, HH:mm', 'id_ID').format(DateTime.now())} WIB');
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
     buffer.writeln('📈 *Uang Masuk (Top-Up Tunai):* ${_currencyFmt.format(totalInflow)} ($topupCount tx)');
     buffer.writeln('📉 *Uang Keluar (Pencairan Stan):* ${_currencyFmt.format(totalOutflow)} ($payoutCount tx)');

@@ -21,6 +21,7 @@ export 'order_message.dart';
 export 'order_review.dart';
 export 'academic_structure.dart';
 export 'finance_officer_ledger.dart';
+export 'cashier_shift.dart';
 
 // ── Composite models ─────────────────────────────────────────
 export 'operator_transaction.dart';

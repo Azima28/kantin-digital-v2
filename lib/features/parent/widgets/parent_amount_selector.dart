@@ -84,7 +84,7 @@ class ParentAmountSelector extends StatelessWidget {
                   width: 18,
                   height: 18,
                   decoration: BoxDecoration(
-                    color: Nebula.teal,
+                    color: const Color(0xFF0D9488),
                     shape: BoxShape.circle,
                   ),
                   child: const Center(
