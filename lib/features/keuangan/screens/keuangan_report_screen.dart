@@ -45,12 +45,6 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
 
     if (_startDate.year == _endDate.year &&
         _startDate.month == _endDate.month &&
-        _startDate.day == 1 &&
-        _endDate.day == DateTime(_endDate.year, _endDate.month + 1, 0).day) {
-      return DateFormat('MMMM yyyy', 'id_ID').format(_startDate);
-    }
-    if (_startDate.year == _endDate.year &&
-        _startDate.month == _endDate.month &&
         _startDate.day == _endDate.day) {
       return startStr;
     }
