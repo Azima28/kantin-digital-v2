@@ -36,6 +36,8 @@ final keuanganDashboardProvider =
         'totalSaldo': data['total_circulating_balance'] ?? 0,
         'topupToday': data['topup_today_amount'] ?? 0,
         'topupCount': data['topup_today_count'] ?? 0,
+        'payoutToday': data['payout_today_amount'] ?? 0,
+        'payoutCount': data['payout_today_count'] ?? 0,
         'recentLogs': parsedLogs,
       };
     }
@@ -49,6 +51,8 @@ final keuanganDashboardProvider =
     'totalSaldo': 0,
     'topupToday': 0,
     'topupCount': 0,
+    'payoutToday': 0,
+    'payoutCount': 0,
     'recentLogs': <Map<String, dynamic>>[],
   };
 });

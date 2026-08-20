@@ -531,7 +531,9 @@ type FinanceSummary struct {
 	TotalCirculatingBalance int                  `json:"total_circulating_balance"`
 	TopupTodayAmount        int                  `json:"topup_today_amount"`
 	TopupTodayCount         int                  `json:"topup_today_count"`
-			RecentTransactions      []domain.Transaction `json:"recent_transactions"`
+	PayoutTodayAmount       int                  `json:"payout_today_amount"`
+	PayoutTodayCount        int                  `json:"payout_today_count"`
+	RecentTransactions      []domain.Transaction `json:"recent_transactions"`
 }
 
 // GetFinanceDashboardSummary aggregates statistics for finance dashboard
@@ -545,10 +547,16 @@ func (r *TransactionRepo) GetFinanceDashboardSummary(ctx context.Context) (*Fina
 	_ = r.db.Pool.QueryRow(ctx, `
 		SELECT COALESCE(SUM(total_amount), 0), COUNT(*)
 		FROM public.transactions
-		WHERE type = 'topup' AND created_at >= CURRENT_DATE
+		WHERE type = 'topup' AND status = 'success' AND created_at >= CURRENT_DATE
 	`).Scan(&s.TopupTodayAmount, &s.TopupTodayCount)
 
-	
+	// 3. Payout today
+	_ = r.db.Pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(total_amount), 0), COUNT(*)
+		FROM public.transactions
+		WHERE type = 'withdrawal' AND status = 'success' AND created_at >= CURRENT_DATE
+	`).Scan(&s.PayoutTodayAmount, &s.PayoutTodayCount)
+
 	// 4. Recent transactions
 	txs, _, err := r.ListTransactionsPaged(ctx, "", "", 10, 0, "", "", "")
 	if err == nil {

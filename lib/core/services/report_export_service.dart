@@ -557,16 +557,8 @@ class ReportExportService {
   }) async {
     final pdf = pw.Document();
 
-    pw.Font? ttfRegular;
-    pw.Font? ttfBold;
-    try {
-      final regularData = await rootBundle.load('assets/fonts/Inter-Regular.ttf');
-      final boldData = await rootBundle.load('assets/fonts/Inter-Bold.ttf');
-      ttfRegular = pw.Font.ttf(regularData);
-      ttfBold = pw.Font.ttf(boldData);
-    } catch (_) {
-      // Fallback ke standard font
-    }
+    final ttfRegular = pw.Font.helvetica();
+    final ttfBold = pw.Font.helveticaBold();
 
     const PdfColor primaryTeal = PdfColor.fromInt(0xFF0D9488);
     const PdfColor darkText = PdfColor.fromInt(0xFF0F172A);
@@ -1280,16 +1272,8 @@ class ReportExportService {
   }) async {
     final pdf = pw.Document();
 
-    pw.Font? ttfRegular;
-    pw.Font? ttfBold;
-    try {
-      final regularData = await rootBundle.load('assets/fonts/Inter-Regular.ttf');
-      final boldData = await rootBundle.load('assets/fonts/Inter-Bold.ttf');
-      ttfRegular = pw.Font.ttf(regularData);
-      ttfBold = pw.Font.ttf(boldData);
-    } catch (_) {
-      // Fallback
-    }
+    final ttfRegular = pw.Font.helvetica();
+    final ttfBold = pw.Font.helveticaBold();
 
     const PdfColor primaryTeal = PdfColor.fromInt(0xFF0D9488);
     const PdfColor darkText = PdfColor.fromInt(0xFF0F172A);
@@ -1729,14 +1713,8 @@ class ReportExportService {
   }) async {
     final pdf = pw.Document();
 
-    pw.Font? ttfRegular;
-    pw.Font? ttfBold;
-    try {
-      final regularData = await rootBundle.load('assets/fonts/Inter-Regular.ttf');
-      final boldData = await rootBundle.load('assets/fonts/Inter-Bold.ttf');
-      ttfRegular = pw.Font.ttf(regularData);
-      ttfBold = pw.Font.ttf(boldData);
-    } catch (_) {}
+    final ttfRegular = pw.Font.helvetica();
+    final ttfBold = pw.Font.helveticaBold();
 
     const PdfColor primaryTeal = PdfColor.fromInt(0xFF0D9488);
     const PdfColor darkText = PdfColor.fromInt(0xFF0F172A);
