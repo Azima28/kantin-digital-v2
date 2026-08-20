@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -40,6 +41,9 @@ class _ParentTopUpFormState extends ConsumerState<ParentTopUpForm> {
   String? _errorMessage;
   bool _isLoading = false;
 
+  static const int minTopup = 10000;
+  static const int maxTopup = 2000000;
+
   @override
   void dispose() {
     _customAmountController.dispose();
@@ -55,19 +59,33 @@ class _ParentTopUpFormState extends ConsumerState<ParentTopUpForm> {
   }
 
   void _onCustomAmountChanged(String val) {
-    if (val.isNotEmpty) {
+    final cleanDigits = val.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleanDigits.isEmpty) {
       setState(() {
-        _selectedQuickAmount = null;
         _errorMessage = null;
       });
+      return;
     }
+
+    final int parsed = int.tryParse(cleanDigits) ?? 0;
+    String? error;
+    if (parsed > maxTopup) {
+      error = 'Maksimal top-up Rp 2.000.000 per transaksi';
+    } else if (parsed > 0 && parsed < minTopup) {
+      error = 'Minimal top-up Rp 10.000';
+    }
+
+    setState(() {
+      _selectedQuickAmount = null;
+      _errorMessage = error;
+    });
   }
 
   double _getFinalAmount() {
     if (_selectedQuickAmount != null) {
       return _selectedQuickAmount!.toDouble();
     }
-    return double.tryParse(_customAmountController.text) ?? 0.0;
+    return CurrencyFormatter.parseClean(_customAmountController.text).toDouble();
   }
 
   Future<void> _handlePaymentSimulation(double amount, String method) async {
@@ -123,9 +141,15 @@ class _ParentTopUpFormState extends ConsumerState<ParentTopUpForm> {
     if (!_formKey.currentState!.validate()) return;
 
     final double amount = _getFinalAmount();
-    if (amount < 10000) {
+    if (amount < minTopup) {
       setState(() {
         _errorMessage = 'Minimal nominal isi saldo adalah Rp 10.000';
+      });
+      return;
+    }
+    if (amount > maxTopup) {
+      setState(() {
+        _errorMessage = 'Maksimal nominal isi saldo adalah Rp 2.000.000 per transaksi';
       });
       return;
     }
@@ -238,31 +262,51 @@ class _ParentTopUpFormState extends ConsumerState<ParentTopUpForm> {
                           ),
                           const SizedBox(height: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                             decoration: BoxDecoration(
                               color: context.cardBg,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: context.dividerCol, width: 1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _errorMessage != null
+                                    ? Nebula.rose
+                                    : (_customAmountController.text.isNotEmpty
+                                        ? Nebula.teal
+                                        : context.dividerCol),
+                                width: _errorMessage != null ? 1.2 : 1,
+                              ),
                             ),
                             child: Row(
                               children: [
-                                Text(
-                                  'Rp ',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: context.textPrimary,
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Nebula.teal.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: Nebula.teal.withValues(alpha: 0.25), width: 0.8),
+                                  ),
+                                  child: Text(
+                                    'Rp',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Nebula.teal,
+                                    ),
                                   ),
                                 ),
+                                const SizedBox(width: 10),
                                 Expanded(
                                   child: TextFormField(
                                     controller: _customAmountController,
                                     keyboardType: TextInputType.number,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                      const ThousandsSeparatorInputFormatter(maxAmount: maxTopup),
+                                    ],
                                     onChanged: _onCustomAmountChanged,
                                     style: GoogleFonts.inter(
                                       fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: context.textPrimary,
+                                      fontWeight: FontWeight.bold,
+                                      color: _errorMessage != null ? Nebula.rose : context.textPrimary,
                                     ),
                                     decoration: InputDecoration(
                                       hintText: '0',
@@ -277,6 +321,29 @@ class _ParentTopUpFormState extends ConsumerState<ParentTopUpForm> {
                                 ),
                               ],
                             ),
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Icon(
+                                _errorMessage != null
+                                    ? CupertinoIcons.exclamationmark_circle_fill
+                                    : CupertinoIcons.info_circle_fill,
+                                size: 13,
+                                color: _errorMessage != null ? Nebula.rose : context.textSecondary,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  _errorMessage ?? 'Minimal Rp 10.000 • Maksimal Rp 2.000.000 per transaksi',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    color: _errorMessage != null ? Nebula.rose : context.textSecondary,
+                                    fontWeight: _errorMessage != null ? FontWeight.bold : FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),

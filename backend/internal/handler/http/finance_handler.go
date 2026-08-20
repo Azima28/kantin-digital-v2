@@ -109,6 +109,14 @@ func (h *FinanceHandler) Topup(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusBadRequest, "Student ID dan nominal top-up wajib valid", nil)
 	}
 
+	if req.Amount < 10000 {
+		return response.Error(c, fiber.StatusBadRequest, "Nominal top-up minimal Rp 10.000", nil)
+	}
+
+	if req.Amount > 2000000 {
+		return response.Error(c, fiber.StatusBadRequest, "Nominal top-up maksimal Rp 2.000.000 per transaksi", nil)
+	}
+
 	tx, err := h.paymentService.ProcessTopup(c.Context(), req.StudentID, claims.UserID, req.Amount)
 	if err != nil {
 		return response.Error(c, fiber.StatusBadRequest, err.Error(), nil)

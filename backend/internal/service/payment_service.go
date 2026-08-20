@@ -52,8 +52,11 @@ func (s *PaymentService) ProcessPurchase(ctx context.Context, params postgres.Ch
 }
 
 func (s *PaymentService) ProcessTopup(ctx context.Context, studentID, officerID string, amount int) (*domain.Transaction, error) {
-	if amount <= 0 {
-		return nil, errors.New("nominal top-up harus lebih dari 0")
+	if amount < 10000 {
+		return nil, errors.New("nominal top-up minimal Rp 10.000")
+	}
+	if amount > 2000000 {
+		return nil, errors.New("nominal top-up maksimal Rp 2.000.000 per transaksi")
 	}
 	return s.txRepo.ProcessTopup(ctx, studentID, officerID, amount)
 }

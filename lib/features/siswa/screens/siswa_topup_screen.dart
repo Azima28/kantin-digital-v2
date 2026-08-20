@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
@@ -30,6 +31,9 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
   String? _errorMessage;
   bool _isLoading = false;
 
+  static const int minTopup = 10000;
+  static const int maxTopup = 2000000;
+
   @override
   void dispose() {
     _customAmountController.dispose();
@@ -45,19 +49,33 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
   }
 
   void _onCustomAmountChanged(String val) {
-    if (val.isNotEmpty) {
+    final cleanDigits = val.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleanDigits.isEmpty) {
       setState(() {
-        _selectedQuickAmount = null;
         _errorMessage = null;
       });
+      return;
     }
+
+    final int parsed = int.tryParse(cleanDigits) ?? 0;
+    String? error;
+    if (parsed > maxTopup) {
+      error = 'Maksimal top-up Rp 2.000.000 per transaksi';
+    } else if (parsed > 0 && parsed < minTopup) {
+      error = 'Minimal top-up Rp 10.000';
+    }
+
+    setState(() {
+      _selectedQuickAmount = null;
+      _errorMessage = error;
+    });
   }
 
   double _getFinalAmount() {
     if (_selectedQuickAmount != null) {
       return _selectedQuickAmount!.toDouble();
     }
-    return double.tryParse(_customAmountController.text) ?? 0.0;
+    return CurrencyFormatter.parseClean(_customAmountController.text).toDouble();
   }
 
   Future<void> _handlePaymentSimulation(double amount) async {
@@ -143,9 +161,15 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
 
   void _showCheckoutSheet() {
     final double amount = _getFinalAmount();
-    if (amount < 10000) {
+    if (amount < minTopup) {
       setState(() {
         _errorMessage = 'Minimal nominal isi saldo adalah Rp 10.000';
+      });
+      return;
+    }
+    if (amount > maxTopup) {
+      setState(() {
+        _errorMessage = 'Maksimal nominal isi saldo adalah Rp 2.000.000 per transaksi';
       });
       return;
     }
@@ -300,39 +324,59 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Custom text field input
+                // Custom text field input with permanent Rp badge and thousands separator
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: context.cardBg,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: _errorMessage != null ? Nebula.rose : context.dividerCol,
-                      width: 1.0,
+                      color: _errorMessage != null
+                          ? Nebula.rose
+                          : (_customAmountController.text.isNotEmpty
+                              ? Nebula.teal
+                              : context.dividerCol),
+                      width: _errorMessage != null ? 1.2 : 1.0,
                     ),
                   ),
                   child: Row(
                     children: [
-                      Text(
-                        'Rp',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: context.textPrimary,
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Nebula.teal.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Nebula.teal.withValues(alpha: 0.25),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Text(
+                          'Rp',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Nebula.teal,
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: TextField(
                           controller: _customAmountController,
                           keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            const ThousandsSeparatorInputFormatter(maxAmount: maxTopup),
+                          ],
                           style: GoogleFonts.inter(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: context.textPrimary,
+                            color: _errorMessage != null ? Nebula.rose : context.textPrimary,
                           ),
                           decoration: const InputDecoration(
                             hintText: '0',
+                            hintStyle: TextStyle(color: Colors.grey),
                             fillColor: Colors.transparent,
                             filled: false,
                             border: InputBorder.none,
@@ -357,13 +401,27 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  _errorMessage ?? 'Minimal top-up Rp 10.000',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: _errorMessage != null ? Nebula.rose : context.textSecondary,
-                    fontWeight: _errorMessage != null ? FontWeight.bold : FontWeight.normal,
-                  ),
+                Row(
+                  children: [
+                    Icon(
+                      _errorMessage != null
+                          ? CupertinoIcons.exclamationmark_circle_fill
+                          : CupertinoIcons.info_circle_fill,
+                      size: 13,
+                      color: _errorMessage != null ? Nebula.rose : context.textSecondary,
+                    ),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Text(
+                        _errorMessage ?? 'Minimal Rp 10.000 • Maksimal Rp 2.000.000 per transaksi',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          color: _errorMessage != null ? Nebula.rose : context.textSecondary,
+                          fontWeight: _errorMessage != null ? FontWeight.bold : FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
 
                 const SizedBox(height: 24),
