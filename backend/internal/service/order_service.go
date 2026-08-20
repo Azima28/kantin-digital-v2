@@ -110,12 +110,12 @@ func (s *OrderService) GetMessages(ctx context.Context, orderID, callerUserID st
 		return s.orderRepo.ListOrderMessages(ctx, orderID)
 	}
 
-	// Verify participant authorization strictly (Admins & Finance Officers are universally authorized)
+	// Verify participant authorization gracefully (Admins & Finance Officers are universally authorized)
 	if callerRole != domain.RoleSuperAdmin && callerRole != domain.RoleAdmin && callerRole != domain.RolePetugasKeuangan {
 		isParticipant := (callerRole == domain.RoleStudent && strings.EqualFold(callerUserID, order.StudentID)) ||
 			(callerRole == domain.RolePetugasKantin && order.OperatorID != nil && strings.EqualFold(callerUserID, *order.OperatorID))
 		if !isParticipant {
-			return nil, errors.New("akses ditolak: Anda bukan partisipan dalam pesanan ini")
+			return []domain.OrderMessage{}, nil
 		}
 	}
 
