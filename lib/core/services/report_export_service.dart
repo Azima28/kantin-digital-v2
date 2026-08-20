@@ -22,8 +22,10 @@ class ReportExportService {
     required String period,
     required double totalTopup,
     required double totalPurchase,
+    double totalWithdrawal = 0.0,
     required int topupCount,
     required int purchaseCount,
+    int withdrawalCount = 0,
     required List<Map<String, dynamic>> canteens,
     required bool includeAudit,
     required bool includeStudents,
@@ -31,7 +33,13 @@ class ReportExportService {
     List<Map<String, dynamic>> students = const [],
   }) async {
     final excel = Excel.createExcel();
-    excel.delete('Sheet1'); // Hapus sheet default Sheet1
+    final Sheet summarySheet = excel['Ringkasan Keuangan'];
+    excel.setDefaultSheet('Ringkasan Keuangan');
+    if (excel.sheets.containsKey('Sheet1')) {
+      excel.delete('Sheet1');
+    }
+
+    final double netInflow = totalTopup - totalWithdrawal;
 
     // Definisi Style untuk Sel Excel
     final titleStyle = CellStyle(
@@ -121,14 +129,10 @@ class ReportExportService {
       verticalAlign: VerticalAlign.Center,
     );
 
-    // 1. Sheet Ringkasan Keuangan
-    final Sheet summarySheet = excel['Ringkasan Keuangan'];
-    excel.setDefaultSheet('Ringkasan Keuangan');
-
-    // Atur Lebar Kolom yang Luas & Nyaman Dibaca
-    summarySheet.setColumnWidth(0, 36.0); // Metrik / Nama Stan
-    summarySheet.setColumnWidth(1, 26.0); // Jumlah Transaksi / No
-    summarySheet.setColumnWidth(2, 36.0); // Total Nominal (IDR) / Pendapatan
+    // Atur Lebar Kolom yang Luas & Nyaman Dibaca (Bebas Truncated)
+    summarySheet.setColumnWidth(0, 44.0); // Metrik Keuangan / Nama Stan
+    summarySheet.setColumnWidth(1, 24.0); // Jumlah Transaksi / No
+    summarySheet.setColumnWidth(2, 32.0); // Total Nominal (IDR)
 
     // Row 0: Header Title
     summarySheet.appendRow([
@@ -186,98 +190,76 @@ class ReportExportService {
 
     // Row 6: Total Top-Up
     summarySheet.appendRow([
-      TextCellValue('Total Top-Up Tunai'),
-      IntCellValue(topupCount),
+      TextCellValue('Total Top-Up Siswa (Kas Masuk)'),
+      TextCellValue('$topupCount Transaksi'),
       TextCellValue(_currencyFmt.format(totalTopup)),
     ]);
-    summarySheet
-        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 6))
-        .cellStyle = cellLeft;
-    summarySheet
-        .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 6))
-        .cellStyle = cellCenter;
-    summarySheet
-        .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 6))
-        .cellStyle = cellRight;
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 6)).cellStyle = cellLeft;
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 6)).cellStyle = cellCenter;
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 6)).cellStyle = cellRight;
 
-    // Row 7: Total Pembayaran
+    // Row 7: Total Pembayaran Belanja
     summarySheet.appendRow([
-      TextCellValue('Total Pembayaran Belanja'),
-      IntCellValue(purchaseCount),
+      TextCellValue('Total Belanja Siswa (Omzet)'),
+      TextCellValue('$purchaseCount Transaksi'),
       TextCellValue(_currencyFmt.format(totalPurchase)),
     ]);
-    summarySheet
-        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 7))
-        .cellStyle = cellLeft;
-    summarySheet
-        .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 7))
-        .cellStyle = cellCenter;
-    summarySheet
-        .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 7))
-        .cellStyle = cellRight;
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 7)).cellStyle = cellLeft;
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 7)).cellStyle = cellCenter;
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 7)).cellStyle = cellRight;
 
-    // Row 8: Total Row - Net Aliran Kas Masuk
+    // Row 8: Total Pencairan Kas Stan (Kas Keluar)
     summarySheet.appendRow([
-      TextCellValue('Total Kas Masuk (Top-Up)'),
-      IntCellValue(topupCount),
-      TextCellValue(_currencyFmt.format(totalTopup)),
+      TextCellValue('Pencairan Kas Stan (Kas Keluar)'),
+      TextCellValue('$withdrawalCount Penarikan'),
+      TextCellValue('-${_currencyFmt.format(totalWithdrawal)}'),
     ]);
-    summarySheet
-        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 8))
-        .cellStyle = totalStyle;
-    summarySheet
-        .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 8))
-        .cellStyle = totalStyleCenter;
-    summarySheet
-        .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 8))
-        .cellStyle = totalStyleRight;
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 8)).cellStyle = cellLeft;
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 8)).cellStyle = cellCenter;
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 8)).cellStyle = cellRight;
 
-    // Row 9: Blank
+    // Row 9: Sisa Kas Mengendap Bersih
+    summarySheet.appendRow([
+      TextCellValue('Sisa Kas Mengendap Bersih'),
+      TextCellValue('${topupCount + withdrawalCount} Mutasi'),
+      TextCellValue(_currencyFmt.format(netInflow)),
+    ]);
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 9)).cellStyle = totalStyle;
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 9)).cellStyle = totalStyleCenter;
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 9)).cellStyle = totalStyleRight;
+
+    // Row 10: Blank
     summarySheet.appendRow([TextCellValue('')]);
 
-    // Row 10: Section Header Stan Kantin
+    // Row 11: Section Header Stan Kantin
     summarySheet.appendRow([
       TextCellValue('II. PENDAPATAN PER STAN KANTIN'),
       TextCellValue(''),
       TextCellValue(''),
     ]);
-    summarySheet
-        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 10))
-        .cellStyle = sectionHeaderStyle;
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 11)).cellStyle = sectionHeaderStyle;
 
     // Row 12: Table Header Stan
     summarySheet.appendRow([
-      TextCellValue('No'),
-      TextCellValue('Nama Stan Kantin'),
-      TextCellValue('Pendapatan Earned (IDR)'),
+      TextCellValue('NAMA STAN KANTIN'),
+      TextCellValue('STATUS / NO'),
+      TextCellValue('PENDAPATAN EARNED (IDR)'),
     ]);
-    summarySheet
-        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 12))
-        .cellStyle = headerStyle;
-    summarySheet
-        .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 12))
-        .cellStyle = headerStyleLeft;
-    summarySheet
-        .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 12))
-        .cellStyle = headerStyleRight;
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 12)).cellStyle = headerStyleLeft;
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 12)).cellStyle = headerStyle;
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 12)).cellStyle = headerStyleRight;
 
     double totalEarnedAll = 0;
     int curRow = 13;
     if (canteens.isEmpty) {
       summarySheet.appendRow([
-        TextCellValue('-'),
         TextCellValue('Belum ada data stan'),
+        TextCellValue('-'),
         TextCellValue('Rp 0'),
       ]);
-      summarySheet
-          .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: curRow))
-          .cellStyle = cellCenter;
-      summarySheet
-          .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: curRow))
-          .cellStyle = cellLeft;
-      summarySheet
-          .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: curRow))
-          .cellStyle = cellRight;
+      summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: curRow)).cellStyle = cellLeft;
+      summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: curRow)).cellStyle = cellCenter;
+      summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: curRow)).cellStyle = cellRight;
       curRow++;
     } else {
       for (int i = 0; i < canteens.length; i++) {
@@ -287,37 +269,25 @@ class ReportExportService {
         totalEarnedAll += earned;
 
         summarySheet.appendRow([
-          IntCellValue(i + 1),
           TextCellValue(name),
+          TextCellValue('Stan #${i + 1}'),
           TextCellValue(_currencyFmt.format(earned)),
         ]);
-        summarySheet
-            .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: curRow))
-            .cellStyle = cellCenter;
-        summarySheet
-            .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: curRow))
-            .cellStyle = cellLeft;
-        summarySheet
-            .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: curRow))
-            .cellStyle = cellRight;
+        summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: curRow)).cellStyle = cellLeft;
+        summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: curRow)).cellStyle = cellCenter;
+        summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: curRow)).cellStyle = cellRight;
         curRow++;
       }
 
       // Total Row Stan Kantin
       summarySheet.appendRow([
-        TextCellValue('TOTAL PENDAPATAN STAN'),
+        TextCellValue('TOTAL PENDAPATAN SELURUH STAN'),
         TextCellValue('${canteens.length} Stan Kantin'),
         TextCellValue(_currencyFmt.format(totalEarnedAll)),
       ]);
-      summarySheet
-          .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: curRow))
-          .cellStyle = totalStyle;
-      summarySheet
-          .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: curRow))
-          .cellStyle = totalStyleCenter;
-      summarySheet
-          .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: curRow))
-          .cellStyle = totalStyleRight;
+      summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: curRow)).cellStyle = totalStyle;
+      summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: curRow)).cellStyle = totalStyleCenter;
+      summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: curRow)).cellStyle = totalStyleRight;
     }
 
     // 2. Sheet Rekap Audit Log (jika dipilih)
@@ -547,8 +517,10 @@ class ReportExportService {
     required String period,
     required double totalTopup,
     required double totalPurchase,
+    double totalWithdrawal = 0.0,
     required int topupCount,
     required int purchaseCount,
+    int withdrawalCount = 0,
     required List<Map<String, dynamic>> canteens,
     required bool includeAudit,
     required bool includeStudents,
@@ -560,6 +532,8 @@ class ReportExportService {
     final ttfRegular = pw.Font.helvetica();
     final ttfBold = pw.Font.helveticaBold();
 
+    final double netInflow = totalTopup - totalWithdrawal;
+
     const PdfColor primaryTeal = PdfColor.fromInt(0xFF0D9488);
     const PdfColor darkText = PdfColor.fromInt(0xFF0F172A);
     const PdfColor grayText = PdfColor.fromInt(0xFF475569);
@@ -567,6 +541,7 @@ class ReportExportService {
     const PdfColor lightBg = PdfColor.fromInt(0xFFF8FAFC);
     const PdfColor totalRowBg = PdfColor.fromInt(0xFFE6F5F2);
     const PdfColor borderCol = PdfColor.fromInt(0xFFE2E8F0);
+    const PdfColor roseColor = PdfColor.fromInt(0xFFE11D48);
 
     final baseStyle = pw.TextStyle(font: ttfRegular, fontSize: 8.5, color: darkText);
     final boldStyle = pw.TextStyle(font: ttfBold, fontSize: 8.5, fontWeight: pw.FontWeight.bold, color: darkText);
@@ -673,7 +648,7 @@ class ReportExportService {
               children: [
                 pw.Expanded(
                   child: _pdfKpiCard(
-                    label: 'TOTAL TOP-UP TUNAI',
+                    label: 'TOTAL TOP-UP SISWA (KAS MASUK)',
                     value: _currencyFmt.format(totalTopup),
                     subtext: '$topupCount transaksi berhasil',
                     baseStyle: baseStyle,
@@ -686,7 +661,7 @@ class ReportExportService {
                 pw.SizedBox(width: 10),
                 pw.Expanded(
                   child: _pdfKpiCard(
-                    label: 'TOTAL PEMBAYARAN BELANJA',
+                    label: 'TOTAL BELANJA SISWA (OMZET)',
                     value: _currencyFmt.format(totalPurchase),
                     subtext: '$purchaseCount transaksi belanja',
                     baseStyle: baseStyle,
@@ -703,9 +678,23 @@ class ReportExportService {
               children: [
                 pw.Expanded(
                   child: _pdfKpiCard(
-                    label: 'TOTAL KAS MASUK BERSIH',
-                    value: _currencyFmt.format(totalTopup),
-                    subtext: 'Kas masuk resmi loket',
+                    label: 'TOTAL PENCAIRAN STAN (KAS KELUAR)',
+                    value: '-${_currencyFmt.format(totalWithdrawal)}',
+                    subtext: '$withdrawalCount penarikan kas stan',
+                    baseStyle: baseStyle,
+                    boldStyle: boldStyle,
+                    grayStyle: grayText,
+                    borderCol: borderCol,
+                    bgCol: lightBg,
+                    valueColor: roseColor,
+                  ),
+                ),
+                pw.SizedBox(width: 10),
+                pw.Expanded(
+                  child: _pdfKpiCard(
+                    label: 'SISA KAS MENGENDAP BERSIH',
+                    value: _currencyFmt.format(netInflow),
+                    subtext: 'Akumulasi sisa kas mengendap',
                     baseStyle: baseStyle,
                     boldStyle: boldStyle,
                     grayStyle: grayText,

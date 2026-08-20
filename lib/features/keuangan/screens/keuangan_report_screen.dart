@@ -359,12 +359,20 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                       (reportData['totalPurchase'] as num?)
                                               ?.toDouble() ??
                                           0.0;
+                                  final totalWithdrawal =
+                                      (reportData['totalWithdrawal'] as num?)
+                                              ?.toDouble() ??
+                                          0.0;
                                   final topupCount =
                                       (reportData['topupCount'] as num?)
                                               ?.toInt() ??
                                           0;
                                   final purchaseCount =
                                       (reportData['purchaseCount'] as num?)
+                                              ?.toInt() ??
+                                          0;
+                                  final withdrawalCount =
+                                      (reportData['withdrawalCount'] as num?)
                                               ?.toInt() ??
                                           0;
 
@@ -414,8 +422,10 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                       period: _currentFilterParam.formattedPeriodLabel,
                                       totalTopup: totalTopup,
                                       totalPurchase: totalPurchase,
+                                      totalWithdrawal: totalWithdrawal,
                                       topupCount: topupCount,
                                       purchaseCount: purchaseCount,
+                                      withdrawalCount: withdrawalCount,
                                       canteens: canteens,
                                       includeAudit: includeAudit,
                                       includeStudents: includeStudents,
@@ -427,8 +437,10 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                       period: _currentFilterParam.formattedPeriodLabel,
                                       totalTopup: totalTopup,
                                       totalPurchase: totalPurchase,
+                                      totalWithdrawal: totalWithdrawal,
                                       topupCount: topupCount,
                                       purchaseCount: purchaseCount,
+                                      withdrawalCount: withdrawalCount,
                                       canteens: canteens,
                                       includeAudit: includeAudit,
                                       includeStudents: includeStudents,
