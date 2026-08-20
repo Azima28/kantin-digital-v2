@@ -224,9 +224,9 @@ func (r *ShiftRepo) CloseCurrentShift(ctx context.Context, p CloseShiftParams) (
 	}
 
 	_, _ = tx.Exec(ctx, `
-		INSERT INTO public.audit_logs (actor_id, action_type, description, target_id)
-		VALUES ($1, 'TUTUP_KASIR_SHIFT', $2, $3)`,
-		p.OfficerID, auditDesc, shift.ID)
+		INSERT INTO public.audit_logs (user_id, action, entity_name, entity_id, old_data, new_data)
+		VALUES ($1, 'TUTUP_KASIR_SHIFT', 'cashier_shifts', $2, '{}'::jsonb, json_build_object('desc', $3::text)::jsonb)`,
+		p.OfficerID, shift.ID, auditDesc)
 
 	if err := tx.Commit(ctx); err != nil {
 		return nil, fmt.Errorf("gagal commit shift: %w", err)
@@ -343,9 +343,9 @@ func (r *ShiftRepo) VerifyShift(ctx context.Context, shiftID, adminID string) (*
 
 	// Log audit trail
 	_, _ = r.db.Pool.Exec(ctx, `
-		INSERT INTO public.audit_logs (actor_id, action_type, description, target_id)
-		VALUES ($1, 'VERIFIKASI_SERAH_TERIMA_SHIFT', $2, $3)`,
-		adminID, fmt.Sprintf("Super Admin memverifikasi dan menerima setoran fisik Shift #%d senilai Rp %d", shift.ShiftNumber, shift.ActualPhysicalCash), shiftID)
+		INSERT INTO public.audit_logs (user_id, action, entity_name, entity_id, old_data, new_data)
+		VALUES ($1, 'VERIFIKASI_SERAH_TERIMA_SHIFT', 'cashier_shifts', $2, '{}'::jsonb, json_build_object('desc', $3::text)::jsonb)`,
+		adminID, shiftID, fmt.Sprintf("Super Admin memverifikasi dan menerima setoran fisik Shift #%d senilai Rp %d", shift.ShiftNumber, shift.ActualPhysicalCash))
 
 	return &shift, nil
 }

@@ -737,30 +737,37 @@ class _KeuanganClosingShiftModalState
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 11.5,
-                fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
-                color: context.textPrimary,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 11.5,
+                  fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
+                  color: context.textPrimary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            Text(
-              sub,
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                color: context.textSecondary,
+              Text(
+                sub,
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  color: context.textSecondary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
+        const SizedBox(width: 8),
         Text(
           value,
           style: GoogleFonts.inter(
-            fontSize: isBold ? 14 : 12.5,
+            fontSize: isBold ? 13.5 : 12,
             fontWeight: FontWeight.bold,
             color: color,
           ),
