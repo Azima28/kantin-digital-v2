@@ -47,7 +47,9 @@ CREATE TABLE IF NOT EXISTS public.canteen_operators (
     canteen_name TEXT NOT NULL,
     balance_earned INTEGER NOT NULL DEFAULT 0 CHECK (balance_earned >= 0),
     is_delivery_enabled BOOLEAN NOT NULL DEFAULT TRUE,
-    delivery_fee INTEGER NOT NULL DEFAULT 2000 CHECK (delivery_fee >= 0)
+    delivery_fee INTEGER NOT NULL DEFAULT 2000 CHECK (delivery_fee >= 0),
+    rating NUMERIC(3,2) DEFAULT 4.85,
+    total_reviews INTEGER DEFAULT 0
 );
 
 -- ---------------------------------------------------------------------
@@ -55,7 +57,10 @@ CREATE TABLE IF NOT EXISTS public.canteen_operators (
 -- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.finance_officers (
     id UUID PRIMARY KEY REFERENCES public.profiles(id) ON DELETE CASCADE,
-    total_managed_funds BIGINT NOT NULL DEFAULT 0 CHECK (total_managed_funds >= 0)
+    assigned_school TEXT NOT NULL DEFAULT 'Sekolah Digital',
+    authority_level TEXT NOT NULL DEFAULT 'L1',
+    features JSONB DEFAULT '["topup", "withdrawal", "correction"]'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- ---------------------------------------------------------------------
@@ -81,6 +86,8 @@ CREATE TABLE IF NOT EXISTS public.products (
     is_available BOOLEAN NOT NULL DEFAULT TRUE,
     image_url TEXT,
     customizable_options JSONB DEFAULT '[]'::jsonb,
+    rating NUMERIC(3,2) DEFAULT 4.80,
+    total_reviews INTEGER DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
