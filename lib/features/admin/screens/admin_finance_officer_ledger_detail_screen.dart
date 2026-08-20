@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/services/api_client.dart';
+import 'package:kantin_digital/core/services/report_export_service.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
@@ -61,6 +62,14 @@ class _AdminFinanceOfficerLedgerDetailScreenState
         ),
         centerTitle: true,
         actions: [
+          detailAsync.maybeWhen(
+            data: (detail) => IconButton(
+              icon: const Icon(CupertinoIcons.square_arrow_up, color: Nebula.teal),
+              tooltip: 'Ekspor & Bagikan',
+              onPressed: () => _openExportModal(context, detail),
+            ),
+            orElse: () => const SizedBox.shrink(),
+          ),
           IconButton(
             icon: const Icon(CupertinoIcons.arrow_clockwise, color: Nebula.teal),
             tooltip: 'Segarkan',
@@ -416,6 +425,54 @@ class _AdminFinanceOfficerLedgerDetailScreenState
                                   ),
                                 ],
                               ),
+                              const SizedBox(height: 12),
+                              // ── Tombol Cepat Ekspor & Bagikan Laporan ──
+                              InkWell(
+                                onTap: () => _openExportModal(context, detail),
+                                borderRadius: BorderRadius.circular(10),
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 9),
+                                  decoration: BoxDecoration(
+                                    color: Nebula.teal.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: Nebula.teal.withValues(alpha: 0.3),
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(
+                                        CupertinoIcons.square_arrow_up,
+                                        size: 15,
+                                        color: Nebula.teal,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Flexible(
+                                        child: Text(
+                                          'Ekspor & Bagikan Laporan Kas',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: Nebula.teal,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      const Icon(
+                                        CupertinoIcons.chevron_right,
+                                        size: 13,
+                                        color: Nebula.teal,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -738,4 +795,888 @@ class _AdminFinanceOfficerLedgerDetailScreenState
       ),
     );
   }
+
+  void _openExportModal(
+      BuildContext context, FinanceOfficerLedgerDetail detail) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _OfficerLedgerExportModal(
+        officer: detail.officer,
+        allJournals: detail.recentJournals,
+      ),
+    );
+  }
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MODAL EKSPOR BUKU KAS & FILTER KALENDER RENTANG TANGGAL
+// ══════════════════════════════════════════════════════════════════════════════
+
+class _OfficerLedgerExportModal extends StatefulWidget {
+  final FinanceOfficerLedgerItem officer;
+  final List<OfficerJournalEntry> allJournals;
+
+  const _OfficerLedgerExportModal({
+    required this.officer,
+    required this.allJournals,
+  });
+
+  @override
+  State<_OfficerLedgerExportModal> createState() =>
+      _OfficerLedgerExportModalState();
+}
+
+class _OfficerLedgerExportModalState extends State<_OfficerLedgerExportModal> {
+  DateTime? _startDate;
+  DateTime? _endDate;
+  int _datePresetIndex = 0; // 0: Semua, 1: Hari Ini, 2: 7 Hari, 3: 30 Hari, 4: Kustom
+  int _selectedFormat = 0; // 0: PDF, 1: Excel
+  bool _isExporting = false;
+
+  final _fmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+  final _dateFmt = DateFormat('dd MMM yyyy', 'id_ID');
+
+  @override
+  void initState() {
+    super.initState();
+    _applyPreset(0);
+  }
+
+  void _applyPreset(int index) {
+    final now = DateTime.now();
+    setState(() {
+      _datePresetIndex = index;
+      if (index == 0) {
+        // Semua Waktu
+        _startDate = null;
+        _endDate = null;
+      } else if (index == 1) {
+        // Hari Ini
+        _startDate = DateTime(now.year, now.month, now.day);
+        _endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
+      } else if (index == 2) {
+        // 7 Hari Terakhir
+        _startDate = now.subtract(const Duration(days: 7));
+        _endDate = now;
+      } else if (index == 3) {
+        // 30 Hari Terakhir
+        _startDate = now.subtract(const Duration(days: 30));
+        _endDate = now;
+      }
+    });
+  }
+
+  List<OfficerJournalEntry> _getFilteredJournals() {
+    return widget.allJournals.where((j) {
+      if (j.createdAt == null) return true;
+      final local = j.createdAt!.toLocal();
+      if (_startDate != null && local.isBefore(_startDate!)) return false;
+      if (_endDate != null && local.isAfter(_endDate!)) return false;
+      return true;
+    }).toList();
+  }
+
+  String _getPeriodLabel() {
+    if (_startDate == null && _endDate == null) {
+      return 'Semua Waktu';
+    }
+    if (_startDate != null && _endDate != null) {
+      if (_dateFmt.format(_startDate!) == _dateFmt.format(_endDate!)) {
+        return _dateFmt.format(_startDate!);
+      }
+      return '${_dateFmt.format(_startDate!)} - ${_dateFmt.format(_endDate!)}';
+    }
+    if (_startDate != null) {
+      return 'Sejak ${_dateFmt.format(_startDate!)}';
+    }
+    return 'Sampai ${_dateFmt.format(_endDate!)}';
+  }
+
+  Future<void> _pickStartDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _startDate ?? now,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2035),
+      helpText: 'PILIH TANGGAL AWAL (DARI)',
+      confirmText: 'PILIH',
+      cancelText: 'BATAL',
+    );
+    if (picked != null) {
+      setState(() {
+        _startDate = DateTime(picked.year, picked.month, picked.day, 0, 0, 0);
+        if (_endDate != null && _endDate!.isBefore(_startDate!)) {
+          _endDate = DateTime(picked.year, picked.month, picked.day, 23, 59, 59);
+        }
+        _datePresetIndex = 4; // Kustom
+      });
+    }
+  }
+
+  Future<void> _pickEndDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _endDate ?? (_startDate ?? now),
+      firstDate: _startDate ?? DateTime(2020),
+      lastDate: DateTime(2035),
+      helpText: 'PILIH TANGGAL AKHIR (SAMPAI)',
+      confirmText: 'PILIH',
+      cancelText: 'BATAL',
+    );
+    if (picked != null) {
+      setState(() {
+        _endDate = DateTime(picked.year, picked.month, picked.day, 23, 59, 59);
+        if (_startDate != null && _startDate!.isAfter(_endDate!)) {
+          _startDate = DateTime(picked.year, picked.month, picked.day, 0, 0, 0);
+        }
+        _datePresetIndex = 4; // Kustom
+      });
+    }
+  }
+
+  Future<void> _handleDownload() async {
+    final filtered = _getFilteredJournals();
+    final period = _getPeriodLabel();
+    final totalInflow = filtered
+        .where((j) => j.category == 'INFLOW' || j.type == 'TOPUP')
+        .fold(0, (sum, j) => sum + j.amount);
+    final totalOutflow = filtered
+        .where((j) => j.category == 'OUTFLOW' || j.type == 'WITHDRAWAL')
+        .fold(0, (sum, j) => sum + j.amount);
+    final netCash = totalInflow - totalOutflow;
+
+    setState(() => _isExporting = true);
+    try {
+      if (_selectedFormat == 0) {
+        // Ekspor PDF
+        await ReportExportService.downloadOfficerLedgerPdf(
+          officer: widget.officer,
+          journals: filtered,
+          period: period,
+          totalInflow: totalInflow,
+          totalOutflow: totalOutflow,
+          netCash: netCash,
+        );
+      } else {
+        // Ekspor Excel
+        await ReportExportService.downloadOfficerLedgerExcel(
+          officer: widget.officer,
+          journals: filtered,
+          period: period,
+          totalInflow: totalInflow,
+          totalOutflow: totalOutflow,
+          netCash: netCash,
+        );
+      }
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Laporan Buku Kas berhasil diekspor (${_selectedFormat == 0 ? "PDF" : "Excel"}).',
+              style: GoogleFonts.inter(),
+            ),
+            backgroundColor: Nebula.teal,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mengekspor laporan: $e', style: GoogleFonts.inter()),
+            backgroundColor: Nebula.rose,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isExporting = false);
+    }
+  }
+
+  Future<void> _handleShareWhatsApp() async {
+    final filtered = _getFilteredJournals();
+    final period = _getPeriodLabel();
+    final totalInflow = filtered
+        .where((j) => j.category == 'INFLOW' || j.type == 'TOPUP')
+        .fold(0, (sum, j) => sum + j.amount);
+    final totalOutflow = filtered
+        .where((j) => j.category == 'OUTFLOW' || j.type == 'WITHDRAWAL')
+        .fold(0, (sum, j) => sum + j.amount);
+    final netCash = totalInflow - totalOutflow;
+
+    setState(() => _isExporting = true);
+    try {
+      await ReportExportService.shareOfficerLedgerViaWhatsApp(
+        officer: widget.officer,
+        journals: filtered,
+        period: period,
+        totalInflow: totalInflow,
+        totalOutflow: totalOutflow,
+        netCash: netCash,
+        asPdf: _selectedFormat == 0,
+      );
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Membuka WhatsApp dan menyiapkan file laporan untuk dibagikan.',
+              style: GoogleFonts.inter(),
+            ),
+            backgroundColor: const Color(0xFF25D366),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal membagikan ke WhatsApp: $e', style: GoogleFonts.inter()),
+            backgroundColor: Nebula.rose,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isExporting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = _getFilteredJournals();
+    final totalInflow = filtered
+        .where((j) => j.category == 'INFLOW' || j.type == 'TOPUP')
+        .fold(0, (sum, j) => sum + j.amount);
+    final totalOutflow = filtered
+        .where((j) => j.category == 'OUTFLOW' || j.type == 'WITHDRAWAL')
+        .fold(0, (sum, j) => sum + j.amount);
+    final netCash = totalInflow - totalOutflow;
+
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom +
+        MediaQuery.of(context).padding.bottom +
+        16;
+
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.9,
+      ),
+      decoration: BoxDecoration(
+        color: context.cardBg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border.all(color: context.dividerCol, width: 0.8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 24,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Grab Handle ──
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(top: 10, bottom: 6),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: context.textSecondary.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+
+            // ── Modal Header ──
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+              child: Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: Nebula.teal.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      CupertinoIcons.doc_text_fill,
+                      color: Nebula.teal,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Ekspor & Bagikan Buku Kas',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: context.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${widget.officer.fullName} • ${widget.officer.assignedSchool}',
+                          style: GoogleFonts.inter(
+                            fontSize: 11.5,
+                            color: context.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(CupertinoIcons.xmark_circle_fill, size: 22),
+                    color: context.textSecondary,
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+
+            const Divider(height: 1, thickness: 0.5),
+
+            // ── Scrollable Body ──
+            Flexible(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(18, 14, 18, bottomPadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── 1. Bagian Filter Rentang Tanggal ──
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '1. RENTANG TANGGAL LAPORAN',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Nebula.teal,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        Text(
+                          _getPeriodLabel(),
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: context.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Preset Chips
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildPresetChip('Semua', 0),
+                          const SizedBox(width: 6),
+                          _buildPresetChip('Hari Ini', 1),
+                          const SizedBox(width: 6),
+                          _buildPresetChip('7 Hari', 2),
+                          const SizedBox(width: 6),
+                          _buildPresetChip('30 Hari', 3),
+                          const SizedBox(width: 6),
+                          _buildPresetChip('Kustom Kalender', 4),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Dua Kartu Kalender: Dari Tanggal & Sampai Tanggal
+                    Row(
+                      children: [
+                        // Dari Tanggal
+                        Expanded(
+                          child: InkWell(
+                            onTap: _pickStartDate,
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: context.surfaceBg,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: _datePresetIndex == 4
+                                      ? Nebula.teal.withValues(alpha: 0.5)
+                                      : context.dividerCol,
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        CupertinoIcons.calendar,
+                                        size: 13,
+                                        color: Nebula.teal,
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        'Dari Tanggal',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: context.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _startDate != null ? _dateFmt.format(_startDate!) : 'Awal',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: context.textPrimary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Sampai Tanggal
+                        Expanded(
+                          child: InkWell(
+                            onTap: _pickEndDate,
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: context.surfaceBg,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: _datePresetIndex == 4
+                                      ? Nebula.teal.withValues(alpha: 0.5)
+                                      : context.dividerCol,
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        CupertinoIcons.calendar_today,
+                                        size: 13,
+                                        color: Nebula.teal,
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        'Sampai Tanggal',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: context.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _endDate != null ? _dateFmt.format(_endDate!) : 'Hari Ini',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: context.textPrimary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ── 2. Live Preview Ringkasan Kas Terpilih ──
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Nebula.teal.withValues(alpha: 0.07),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: Nebula.teal.withValues(alpha: 0.25),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Rincian Kas Periode Terpilih:',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Nebula.teal,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Nebula.teal.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  '${filtered.length} Transaksi',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Nebula.teal,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildPreviewTile(
+                                  label: 'Uang Masuk (+)',
+                                  value: _fmt.format(totalInflow),
+                                  color: Nebula.teal,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _buildPreviewTile(
+                                  label: 'Uang Keluar (-)',
+                                  value: _fmt.format(totalOutflow),
+                                  color: Nebula.rose,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: context.surfaceBg,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: context.dividerCol, width: 0.6),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Kas Fisik di Tangan:',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: context.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  _fmt.format(netCash),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: netCash >= 0 ? Nebula.teal : Nebula.rose,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+
+                    // ── 3. Pilih Format Dokumen ──
+                    Text(
+                      '2. PILIH FORMAT DOKUMEN',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Nebula.teal,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    Row(
+                      children: [
+                        // PDF Card
+                        Expanded(
+                          child: _buildFormatCard(
+                            title: 'PDF Resmi',
+                            subtitle: 'Berkop, TTD & QR',
+                            icon: CupertinoIcons.doc_text_fill,
+                            index: 0,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        // Excel Card
+                        Expanded(
+                          child: _buildFormatCard(
+                            title: 'Excel (.xlsx)',
+                            subtitle: 'Multi-Sheet & Rumus',
+                            icon: CupertinoIcons.table_fill,
+                            index: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 22),
+
+                    // ── 4. Tombol Aksi Download & Share WhatsApp ──
+                    if (_isExporting)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          child: CircularProgressIndicator(color: Nebula.teal),
+                        ),
+                      )
+                    else ...[
+                      // Tombol 1: Download / Cetak File
+                      SizedBox(
+                        width: double.infinity,
+                        height: 46,
+                        child: ElevatedButton.icon(
+                          onPressed: _handleDownload,
+                          icon: const Icon(CupertinoIcons.arrow_down_doc_fill, size: 18),
+                          label: Text(
+                            'Download & Cetak Laporan (${_selectedFormat == 0 ? "PDF" : "Excel"})',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Nebula.teal,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Tombol 2: Bagikan ke WhatsApp
+                      SizedBox(
+                        width: double.infinity,
+                        height: 46,
+                        child: ElevatedButton.icon(
+                          onPressed: _handleShareWhatsApp,
+                          icon: const Icon(CupertinoIcons.share, size: 18),
+                          label: Text(
+                            'Bagikan ke WhatsApp (Teks & File ${_selectedFormat == 0 ? "PDF" : "Excel"})',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF25D366),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPresetChip(String label, int index) {
+    final isSelected = _datePresetIndex == index;
+    return InkWell(
+      onTap: () {
+        if (index == 4) {
+          _pickStartDate();
+        } else {
+          _applyPreset(index);
+        }
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected ? Nebula.teal : context.surfaceBg,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? Nebula.teal : context.dividerCol,
+            width: isSelected ? 1.2 : 0.8,
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 11.5,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            color: isSelected ? Colors.white : context.textPrimary,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPreviewTile({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.25), width: 0.8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFormatCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required int index,
+  }) {
+    final isSelected = _selectedFormat == index;
+    return InkWell(
+      onTap: () => setState(() => _selectedFormat = index),
+      borderRadius: BorderRadius.circular(14),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? Nebula.teal.withValues(alpha: 0.1) : context.surfaceBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? Nebula.teal : context.dividerCol,
+            width: isSelected ? 1.5 : 0.8,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isSelected ? Nebula.teal : context.dividerCol.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                size: 18,
+                color: isSelected ? Colors.white : context.textSecondary,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? Nebula.teal : context.textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      color: context.textSecondary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              const Icon(
+                CupertinoIcons.checkmark_circle_fill,
+                size: 16,
+                color: Nebula.teal,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

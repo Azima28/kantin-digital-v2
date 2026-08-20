@@ -404,14 +404,19 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Aktivitas Transaksi',
-                      style: GoogleFonts.inter(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: context.textPrimary,
+                    Expanded(
+                      child: Text(
+                        'Aktivitas Transaksi',
+                        style: GoogleFonts.inter(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: context.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: 8),
                     PressScale(
                       onTap: () {
                         Navigator.of(context).push(
@@ -425,15 +430,12 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                           ),
                         );
                       },
-                      child: TextButton(
-                        onPressed: null,
-                        child: Text(
-                          'Lihat Semua',
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Nebula.teal,
-                          ),
+                      child: Text(
+                        'Lihat Semua',
+                        style: GoogleFonts.inter(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: Nebula.teal,
                         ),
                       ),
                     ),

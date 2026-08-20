@@ -6,6 +6,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:kantin_digital/core/models/models.dart';
 
 /// Service untuk mengekspor dan mengunduh Laporan Keuangan
 /// dalam format Excel (.xlsx) dan PDF.
@@ -596,7 +598,7 @@ class ReportExportService {
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
-                  'Sistem Kantin Digital • Dokumen Laporan Keuangan Sah',
+                  'Sistem Kantin Digital | Dokumen Laporan Keuangan Sah',
                   style: pw.TextStyle(font: ttfRegular, fontSize: 8, color: subtleText),
                 ),
                 pw.Text(
@@ -1025,4 +1027,685 @@ class ReportExportService {
     );
   }
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // EKSPOR BUKU KAS PETUGAS LOKET (PDF & EXCEL & WHATSAPP)
+  // ══════════════════════════════════════════════════════════════════════════
+
+  /// Download atau Bagikan Laporan Buku Kas Petugas dalam format Excel (.xlsx)
+  static Future<void> downloadOfficerLedgerExcel({
+    required FinanceOfficerLedgerItem officer,
+    required List<OfficerJournalEntry> journals,
+    required String period,
+    required int totalInflow,
+    required int totalOutflow,
+    required int netCash,
+  }) async {
+    final excel = Excel.createExcel();
+    excel.delete('Sheet1');
+
+    final titleStyle = CellStyle(
+      bold: true,
+      fontSize: 16,
+      fontColorHex: ExcelColor.fromHexString('#0D9488'),
+      horizontalAlign: HorizontalAlign.Left,
+      verticalAlign: VerticalAlign.Center,
+    );
+
+    final metaStyle = CellStyle(
+      fontSize: 11,
+      fontColorHex: ExcelColor.fromHexString('#475569'),
+      horizontalAlign: HorizontalAlign.Left,
+      verticalAlign: VerticalAlign.Center,
+    );
+
+    final sectionHeaderStyle = CellStyle(
+      bold: true,
+      fontSize: 12,
+      fontColorHex: ExcelColor.fromHexString('#0F172A'),
+      backgroundColorHex: ExcelColor.fromHexString('#F1F5F9'),
+      horizontalAlign: HorizontalAlign.Left,
+      verticalAlign: VerticalAlign.Center,
+    );
+
+    final headerStyle = CellStyle(
+      backgroundColorHex: ExcelColor.fromHexString('#0D9488'),
+      fontColorHex: ExcelColor.fromHexString('#FFFFFF'),
+      bold: true,
+      horizontalAlign: HorizontalAlign.Center,
+      verticalAlign: VerticalAlign.Center,
+    );
+
+    final headerStyleLeft = CellStyle(
+      backgroundColorHex: ExcelColor.fromHexString('#0D9488'),
+      fontColorHex: ExcelColor.fromHexString('#FFFFFF'),
+      bold: true,
+      horizontalAlign: HorizontalAlign.Left,
+      verticalAlign: VerticalAlign.Center,
+    );
+
+    final headerStyleRight = CellStyle(
+      backgroundColorHex: ExcelColor.fromHexString('#0D9488'),
+      fontColorHex: ExcelColor.fromHexString('#FFFFFF'),
+      bold: true,
+      horizontalAlign: HorizontalAlign.Right,
+      verticalAlign: VerticalAlign.Center,
+    );
+
+    final cellLeft = CellStyle(
+      horizontalAlign: HorizontalAlign.Left,
+      verticalAlign: VerticalAlign.Center,
+    );
+
+    final cellCenter = CellStyle(
+      horizontalAlign: HorizontalAlign.Center,
+      verticalAlign: VerticalAlign.Center,
+    );
+
+    final cellRight = CellStyle(
+      horizontalAlign: HorizontalAlign.Right,
+      verticalAlign: VerticalAlign.Center,
+    );
+
+    final totalStyle = CellStyle(
+      backgroundColorHex: ExcelColor.fromHexString('#CCFBF1'),
+      fontColorHex: ExcelColor.fromHexString('#0F766E'),
+      bold: true,
+      horizontalAlign: HorizontalAlign.Left,
+      verticalAlign: VerticalAlign.Center,
+    );
+
+    final totalStyleRight = CellStyle(
+      backgroundColorHex: ExcelColor.fromHexString('#CCFBF1'),
+      fontColorHex: ExcelColor.fromHexString('#0F766E'),
+      bold: true,
+      horizontalAlign: HorizontalAlign.Right,
+      verticalAlign: VerticalAlign.Center,
+    );
+
+    // ── 1. Sheet Ringkasan Kas Petugas ──
+    final Sheet summarySheet = excel['Ringkasan Kas Petugas'];
+    excel.setDefaultSheet('Ringkasan Kas Petugas');
+
+    summarySheet.setColumnWidth(0, 36.0);
+    summarySheet.setColumnWidth(1, 30.0);
+    summarySheet.setColumnWidth(2, 36.0);
+
+    summarySheet.appendRow([TextCellValue('LAPORAN BUKU KAS PETUGAS LOKET')]);
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0)).cellStyle = titleStyle;
+
+    summarySheet.appendRow([TextCellValue('Nama Petugas: ${officer.fullName} (${officer.assignedSchool})')]);
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 1)).cellStyle = metaStyle;
+
+    summarySheet.appendRow([TextCellValue('Periode Laporan: $period')]);
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 2)).cellStyle = metaStyle;
+
+    summarySheet.appendRow([TextCellValue('Tanggal Export: ${DateFormat('dd MMMM yyyy HH:mm', 'id_ID').format(DateTime.now())}')]);
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 3)).cellStyle = metaStyle;
+
+    summarySheet.appendRow([TextCellValue('')]);
+
+    summarySheet.appendRow([TextCellValue('RINGKASAN AKUNTABILITAS KAS PETUGAS')]);
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 5)).cellStyle = sectionHeaderStyle;
+
+    summarySheet.appendRow([TextCellValue('Indikator Kas'), TextCellValue('Keterangan'), TextCellValue('Nominal (IDR)')]);
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 6)).cellStyle = headerStyleLeft;
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 6)).cellStyle = headerStyleLeft;
+    summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 6)).cellStyle = headerStyleRight;
+
+    final summaryRows = [
+      ['Total Uang Masuk (Inflow)', 'Setoran Top-Up Tunai Siswa', _currencyFmt.format(totalInflow)],
+      ['Total Uang Keluar (Outflow)', 'Pencairan Kas Stan (Payout)', _currencyFmt.format(totalOutflow)],
+      ['Kas Fisik di Tangan Petugas', 'Net Uang Tunai di Laci Kasir', _currencyFmt.format(netCash)],
+      ['Total Transaksi Jurnal', 'Frekuensi Mutasi Periode Ini', '${journals.length} Transaksi'],
+      ['Status Petugas', 'Otoritas ${officer.authorityLevel}', officer.isActive ? 'AKTIF' : 'NONAKTIF'],
+    ];
+
+    for (int i = 0; i < summaryRows.length; i++) {
+      final r = summaryRows[i];
+      final rIdx = 7 + i;
+      summarySheet.appendRow([TextCellValue(r[0]), TextCellValue(r[1]), TextCellValue(r[2])]);
+      summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rIdx)).cellStyle = cellLeft;
+      summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rIdx)).cellStyle = cellLeft;
+      summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rIdx)).cellStyle = cellRight;
+    }
+
+    // ── 2. Sheet Jurnal Rincian Mutasi Kas ──
+    final Sheet journalSheet = excel['Rincian Jurnal Mutasi'];
+    journalSheet.setColumnWidth(0, 8.0);   // No
+    journalSheet.setColumnWidth(1, 22.0);  // Waktu
+    journalSheet.setColumnWidth(2, 16.0);  // Jenis
+    journalSheet.setColumnWidth(3, 16.0);  // Kategori
+    journalSheet.setColumnWidth(4, 28.0);  // Pihak Terkait
+    journalSheet.setColumnWidth(5, 34.0);  // Catatan
+    journalSheet.setColumnWidth(6, 14.0);  // Metode
+    journalSheet.setColumnWidth(7, 24.0);  // Nominal
+
+    journalSheet.appendRow([TextCellValue('JURNAL RINCIAN MUTASI KAS PETUGAS')]);
+    journalSheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0)).cellStyle = titleStyle;
+
+    journalSheet.appendRow([TextCellValue('Petugas: ${officer.fullName} | Periode: $period')]);
+    journalSheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 1)).cellStyle = metaStyle;
+
+    journalSheet.appendRow([TextCellValue('')]);
+
+    journalSheet.appendRow([
+      TextCellValue('No'),
+      TextCellValue('Waktu & Tanggal'),
+      TextCellValue('Jenis Transaksi'),
+      TextCellValue('Arah Kas'),
+      TextCellValue('Pihak Terkait (Siswa/Stan)'),
+      TextCellValue('Catatan / Keterangan'),
+      TextCellValue('Metode'),
+      TextCellValue('Nominal (IDR)'),
+    ]);
+
+    for (int col = 0; col < 8; col++) {
+      journalSheet.cell(CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 3)).cellStyle =
+          col == 7 ? headerStyleRight : (col == 0 ? headerStyle : headerStyleLeft);
+    }
+
+    int jRow = 4;
+    for (int i = 0; i < journals.length; i++) {
+      final j = journals[i];
+      final dateStr = j.createdAt != null
+          ? DateFormat('dd/MM/yyyy HH:mm').format(j.createdAt!)
+          : '-';
+      final isInflow = j.category == 'INFLOW' || j.type == 'TOPUP';
+      final sign = isInflow ? '+' : '-';
+
+      journalSheet.appendRow([
+        IntCellValue(i + 1),
+        TextCellValue(dateStr),
+        TextCellValue(j.type),
+        TextCellValue(isInflow ? 'UANG MASUK (+)' : 'UANG KELUAR (-)'),
+        TextCellValue(j.targetName.isNotEmpty ? j.targetName : '-'),
+        TextCellValue(j.notes.isNotEmpty ? j.notes : '-'),
+        TextCellValue(j.method.isNotEmpty ? j.method.toUpperCase() : 'TUNAI'),
+        TextCellValue('$sign${_currencyFmt.format(j.amount)}'),
+      ]);
+
+      journalSheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: jRow)).cellStyle = cellCenter;
+      journalSheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: jRow)).cellStyle = cellCenter;
+      journalSheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: jRow)).cellStyle = cellLeft;
+      journalSheet.cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: jRow)).cellStyle = cellLeft;
+      journalSheet.cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: jRow)).cellStyle = cellLeft;
+      journalSheet.cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: jRow)).cellStyle = cellLeft;
+      journalSheet.cell(CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: jRow)).cellStyle = cellCenter;
+      journalSheet.cell(CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: jRow)).cellStyle = cellRight;
+      jRow++;
+    }
+
+    // Total Row
+    journalSheet.appendRow([
+      TextCellValue('TOTAL'),
+      TextCellValue('${journals.length} Mutasi'),
+      TextCellValue(''),
+      TextCellValue(''),
+      TextCellValue(''),
+      TextCellValue('KAS BERSIH DI TANGAN:'),
+      TextCellValue(''),
+      TextCellValue(_currencyFmt.format(netCash)),
+    ]);
+
+    for (int col = 0; col < 8; col++) {
+      journalSheet.cell(CellIndex.indexByColumnRow(columnIndex: col, rowIndex: jRow)).cellStyle =
+          col == 7 ? totalStyleRight : totalStyle;
+    }
+
+    final List<int>? fileBytes = excel.encode();
+    if (fileBytes == null) return;
+
+    final Uint8List bytes = Uint8List.fromList(fileBytes);
+    final safeName = officer.fullName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+    final String filename = 'Buku_Kas_${safeName}_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.xlsx';
+
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/$filename');
+      await file.writeAsBytes(bytes);
+      await Printing.sharePdf(bytes: bytes, filename: filename);
+    } catch (_) {
+      await Printing.sharePdf(bytes: bytes, filename: filename);
+    }
+  }
+
+  /// Download atau Tampilkan Preview Laporan Buku Kas Petugas dalam format PDF Berkop Resmi
+  static Future<void> downloadOfficerLedgerPdf({
+    required FinanceOfficerLedgerItem officer,
+    required List<OfficerJournalEntry> journals,
+    required String period,
+    required int totalInflow,
+    required int totalOutflow,
+    required int netCash,
+  }) async {
+    final pdf = pw.Document();
+
+    pw.Font? ttfRegular;
+    pw.Font? ttfBold;
+    try {
+      final regularData = await rootBundle.load('assets/fonts/Inter-Regular.ttf');
+      final boldData = await rootBundle.load('assets/fonts/Inter-Bold.ttf');
+      ttfRegular = pw.Font.ttf(regularData);
+      ttfBold = pw.Font.ttf(boldData);
+    } catch (_) {
+      // Fallback
+    }
+
+    const PdfColor primaryTeal = PdfColor.fromInt(0xFF0D9488);
+    const PdfColor darkText = PdfColor.fromInt(0xFF0F172A);
+    const PdfColor grayText = PdfColor.fromInt(0xFF475569);
+    const PdfColor subtleText = PdfColor.fromInt(0xFF64748B);
+    const PdfColor lightBg = PdfColor.fromInt(0xFFF8FAFC);
+    const PdfColor totalRowBg = PdfColor.fromInt(0xFFE6F5F2);
+    const PdfColor borderCol = PdfColor.fromInt(0xFFE2E8F0);
+    const PdfColor roseText = PdfColor.fromInt(0xFFE11D48);
+
+    final baseStyle = pw.TextStyle(font: ttfRegular, fontSize: 8.5, color: darkText);
+    final boldStyle = pw.TextStyle(font: ttfBold, fontSize: 8.5, fontWeight: pw.FontWeight.bold, color: darkText);
+    final titleStyle = pw.TextStyle(font: ttfBold, fontSize: 11, fontWeight: pw.FontWeight.bold, color: darkText);
+    final tableHeaderStyle = pw.TextStyle(font: ttfBold, fontSize: 8.5, fontWeight: pw.FontWeight.bold, color: PdfColors.white);
+
+    final printDateStr = DateFormat('dd MMMM yyyy HH:mm', 'id_ID').format(DateTime.now());
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        footer: (pw.Context context) {
+          return pw.Container(
+            margin: const pw.EdgeInsets.only(top: 16),
+            padding: const pw.EdgeInsets.only(top: 8),
+            decoration: const pw.BoxDecoration(
+              border: pw.Border(top: pw.BorderSide(color: borderCol, width: 0.5)),
+            ),
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                  'Sistem Kantin Digital | Buku Kas Sah Petugas Loket',
+                  style: pw.TextStyle(font: ttfRegular, fontSize: 8, color: subtleText),
+                ),
+                pw.Text(
+                  'Halaman ${context.pageNumber} dari ${context.pagesCount}',
+                  style: pw.TextStyle(font: ttfRegular, fontSize: 8, color: subtleText),
+                ),
+              ],
+            ),
+          );
+        },
+        build: (pw.Context context) {
+          return [
+            // ── Executive Header Banner ──
+            pw.Container(
+              padding: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: pw.BoxDecoration(
+                color: primaryTeal,
+                borderRadius: pw.BorderRadius.circular(12),
+              ),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                children: [
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        'KANTIN DIGITAL',
+                        style: pw.TextStyle(
+                          font: ttfBold,
+                          fontSize: 16,
+                          color: PdfColors.white,
+                          fontWeight: pw.FontWeight.bold,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                      pw.SizedBox(height: 3),
+                      pw.Text(
+                        'LAPORAN BUKU KAS PETUGAS LOKET KEUANGAN',
+                        style: pw.TextStyle(
+                          font: ttfRegular,
+                          fontSize: 9,
+                          color: const PdfColor.fromInt(0xFFCCFBF1),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  pw.Container(
+                    padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: pw.BoxDecoration(
+                      color: const PdfColor.fromInt(0xFF0F766E),
+                      borderRadius: pw.BorderRadius.circular(8),
+                      border: pw.Border.all(color: const PdfColor.fromInt(0xFF2DD4BF), width: 0.8),
+                    ),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.end,
+                      children: [
+                        pw.Text(
+                          'PERIODE: $period',
+                          style: pw.TextStyle(font: ttfBold, fontSize: 8.5, color: PdfColors.white),
+                        ),
+                        pw.SizedBox(height: 3),
+                        pw.Text(
+                          'Dicetak: $printDateStr',
+                          style: pw.TextStyle(font: ttfRegular, fontSize: 8, color: const PdfColor.fromInt(0xFFCCFBF1)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 14),
+
+            // ── Informasi Identitas Petugas ──
+            pw.Container(
+              padding: const pw.EdgeInsets.all(12),
+              decoration: pw.BoxDecoration(
+                color: lightBg,
+                borderRadius: pw.BorderRadius.circular(8),
+                border: pw.Border.all(color: borderCol, width: 0.8),
+              ),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('NAMA PETUGAS LOKET:', style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: subtleText)),
+                      pw.SizedBox(height: 2),
+                      pw.Text(officer.fullName, style: boldStyle.copyWith(fontSize: 10)),
+                    ],
+                  ),
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('INSTANSI / SEKOLAH:', style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: subtleText)),
+                      pw.SizedBox(height: 2),
+                      pw.Text(officer.assignedSchool, style: boldStyle.copyWith(fontSize: 10)),
+                    ],
+                  ),
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('OTORITAS / STATUS:', style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: subtleText)),
+                      pw.SizedBox(height: 2),
+                      pw.Text('${officer.authorityLevel} | ${officer.isActive ? "AKTIF" : "NONAKTIF"}', style: boldStyle.copyWith(fontSize: 10, color: primaryTeal)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 16),
+
+            // ── Ringkasan Kas (3 KPI Cards) ──
+            _pdfSectionTitle('REKAPITULASI KAS FISIK DI TANGAN', titleStyle, primaryTeal, ttfBold),
+            pw.SizedBox(height: 8),
+            pw.Row(
+              children: [
+                pw.Expanded(
+                  child: _pdfKpiCard(
+                    label: 'TOTAL UANG MASUK (+)',
+                    value: _currencyFmt.format(totalInflow),
+                    subtext: 'Setoran Top-Up Tunai Siswa',
+                    baseStyle: baseStyle,
+                    boldStyle: boldStyle,
+                    grayStyle: grayText,
+                    borderCol: borderCol,
+                    bgCol: lightBg,
+                    valueColor: primaryTeal,
+                  ),
+                ),
+                pw.SizedBox(width: 8),
+                pw.Expanded(
+                  child: _pdfKpiCard(
+                    label: 'TOTAL UANG KELUAR (-)',
+                    value: _currencyFmt.format(totalOutflow),
+                    subtext: 'Pencairan Kas Stan (Payout)',
+                    baseStyle: baseStyle,
+                    boldStyle: boldStyle,
+                    grayStyle: grayText,
+                    borderCol: borderCol,
+                    bgCol: lightBg,
+                    valueColor: roseText,
+                  ),
+                ),
+                pw.SizedBox(width: 8),
+                pw.Expanded(
+                  child: _pdfKpiCard(
+                    label: 'KAS FISIK DI TANGAN',
+                    value: _currencyFmt.format(netCash),
+                    subtext: 'Sisa uang di laci petugas',
+                    baseStyle: baseStyle,
+                    boldStyle: boldStyle,
+                    grayStyle: grayText,
+                    borderCol: const PdfColor.fromInt(0xFF5EEAD4),
+                    bgCol: totalRowBg,
+                    valueColor: primaryTeal,
+                  ),
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 18),
+
+            // ── Tabel Rincian Jurnal Mutasi ──
+            _pdfSectionTitle('RINCIAN JURNAL MUTASI KAS (${journals.length} TRANSAKSI)', titleStyle, primaryTeal, ttfBold),
+            pw.SizedBox(height: 8),
+            pw.TableHelper.fromTextArray(
+              context: context,
+              headerStyle: tableHeaderStyle,
+              headerDecoration: pw.BoxDecoration(
+                color: primaryTeal,
+                borderRadius: const pw.BorderRadius.vertical(top: pw.Radius.circular(6)),
+              ),
+              cellStyle: baseStyle,
+              headerHeight: 24,
+              cellHeight: 22,
+              cellAlignments: {
+                0: pw.Alignment.center,
+                1: pw.Alignment.center,
+                2: pw.Alignment.centerLeft,
+                3: pw.Alignment.centerLeft,
+                4: pw.Alignment.centerLeft,
+                5: pw.Alignment.center,
+                6: pw.Alignment.centerRight,
+              },
+              columnWidths: {
+                0: const pw.FixedColumnWidth(28),
+                1: const pw.FixedColumnWidth(68),
+                2: const pw.FixedColumnWidth(64),
+                3: const pw.FlexColumnWidth(1.4),
+                4: const pw.FlexColumnWidth(1.8),
+                5: const pw.FixedColumnWidth(48),
+                6: const pw.FlexColumnWidth(1.3),
+              },
+              border: const pw.TableBorder(
+                horizontalInside: pw.BorderSide(color: borderCol, width: 0.5),
+                bottom: pw.BorderSide(color: borderCol, width: 0.8),
+              ),
+              rowDecoration: const pw.BoxDecoration(color: PdfColors.white),
+              oddRowDecoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFF8FAFC)),
+              headers: ['No', 'Waktu', 'Jenis', 'Pihak Terkait', 'Keterangan', 'Metode', 'Nominal'],
+              data: journals.isEmpty
+                  ? [
+                      ['1', '-', '-', 'Belum ada mutasi pada periode ini', '-', '-', 'Rp 0']
+                    ]
+                  : journals.asMap().entries.map((entry) {
+                      final i = entry.key;
+                      final j = entry.value;
+                      final date = j.createdAt != null
+                          ? DateFormat('dd/MM HH:mm').format(j.createdAt!)
+                          : '-';
+                      final isInflow = j.category == 'INFLOW' || j.type == 'TOPUP';
+                      final sign = isInflow ? '+' : '-';
+                      return [
+                        '${i + 1}',
+                        date,
+                        j.type,
+                        j.targetName.isNotEmpty ? j.targetName : '-',
+                        j.notes.isNotEmpty ? j.notes : '-',
+                        j.method.isNotEmpty ? j.method.toUpperCase() : 'TUNAI',
+                        '$sign${_currencyFmt.format(j.amount)}',
+                      ];
+                    }).toList(),
+            ),
+            pw.SizedBox(height: 8),
+
+            // Total Baris Bawah
+            pw.Container(
+              padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: pw.BoxDecoration(
+                color: totalRowBg,
+                borderRadius: pw.BorderRadius.circular(6),
+                border: pw.Border.all(color: const PdfColor.fromInt(0xFF99F6E4), width: 0.8),
+              ),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                    'TOTAL SISA KAS FISIK DI TANGAN PETUGAS (${journals.length} MUTASI)',
+                    style: boldStyle.copyWith(fontSize: 8.5, color: primaryTeal),
+                  ),
+                  pw.Text(
+                    _currencyFmt.format(netCash),
+                    style: boldStyle.copyWith(fontSize: 10, color: primaryTeal),
+                  ),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 24),
+
+            // ── Bagian Tanda Tangan & Pengesahan Sah ──
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.center,
+                  children: [
+                    pw.Text('Petugas Loket Kasir,', style: baseStyle),
+                    pw.SizedBox(height: 40),
+                    pw.Text('( ${officer.fullName} )', style: boldStyle),
+                    pw.Text('NIP / Otoritas ${officer.authorityLevel}', style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: subtleText)),
+                  ],
+                ),
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.center,
+                  children: [
+                    pw.Text('Mengetahui / Mengesahkan,', style: baseStyle),
+                    pw.SizedBox(height: 40),
+                    pw.Text('( Super Admin Keuangan )', style: boldStyle),
+                    pw.Text('Auditor & Governance Sistem', style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: subtleText)),
+                  ],
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 16),
+
+            // Footer Otomatis
+            pw.Center(
+              child: pw.Container(
+                padding: const pw.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: pw.BoxDecoration(
+                  color: lightBg,
+                  borderRadius: pw.BorderRadius.circular(20),
+                  border: pw.Border.all(color: borderCol, width: 0.8),
+                ),
+                child: pw.Text(
+                  'Dokumen buku kas ini ditarik secara digital & terverifikasi oleh Sistem Kantin Digital.',
+                  style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: grayText),
+                ),
+              ),
+            ),
+          ];
+        },
+      ),
+    );
+
+    final safeName = officer.fullName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+    final String filename = 'Buku_Kas_${safeName}_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.pdf';
+
+    await Printing.sharePdf(
+      bytes: await pdf.save(),
+      filename: filename,
+    );
+  }
+
+  /// Bagikan Ringkasan Buku Kas Petugas ke WhatsApp dan Lampirkan Dokumen Laporan
+  static Future<void> shareOfficerLedgerViaWhatsApp({
+    required FinanceOfficerLedgerItem officer,
+    required List<OfficerJournalEntry> journals,
+    required String period,
+    required int totalInflow,
+    required int totalOutflow,
+    required int netCash,
+    bool asPdf = true,
+  }) async {
+    // 1. Susun teks pesan ringkasan WhatsApp yang sangat rapi dan informatif
+    final buffer = StringBuffer();
+    buffer.writeln('📋 *LAPORAN BUKU KAS PETUGAS LOKET*');
+    buffer.writeln('Kantin Digital — Sistem Akuntabilitas Sah');
+    buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
+    buffer.writeln('👤 *Petugas:* ${officer.fullName}');
+    buffer.writeln('🏫 *Sekolah:* ${officer.assignedSchool}');
+    buffer.writeln('🛡️ *Otoritas:* Level ${officer.authorityLevel}');
+    buffer.writeln('📅 *Periode:* $period');
+    buffer.writeln('⏰ *Waktu Cetak:* ${DateFormat('dd MMMM yyyy HH:mm', 'id_ID').format(DateTime.now())}');
+    buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
+    buffer.writeln('📈 *Uang Masuk (Top-Up):* ${_currencyFmt.format(totalInflow)}');
+    buffer.writeln('📉 *Uang Keluar (Pencairan):* ${_currencyFmt.format(totalOutflow)}');
+    buffer.writeln('💰 *SISA KAS FISIK DI TANGAN:* ${_currencyFmt.format(netCash)}');
+    buffer.writeln('📊 *Total Mutasi:* ${journals.length} Transaksi');
+    buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
+
+    if (journals.isNotEmpty) {
+      buffer.writeln('*Mutasi Terkini:*');
+      final sample = journals.take(5).toList();
+      for (int i = 0; i < sample.length; i++) {
+        final j = sample[i];
+        final dt = j.createdAt != null ? DateFormat('dd/MM HH:mm').format(j.createdAt!) : '-';
+        final isInflow = j.category == 'INFLOW' || j.type == 'TOPUP';
+        final sign = isInflow ? '(+)' : '(-)';
+        buffer.writeln('${i + 1}. [$dt] ${j.type} $sign ${_currencyFmt.format(j.amount)} — ${j.targetName}');
+      }
+      buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
+    }
+
+    buffer.writeln('_Laporan ditarik resmi dari Sistem Kantin Digital._');
+
+    // 2. Buka WhatsApp dengan pesan terformat
+    final encodedText = Uri.encodeComponent(buffer.toString());
+    final waUrl = 'https://api.whatsapp.com/send?text=$encodedText';
+    final uri = Uri.parse(waUrl);
+
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {
+      // Abaikan jika url_launcher browser belum terhubung
+    }
+
+    // 3. Picu unduhan / share file dokumen (PDF / Excel) agar pengguna dapat melampirkannya ke chat WhatsApp
+    if (asPdf) {
+      await downloadOfficerLedgerPdf(
+        officer: officer,
+        journals: journals,
+        period: period,
+        totalInflow: totalInflow,
+        totalOutflow: totalOutflow,
+        netCash: netCash,
+      );
+    } else {
+      await downloadOfficerLedgerExcel(
+        officer: officer,
+        journals: journals,
+        period: period,
+        totalInflow: totalInflow,
+        totalOutflow: totalOutflow,
+        netCash: netCash,
+      );
+    }
+  }
+
 }
+

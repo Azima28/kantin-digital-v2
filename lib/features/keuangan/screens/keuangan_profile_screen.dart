@@ -9,6 +9,7 @@ import 'package:kantin_digital/core/services/storage_service.dart';
 import 'package:kantin_digital/core/widgets/change_password_panel.dart';
 import 'package:kantin_digital/core/widgets/theme_toggle_tile.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
+import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
@@ -140,10 +141,13 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(authNotifierProvider).profile;
+    final acadSchool = ref.watch(academicStructureProvider).valueOrNull?.schoolName;
     final fullName = profile?['full_name'] ?? 'Admin Keuangan';
     final email = profile?['email'] ?? '-';
     final username = profile?['username'] ?? 'budi_fin';
-    final school = profile?['assigned_school'] ?? 'SMP Terpadu';
+    final school = acadSchool?.isNotEmpty == true
+        ? acadSchool!
+        : (profile?['assigned_school'] ?? 'Sekolah Digital');
     final String? avatarUrl = profile?['avatar_url'] as String?;
 
     return Scaffold(

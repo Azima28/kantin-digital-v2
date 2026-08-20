@@ -152,9 +152,11 @@ class StudentWithProfile {
     );
   }
 
-  /// Parse dari response REST API /finance/students:
+  /// Parse dari response REST API /finance/students atau /student/lookup:
   factory StudentWithProfile.fromApiJson(Map<String, dynamic> json) {
-    final profile = json['profile'] is Map<String, dynamic> ? json['profile'] as Map<String, dynamic> : json;
+    final profile = json['profile'] is Map
+        ? Map<String, dynamic>.from(json['profile'] as Map)
+        : json;
     final bool isAccountActive = (profile['is_active'] ?? json['is_active']) == true;
     final bool isCardActive = json.containsKey('is_active')
         ? json['is_active'] == true
@@ -166,7 +168,7 @@ class StudentWithProfile {
       email: (profile['email'] ?? json['email'])?.toString(),
       nisn: (profile['nisn'] ?? json['nisn'])?.toString(),
       isActive: isAccountActive,
-      class_: (json['class'] ?? profile['class'])?.toString(),
+      class_: (json['class'] ?? profile['class'] ?? json['rombel'])?.toString(),
       balance: Student._parseBalance(json['balance'] ?? profile['balance']),
       rfidUid: (json['rfid_uid'] ?? profile['rfid_uid'])?.toString(),
       cardIsActive: isCardActive,
@@ -175,15 +177,18 @@ class StudentWithProfile {
 
   /// Parse dari response data join student + profile:
   factory StudentWithProfile.fromJoinedJson(Map<String, dynamic> json) {
+    if (json.containsKey('profile') || json.containsKey('balance')) {
+      return StudentWithProfile.fromApiJson(json);
+    }
     final studentData = json['students'] is List
         ? (json['students'] as List).firstOrNull as Map<String, dynamic>?
         : json['students'] as Map<String, dynamic>?;
 
     return StudentWithProfile(
-      id: json['id'] as String,
-      fullName: (json['full_name'] ?? 'Siswa') as String,
-      email: json['email'] as String?,
-      nisn: json['nisn'] as String?,
+      id: json['id']?.toString() ?? '',
+      fullName: (json['full_name'] ?? 'Siswa').toString(),
+      email: json['email']?.toString(),
+      nisn: json['nisn']?.toString(),
       isActive: json['is_active'] == true,
       class_: (studentData?['class'] ??
           (studentData?['classes'] is Map
@@ -191,7 +196,7 @@ class StudentWithProfile {
               : null))?.toString(),
       balance:
           (double.tryParse(studentData?['balance']?.toString() ?? '0') ?? 0.0).toInt(),
-      rfidUid: studentData?['rfid_uid'] as String?,
+      rfidUid: studentData?['rfid_uid']?.toString(),
       cardIsActive: studentData?['is_active'] == true,
     );
   }

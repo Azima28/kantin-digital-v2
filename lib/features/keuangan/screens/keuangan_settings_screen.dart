@@ -13,6 +13,7 @@ import 'package:kantin_digital/core/services/storage_service.dart';
 import 'package:kantin_digital/core/widgets/app_image_picker_sheet.dart';
 import 'package:kantin_digital/core/widgets/change_password_panel.dart';
 import 'package:kantin_digital/core/widgets/theme_toggle_tile.dart';
+import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
@@ -309,10 +310,13 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(authNotifierProvider).profile;
+    final acadSchool = ref.watch(academicStructureProvider).valueOrNull?.schoolName;
     final fullName = profile?['full_name'] ?? 'Admin Keuangan';
     final email = profile?['email'] ?? '-';
     final username = profile?['username'] ?? '-';
-    final school = profile?['assigned_school'] ?? 'SMP Terpadu';
+    final school = acadSchool?.isNotEmpty == true
+        ? acadSchool!
+        : (profile?['assigned_school'] ?? 'Sekolah Digital');
     final phone = (profile?['phone_number'] ?? profile?['phone'] ?? '-').toString();
     final role = profile?['role'] ?? 'petugas_keuangan';
     final avatarUrl = profile?['avatar_url'] as String?;

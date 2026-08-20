@@ -19,11 +19,14 @@ void showEditFinanceSheet(
   UserProfile profile,
   FinanceOfficer officer,
 ) {
+  final dynamicSchool = ref.read(academicStructureProvider).valueOrNull?.schoolName ?? 'Sekolah Digital';
   final nameCtrl = TextEditingController(text: profile.fullName);
   final phoneCtrl = TextEditingController(text: profile.phoneNumber);
   final emailCtrl = TextEditingController(text: profile.email);
   final usernameCtrl = TextEditingController(text: profile.username);
-  String school = officer.assignedSchool;
+  String school = officer.assignedSchool.isNotEmpty && officer.assignedSchool != 'SMP Terpadu'
+      ? officer.assignedSchool
+      : dynamicSchool;
   String authLevel = officer.authorityLevel;
   bool isSaving = false;
 
@@ -93,7 +96,7 @@ void showEditFinanceSheet(
               AdminDropdownRow(
                 label: 'Sekolah',
                 value: school,
-                items: const ['SMP Terpadu'],
+                items: [dynamicSchool, if (school != dynamicSchool) school],
                 onChanged: (v) => setLocal(() => school = v ?? school),
               ),
               const SizedBox(height: 12),

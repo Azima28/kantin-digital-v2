@@ -19,16 +19,24 @@ final keuanganDashboardProvider =
   try {
     final res = await apiClient.get('/finance/dashboard');
     if (res.success && res.data != null) {
-      final data = res.data as Map<String, dynamic>;
+      final data = Map<String, dynamic>.from(res.data as Map);
+      final rawRecent = data['recent_transactions'];
+      final List<Map<String, dynamic>> parsedLogs = [];
+      if (rawRecent is List) {
+        for (final item in rawRecent) {
+          if (item is Map) {
+            parsedLogs.add(Map<String, dynamic>.from(item));
+          }
+        }
+      }
+
       return {
         'profile': profile,
-        'school': profile?['assigned_school'] ?? 'SMP Terpadu',
+        'school': profile?['assigned_school']?.toString() ?? 'Sekolah Digital',
         'totalSaldo': data['total_circulating_balance'] ?? 0,
         'topupToday': data['topup_today_amount'] ?? 0,
         'topupCount': data['topup_today_count'] ?? 0,
-        'koreksCount': data['koreksi_today_count'] ?? 0,
-        'koreksNet': data['koreksi_today_net'] ?? 0,
-        'recentLogs': (data['recent_transactions'] as List?)?.map((e) => e as Map<String, dynamic>).toList() ?? [],
+        'recentLogs': parsedLogs,
       };
     }
   } catch (e) {
@@ -37,12 +45,10 @@ final keuanganDashboardProvider =
 
   return {
     'profile': profile,
-    'school': profile?['assigned_school'] ?? 'SMP Terpadu',
+    'school': profile?['assigned_school']?.toString() ?? 'Sekolah Digital',
     'totalSaldo': 0,
     'topupToday': 0,
     'topupCount': 0,
-    'koreksCount': 0,
-    'koreksNet': 0,
     'recentLogs': <Map<String, dynamic>>[],
   };
 });

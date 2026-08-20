@@ -48,13 +48,48 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
   Future<List<Map<String, dynamic>>> _fetchActivities() async {
     try {
       final apiClient = ref.read(apiClientProvider);
+
+      // 1. If officerId is provided, first try getting ledger details which has rich journal entries
+      if (widget.officerId.isNotEmpty) {
+        final ledgerRes = await apiClient.get('/admin/finance-officers/${widget.officerId}/ledger');
+        if (ledgerRes.success && ledgerRes.data != null) {
+          final data = Map<String, dynamic>.from(ledgerRes.data as Map);
+          final recent = data['recent_journals'];
+          if (recent is List && recent.isNotEmpty) {
+            return List<Map<String, dynamic>>.from(
+              recent.map((e) => Map<String, dynamic>.from(e as Map)),
+            );
+          }
+        }
+      }
+
+      // 2. Fallback to /pos/sales-history or /admin/audit-logs
       final response = await apiClient.get('/pos/sales-history', queryParams: {
         if (widget.officerId.isNotEmpty) 'operator_id': widget.officerId,
         'limit': '50',
       });
       if (response.success && response.data != null) {
-        return List<Map<String, dynamic>>.from(response.data as List);
+        final raw = response.data;
+        if (raw is List && raw.isNotEmpty) {
+          return List<Map<String, dynamic>>.from(
+            raw.map((e) => Map<String, dynamic>.from(e as Map)),
+          );
+        }
       }
+
+      // 3. Fallback to audit logs
+      final auditRes = await apiClient.get('/admin/audit-logs', queryParams: {
+        'limit': '50',
+      });
+      if (auditRes.success && auditRes.data != null) {
+        final raw = auditRes.data;
+        if (raw is List) {
+          return List<Map<String, dynamic>>.from(
+            raw.map((e) => Map<String, dynamic>.from(e as Map)),
+          );
+        }
+      }
+
       return <Map<String, dynamic>>[];
     } catch (_) {
       return <Map<String, dynamic>>[];
@@ -507,35 +542,93 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
   }
 
   Widget _buildActivityTile(Map<String, dynamic> log) {
-    final String actionType = log['action_type']?.toString() ?? '';
-    final String desc = log['description']?.toString() ?? '';
+    final fmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+
+    // Extract type / action_type
+    String actionType = log['action_type']?.toString() ?? log['type']?.toString() ?? '';
+    if (actionType.isEmpty) {
+      actionType = 'TRANSAKSI';
+    }
+
+    // Extract amount
+    final int amount = int.tryParse(log['amount']?.toString() ?? '') ??
+        int.tryParse(log['total_amount']?.toString() ?? '') ??
+        int.tryParse(log['refund_amount']?.toString() ?? '') ??
+        0;
+
+    // Extract target / related names
+    final String targetName = log['target_name']?.toString() ??
+        log['student_name']?.toString() ??
+        log['canteen_name']?.toString() ??
+        log['actor_name']?.toString() ??
+        '';
+
+    final String notes = log['notes']?.toString() ?? '';
+    String desc = log['description']?.toString() ?? '';
+
+    final String category = log['category']?.toString() ?? '';
+    final bool isInflow = category == 'INFLOW' || actionType == 'TOPUP' || actionType == 'topup' || actionType.contains('TOPUP');
+    final bool isOutflow = category == 'OUTFLOW' || actionType == 'WITHDRAWAL' || actionType == 'withdrawal' || actionType.contains('PAYOUT') || actionType.contains('WITHDRAWAL');
+
+    if (desc.isEmpty) {
+      if (notes.isNotEmpty) {
+        desc = notes;
+      } else if (isInflow) {
+        desc = targetName.isNotEmpty ? 'Top-Up saldo untuk $targetName' : 'Setoran Top-Up Tunai';
+      } else if (isOutflow) {
+        desc = targetName.isNotEmpty ? 'Pencairan Kas Stan $targetName' : 'Penarikan Kas Stan (Payout)';
+      } else if (targetName.isNotEmpty) {
+        desc = 'Transaksi dengan $targetName';
+      } else {
+        desc = 'Mutasi Kas Petugas';
+      }
+    }
+
+    // Human readable action label
+    String displayType = actionType.replaceAll('_', ' ');
+    if (displayType == 'WITHDRAWAL' || displayType == 'withdrawal') {
+      displayType = 'TARIK KAS STAN';
+    } else if (displayType == 'TOPUP' || displayType == 'topup') {
+      displayType = 'TOP-UP SALDO';
+    } else if (displayType == 'KOREKSI SALDO' || displayType.contains('KOREKSI')) {
+      displayType = 'PENYESUAIAN KAS';
+    }
+
     final date = log['created_at'] != null
         ? DateTime.tryParse(log['created_at'].toString())?.toLocal() ?? DateTime.now()
         : DateTime.now();
 
-    IconData logIcon = CupertinoIcons.doc_text;
+    IconData logIcon = CupertinoIcons.doc_text_fill;
     Color logColor = widget.primaryColor;
-    if (actionType.contains('BATAL')) {
-      logIcon = CupertinoIcons.xmark_circle_fill;
+    String sign = '';
+
+    if (isInflow) {
+      logIcon = CupertinoIcons.arrow_down_circle_fill;
+      logColor = Nebula.teal;
+      sign = '+';
+    } else if (isOutflow) {
+      logIcon = CupertinoIcons.arrow_up_circle_fill;
       logColor = Nebula.rose;
-    } else if (actionType.contains('KOREKSI')) {
-      logIcon = CupertinoIcons.refresh;
-      logColor = widget.accentColor;
+      sign = '-';
+    } else if (actionType.contains('BATAL') || actionType.contains('REFUND')) {
+      logIcon = CupertinoIcons.arrow_counterclockwise_circle_fill;
+      logColor = Nebula.rose;
     } else if (actionType.contains('REGISTRASI')) {
-      logIcon = CupertinoIcons.creditcard;
+      logIcon = CupertinoIcons.creditcard_fill;
       logColor = Nebula.teal;
     }
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: context.cardBg,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: context.dividerCol, width: 0.6),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: context.shadowColor,
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -544,7 +637,7 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
         children: [
           CircleAvatar(
             radius: 18,
-            backgroundColor: logColor.withValues(alpha: 0.1),
+            backgroundColor: logColor.withValues(alpha: 0.12),
             child: Icon(logIcon, color: logColor, size: 18),
           ),
           const SizedBox(width: 12),
@@ -555,14 +648,19 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      actionType.replaceAll('_', ' '),
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: logColor,
+                    Flexible(
+                      child: Text(
+                        displayType,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: logColor,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: 8),
                     Text(
                       DateFormat('HH:mm', 'id_ID').format(date),
                       style: GoogleFonts.inter(
@@ -572,14 +670,35 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  desc,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: context.textPrimary,
-                  ),
+                const SizedBox(height: 3),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        desc,
+                        style: GoogleFonts.inter(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w500,
+                          color: context.textPrimary,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (amount > 0) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        '$sign${fmt.format(amount)}',
+                        style: GoogleFonts.inter(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: logColor,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),

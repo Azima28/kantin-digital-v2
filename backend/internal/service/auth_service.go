@@ -53,7 +53,11 @@ func (s *AuthService) Login(ctx context.Context, identifier, password, expectedR
 	// 2. Direct Lookup by username, email, or NISN
 	if authenticatedUser == nil {
 		user, err := s.userRepo.FindByIdentifier(ctx, cleanID)
-		if err == nil && user != nil && user.Password != nil && *user.Password != "" {
+		if err != nil {
+			if errors.Is(err, postgres.ErrDatabaseNotReady) {
+				return nil, err
+			}
+		} else if user != nil && user.Password != nil && *user.Password != "" {
 			if hasher.CheckPassword(password, *user.Password) || password == *user.Password {
 				authenticatedUser = user
 			}

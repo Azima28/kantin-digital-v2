@@ -29,16 +29,22 @@ import (
 func main() {
 	cfg := config.LoadConfig()
 
-	// 1. Database Connection
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	db, err := postgres.NewDB(ctx, cfg.DatabaseURL)
-	if err != nil {
-		log.Printf("[WARN] Tidak dapat terhubung ke PostgreSQL: %v (Pastikan PostgreSQL aktif)", err)
-	} else {
-		log.Println("[SUCCESS] Terhubung ke PostgreSQL database")
-		defer db.Close()
+	// 1. Database Connection with Auto-Retry
+	var db *postgres.DB
+	for attempt := 1; attempt <= 3; attempt++ {
+		connectCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		var err error
+		db, err = postgres.NewDB(connectCtx, cfg.DatabaseURL)
+		cancel()
+		if err == nil {
+			log.Printf("[SUCCESS] Terhubung ke PostgreSQL database (Percobaan %d)", attempt)
+			defer db.Close()
+			break
+		}
+		log.Printf("[WARN] Percobaan %d gagal terhubung ke PostgreSQL: %v", attempt, err)
+		if attempt < 3 {
+			time.Sleep(1 * time.Second)
+		}
 	}
 
 	// 2. Token Maker

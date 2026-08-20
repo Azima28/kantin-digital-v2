@@ -52,10 +52,10 @@ void showImportUsersDialog(BuildContext context, WidgetRef ref, String roleFilte
     formatGuidance =
         'Format CSV (tanpa spasi/koma berlebih):\nNama, Email, Sekolah, Tingkat Wewenang (L1/L2/L3), Password';
     hintText =
-        'Budi Finance, budi.fin@sekolah.sch.id, SMP Terpadu, L1, password123';
+        'Budi Finance, budi.fin@sekolah.sch.id, SMK Negeri 1, L1, password123';
     templateText =
-        'Budi Finance, budi.fin@sekolah.sch.id, SMP Terpadu, L1, password123\n'
-            'Siti Finance, siti.fin@sekolah.sch.id, SMP Terpadu, L2, password123';
+        'Budi Finance, budi.fin@sekolah.sch.id, SMK Negeri 1, L1, password123\n'
+            'Siti Finance, siti.fin@sekolah.sch.id, SMK Negeri 1, L2, password123';
   }
 
   showDialog(

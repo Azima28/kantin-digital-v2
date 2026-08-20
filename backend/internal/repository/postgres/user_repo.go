@@ -643,7 +643,8 @@ func (r *UserRepo) DeleteUser(ctx context.Context, id string) error {
 func (r *UserRepo) ListFinanceOfficersLedger(ctx context.Context) ([]domain.FinanceOfficerLedgerItem, error) {
 	query := `
 		SELECT p.id, p.full_name, p.email, p.username, p.phone_number, p.is_active, p.avatar_url, p.created_at,
-		       'SMP Terpadu' AS assigned_school, 'L1' AS authority_level,
+		       COALESCE((SELECT value->>'school_name' FROM public.system_settings WHERE key = 'academic_structure'), 'Sekolah Digital') AS assigned_school,
+		       'L1' AS authority_level,
 		       -- Total Cash Inflow (Topup by this officer)
 		       COALESCE((
 		           SELECT SUM(t.total_amount)
@@ -727,6 +728,11 @@ func (r *UserRepo) GetFinanceOfficerLedgerDetail(ctx context.Context, officerID 
 		if err != nil {
 			return nil, err
 		}
+		acad, _ := r.GetAcademicStructure(ctx)
+		schoolName := "Sekolah Digital"
+		if acad != nil && acad.SchoolName != "" {
+			schoolName = acad.SchoolName
+		}
 		officerItem = &domain.FinanceOfficerLedgerItem{
 			ID:             prof.ID,
 			FullName:       prof.FullName,
@@ -735,7 +741,7 @@ func (r *UserRepo) GetFinanceOfficerLedgerDetail(ctx context.Context, officerID 
 			PhoneNumber:    prof.PhoneNumber,
 			IsActive:       prof.IsActive,
 			AvatarURL:      prof.AvatarURL,
-			AssignedSchool: "SMP Terpadu",
+			AssignedSchool: schoolName,
 			AuthorityLevel: "L1",
 			CreatedAt:      prof.CreatedAt,
 		}

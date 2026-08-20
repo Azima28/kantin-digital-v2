@@ -12,11 +12,12 @@ import 'package:kantin_digital/features/admin/widgets/admin_form_text_field.dart
 import 'package:kantin_digital/features/admin/widgets/admin_section_label.dart';
 
 Future<void> showAddFinanceSheet(BuildContext context, WidgetRef ref) async {
+  final dynamicSchool = ref.read(academicStructureProvider).valueOrNull?.schoolName ?? 'Sekolah Digital';
   final nameCtrl = TextEditingController();
   final usernameCtrl = TextEditingController();
   final emailCtrl = TextEditingController();
   final passCtrl = TextEditingController(text: 'keu${_randomSuffix()}');
-  String school = 'SMP Terpadu';
+  String school = dynamicSchool;
   String authLevel = 'L1';
   bool isSaving = false;
 
@@ -95,7 +96,7 @@ Future<void> showAddFinanceSheet(BuildContext context, WidgetRef ref) async {
               AdminDropdownRow(
                 label: 'Sekolah',
                 value: school,
-                items: ['SMP Terpadu'],
+                items: [dynamicSchool],
                 onChanged: (v) => setLocal(() => school = v ?? school),
               ),
               const SizedBox(height: 12),

@@ -107,7 +107,8 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
         final list = response.data as List<dynamic>;
         setState(() {
           _searchResults = list
-              .map((item) => StudentWithProfile.fromJoinedJson(item as Map<String, dynamic>))
+              .map((item) => StudentWithProfile.fromApiJson(
+                  Map<String, dynamic>.from(item as Map)))
               .toList();
           _hasSearched = true;
         });

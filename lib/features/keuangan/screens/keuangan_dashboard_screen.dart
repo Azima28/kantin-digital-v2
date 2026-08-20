@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 
@@ -28,8 +29,15 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
   Widget build(BuildContext context) {
     final dashAsync = ref.watch(keuanganDashboardProvider);
     final profile = ref.watch(authNotifierProvider).profile;
-    final fullName = profile?['full_name'] ?? 'Admin Keuangan';
-    final school = profile?['assigned_school'] ?? 'SMP Terpadu';
+    final acadSchool = ref.watch(academicStructureProvider).valueOrNull?.schoolName;
+    final String fullName = (profile?['full_name'] as String?)?.trim().isNotEmpty == true
+        ? profile!['full_name'].toString()
+        : 'Admin Keuangan';
+    final String school = acadSchool?.isNotEmpty == true
+        ? acadSchool!
+        : ((profile?['assigned_school'] as String?)?.trim().isNotEmpty == true
+            ? profile!['assigned_school'].toString()
+            : 'Sekolah Digital');
     final fmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
     final hour = DateTime.now().hour;
@@ -43,7 +51,7 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
           color: Nebula.teal,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -51,14 +59,14 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Flexible(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             '$greeting, 👋',
                             style: GoogleFonts.inter(
-                              fontSize: 13,
+                              fontSize: 12.5,
                               color: context.textSecondary,
                             ),
                           ),
@@ -66,10 +74,11 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
                           Text(
                             fullName,
                             style: GoogleFonts.inter(
-                              fontSize: 20,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: context.textPrimary,
                             ),
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
@@ -77,13 +86,16 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
                                 ? 'Super Admin · Sistem Utama'
                                 : 'Admin Keuangan · $school',
                             style: GoogleFonts.inter(
-                              fontSize: 12,
+                              fontSize: 11,
                               color: context.textSecondary,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
                     ),
+                    const SizedBox(width: 8),
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -92,12 +104,12 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
                         GestureDetector(
                           onTap: () => context.go('/finance/settings'),
                           child: CircleAvatar(
-                            radius: 22,
+                            radius: 20,
                             backgroundColor: Nebula.teal.withValues(alpha: 0.1),
                             child: Text(
                               fullName.isNotEmpty ? fullName[0].toUpperCase() : 'A',
                               style: GoogleFonts.inter(
-                                fontSize: 18,
+                                fontSize: 16,
                                 fontWeight: FontWeight.bold,
                                 color: Nebula.teal,
                               ),
@@ -108,7 +120,7 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
                 dashAsync.when(
                   data: (data) => _buildContent(context, data, fmt),
@@ -205,7 +217,16 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
     final totalSaldo = (data['totalSaldo'] as num?)?.toDouble() ?? 0.0;
     final topupToday = (data['topupToday'] as num?)?.toDouble() ?? 0.0;
     final topupCount = (data['topupCount'] as num?)?.toInt() ?? 0;
-    final logs = data['recentLogs'] as List<Map<String, dynamic>>;
+
+    final rawLogs = data['recentLogs'];
+    final List<Map<String, dynamic>> logs = [];
+    if (rawLogs is List) {
+      for (final item in rawLogs) {
+        if (item is Map) {
+          logs.add(Map<String, dynamic>.from(item));
+        }
+      }
+    }
 
     // Filter logs for Siswa vs Petugas Kantin
     final studentLogs = logs.where((l) {
@@ -533,7 +554,7 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
                 }
 
                 final date = log['created_at'] != null
-                    ? DateTime.parse(log['created_at'].toString()).toLocal()
+                    ? (DateTime.tryParse(log['created_at'].toString())?.toLocal() ?? DateTime.now())
                     : DateTime.now();
                 final timeStr = DateFormat('HH:mm', 'id_ID').format(date);
 

@@ -19,12 +19,12 @@ class AdminAcademicSettingsScreen extends ConsumerStatefulWidget {
 
 class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSettingsScreen> {
   final PageController _pageController = PageController();
+  final TextEditingController _schoolNameController = TextEditingController(text: 'SMK Negeri 1');
   int _currentStep = 0; // 0: Jenjang & Jurusan, 1: Tingkat Kelas, 2: Master Rombel
   bool _isInitialized = false;
 
   // Working state
   String _schoolType = 'smk'; // 'smk', 'sma', 'smp', 'sd', 'custom'
-  String _schoolName = 'SMK Negeri 1';
   bool _hasMajors = true;
   List<AcademicMajor> _majors = [];
   List<String> _gradeLevels = ['X', 'XI', 'XII'];
@@ -57,6 +57,7 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
   @override
   void dispose() {
     _pageController.dispose();
+    _schoolNameController.dispose();
     super.dispose();
   }
 
@@ -64,8 +65,8 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
     if (_isInitialized) return;
     _isInitialized = true;
     _schoolType = s.schoolType;
-    _schoolName = s.schoolName;
-    _hasMajors = s.hasMajors;
+    _schoolNameController.text = s.schoolName;
+    _hasMajors = s.schoolType == 'smk' || s.schoolType == 'sma';
     _majors = List.from(s.majors);
     _gradeLevels = s.gradeLevels.isNotEmpty ? List.from(s.gradeLevels) : ['X', 'XI', 'XII'];
     _rombels = s.rombels.isNotEmpty ? List.from(s.rombels) : [];
@@ -203,6 +204,35 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
     });
   }
 
+  /// Edit / Rename kelas di tingkat pertama (otomatis update ke tingkat berikutnya jika autoSync ON)
+  void _editClassInFirstGrade(String oldName, String newRawName) {
+    final trimmedNew = newRawName.trim();
+    if (trimmedNew.isEmpty || oldName == trimmedNew) return;
+
+    final firstG = _firstGrade;
+    final formattedNew = _projectClassToGrade(trimmedNew, firstG, firstG);
+
+    setState(() {
+      final idx = _rombels.indexOf(oldName);
+      if (idx != -1) {
+        _rombels[idx] = formattedNew;
+      }
+
+      // Auto-propagate rename ke tingkat berikutnya (XI, XII, dst.)
+      if (_autoSyncToOtherGrades) {
+        for (int i = 1; i < _gradeLevels.length; i++) {
+          final targetGrade = _gradeLevels[i];
+          final oldProjected = _projectClassToGrade(oldName, firstG, targetGrade);
+          final newProjected = _projectClassToGrade(trimmedNew, firstG, targetGrade);
+          final otherIdx = _rombels.indexOf(oldProjected);
+          if (otherIdx != -1) {
+            _rombels[otherIdx] = newProjected;
+          }
+        }
+      }
+    });
+  }
+
   /// Hapus kelas dari tingkat pertama (otomatis hapus dari tingkat berikutnya jika autoSync ON)
   void _removeClassFromFirstGrade(String className) {
     final firstG = _firstGrade;
@@ -232,6 +262,19 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
     });
   }
 
+  /// Edit / Rename kelas khusus di tingkat tertentu
+  void _editCustomClass(String oldName, String newRawName) {
+    final trimmedNew = newRawName.trim();
+    if (trimmedNew.isEmpty || oldName == trimmedNew) return;
+
+    setState(() {
+      final idx = _rombels.indexOf(oldName);
+      if (idx != -1) {
+        _rombels[idx] = trimmedNew;
+      }
+    });
+  }
+
   void _goToStep(int step) {
     if (step < 0 || step > 2) return;
     setState(() => _currentStep = step);
@@ -243,6 +286,9 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
   }
 
   Future<void> _handleSave() async {
+    final enteredSchoolName = _schoolNameController.text.trim();
+    final effectiveSchoolName = enteredSchoolName.isNotEmpty ? enteredSchoolName : 'Sekolah Digital';
+
     if (_rombels.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -257,7 +303,7 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
     setState(() => _isSaving = true);
     final struct = AcademicStructure(
       schoolType: _schoolType,
-      schoolName: _schoolName.trim().isNotEmpty ? _schoolName.trim() : 'Sekolah Digital',
+      schoolName: effectiveSchoolName,
       hasMajors: _hasMajors,
       majors: _majors,
       gradeLevels: _gradeLevels,
@@ -272,7 +318,7 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(ok
-              ? 'Master struktur akademik & rombel berhasil disimpan!'
+              ? 'Master struktur akademik & rombel $effectiveSchoolName berhasil disimpan!'
               : 'Gagal menyimpan struktur akademik'),
           backgroundColor: ok ? Nebula.teal : Nebula.rose,
           behavior: SnackBarBehavior.floating,
@@ -290,7 +336,7 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
     asyncData.whenData((s) => _loadFromModel(s));
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: context.surfaceBg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -457,14 +503,18 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
                         _handleSave();
                       }
                     },
-              child: Text(
-                _currentStep == 0
-                    ? 'Lanjut: Tingkat Kelas →'
-                    : (_currentStep == 1
-                        ? 'Lanjut: Master Rombel →'
-                        : (_isSaving ? 'Menyimpan...' : 'Simpan Seluruh Struktur (Selesai)')),
-                style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12.5),
-              ),
+              child: _isSaving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : Text(
+                      _currentStep == 0
+                          ? 'Lanjut: Tingkat Kelas →'
+                          : (_currentStep == 1 ? 'Lanjut: Master Rombel →' : 'Simpan Seluruh Struktur (Selesai)'),
+                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
             ),
           ),
         ],
@@ -486,6 +536,38 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Input Nama Sekolah ──
+          Text(
+            'Nama Instansi / Sekolah',
+            style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.bold, color: context.textPrimary),
+          ),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: _schoolNameController,
+            style: GoogleFonts.inter(fontSize: 13.5, fontWeight: FontWeight.w600, color: context.textPrimary),
+            decoration: InputDecoration(
+              prefixIcon: const Icon(CupertinoIcons.building_2_fill, color: Nebula.teal, size: 18),
+              hintText: 'Contoh: SMK Negeri 1 Jakarta / SMP Budi Utomo',
+              hintStyle: GoogleFonts.inter(fontSize: 12, color: context.textSecondary),
+              filled: true,
+              fillColor: context.cardBg,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: context.dividerCol, width: 0.8),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: context.dividerCol, width: 0.8),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Nebula.teal, width: 1.4),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
           Text(
             'Langkah 1: Jenjang & Jurusan Sekolah',
             style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: context.textPrimary),
@@ -509,51 +591,7 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
           ),
           const SizedBox(height: 16),
 
-          // Toggle Punya Jurusan / Tidak
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: context.cardBg,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: context.dividerCol, width: 0.6),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Sekolah Memiliki Jurusan / Peminatan',
-                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: context.textPrimary),
-                      ),
-                      Text(
-                        'Aktifkan jika sekolah memiliki konsentrasi keahlian (SMK/SMA)',
-                        style: GoogleFonts.inter(fontSize: 10, color: context.textSecondary),
-                      ),
-                    ],
-                  ),
-                ),
-                Transform.scale(
-                  scale: 0.8,
-                  child: CupertinoSwitch(
-                    value: _hasMajors,
-                    activeTrackColor: Nebula.teal,
-                    onChanged: (val) {
-                      setState(() {
-                        _hasMajors = val;
-                        _autoGenerateRombels();
-                      });
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Master Jurusan List
+          // Master Jurusan List (Otomatis muncul untuk SMK & SMA)
           if (_hasMajors) ...[
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -813,7 +851,7 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
     );
   }
 
-  // ── LANGKAH 3: Master Rombel (Auto-Sync dari Tingkat Pertama) ───────────────
+  // ── LANGKAH 3: Master Rombel (Editable Fields & Auto-Sync) ───────────────────
   Widget _buildStep3Rombels(BuildContext context) {
     final firstG = _firstGrade;
     final firstGradeClasses = _rombels.where((r) => _matchesGrade(r, firstG)).toList();
@@ -830,18 +868,18 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
           ),
           const SizedBox(height: 2),
           Text(
-            'Cukup isi di tingkat pertama ($firstG), tingkat selanjutnya ($otherGrades) otomatis terisi sama.',
+            'Klik pensil atau nama kelas untuk mengedit. Tingkat selanjutnya otomatis tersinkronisasi.',
             style: GoogleFonts.inter(fontSize: 11, color: context.textSecondary),
           ),
           const SizedBox(height: 12),
 
-          // ── KARTU MASTER TINGKAT PERTAMA ───────────────────────────────────
+          // ── KARTU MASTER TINGKAT PERTAMA (EDITABLE INPUTS) ───────────────────
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: context.cardBg,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Nebula.teal.withValues(alpha: 0.3), width: 1.2),
+              border: Border.all(color: Nebula.teal.withValues(alpha: 0.35), width: 1.2),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -860,7 +898,7 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
                         Text('Master Kelas', style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.bold, color: context.textPrimary)),
                       ],
                     ),
-                    ElevatedButton(
+                    ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Nebula.teal,
                         foregroundColor: Colors.white,
@@ -870,8 +908,9 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                       ),
+                      icon: const Icon(CupertinoIcons.add, size: 12),
                       onPressed: () => _showAddClassDialog(context, targetGrade: firstG, isMaster: true),
-                      child: Text('+ Tambah Kelas', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold)),
+                      label: Text('Tambah Kelas', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
@@ -890,17 +929,12 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
                     spacing: 6,
                     runSpacing: 6,
                     children: firstGradeClasses.map((className) {
-                      return Chip(
-                        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        backgroundColor: Nebula.teal.withValues(alpha: 0.1),
-                        side: BorderSide(color: Nebula.teal.withValues(alpha: 0.3), width: 0.8),
-                        label: Text(
-                          className,
-                          style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Nebula.teal, fontSize: 11.5),
-                        ),
-                        deleteIcon: const Icon(CupertinoIcons.xmark, size: 11, color: Nebula.rose),
-                        onDeleted: () => _removeClassFromFirstGrade(className),
+                      return _buildEditableClassTile(
+                        context,
+                        className: className,
+                        isMaster: true,
+                        onEdit: (newVal) => _editClassInFirstGrade(className, newVal),
+                        onDelete: () => _removeClassFromFirstGrade(className),
                       );
                     }).toList(),
                   ),
@@ -950,9 +984,23 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
                     targetGrade: _gradeLevels[_selectedGradeIndex],
                     isMaster: false,
                   ),
-                  child: Text(
-                    '+ Tambah Khusus',
-                    style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: Nebula.teal),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Nebula.teal.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(CupertinoIcons.add, size: 11, color: Nebula.teal),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Tambah Khusus',
+                          style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: Nebula.teal),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
             ],
@@ -960,6 +1008,66 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
           const SizedBox(height: 8),
 
           _buildTabbedGradePreview(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEditableClassTile(
+    BuildContext context, {
+    required String className,
+    required bool isMaster,
+    required ValueChanged<String> onEdit,
+    required VoidCallback onDelete,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isMaster ? Nebula.teal.withValues(alpha: 0.08) : context.surfaceBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isMaster ? Nebula.teal.withValues(alpha: 0.3) : context.dividerCol,
+          width: 0.8,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Tap to edit
+          InkWell(
+            onTap: () => _showEditClassDialog(context, oldName: className, isMaster: isMaster, onSubmitted: onEdit),
+            borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    className,
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.bold,
+                      color: isMaster ? Nebula.teal : context.textPrimary,
+                      fontSize: 11.5,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Icon(
+                    CupertinoIcons.pencil,
+                    size: 12,
+                    color: isMaster ? Nebula.teal.withValues(alpha: 0.7) : context.textSecondary,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Delete button
+          InkWell(
+            onTap: onDelete,
+            borderRadius: const BorderRadius.horizontal(right: Radius.circular(8)),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(4, 6, 8, 6),
+              child: const Icon(CupertinoIcons.xmark, size: 11, color: Nebula.rose),
+            ),
+          ),
         ],
       ),
     );
@@ -1052,20 +1160,24 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
                   spacing: 6,
                   runSpacing: 6,
                   children: activeGradeRombels.map((rombel) {
-                    return Chip(
-                      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      backgroundColor: context.surfaceBg,
-                      side: BorderSide(color: context.dividerCol, width: 0.6),
-                      label: Text(
-                        rombel,
-                        style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: context.textPrimary, fontSize: 11),
-                      ),
-                      deleteIcon: const Icon(CupertinoIcons.xmark, size: 11, color: Nebula.rose),
-                      onDeleted: () {
-                        setState(() {
-                          _rombels.remove(rombel);
-                        });
+                    final isMasterGrade = activeGrade == _firstGrade;
+                    return _buildEditableClassTile(
+                      context,
+                      className: rombel,
+                      isMaster: isMasterGrade,
+                      onEdit: (newVal) {
+                        if (isMasterGrade) {
+                          _editClassInFirstGrade(rombel, newVal);
+                        } else {
+                          _editCustomClass(rombel, newVal);
+                        }
+                      },
+                      onDelete: () {
+                        if (isMasterGrade) {
+                          _removeClassFromFirstGrade(rombel);
+                        } else {
+                          setState(() => _rombels.remove(rombel));
+                        }
                       },
                     );
                   }).toList(),
@@ -1076,6 +1188,87 @@ class _AdminAcademicSettingsScreenState extends ConsumerState<AdminAcademicSetti
   }
 
   // ── Dialogs ────────────────────────────────────────────────────────────────
+  void _showEditClassDialog(
+    BuildContext context, {
+    required String oldName,
+    required bool isMaster,
+    required ValueChanged<String> onSubmitted,
+  }) {
+    final ctrl = TextEditingController(text: oldName);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: ctx.cardBg,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: ctx.dividerCol),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  const Icon(CupertinoIcons.pencil_circle_fill, color: Nebula.teal, size: 22),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Edit Nama Rombel / Kelas',
+                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: ctx.textPrimary),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                isMaster && _autoSyncToOtherGrades
+                    ? 'Perubahan pada master kelas ini akan otomatis diterapkan ke seluruh tingkat.'
+                    : 'Perubahan hanya diterapkan pada rombel ini.',
+                style: GoogleFonts.inter(fontSize: 10.5, color: context.textSecondary),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: ctrl,
+                autofocus: true,
+                style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: ctx.textPrimary),
+                decoration: InputDecoration(
+                  labelText: 'Nama Rombel / Kelas',
+                  labelStyle: GoogleFonts.inter(fontSize: 11),
+                  filled: true,
+                  fillColor: ctx.surfaceBg,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal'))),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: Nebula.teal, foregroundColor: Colors.white),
+                      onPressed: () {
+                        final val = ctrl.text.trim();
+                        if (val.isNotEmpty) {
+                          onSubmitted(val);
+                        }
+                        Navigator.pop(ctx);
+                      },
+                      child: const Text('Simpan'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showAddOrEditMajorDialog({AcademicMajor? existing, int? index}) {
     final nameCtrl = TextEditingController(text: existing?.name ?? '');
     final codeCtrl = TextEditingController(text: existing?.code ?? '');
