@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -8,6 +9,35 @@ import 'package:kantin_digital/core/services/report_export_service.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+
+/// Formatter untuk input nominal dengan pemisah ribuan titik (.) khas Indonesia
+class _ThousandsSeparatorInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    final cleanText = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleanText.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    final number = int.tryParse(cleanText);
+    if (number == null) return oldValue;
+
+    final formatter = NumberFormat('#,###', 'id_ID');
+    final formatted = formatter.format(number);
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
 
 /// Modal interaktif untuk Tutup Kasir / Closing Shift & Rekonsiliasi Uang Fisik di Laci
 class KeuanganClosingShiftModal extends ConsumerStatefulWidget {
@@ -54,8 +84,9 @@ class _KeuanganClosingShiftModalState
 
   void _quickFillExpectedCash() {
     final expected = _getSystemNetCash();
+    final fmt = NumberFormat('#,###', 'id_ID');
     setState(() {
-      _physicalCashController.text = expected > 0 ? expected.toString() : '0';
+      _physicalCashController.text = expected > 0 ? fmt.format(expected) : '0';
     });
   }
 
@@ -373,6 +404,10 @@ class _KeuanganClosingShiftModalState
                     TextField(
                       controller: _physicalCashController,
                       keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        _ThousandsSeparatorInputFormatter(),
+                      ],
                       onChanged: _onAmountChanged,
                       style: GoogleFonts.inter(
                         fontSize: 16,
@@ -380,9 +415,25 @@ class _KeuanganClosingShiftModalState
                         color: context.textPrimary,
                       ),
                       decoration: InputDecoration(
-                        prefixIcon: const Icon(CupertinoIcons.money_dollar_circle_fill, color: Nebula.teal),
-                        hintText: 'Contoh: 1920000',
-                        labelText: 'Total Uang Kertas & Koin Fisik di Laci (Rp)',
+                        prefixIcon: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Nebula.teal.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'Rp',
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                              color: Nebula.teal,
+                            ),
+                          ),
+                        ),
+                        prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                        hintText: '0',
+                        labelText: 'Total Uang Kertas & Koin Fisik di Laci',
                         labelStyle: GoogleFonts.inter(fontSize: 12),
                         filled: true,
                         fillColor: context.surfaceBg,

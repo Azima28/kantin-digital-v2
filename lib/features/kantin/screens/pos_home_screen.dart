@@ -555,7 +555,7 @@ class _PosHomeScreenState extends ConsumerState<PosHomeScreen> {
                                   ),
                                   orElse: () => const Text('Rp 0'),
                                 ),
-                                icon: CupertinoIcons.money_dollar_circle_fill,
+                                icon: CupertinoIcons.creditcard_fill,
                                 iconColor: Nebula.teal,
                                 iconBgColor: Nebula.teal.withValues(alpha: 0.12),
                                 onTap: () => context.go('/pos/sales'),

@@ -262,7 +262,7 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
             children: [
               Row(
                 children: [
-                  const Icon(CupertinoIcons.money_dollar_circle_fill, color: Colors.white70, size: 16),
+                  const Icon(CupertinoIcons.creditcard_fill, color: Colors.white70, size: 16),
                   const SizedBox(width: 6),
                   Text(
                     'Total Saldo Beredar Siswa',
@@ -377,7 +377,7 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
             Expanded(
               child: _buildQuickAction(
                 context,
-                icon: CupertinoIcons.money_dollar_circle_fill,
+                icon: CupertinoIcons.arrow_up_right_circle_fill,
                 color: const Color(0xFF0D9488),
                 label: 'Tarik Saldo\nStan',
                 route: '/finance/users?tab=2',
@@ -602,7 +602,7 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
                   dotIcon = CupertinoIcons.arrow_up_circle_fill;
                 } else if (type == 'withdrawal' || type.contains('WITHDRAWAL') || type.contains('PAYOUT')) {
                   dotColor = Nebula.rose;
-                  dotIcon = CupertinoIcons.money_dollar_circle_fill;
+                  dotIcon = CupertinoIcons.arrow_up_right_circle_fill;
                 } else if (type == 'merchant_adjustment') {
                   dotColor = Nebula.amber;
                   dotIcon = CupertinoIcons.arrow_right_arrow_left_circle_fill;

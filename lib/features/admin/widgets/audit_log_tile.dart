@@ -42,7 +42,7 @@ class AuditLogTile extends StatelessWidget {
       actionIcon = CupertinoIcons.xmark_circle_fill;
     } else if (actionType == 'MERCHANT_PAYOUT') {
       actionColor = Nebula.rose;
-      actionIcon = CupertinoIcons.money_dollar_circle_fill;
+      actionIcon = CupertinoIcons.arrow_up_right_circle_fill;
     } else if (actionType == 'KOREKSI_SALDO' || actionType == 'MERCHANT_BALANCE_ADJUSTMENT') {
       actionColor = Nebula.amber;
       actionIcon = CupertinoIcons.arrow_right_arrow_left_circle_fill;

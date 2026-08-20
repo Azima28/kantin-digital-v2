@@ -126,7 +126,7 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
 
     final categories = [
       {'label': 'Semua', 'icon': CupertinoIcons.square_grid_2x2},
-      {'label': 'Mutasi Finansial', 'icon': CupertinoIcons.money_dollar_circle_fill},
+      {'label': 'Mutasi Finansial', 'icon': CupertinoIcons.arrow_right_arrow_left_circle_fill},
       {'label': 'Kartu RFID', 'icon': CupertinoIcons.creditcard_fill},
       {'label': 'Akun & Akses', 'icon': CupertinoIcons.shield_fill},
     ];

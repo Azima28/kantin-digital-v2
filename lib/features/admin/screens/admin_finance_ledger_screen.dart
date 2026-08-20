@@ -143,7 +143,7 @@ class _AdminFinanceLedgerScreenState
                               backgroundColor:
                                   Nebula.teal.withValues(alpha: 0.15),
                               child: const Icon(
-                                CupertinoIcons.money_dollar_circle_fill,
+                                CupertinoIcons.creditcard_fill,
                                 color: Nebula.teal,
                                 size: 18,
                               ),

@@ -270,7 +270,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                               color: Nebula.teal.withValues(alpha: 0.12),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(CupertinoIcons.money_dollar_circle_fill, color: Nebula.teal, size: 24),
+                            child: const Icon(CupertinoIcons.arrow_up_right_circle_fill, color: Nebula.rose, size: 24),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -404,7 +404,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                         ),
                         child: Row(
                           children: [
-                            const Icon(CupertinoIcons.money_dollar_circle, size: 18, color: Nebula.teal),
+                            const Icon(CupertinoIcons.arrow_up_right_circle_fill, size: 18, color: Nebula.teal),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Column(
@@ -641,7 +641,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                                     color: Nebula.teal.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: const Icon(CupertinoIcons.money_dollar_circle_fill, color: Nebula.teal, size: 16),
+                                  child: const Icon(CupertinoIcons.creditcard_fill, color: Nebula.teal, size: 16),
                                 ),
                                 const SizedBox(width: 6),
                                 Flexible(
@@ -701,7 +701,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(CupertinoIcons.money_dollar_circle_fill, size: 16, color: Colors.white),
+                              const Icon(CupertinoIcons.arrow_up_right_circle_fill, size: 16, color: Colors.white),
                               const SizedBox(width: 6),
                               Text(
                                 'Cairkan Kas Stan (Tarik Saldo)',
@@ -1030,7 +1030,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                                 : (isAdjustment ? Nebula.amber.withValues(alpha: 0.15) : Nebula.teal.withValues(alpha: 0.12)),
                             child: Icon(
                               isWithdrawal
-                                  ? CupertinoIcons.money_dollar_circle
+                                  ? CupertinoIcons.arrow_up_right_circle
                                   : (isAdjustment ? CupertinoIcons.arrow_right_arrow_left : (isRefund ? CupertinoIcons.arrow_uturn_left : CupertinoIcons.cart)),
                               size: 16,
                               color: isWithdrawal ? Nebula.rose : (isAdjustment ? Nebula.amber : Nebula.teal),
