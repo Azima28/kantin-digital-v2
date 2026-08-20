@@ -292,11 +292,24 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final errorMsg = e.toString().replaceAll('Exception: ', '').trim();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Top-up gagal'),
+            content: Row(
+              children: [
+                const Icon(CupertinoIcons.exclamationmark_circle_fill, color: Colors.white, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    errorMsg.isNotEmpty ? errorMsg : 'Top-up gagal diproses',
+                    style: GoogleFonts.inter(fontSize: 12.5),
+                  ),
+                ),
+              ],
+            ),
             backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
           ),
         );
       }

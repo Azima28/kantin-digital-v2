@@ -215,14 +215,6 @@ func (r *TransactionRepo) ProcessTopup(ctx context.Context, studentID, officerID
 		return nil, fmt.Errorf("top-up ditolak: Akun siswa sedang dinonaktifkan / diblokir oleh admin")
 	}
 
-	if rfidUID == nil || *rfidUID == "" {
-		return nil, fmt.Errorf("top-up ditolak: Siswa belum memiliki kartu RFID yang terdaftar. Daftarkan kartu terlebih dahulu di menu Registrasi Kartu")
-	}
-
-	if !isCardActive {
-		return nil, fmt.Errorf("top-up ditolak: Kartu RFID siswa sedang diblokir / dibekukan. Buka blokir kartu terlebih dahulu")
-	}
-
 	// 1. Add balance to student
 	_, err = tx.Exec(ctx, `
 		UPDATE public.students
