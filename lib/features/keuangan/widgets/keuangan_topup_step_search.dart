@@ -137,13 +137,36 @@ class _KeuanganTopupStepSearchState extends State<KeuanganTopupStepSearch> {
             ),
           )
         else if (widget.searchResults.isNotEmpty) ...[
-          Text(
-            'Hasil Pencarian (${widget.searchResults.length}):',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: context.textSecondary,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                widget.searchController.text.trim().isNotEmpty
+                    ? 'Hasil Pencarian (${widget.searchResults.length}):'
+                    : 'Siswa Rekomendasi / Terdaftar (${widget.searchResults.length}):',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: context.textSecondary,
+                ),
+              ),
+              if (widget.searchController.text.trim().isEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Nebula.teal.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    '10 Siswa',
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: Nebula.teal,
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 8),
           ListView.separated(
