@@ -116,6 +116,25 @@
     <p class="app-subtitle">Sistem Kasir & Dompet Digital Sekolah</p>
     <div class="spinner"></div>
   </div>
+  <script>
+    // Clear any stale local service workers or caches on domain migration
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (var i = 0; i < registrations.length; i++) {
+          registrations[i].unregister();
+        }
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(function(names) {
+        for (var i = 0; i < names.length; i++) {
+          if (names[i].indexOf('flutter') !== -1) {
+            caches.delete(names[i]);
+          }
+        }
+      });
+    }
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
