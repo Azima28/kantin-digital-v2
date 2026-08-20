@@ -31,12 +31,12 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
     final dashAsync = ref.watch(keuanganDashboardProvider);
     final profile = ref.watch(authNotifierProvider).profile;
     final acadSchool = ref.watch(academicStructureProvider).valueOrNull?.schoolName;
-    final String fullName = (profile?['full_name'] as String?)?.trim().isNotEmpty == true
+    final String fullName = (profile?['full_name']?.toString().trim().isNotEmpty == true)
         ? profile!['full_name'].toString()
         : 'Admin Keuangan';
-    final String school = acadSchool?.isNotEmpty == true
-        ? acadSchool!
-        : ((profile?['assigned_school'] as String?)?.trim().isNotEmpty == true
+    final String school = (acadSchool != null && acadSchool.trim().isNotEmpty)
+        ? acadSchool
+        : ((profile?['assigned_school']?.toString().trim().isNotEmpty == true)
             ? profile!['assigned_school'].toString()
             : 'Sekolah Digital');
     final fmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);

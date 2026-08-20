@@ -16,9 +16,9 @@ class SystemSetting {
 
   factory SystemSetting.fromJson(Map<String, dynamic> json) {
     return SystemSetting(
-      key: json['key'] as String,
+      key: json['key']?.toString() ?? '',
       value: json['value'],
-      updatedBy: json['updated_by'] as String?,
+      updatedBy: json['updated_by']?.toString(),
       updatedAt: json['updated_at'] != null
           ? DateTime.tryParse(json['updated_at'].toString())
           : null,

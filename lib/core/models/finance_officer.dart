@@ -18,7 +18,7 @@ class FinanceOfficer {
 
   factory FinanceOfficer.fromJson(Map<String, dynamic> json) {
     return FinanceOfficer(
-      id: json['id'] as String,
+      id: json['id']?.toString() ?? '',
       assignedSchool: json['assigned_school']?.toString() ?? '',
       authorityLevel: json['authority_level']?.toString() ?? '',
       features: json['features'] is List

@@ -340,21 +340,23 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRouter.parentDashboard,
         builder: (BuildContext context, GoRouterState state) =>
             ParentDashboardScreen(
-          studentId: state.pathParameters['studentId']!,
+          studentId: state.pathParameters['studentId'] ?? '',
         ),
       ),
       GoRoute(
         path: AppRouter.parentTopUp,
         builder: (BuildContext context, GoRouterState state) =>
             ParentTopUpScreen(
-          studentId: state.pathParameters['studentId']!,
+          studentId: state.pathParameters['studentId'] ?? '',
         ),
       ),
       GoRoute(
         path: AppRouter.parentReceipt,
         builder: (BuildContext context, GoRouterState state) =>
             ParentReceiptScreen(
-          receiptData: state.extra as Map<String, dynamic>,
+          receiptData: (state.extra is Map<String, dynamic>)
+              ? state.extra as Map<String, dynamic>
+              : const <String, dynamic>{},
         ),
       ),
 
@@ -522,21 +524,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRouter.adminStudentDetail,
         builder: (BuildContext context, GoRouterState state) =>
             AdminStudentDetailScreen(
-          studentId: state.pathParameters['studentId']!,
+          studentId: state.pathParameters['studentId'] ?? '',
         ),
       ),
       GoRoute(
         path: AppRouter.adminMerchantDetail,
         builder: (BuildContext context, GoRouterState state) =>
             AdminMerchantDetailScreen(
-          merchantId: state.pathParameters['merchantId']!,
+          merchantId: state.pathParameters['merchantId'] ?? '',
         ),
       ),
       GoRoute(
         path: AppRouter.adminFinanceDetail,
         builder: (BuildContext context, GoRouterState state) =>
             AdminFinanceDetailScreen(
-          officerId: state.pathParameters['officerId']!,
+          officerId: state.pathParameters['officerId'] ?? '',
         ),
       ),
       GoRoute(
@@ -553,14 +555,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRouter.adminFinanceOfficerLedgerDetail,
         builder: (BuildContext context, GoRouterState state) =>
             AdminFinanceOfficerLedgerDetailScreen(
-          officerId: state.pathParameters['officerId']!,
+          officerId: state.pathParameters['officerId'] ?? '',
         ),
       ),
       GoRoute(
         path: AppRouter.adminParentDetail,
         builder: (BuildContext context, GoRouterState state) =>
             AdminParentDetailScreen(
-          parentId: state.pathParameters['parentId']!,
+          parentId: state.pathParameters['parentId'] ?? '',
         ),
       ),
 

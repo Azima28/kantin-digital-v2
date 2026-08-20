@@ -201,7 +201,7 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                         ),
                         const SizedBox(width: 5),
                         Text(
-                          cat['label'] as String,
+                          cat['label']?.toString() ?? '',
                           style: GoogleFonts.inter(
                             fontSize: 11.5,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,

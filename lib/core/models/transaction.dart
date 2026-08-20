@@ -35,11 +35,11 @@ class Transaction {
       operatorId: json['operator_id']?.toString() ?? '',
       status: json['status']?.toString() ?? '',
       totalAmount: (double.tryParse(json['total_amount']?.toString() ?? '') ?? 0.0).toInt(),
-      type: json['type'] as String,
+      type: json['type']?.toString() ?? 'purchase',
       createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
       purchaseMethod: json['purchase_method']?.toString() ?? 'rfid',
-      operator: json['operator'] as Map<String, dynamic>?,
-      student: json['student'] as Map<String, dynamic>?,
+      operator: json['operator'] is Map<String, dynamic> ? json['operator'] as Map<String, dynamic> : null,
+      student: json['student'] is Map<String, dynamic> ? json['student'] as Map<String, dynamic> : null,
     );
   }
 

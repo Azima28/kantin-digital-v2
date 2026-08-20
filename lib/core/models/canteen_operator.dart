@@ -22,7 +22,7 @@ class CanteenOperator {
 
   factory CanteenOperator.fromJson(Map<String, dynamic> json) {
     return CanteenOperator(
-      id: json['id'] as String,
+      id: json['id']?.toString() ?? '',
       canteenName: json['canteen_name']?.toString() ?? '',
       balanceEarned:
           (double.tryParse(json['balance_earned']?.toString() ?? '0') ?? 0.0).toInt(),
