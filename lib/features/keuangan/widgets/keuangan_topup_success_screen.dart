@@ -184,17 +184,23 @@ class KeuanganTopupSuccessScreen extends StatelessWidget {
         Text(
           label,
           style: GoogleFonts.inter(
-            fontSize: 13,
+            fontSize: 12.5,
             color: context.textSecondary,
             fontWeight: FontWeight.w500,
           ),
         ),
-        Text(
-          value,
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            color: valueColor ?? context.textPrimary,
-            fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            value,
+            style: GoogleFonts.inter(
+              fontSize: 12.5,
+              color: valueColor ?? context.textPrimary,
+              fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+            ),
+            textAlign: TextAlign.right,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
