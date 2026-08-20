@@ -1,0 +1,9 @@
+tunnel: 7576e167-9a46-4928-8dc6-a3281abef804
+credentials-file: C:\Users\agust\.cloudflared\7576e167-9a46-4928-8dc6-a3281abef804.json
+
+ingress:
+  - hostname: zitech.web.id
+    service: http://localhost:80
+  - hostname: kantin.zitech.web.id
+    service: http://localhost:80
+  - service: http_status:404

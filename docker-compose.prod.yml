@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # 1. Database PostgreSQL Production
+  postgres:
+    image: postgres:16-alpine
+    container_name: kantin_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: kantindigital_secure_2026
+      POSTGRES_DB: kantin_digital
+      TZ: Asia/Jakarta
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database_backup/init_postgres_standalone.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+      - ./database_backup/full_backup_data.sql:/docker-entrypoint-initdb.d/02_data.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d kantin_digital"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kantin_network
+
+  # 2. Golang API Backend (REST & WebSocket)
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: kantin_api
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 8080
+      DATABASE_URL: postgres://postgres:kantindigital_secure_2026@postgres:5432/kantin_digital?sslmode=disable
+      JWT_SECRET: kantin-digital-v2-super-production-secret-jwt-key-2026
+      JWT_EXPIRY_HOURS: 72
+      CORS_ORIGINS: "*"
+      UPLOAD_DIR: "/app/uploads"
+      APP_ENV: production
+    volumes:
+      - uploads_data:/app/uploads
+    networks:
+      - kantin_network
+
+  # 3. Flutter Web Frontend (Nginx Gateway)
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: kantin_web
+    restart: always
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+    networks:
+      - kantin_network
+
+networks:
+  kantin_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  uploads_data:
+    driver: local
