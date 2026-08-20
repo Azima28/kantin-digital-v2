@@ -35,10 +35,87 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <title>kantin_digital</title>
+  <title>Kantin Digital</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #0F172A;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+    }
+    #loading-splash {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      transition: opacity 0.4s ease-out;
+    }
+    .logo-container {
+      width: 72px;
+      height: 72px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #0D9488 0%, #047857 100%);
+      box-shadow: 0 10px 25px rgba(13, 148, 136, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      animation: pulse 2s infinite ease-in-out;
+    }
+    .logo-container svg {
+      width: 38px;
+      height: 38px;
+      fill: #FFFFFF;
+    }
+    .app-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #FFFFFF;
+      letter-spacing: -0.5px;
+      margin: 0 0 6px 0;
+    }
+    .app-subtitle {
+      font-size: 12px;
+      color: #94A3B8;
+      margin: 0 0 24px 0;
+      font-weight: 500;
+    }
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 2.5px solid rgba(13, 148, 136, 0.2);
+      border-top-color: #0D9488;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+  </style>
 </head>
 <body>
+  <div id="loading-splash">
+    <div class="logo-container">
+      <svg viewBox="0 0 24 24">
+        <path d="M19 14V6c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zm-2 0H3V6h14v8zm4-7v11c0 1.1-.9 2-2 2H4v-2h15V7h2z"/>
+      </svg>
+    </div>
+    <h1 class="app-title">Kantin Digital</h1>
+    <p class="app-subtitle">Sistem Kasir & Dompet Digital Sekolah</p>
+    <div class="spinner"></div>
+  </div>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

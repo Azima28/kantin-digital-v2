@@ -48,11 +48,20 @@ class ApiClient {
 
   ApiClient({
     String? baseUrl,
-  }) : baseUrl = baseUrl ??
-            const String.fromEnvironment(
-              'BACKEND_API_URL',
-              defaultValue: 'http://127.0.0.1:8000/api/v1',
-            );
+  }) : baseUrl = baseUrl ?? _resolveDefaultBaseUrl();
+
+  static String _resolveDefaultBaseUrl() {
+    if (kIsWeb) {
+      final origin = Uri.base.origin;
+      if (origin.isNotEmpty && !origin.startsWith('file://')) {
+        return '$origin/api/v1';
+      }
+    }
+    return const String.fromEnvironment(
+      'BACKEND_API_URL',
+      defaultValue: 'https://kantin.zitech.web.id/api/v1',
+    );
+  }
 
   void setAuthToken(String token) {
     _authToken = token;
@@ -71,10 +80,19 @@ class ApiClient {
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
       return trimmed;
     }
-    const backendHost = String.fromEnvironment(
-      'BACKEND_HOST',
-      defaultValue: 'http://127.0.0.1:8000',
-    );
+    String backendHost = '';
+    if (kIsWeb) {
+      final origin = Uri.base.origin;
+      if (origin.isNotEmpty && !origin.startsWith('file://')) {
+        backendHost = origin;
+      }
+    }
+    if (backendHost.isEmpty) {
+      backendHost = const String.fromEnvironment(
+        'BACKEND_HOST',
+        defaultValue: 'https://kantin.zitech.web.id',
+      );
+    }
     final cleanPath = trimmed.startsWith('/') ? trimmed : '/$trimmed';
     return '$backendHost$cleanPath';
   }

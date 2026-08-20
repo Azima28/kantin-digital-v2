@@ -25,6 +25,21 @@ class RealtimeService {
 
   bool get isConnected => _isConnected;
 
+  static String _resolveDefaultWsUrl() {
+    if (kIsWeb) {
+      final origin = Uri.base;
+      if (origin.host.isNotEmpty && !origin.scheme.startsWith('file')) {
+        final wsScheme = origin.scheme == 'https' ? 'wss' : 'ws';
+        final portPart = (origin.hasPort && origin.port != 80 && origin.port != 443) ? ':${origin.port}' : '';
+        return '$wsScheme://${origin.host}$portPart/ws';
+      }
+    }
+    return const String.fromEnvironment(
+      'BACKEND_WS_URL',
+      defaultValue: 'wss://kantin.zitech.web.id/ws',
+    );
+  }
+
   void connect() {
     if (_isDisposed) return;
     _subscription?.cancel();
@@ -33,10 +48,7 @@ class RealtimeService {
     final authState = _ref.read(authNotifierProvider);
     final String? token = authState.sessionToken;
 
-    final String wsUrl = const String.fromEnvironment(
-      'BACKEND_WS_URL',
-      defaultValue: 'ws://127.0.0.1:8000/ws',
-    );
+    final String wsUrl = _resolveDefaultWsUrl();
 
     final Uri uri = Uri.parse(wsUrl).replace(
       queryParameters: {
