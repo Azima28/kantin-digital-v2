@@ -88,9 +88,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     // 1. Check persistent 7-day session storage on launch or page refresh first
     try {
       final cachedSession = await SecureSessionService.getValidSessionData();
-      if (cachedSession != null) {
-        final Map<String, dynamic> profile = cachedSession['profile'] as Map<String, dynamic>;
-        final String? sessionToken = cachedSession['session_token'] as String?;
+      if (cachedSession != null && cachedSession['profile'] != null) {
+        final Map<String, dynamic> profile = Map<String, dynamic>.from(cachedSession['profile'] as Map);
+        final String? sessionToken = cachedSession['session_token']?.toString();
         if (sessionToken != null && sessionToken.isNotEmpty) {
           _apiClient.setAuthToken(sessionToken);
         }
@@ -137,8 +137,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         password: password,
         expectedRole: role,
       );
-      final Map<String, dynamic> profile = result['profile'] as Map<String, dynamic>;
-      final String? sessionToken = result['session_token'] as String?;
+      final Map<String, dynamic> profile = Map<String, dynamic>.from(result['profile'] as Map);
+      final String? sessionToken = result['session_token']?.toString();
 
       if (sessionToken != null && sessionToken.isNotEmpty) {
         _apiClient.setAuthToken(sessionToken);

@@ -190,19 +190,32 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
                       ],
                     ),
                   ),
-                  error: (e, _) => Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.error_outline, size: 48, color: Nebula.rose),
-                        const SizedBox(height: 12),
-                        Text('${AppStrings.labelFailed} memuat data'),
-                        const SizedBox(height: 8),
-                        ElevatedButton(
-                          onPressed: () => ref.invalidate(keuanganDashboardProvider),
-                          child: const Text(AppStrings.buttonRetry),
-                        ),
-                      ],
+                  error: (e, stack) => Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.error_outline, size: 48, color: Nebula.rose),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Gagal memuat data dasbor: $e',
+                            style: GoogleFonts.inter(color: Nebula.rose, fontSize: 13),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                          ElevatedButton.icon(
+                            onPressed: () => ref.invalidate(keuanganDashboardProvider),
+                            icon: const Icon(Icons.refresh, size: 16),
+                            label: const Text(AppStrings.buttonRetry),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Nebula.teal,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -218,6 +231,8 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
     final totalSaldo = (data['totalSaldo'] as num?)?.toDouble() ?? 0.0;
     final topupToday = (data['topupToday'] as num?)?.toDouble() ?? 0.0;
     final topupCount = (data['topupCount'] as num?)?.toInt() ?? 0;
+    final payoutToday = (data['payoutToday'] as num?)?.toDouble() ?? 0.0;
+    final payoutCount = (data['payoutCount'] as num?)?.toInt() ?? 0;
 
     final rawLogs = data['recentLogs'];
     final List<Map<String, dynamic>> logs = [];
@@ -318,8 +333,8 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
                 icon: CupertinoIcons.arrow_up_right_circle_fill,
                 iconColor: Nebula.rose,
                 label: 'Pencairan Stan',
-                value: fmt.format(data['payoutToday'] ?? 0),
-                sub: '${data['payoutCount'] ?? 0} Transaksi',
+                value: fmt.format(payoutToday),
+                sub: '$payoutCount Transaksi',
               ),
             ),
           ],

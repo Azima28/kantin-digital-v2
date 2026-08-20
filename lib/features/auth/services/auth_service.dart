@@ -52,9 +52,11 @@ class AuthService {
         throw Exception(errMsg);
       }
 
-      final data = response.data as Map<String, dynamic>;
-      final String? token = data['token'] as String?;
-      final Map<String, dynamic>? userMap = data['user'] as Map<String, dynamic>?;
+      final data = Map<String, dynamic>.from(response.data as Map);
+      final String? token = data['token']?.toString();
+      final Map<String, dynamic>? userMap = data['user'] is Map
+          ? Map<String, dynamic>.from(data['user'] as Map)
+          : null;
 
       if (token == null || userMap == null) {
         throw Exception('Respons login dari server tidak valid.');
@@ -64,10 +66,11 @@ class AuthService {
       _apiClient.setAuthToken(token);
 
       final Map<String, dynamic> profile = Map<String, dynamic>.from(userMap);
-      if (data['student'] != null) {
-        profile['student_id'] = (data['student'] as Map<String, dynamic>)['id'];
-        profile['balance'] = (data['student'] as Map<String, dynamic>)['balance'];
-        profile['rfid_uid'] = (data['student'] as Map<String, dynamic>)['rfid_uid'];
+      if (data['student'] != null && data['student'] is Map) {
+        final studentMap = Map<String, dynamic>.from(data['student'] as Map);
+        profile['student_id'] = studentMap['id'];
+        profile['balance'] = studentMap['balance'];
+        profile['rfid_uid'] = studentMap['rfid_uid'];
       }
 
       final String role = profile['role']?.toString() ?? '';
