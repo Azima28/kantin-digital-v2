@@ -11,6 +11,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/hallmark_color_scheme.dart';
 import 'package:kantin_digital/core/theme/hallmark_typography.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/widgets/notification_bell.dart';
 import 'package:kantin_digital/core/widgets/hallmark_button.dart';
@@ -141,6 +142,173 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildActiveOrdersSection(BuildContext context, HallmarkColorScheme colors) {
+    final activeOrdersAsync = ref.watch(siswaActiveOrdersProvider);
+
+    return activeOrdersAsync.maybeWhen(
+      data: (orders) {
+        final activeList = orders.where((o) {
+          final s = o.status.trim().toLowerCase();
+          return s != 'selesai' && s != 'dibatalkan' && s != 'cancelled' && s != 'refunded';
+        }).toList();
+
+        if (activeList.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Pesanan Sedang Diproses',
+                      style: HallmarkTypography.titleL3(colors.textPrimary),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Nebula.amber.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Nebula.amber.withValues(alpha: 0.4), width: 0.8),
+                      ),
+                      child: Text(
+                        '${activeList.length} Aktif',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.amber.shade800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  onPressed: () => context.push('/student/active-orders'),
+                  child: Text(
+                    'Lihat Semua',
+                    style: HallmarkTypography.labelButton(colors.brandPrimary),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: activeList.length > 3 ? 3 : activeList.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final order = activeList[index];
+                final String itemNames = order.items.isNotEmpty
+                    ? order.items.map((i) => '${i.qty}x ${i.name}').join(', ')
+                    : 'Pesanan #${order.id.length >= 6 ? order.id.substring(0, 6) : order.id}';
+
+                Color statusColor = Nebula.amber;
+                Color statusBg = Nebula.amber.withValues(alpha: 0.12);
+                if (order.status == 'Sedang Dimasak') {
+                  statusColor = const Color(0xFF0284C7);
+                  statusBg = const Color(0xFF0284C7).withValues(alpha: 0.12);
+                } else if (order.status == 'Siap Diambil' || order.status == 'Siap Diantar') {
+                  statusColor = Nebula.teal;
+                  statusBg = Nebula.teal.withValues(alpha: 0.12);
+                }
+
+                return HallmarkCard(
+                  backgroundColor: colors.surfaceContainer,
+                  padding: const EdgeInsets.all(14),
+                  onTap: () => context.push('/student/active-orders'),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: colors.brandPrimary.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(CupertinoIcons.bag_fill, size: 14, color: colors.brandPrimary),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                order.time.isNotEmpty ? order.time : 'Hari Ini',
+                                style: HallmarkTypography.bodySmall(colors.textMuted),
+                              ),
+                            ],
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: statusBg,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: statusColor.withValues(alpha: 0.3), width: 0.8),
+                            ),
+                            child: Text(
+                              order.status,
+                              style: GoogleFonts.inter(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.bold,
+                                color: statusColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        itemNames,
+                        style: HallmarkTypography.titleSmall(colors.textPrimary),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          if (order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty)
+                            Text(
+                              '📍 ${order.deliveryLocation}',
+                              style: HallmarkTypography.bodySmall(colors.textMuted),
+                            )
+                          else
+                            Text(
+                              'Ambil di Stan',
+                              style: HallmarkTypography.bodySmall(colors.textMuted),
+                            ),
+                          Text(
+                            'Rp ${NumberFormat('#,###', 'id_ID').format(order.totalAmount)}',
+                            style: HallmarkTypography.financialNumeral(
+                              color: colors.brandPrimary,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
     );
   }
 
@@ -429,7 +597,10 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
+
+                  // ── Pesanan Aktif / Sedang Diproses Section ──
+                  _buildActiveOrdersSection(context, colors),
 
                   // ── Koleksi Spesial / Panel Iklan Section ──
                   Row(
