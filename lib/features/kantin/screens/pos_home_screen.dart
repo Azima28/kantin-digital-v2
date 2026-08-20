@@ -215,13 +215,29 @@ class _PosHomeScreenState extends ConsumerState<PosHomeScreen> {
                       TextField(
                         controller: feeController,
                         keyboardType: TextInputType.number,
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: context.textPrimary,
+                        ),
                         decoration: InputDecoration(
-                          prefixText: 'Rp ',
-                          prefixStyle: GoogleFonts.inter(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: Nebula.teal,
+                          prefixIcon: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Nebula.teal.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'Rp',
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                                color: Nebula.teal,
+                              ),
+                            ),
                           ),
+                          prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
                           hintText: '2000',
                           filled: true,
                           fillColor: context.cardBg,

@@ -627,12 +627,23 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
               onChanged: _onFeeChanged,
               onSubmitted: (val) => _autoSaveDelivery(),
               decoration: InputDecoration(
-                prefixText: 'Rp ',
-                prefixStyle: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF10B981),
+                prefixIcon: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'Rp',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                      color: const Color(0xFF10B981),
+                    ),
+                  ),
                 ),
+                prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
                 hintText: '2000',
                 filled: true,
                 fillColor: context.surfaceBg,

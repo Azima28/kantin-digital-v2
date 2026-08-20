@@ -347,8 +347,23 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                         decoration: InputDecoration(
                           hintText: 'Contoh: 50000',
                           hintStyle: GoogleFonts.inter(color: ctx.textSecondary, fontSize: 13),
-                          prefixText: 'Rp ',
-                          prefixStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Nebula.teal),
+                          prefixIcon: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Nebula.teal.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'Rp',
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                                color: Nebula.teal,
+                              ),
+                            ),
+                          ),
+                          prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
                           filled: true,
                           fillColor: ctx.surfaceBg,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

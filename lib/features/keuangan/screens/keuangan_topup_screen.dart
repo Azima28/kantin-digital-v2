@@ -159,12 +159,14 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
   void _onQuickAmountSelected(int amount) {
     setState(() {
       _selectedQuickAmount = amount;
-      _amountController.text = amount.toString();
+      final fmt = NumberFormat('#,###', 'id_ID');
+      _amountController.text = fmt.format(amount);
     });
   }
 
   int _getAmount() {
-    return int.tryParse(_amountController.text.trim()) ?? 0;
+    final clean = _amountController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    return int.tryParse(clean) ?? 0;
   }
 
   /// ⚡ 100% Client-Side Instant Substring Search (0 Network Requests saat mengetik)

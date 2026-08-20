@@ -1,10 +1,40 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+
+/// Formatter untuk input nominal dengan pemisah ribuan titik (.) khas Indonesia
+class _ThousandsSeparatorInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    final cleanText = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleanText.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    final number = int.tryParse(cleanText);
+    if (number == null) return oldValue;
+
+    final formatter = NumberFormat('#,###', 'id_ID');
+    final formatted = formatter.format(number);
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
 
 /// Step 2 of the keuangan top-up flow — amount entry.
 ///
@@ -38,7 +68,8 @@ class KeuanganTopupStepAmount extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final int amount = int.tryParse(amountController.text.trim()) ?? 0;
+    final clean = amountController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final int amount = int.tryParse(clean) ?? 0;
     final int newBalance = studentBalance + amount;
 
     return Column(
@@ -116,15 +147,36 @@ class KeuanganTopupStepAmount extends StatelessWidget {
         TextField(
           controller: amountController,
           keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            _ThousandsSeparatorInputFormatter(),
+          ],
           onChanged: (val) {
             onChanged();
           },
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: context.textPrimary,
+          ),
           decoration: InputDecoration(
-            prefixText: 'Rp ',
-            prefixStyle: GoogleFonts.inter(
-              fontWeight: FontWeight.bold,
-              color: context.textPrimary,
+            prefixIcon: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Nebula.teal.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'Rp',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                  color: Nebula.teal,
+                ),
+              ),
             ),
+            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
             hintText: '0',
             hintStyle: GoogleFonts.inter(
               color: context.textSecondary,
