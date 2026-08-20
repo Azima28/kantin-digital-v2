@@ -100,6 +100,24 @@ func (r *UserRepo) GetStudentDetail(ctx context.Context, studentID string) (*dom
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
+			// Self-healing: check if profile exists with role student and auto-create student record
+			var profile domain.UserProfile
+			profErr := r.db.Pool.QueryRow(ctx, `SELECT id, email, full_name, role, username, nisn, phone_number, is_active, avatar_url, created_at FROM public.profiles WHERE id = $1 AND role = 'student'`, studentID).Scan(
+				&profile.ID, &profile.Email, &profile.FullName, &profile.Role, &profile.Username, &profile.NISN, &profile.PhoneNumber, &profile.IsActive, &profile.AvatarURL, &profile.CreatedAt,
+			)
+			if profErr == nil {
+				_, _ = r.db.Pool.Exec(ctx, `INSERT INTO public.students (id, balance, is_active, daily_limit, wa_notifications_enabled, class, rombel) VALUES ($1, 0, true, 0, true, 'X RPL 1', 'X RPL 1') ON CONFLICT DO NOTHING`, studentID)
+				return &domain.Student{
+					ID:                     studentID,
+					Balance:                0,
+					IsActive:               profile.IsActive,
+					DailyLimit:             0,
+					WANotificationsEnabled: true,
+					Class:                  "X RPL 1",
+					Rombel:                 "X RPL 1",
+					Profile:                &profile,
+				}, nil
+			}
 			return nil, ErrUserNotFound
 		}
 		return nil, err
