@@ -766,10 +766,13 @@ func (r *TransactionRepo) GetFinanceReport(ctx context.Context, startDate, endDa
 
 	// 6. Per-canteen performance
 	canteenQuery := `
-		SELECT c.id, c.canteen_name, COALESCE(SUM(t.total_amount), 0) as total_sales, COUNT(t.id) as tx_count
+		SELECT c.id, c.canteen_name,
+		       COALESCE(SUM(t.total_amount), 0) as total_sales,
+		       COUNT(t.id) as tx_count,
+		       COALESCE(c.balance_earned, 0) as balance_earned
 		FROM public.canteen_operators c
 		LEFT JOIN public.transactions t ON t.operator_id = c.id AND t.type = 'purchase' AND t.status = 'success' AND t.created_at >= $1 AND t.created_at <= $2
-		GROUP BY c.id, c.canteen_name
+		GROUP BY c.id, c.canteen_name, c.balance_earned
 		ORDER BY total_sales DESC`
 
 	rows, err := r.db.Pool.Query(ctx, canteenQuery, startDate, endDate)
@@ -777,13 +780,15 @@ func (r *TransactionRepo) GetFinanceReport(ctx context.Context, startDate, endDa
 		defer rows.Close()
 		for rows.Next() {
 			var id, name string
-			var sales, count int
-			if err := rows.Scan(&id, &name, &sales, &count); err == nil {
+			var sales, count, balanceEarned int
+			if err := rows.Scan(&id, &name, &sales, &count, &balanceEarned); err == nil {
 				rep.Canteens = append(rep.Canteens, map[string]interface{}{
-					"canteen_id":   id,
-					"canteen_name": name,
-					"total_sales":  sales,
-					"tx_count":     count,
+					"canteen_id":      id,
+					"canteen_name":    name,
+					"total_sales":     sales,
+					"balance_earned":  sales, // Penjualan pada periode filter
+					"current_balance": balanceEarned,
+					"tx_count":        count,
 				})
 			}
 		}
