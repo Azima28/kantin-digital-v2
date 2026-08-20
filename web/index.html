@@ -128,13 +128,11 @@
     if ('caches' in window) {
       caches.keys().then(function(names) {
         for (var i = 0; i < names.length; i++) {
-          if (names[i].indexOf('flutter') !== -1) {
-            caches.delete(names[i]);
-          }
+          caches.delete(names[i]);
         }
       });
     }
   </script>
-  <script src="flutter_bootstrap.js" async></script>
+  <script src="flutter_bootstrap.js?v=20260820_v2" async></script>
 </body>
 </html>
