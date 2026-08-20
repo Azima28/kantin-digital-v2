@@ -14,6 +14,7 @@ import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/widgets/notification_bell.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/features/keuangan/widgets/keuangan_closing_shift_modal.dart';
 
 class KeuanganDashboardScreen extends ConsumerStatefulWidget {
   const KeuanganDashboardScreen({super.key});
@@ -325,14 +326,40 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
         ),
         const SizedBox(height: 20),
 
-        // ─── Aksi Cepat (Top-Up Siswa, Tarik Saldo Stan, Laporan) ───
-        Text(
-          'Aksi Cepat',
-          style: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: context.textPrimary,
-          ),
+        // ─── Aksi Cepat (Top-Up Siswa, Tarik Saldo Stan, Laporan, Tutup Kasir) ───
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Aksi Cepat',
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: context.textPrimary,
+              ),
+            ),
+            InkWell(
+              onTap: () => _openClosingShiftModal(context, data),
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                child: Row(
+                  children: [
+                    const Icon(CupertinoIcons.lock_shield_fill, size: 14, color: Nebula.teal),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Tutup Kasir (Shift)',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Nebula.teal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         Row(
@@ -346,7 +373,7 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
                 route: '/finance/topup',
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: _buildQuickAction(
                 context,
@@ -356,14 +383,24 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
                 route: '/finance/users?tab=2',
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: _buildQuickAction(
                 context,
                 icon: CupertinoIcons.chart_bar_fill,
                 color: Nebula.amber,
-                label: 'Laporan\nKeuangan',
+                label: 'Laporan\nKas',
                 route: '/finance/report',
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildQuickAction(
+                context,
+                icon: CupertinoIcons.lock_shield_fill,
+                color: const Color(0xFF0284C7),
+                label: 'Tutup\nKasir',
+                onTap: () => _openClosingShiftModal(context, data),
               ),
             ),
           ],
@@ -681,15 +718,28 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
     );
   }
 
+  void _openClosingShiftModal(
+      BuildContext context, Map<String, dynamic> data) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => KeuanganClosingShiftModal(
+        dashboardData: data,
+      ),
+    );
+  }
+
   Widget _buildQuickAction(
     BuildContext context, {
     required IconData icon,
     required Color color,
     required String label,
-    required String route,
+    String? route,
+    VoidCallback? onTap,
   }) {
     return InkWell(
-      onTap: () => context.push(route),
+      onTap: onTap ?? (route != null ? () => context.push(route) : null),
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
@@ -717,7 +767,7 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
               label,
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
-                fontSize: 11.5,
+                fontSize: 11,
                 fontWeight: FontWeight.bold,
                 color: context.textPrimary,
                 height: 1.15,

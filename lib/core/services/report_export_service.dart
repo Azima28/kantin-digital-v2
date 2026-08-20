@@ -1707,5 +1707,442 @@ class ReportExportService {
     }
   }
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // BERITA ACARA SERAH TERIMA & TUTUP KASIR (CLOSING SHIFT PDF & WHATSAPP)
+  // ══════════════════════════════════════════════════════════════════════════
+
+  /// Download atau Tampilkan Preview Berita Acara Tutup Kasir (PDF Berkop Resmi)
+  static Future<void> downloadClosingShiftPdf({
+    required String officerName,
+    required String schoolName,
+    required String authorityLevel,
+    required int totalInflow,
+    required int totalOutflow,
+    required int systemNetCash,
+    required int physicalCash,
+    required int difference,
+    required int topupCount,
+    required int payoutCount,
+    String notes = '',
+  }) async {
+    final pdf = pw.Document();
+
+    pw.Font? ttfRegular;
+    pw.Font? ttfBold;
+    try {
+      final regularData = await rootBundle.load('assets/fonts/Inter-Regular.ttf');
+      final boldData = await rootBundle.load('assets/fonts/Inter-Bold.ttf');
+      ttfRegular = pw.Font.ttf(regularData);
+      ttfBold = pw.Font.ttf(boldData);
+    } catch (_) {}
+
+    const PdfColor primaryTeal = PdfColor.fromInt(0xFF0D9488);
+    const PdfColor darkText = PdfColor.fromInt(0xFF0F172A);
+    const PdfColor grayText = PdfColor.fromInt(0xFF475569);
+    const PdfColor subtleText = PdfColor.fromInt(0xFF64748B);
+    const PdfColor lightBg = PdfColor.fromInt(0xFFF8FAFC);
+    const PdfColor totalRowBg = PdfColor.fromInt(0xFFE6F5F2);
+    const PdfColor borderCol = PdfColor.fromInt(0xFFE2E8F0);
+    const PdfColor roseColor = PdfColor.fromInt(0xFFE11D48);
+
+    final baseStyle = pw.TextStyle(font: ttfRegular, fontSize: 8.5, color: darkText);
+    final boldStyle = pw.TextStyle(font: ttfBold, fontSize: 8.5, fontWeight: pw.FontWeight.bold, color: darkText);
+    final titleStyle = pw.TextStyle(font: ttfBold, fontSize: 11, fontWeight: pw.FontWeight.bold, color: darkText);
+
+    final printDateStr = DateFormat('dd MMMM yyyy HH:mm', 'id_ID').format(DateTime.now());
+    final dateTodayStr = DateFormat('dd MMMM yyyy', 'id_ID').format(DateTime.now());
+
+    final isMatched = difference == 0;
+    final isShort = difference < 0;
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        footer: (pw.Context context) {
+          return pw.Container(
+            margin: const pw.EdgeInsets.only(top: 16),
+            padding: const pw.EdgeInsets.only(top: 8),
+            decoration: const pw.BoxDecoration(
+              border: pw.Border(top: pw.BorderSide(color: borderCol, width: 0.5)),
+            ),
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                  'Sistem Kantin Digital | Berita Acara Sah Tutup Kasir & Rekonsiliasi Laci',
+                  style: pw.TextStyle(font: ttfRegular, fontSize: 8, color: subtleText),
+                ),
+                pw.Text(
+                  'Halaman ${context.pageNumber} dari ${context.pagesCount}',
+                  style: pw.TextStyle(font: ttfRegular, fontSize: 8, color: subtleText),
+                ),
+              ],
+            ),
+          );
+        },
+        build: (pw.Context context) {
+          return [
+            // Banner Header
+            pw.Container(
+              padding: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: pw.BoxDecoration(
+                color: primaryTeal,
+                borderRadius: pw.BorderRadius.circular(12),
+              ),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                children: [
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        'KANTIN DIGITAL',
+                        style: pw.TextStyle(
+                          font: ttfBold,
+                          fontSize: 16,
+                          color: PdfColors.white,
+                          fontWeight: pw.FontWeight.bold,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                      pw.SizedBox(height: 3),
+                      pw.Text(
+                        'BERITA ACARA SERAH TERIMA & TUTUP KASIR',
+                        style: pw.TextStyle(
+                          font: ttfRegular,
+                          fontSize: 9,
+                          color: const PdfColor.fromInt(0xFFCCFBF1),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  pw.Container(
+                    padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: pw.BoxDecoration(
+                      color: const PdfColor.fromInt(0xFF0F766E),
+                      borderRadius: pw.BorderRadius.circular(8),
+                      border: pw.Border.all(color: const PdfColor.fromInt(0xFF2DD4BF), width: 0.8),
+                    ),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.end,
+                      children: [
+                        pw.Text(
+                          'TANGGAL: $dateTodayStr',
+                          style: pw.TextStyle(font: ttfBold, fontSize: 8.5, color: PdfColors.white),
+                        ),
+                        pw.SizedBox(height: 3),
+                        pw.Text(
+                          'Waktu Cetak: $printDateStr',
+                          style: pw.TextStyle(font: ttfRegular, fontSize: 8, color: const PdfColor.fromInt(0xFFCCFBF1)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 14),
+
+            // Identitas Kasir & Loket
+            pw.Container(
+              padding: const pw.EdgeInsets.all(12),
+              decoration: pw.BoxDecoration(
+                color: lightBg,
+                borderRadius: pw.BorderRadius.circular(8),
+                border: pw.Border.all(color: borderCol, width: 0.8),
+              ),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('PETUGAS LOKET / KASIR:', style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: subtleText)),
+                      pw.SizedBox(height: 2),
+                      pw.Text(officerName, style: boldStyle.copyWith(fontSize: 10)),
+                    ],
+                  ),
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('INSTANSI / SEKOLAH:', style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: subtleText)),
+                      pw.SizedBox(height: 2),
+                      pw.Text(schoolName, style: boldStyle.copyWith(fontSize: 10)),
+                    ],
+                  ),
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('WEWENANG / SHIFT:', style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: subtleText)),
+                      pw.SizedBox(height: 2),
+                      pw.Text('Level $authorityLevel | Tutup Kasir', style: boldStyle.copyWith(fontSize: 10, color: primaryTeal)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 16),
+
+            // 1. REKONSILIASI KAS LACI (FISIK VS SISTEM)
+            _pdfSectionTitle('1. REKONSILIASI KAS LACI FISIK', titleStyle, primaryTeal, ttfBold),
+            pw.SizedBox(height: 8),
+
+            pw.Row(
+              children: [
+                pw.Expanded(
+                  child: _pdfKpiCard(
+                    label: 'TOTAL UANG MASUK (+)',
+                    value: _currencyFmt.format(totalInflow),
+                    subtext: '$topupCount Transaksi Top-Up Tunai',
+                    baseStyle: baseStyle,
+                    boldStyle: boldStyle,
+                    grayStyle: grayText,
+                    borderCol: borderCol,
+                    bgCol: lightBg,
+                    valueColor: primaryTeal,
+                  ),
+                ),
+                pw.SizedBox(width: 8),
+                pw.Expanded(
+                  child: _pdfKpiCard(
+                    label: 'TOTAL UANG KELUAR (-)',
+                    value: _currencyFmt.format(totalOutflow),
+                    subtext: '$payoutCount Transaksi Pencairan Stan',
+                    baseStyle: baseStyle,
+                    boldStyle: boldStyle,
+                    grayStyle: grayText,
+                    borderCol: borderCol,
+                    bgCol: lightBg,
+                    valueColor: roseColor,
+                  ),
+                ),
+                pw.SizedBox(width: 8),
+                pw.Expanded(
+                  child: _pdfKpiCard(
+                    label: 'KAS SISTEM (WAJIB DI LACI)',
+                    value: _currencyFmt.format(systemNetCash),
+                    subtext: 'Saldo kas riil sistem',
+                    baseStyle: baseStyle,
+                    boldStyle: boldStyle,
+                    grayStyle: grayText,
+                    borderCol: const PdfColor.fromInt(0xFF5EEAD4),
+                    bgCol: totalRowBg,
+                    valueColor: primaryTeal,
+                  ),
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 12),
+
+            // Banner Hasil Perhitungan Fisik & Selisih
+            pw.Container(
+              padding: const pw.EdgeInsets.all(14),
+              decoration: pw.BoxDecoration(
+                color: isMatched
+                    ? totalRowBg
+                    : (isShort
+                        ? const PdfColor.fromInt(0xFFFFF1F2)
+                        : const PdfColor.fromInt(0xFFFEF3C7)),
+                borderRadius: pw.BorderRadius.circular(8),
+                border: pw.Border.all(
+                  color: isMatched
+                      ? const PdfColor.fromInt(0xFF5EEAD4)
+                      : (isShort
+                          ? const PdfColor.fromInt(0xFFFDA4AF)
+                          : const PdfColor.fromInt(0xFFFDE68A)),
+                  width: 1,
+                ),
+              ),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        'FISIK UANG DI LACI YANG DISERAHKAN:',
+                        style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: subtleText),
+                      ),
+                      pw.SizedBox(height: 2),
+                      pw.Text(
+                        _currencyFmt.format(physicalCash),
+                        style: boldStyle.copyWith(fontSize: 14, color: isMatched ? primaryTeal : (isShort ? roseColor : const PdfColor.fromInt(0xFFD97706))),
+                      ),
+                    ],
+                  ),
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.end,
+                    children: [
+                      pw.Text(
+                        'STATUS REKONSILIASI KAS:',
+                        style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: subtleText),
+                      ),
+                      pw.SizedBox(height: 2),
+                      pw.Text(
+                        isMatched
+                            ? 'SEIMBANG (PAS / Rp 0 SELISIH)'
+                            : (isShort
+                                ? 'DEFISIT / KURANG (-${_currencyFmt.format(difference.abs())})'
+                                : 'SURPLUS / LEBIH (+${_currencyFmt.format(difference.abs())})'),
+                        style: boldStyle.copyWith(
+                          fontSize: 10.5,
+                          color: isMatched
+                              ? primaryTeal
+                              : (isShort ? roseColor : const PdfColor.fromInt(0xFFD97706)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 16),
+
+            // 2. CATATAN & KETERANGAN SERAH TERIMA
+            _pdfSectionTitle('2. KETERANGAN & CATATAN SERAH TERIMA', titleStyle, primaryTeal, ttfBold),
+            pw.SizedBox(height: 6),
+            pw.Container(
+              width: double.infinity,
+              padding: const pw.EdgeInsets.all(10),
+              decoration: pw.BoxDecoration(
+                color: lightBg,
+                borderRadius: pw.BorderRadius.circular(6),
+                border: pw.Border.all(color: borderCol, width: 0.6),
+              ),
+              child: pw.Text(
+                notes.isNotEmpty
+                    ? notes
+                    : 'Fisik uang di laci telah dihitung bersama dan diserahkan dalam keadaan tersegel/sesuai.',
+                style: baseStyle.copyWith(fontSize: 8.5),
+              ),
+            ),
+            pw.SizedBox(height: 24),
+
+            // Pengesahan Tanda Tangan
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.center,
+                  children: [
+                    pw.Text('Yang Menyerahkan (Petugas Loket),', style: baseStyle),
+                    pw.SizedBox(height: 40),
+                    pw.Text('( $officerName )', style: boldStyle),
+                    pw.Text('Petugas Kasir Shift', style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: subtleText)),
+                  ],
+                ),
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.center,
+                  children: [
+                    pw.Text('Yang Menerima (Super Admin / Bendahara),', style: baseStyle),
+                    pw.SizedBox(height: 40),
+                    pw.Text('( Super Admin Keuangan )', style: boldStyle),
+                    pw.Text('Auditor Kas & Governance Sekolah', style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: subtleText)),
+                  ],
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 16),
+
+            pw.Center(
+              child: pw.Container(
+                padding: const pw.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: pw.BoxDecoration(
+                  color: lightBg,
+                  borderRadius: pw.BorderRadius.circular(20),
+                  border: pw.Border.all(color: borderCol, width: 0.8),
+                ),
+                child: pw.Text(
+                  'Dokumen berita acara ini diterbitkan secara digital oleh Sistem Kantin Digital.',
+                  style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: grayText),
+                ),
+              ),
+            ),
+          ];
+        },
+      ),
+    );
+
+    final safeName = officerName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+    final String filename = 'Berita_Acara_Tutup_Kas_${safeName}_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.pdf';
+
+    await Printing.sharePdf(
+      bytes: await pdf.save(),
+      filename: filename,
+    );
+  }
+
+  /// Bagikan Berita Acara Tutup Kasir ke WhatsApp Super Admin
+  static Future<void> shareClosingShiftViaWhatsApp({
+    required String officerName,
+    required String schoolName,
+    required String authorityLevel,
+    required int totalInflow,
+    required int totalOutflow,
+    required int systemNetCash,
+    required int physicalCash,
+    required int difference,
+    required int topupCount,
+    required int payoutCount,
+    String notes = '',
+  }) async {
+    final buffer = StringBuffer();
+    buffer.writeln('🔒 *BERITA ACARA TUTUP KASIR (CLOSING SHIFT)*');
+    buffer.writeln('Kantin Digital — Sistem Akuntabilitas Sah');
+    buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
+    buffer.writeln('👤 *Petugas Kasir:* $officerName');
+    buffer.writeln('🏫 *Sekolah:* $schoolName');
+    buffer.writeln('📅 *Tanggal:* ${DateFormat('dd MMMM yyyy', 'id_ID').format(DateTime.now())}');
+    buffer.writeln('⏰ *Waktu Tutup:* ${DateFormat('HH:mm:ss', 'id_ID').format(DateTime.now())} WIB');
+    buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
+    buffer.writeln('📈 *Uang Masuk (Top-Up Tunai):* ${_currencyFmt.format(totalInflow)} ($topupCount tx)');
+    buffer.writeln('📉 *Uang Keluar (Pencairan Stan):* ${_currencyFmt.format(totalOutflow)} ($payoutCount tx)');
+    buffer.writeln('📊 *Total Wajib di Laci (Sistem):* ${_currencyFmt.format(systemNetCash)}');
+    buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
+    buffer.writeln('💵 *Fisik Uang Diserahkan:* ${_currencyFmt.format(physicalCash)}');
+
+    if (difference == 0) {
+      buffer.writeln('🟢 *Status:* SEIMBANG / PAS (Rp 0 Selisih)');
+    } else if (difference < 0) {
+      buffer.writeln('🔴 *Status:* DEFISIT / KURANG (-${_currencyFmt.format(difference.abs())})');
+    } else {
+      buffer.writeln('🟡 *Status:* SURPLUS / LEBIH (+${_currencyFmt.format(difference.abs())})');
+    }
+
+    if (notes.isNotEmpty) {
+      buffer.writeln('📝 *Catatan:* $notes');
+    }
+    buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
+    buffer.writeln('_Laporan serah terima kas resmi diterbitkan dari Sistem Kantin Digital._');
+
+    final encodedText = Uri.encodeComponent(buffer.toString());
+    final waUrl = 'https://api.whatsapp.com/send?text=$encodedText';
+    final uri = Uri.parse(waUrl);
+
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {}
+
+    await downloadClosingShiftPdf(
+      officerName: officerName,
+      schoolName: schoolName,
+      authorityLevel: authorityLevel,
+      totalInflow: totalInflow,
+      totalOutflow: totalOutflow,
+      systemNetCash: systemNetCash,
+      physicalCash: physicalCash,
+      difference: difference,
+      topupCount: topupCount,
+      payoutCount: payoutCount,
+      notes: notes,
+    );
+  }
+
 }
+
 
