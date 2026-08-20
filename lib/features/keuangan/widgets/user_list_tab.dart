@@ -25,6 +25,51 @@ class StudentsTab extends ConsumerStatefulWidget {
 
 class _StudentsTabState extends ConsumerState<StudentsTab> {
   String _selectedStatus = 'Semua';
+  final ScrollController _scrollController = ScrollController();
+  int _displayLimit = 10;
+  bool _isLoadingMore = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void didUpdateWidget(covariant StudentsTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.searchQuery != widget.searchQuery) {
+      _displayLimit = 10;
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.hasClients &&
+        _scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 60) {
+      _loadMore();
+    }
+  }
+
+  void _loadMore() {
+    if (_isLoadingMore) return;
+    setState(() => _isLoadingMore = true);
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        setState(() {
+          _displayLimit += 10;
+          _isLoadingMore = false;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +113,11 @@ class _StudentsTabState extends ConsumerState<StudentsTab> {
             return matchesSearch && matchesStatus;
           }).toList();
 
+          final displayed = filtered.take(_displayLimit).toList();
+          final bool hasMore = _displayLimit < filtered.length;
+
           return ListView(
+            controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             children: [
@@ -78,6 +127,7 @@ class _StudentsTabState extends ConsumerState<StudentsTab> {
                 onChanged: (val) {
                   setState(() {
                     _selectedStatus = val;
+                    _displayLimit = 10;
                   });
                 },
               ),
@@ -116,14 +166,60 @@ class _StudentsTabState extends ConsumerState<StudentsTab> {
                   ),
                 )
               else ...[
-                _sectionHeader('SEMUA SISWA (${filtered.length})'),
+                _sectionHeader(
+                  hasMore
+                      ? 'SEMUA SISWA (${displayed.length}/${filtered.length})'
+                      : 'SEMUA SISWA (${filtered.length})',
+                ),
                 const SizedBox(height: 8),
-                ...filtered.map(
+                ...displayed.map(
                   (student) => KeuanganStudentCard(
                     student: student,
                     fmt: fmt,
                   ),
                 ),
+                if (_isLoadingMore) ...[
+                  const SizedBox(height: 14),
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Nebula.teal,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Memuat siswa berikutnya...',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Nebula.teal,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ] else if (hasMore) ...[
+                  const SizedBox(height: 12),
+                  Center(
+                    child: Text(
+                      'Gulir ke bawah untuk memuat ${filtered.length - displayed.length} siswa lainnya...',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: context.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ],
           );

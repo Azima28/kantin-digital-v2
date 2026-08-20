@@ -14,12 +14,63 @@ import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 // ── Staff/Operator Tab ──────────────────────────────────────────────────────
 
-class StaffTab extends ConsumerWidget {
+class StaffTab extends ConsumerStatefulWidget {
   final String searchQuery;
   const StaffTab({required this.searchQuery, super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<StaffTab> createState() => _StaffTabState();
+}
+
+class _StaffTabState extends ConsumerState<StaffTab> {
+  final ScrollController _scrollController = ScrollController();
+  int _displayLimit = 10;
+  bool _isLoadingMore = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void didUpdateWidget(covariant StaffTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.searchQuery != widget.searchQuery) {
+      _displayLimit = 10;
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.hasClients &&
+        _scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 60) {
+      _loadMore();
+    }
+  }
+
+  void _loadMore() {
+    if (_isLoadingMore) return;
+    setState(() => _isLoadingMore = true);
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        setState(() {
+          _displayLimit += 10;
+          _isLoadingMore = false;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final staffAsync = ref.watch(keuanganStaffProvider);
     final fmt = NumberFormat.currency(
       locale: 'id_ID',
@@ -38,7 +89,7 @@ class StaffTab extends ConsumerWidget {
           final filtered = profiles.where((s) {
             final name = (s.fullName ?? '').toLowerCase();
             final uname = (s.username ?? '').toLowerCase();
-            return name.contains(searchQuery) || uname.contains(searchQuery);
+            return name.contains(widget.searchQuery) || uname.contains(widget.searchQuery);
           }).toList();
 
           // Keep raw data for nested canteen_operators access
@@ -54,16 +105,67 @@ class StaffTab extends ConsumerWidget {
             return _buildEmptyState(context);
           }
 
+          final displayed = filtered.take(_displayLimit).toList();
+          final bool hasMore = _displayLimit < filtered.length;
+
           return ListView(
+            controller: _scrollController,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             children: [
-              _sectionHeader(context, 'PETUGAS AKTIF (${filtered.length})'),
+              _sectionHeader(
+                context,
+                hasMore
+                    ? 'PETUGAS AKTIF (${displayed.length}/${filtered.length})'
+                    : 'PETUGAS AKTIF (${filtered.length})',
+              ),
               const SizedBox(height: 8),
-              ...filtered.map((s) => _buildStaffCard(
+              ...displayed.map((s) => _buildStaffCard(
                 context, ref, s, fmt,
                 canteenData: rawItems[s.id]?['canteen_operators']
                     as Map<String, dynamic>?,
               )),
+              if (_isLoadingMore) ...[
+                const SizedBox(height: 14),
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Nebula.teal,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Memuat data berikutnya...',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Nebula.teal,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ] else if (hasMore) ...[
+                const SizedBox(height: 12),
+                Center(
+                  child: Text(
+                    'Gulir ke bawah untuk memuat ${filtered.length - displayed.length} petugas lainnya...',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: context.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ],
           );
         },

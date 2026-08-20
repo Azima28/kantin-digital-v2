@@ -15,12 +15,63 @@ import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
 
 // ── Parents Tab ─────────────────────────────────────────────────────────────
 
-class ParentsTab extends ConsumerWidget {
+class ParentsTab extends ConsumerStatefulWidget {
   final String searchQuery;
   const ParentsTab({required this.searchQuery, super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ParentsTab> createState() => _ParentsTabState();
+}
+
+class _ParentsTabState extends ConsumerState<ParentsTab> {
+  final ScrollController _scrollController = ScrollController();
+  int _displayLimit = 10;
+  bool _isLoadingMore = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void didUpdateWidget(covariant ParentsTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.searchQuery != widget.searchQuery) {
+      _displayLimit = 10;
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.hasClients &&
+        _scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 60) {
+      _loadMore();
+    }
+  }
+
+  void _loadMore() {
+    if (_isLoadingMore) return;
+    setState(() => _isLoadingMore = true);
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        setState(() {
+          _displayLimit += 10;
+          _isLoadingMore = false;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final parentsAsync = ref.watch(keuanganParentsProvider);
 
     return RefreshIndicator(
@@ -36,7 +87,7 @@ class ParentsTab extends ConsumerWidget {
           final filtered = profiles.where((p) {
             final name = (p.fullName ?? '').toLowerCase();
             final email = (p.email ?? '').toLowerCase();
-            return name.contains(searchQuery) || email.contains(searchQuery);
+            return name.contains(widget.searchQuery) || email.contains(widget.searchQuery);
           }).toList();
 
           if (filtered.isEmpty) {
@@ -47,11 +98,15 @@ class ParentsTab extends ConsumerWidget {
             );
           }
 
+          final displayed = filtered.take(_displayLimit).toList();
+          final bool hasMore = _displayLimit < filtered.length;
+
           return ListView(
+            controller: _scrollController,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             children: [
               // Pending verification section
-              if (pending.isNotEmpty && searchQuery.isEmpty) ...[
+              if (pending.isNotEmpty && widget.searchQuery.isEmpty) ...[
                 _sectionHeader(context, 'PERLU VERIFIKASI (${pending.length})'),
                 const SizedBox(height: 8),
                 ...pending.map(
@@ -60,11 +115,58 @@ class ParentsTab extends ConsumerWidget {
                 const SizedBox(height: 20),
               ],
               // All active parents
-              _sectionHeader(context, 'SEMUA ORANG TUA (${filtered.length})'),
+              _sectionHeader(
+                context,
+                hasMore
+                    ? 'SEMUA ORANG TUA (${displayed.length}/${filtered.length})'
+                    : 'SEMUA ORANG TUA (${filtered.length})',
+              ),
               const SizedBox(height: 8),
-              ...filtered.map(
+              ...displayed.map(
                 (p) => _buildParentCard(context, ref, p, isPending: false),
               ),
+              if (_isLoadingMore) ...[
+                const SizedBox(height: 14),
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Nebula.teal,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Memuat data berikutnya...',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Nebula.teal,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ] else if (hasMore) ...[
+                const SizedBox(height: 12),
+                Center(
+                  child: Text(
+                    'Gulir ke bawah untuk memuat ${filtered.length - displayed.length} orang tua lainnya...',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: context.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ],
           );
         },
