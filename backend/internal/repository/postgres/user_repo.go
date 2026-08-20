@@ -191,7 +191,7 @@ func (r *UserRepo) SearchStudents(ctx context.Context, search string) ([]domain.
 		JOIN public.profiles p ON p.id = s.id
 		WHERE ($1 = '' OR p.full_name ILIKE '%' || $1 || '%' OR p.nisn ILIKE '%' || $1 || '%' OR p.username ILIKE '%' || $1 || '%')
 		ORDER BY p.full_name ASC
-		LIMIT 20`
+		LIMIT 100`
 
 	rows, err := r.db.Pool.Query(ctx, query, strings.TrimSpace(search))
 	if err != nil {

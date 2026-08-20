@@ -33,15 +33,16 @@ class KeuanganTopupScreen extends ConsumerStatefulWidget {
 class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
   int _currentStep = 1; // 1: Search, 2: Amount, 3: Confirm, 4: Success
 
-  // Cache pencarian in-memory untuk instant typing tanpa request ulang
-  static final Map<String, List<StudentWithProfile>> _searchCache = {};
+  // Master Cache & In-Memory Filter Pool
+  static List<StudentWithProfile> _globalStudentPool = [];
+  List<StudentWithProfile> _allStudents = [];
+  List<StudentWithProfile> _initialStudents = [];
+  List<StudentWithProfile> _searchResults = [];
 
   // Step 1: Search
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
   StudentWithProfile? _selectedStudent;
-  List<StudentWithProfile> _searchResults = [];
-  List<StudentWithProfile> _initialStudents = [];
   bool _hasSearched = false;
   Timer? _debounce;
 
@@ -61,11 +62,25 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
       _selectedStudent = widget.prefilledStudent;
       _currentStep = 2; // Skip search step
     } else {
-      _loadInitialStudents();
+      if (_globalStudentPool.isNotEmpty) {
+        _applyStudentPool(_globalStudentPool);
+      }
+      _loadStudents();
     }
   }
 
-  Future<void> _loadInitialStudents() async {
+  void _applyStudentPool(List<StudentWithProfile> list) {
+    _allStudents = List.from(list);
+    final shuffled = List<StudentWithProfile>.from(list)..shuffle();
+    _initialStudents = shuffled.take(10).toList();
+    if (_searchController.text.trim().isEmpty) {
+      _searchResults = _initialStudents;
+    } else {
+      _filterLocally(_searchController.text.trim());
+    }
+  }
+
+  Future<void> _loadStudents() async {
     try {
       final apiClient = ref.read(apiClientProvider);
       final response = await apiClient.get('/student/lookup', queryParams: {'search': ''});
@@ -77,16 +92,10 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
                 Map<String, dynamic>.from(item as Map)))
             .toList();
 
-        // Acak 10 siswa awal
-        students.shuffle();
-        final ten = students.take(10).toList();
-
+        _globalStudentPool = students;
         if (mounted) {
           setState(() {
-            _initialStudents = ten;
-            if (_searchController.text.trim().isEmpty) {
-              _searchResults = ten;
-            }
+            _applyStudentPool(students);
           });
         }
       }
@@ -114,10 +123,10 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
     return int.tryParse(_amountController.text.trim()) ?? 0;
   }
 
-  void _onSearchChanged(String query) {
+  /// ⚡ 100% Client-Side Instant Substring Search (0 Network Requests saat mengetik)
+  void _filterLocally(String query) {
     final clean = query.trim().toLowerCase();
     if (clean.isEmpty) {
-      _debounce?.cancel();
       setState(() {
         _searchResults = _initialStudents;
         _hasSearched = false;
@@ -126,96 +135,26 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
       return;
     }
 
-    // ⚡ Instant Cache Lookup (Zero network delay saat ketik ulang nama yang sudah pernah dicari)
-    if (_searchCache.containsKey(clean)) {
-      _debounce?.cancel();
-      setState(() {
-        _searchResults = _searchCache[clean]!;
-        _hasSearched = true;
-        _isSearching = false;
-      });
-      return;
-    }
+    final filtered = _allStudents.where((s) {
+      final name = s.fullName.toLowerCase();
+      final nisn = (s.nisn ?? '').toLowerCase();
+      final cls = (s.class_ ?? '').toLowerCase();
+      final email = (s.email ?? '').toLowerCase();
+      return name.contains(clean) ||
+          nisn.contains(clean) ||
+          cls.contains(clean) ||
+          email.contains(clean);
+    }).toList();
 
-    // Debounce network request untuk kata kunci baru
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () {
-      _searchStudent(clean);
+    setState(() {
+      _searchResults = filtered;
+      _hasSearched = true;
+      _isSearching = false;
     });
   }
 
-  Future<void> _searchStudent(String query) async {
-    final clean = query.trim().toLowerCase();
-    if (clean.isEmpty) {
-      setState(() {
-        _searchResults = _initialStudents;
-        _hasSearched = false;
-      });
-      return;
-    }
-
-    // Cek cache sekali lagi
-    if (_searchCache.containsKey(clean)) {
-      setState(() {
-        _searchResults = _searchCache[clean]!;
-        _hasSearched = true;
-        _isSearching = false;
-      });
-      return;
-    }
-
-    setState(() {
-      _isSearching = true;
-    });
-
-    try {
-      final apiClient = ref.read(apiClientProvider);
-      final response = await apiClient.get('/student/lookup', queryParams: {'search': clean});
-
-      if (response.success && response.data != null) {
-        final list = response.data as List<dynamic>;
-        final results = list
-            .map((item) => StudentWithProfile.fromApiJson(
-                Map<String, dynamic>.from(item as Map)))
-            .toList();
-
-        // Simpan ke cache
-        _searchCache[clean] = results;
-
-        if (mounted && _searchController.text.trim().toLowerCase() == clean) {
-          setState(() {
-            _searchResults = results;
-            _hasSearched = true;
-          });
-        }
-      } else {
-        _searchCache[clean] = [];
-        if (mounted && _searchController.text.trim().toLowerCase() == clean) {
-          setState(() {
-            _searchResults = [];
-            _hasSearched = true;
-          });
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Pencarian gagal: ${e.toString().replaceAll('Exception: ', '')}',
-            ),
-            backgroundColor: Nebula.rose,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSearching = false;
-        });
-      }
-    }
+  void _onSearchChanged(String query) {
+    _filterLocally(query);
   }
 
   Future<void> _processTopup() async {
@@ -394,7 +333,7 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
       onSearchChanged: _onSearchChanged,
       onSearchSubmitted: (val) {
         _debounce?.cancel();
-        _searchStudent(val);
+        _filterLocally(val);
       },
       onSearchCleared: () {
         _debounce?.cancel();

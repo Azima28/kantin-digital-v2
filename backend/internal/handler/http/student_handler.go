@@ -40,7 +40,7 @@ func (h *StudentHandler) LookupStudent(c *fiber.Ctx) error {
 	if search == "" {
 		search = c.Query("q", "")
 	}
-	if search != "" {
+	if search != "" || c.Request().URI().QueryArgs().Has("search") || c.Request().URI().QueryArgs().Has("q") {
 		students, err := h.paymentService.SearchStudents(c.Context(), search)
 		if err != nil {
 			return response.Error(c, fiber.StatusInternalServerError, "Gagal mencari data siswa", err.Error())
