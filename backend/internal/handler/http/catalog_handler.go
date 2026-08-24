@@ -1,6 +1,8 @@
 package http
 
 import (
+	"strings"
+
 	"github.com/gofiber/fiber/v2"
 	"kantin-backend/internal/domain"
 	"kantin-backend/internal/handler/http/middleware"
@@ -63,6 +65,26 @@ func (h *CatalogHandler) ListProducts(c *fiber.Ctx) error {
 	return response.Success(c, fiber.StatusOK, "Katalog produk kantin", products)
 }
 
+func sanitizeString(s string) string {
+	s = strings.TrimSpace(s)
+	s = strings.ReplaceAll(s, "<", "&lt;")
+	s = strings.ReplaceAll(s, ">", "&gt;")
+	return s
+}
+
+func sanitizeCategory(cat string) string {
+	clean := strings.ToLower(strings.TrimSpace(cat))
+	switch clean {
+	case "makanan", "minuman", "camilan", "snack", "lainnya":
+		if clean == "snack" {
+			return "camilan"
+		}
+		return clean
+	default:
+		return "makanan"
+	}
+}
+
 func (h *CatalogHandler) CreateProduct(c *fiber.Ctx) error {
 	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
 	var p domain.Product
@@ -71,8 +93,16 @@ func (h *CatalogHandler) CreateProduct(c *fiber.Ctx) error {
 	}
 
 	p.OperatorID = claims.UserID
+	p.Name = sanitizeString(p.Name)
 	if p.Name == "" || p.Price <= 0 {
 		return response.Error(c, fiber.StatusBadRequest, "Nama dan harga produk wajib diisi dengan benar", nil)
+	}
+	if len(p.Name) > 80 {
+		p.Name = p.Name[:80]
+	}
+	p.Category = sanitizeCategory(p.Category)
+	if p.Price < 100 || p.Price > 10000000 {
+		return response.Error(c, fiber.StatusBadRequest, "Harga produk harus antara Rp 100 hingga Rp 10.000.000", nil)
 	}
 
 	if err := h.catalogService.CreateProduct(c.Context(), &p); err != nil {
@@ -92,6 +122,18 @@ func (h *CatalogHandler) UpdateProduct(c *fiber.Ctx) error {
 
 	p.ID = productID
 	p.OperatorID = claims.UserID
+	if p.Name != "" {
+		p.Name = sanitizeString(p.Name)
+		if len(p.Name) > 80 {
+			p.Name = p.Name[:80]
+		}
+	}
+	if p.Category != "" {
+		p.Category = sanitizeCategory(p.Category)
+	}
+	if p.Price != 0 && (p.Price < 100 || p.Price > 10000000) {
+		return response.Error(c, fiber.StatusBadRequest, "Harga produk harus antara Rp 100 hingga Rp 10.000.000", nil)
+	}
 
 	if err := h.catalogService.UpdateProduct(c.Context(), &p); err != nil {
 		return response.Error(c, fiber.StatusInternalServerError, "Gagal memperbarui produk", err.Error())

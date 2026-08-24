@@ -216,8 +216,8 @@ func main() {
 		authRequired.Get("/auth/me", authH.Me)
 		authRequired.Post("/auth/change-password", authH.ChangePassword)
 
-		// Uploads
-		authRequired.Post("/upload/product-image", uploadH.UploadProductImage)
+		// Uploads (Protected with role verification for products)
+		authRequired.Post("/upload/product-image", middleware.RequireRoles(domain.RolePetugasKantin, domain.RoleAdmin, domain.RoleSuperAdmin), uploadH.UploadProductImage)
 		authRequired.Post("/upload/avatar", uploadH.UploadAvatar)
 
 		// Profile Updates

@@ -2,6 +2,7 @@ package http
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,6 +15,8 @@ import (
 	"kantin-backend/internal/pkg/token"
 	"kantin-backend/internal/repository/postgres"
 )
+
+const maxUploadSize = 5 * 1024 * 1024 // 5 MB
 
 type UploadHandler struct {
 	uploadDir string
@@ -30,9 +33,27 @@ func (h *UploadHandler) UploadProductImage(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusBadRequest, "File gambar tidak ditemukan dalam form-data", err.Error())
 	}
 
+	if file.Size > maxUploadSize {
+		return response.Error(c, fiber.StatusBadRequest, "Ukuran file gambar maksimal 5 MB", nil)
+	}
+
 	ext := strings.ToLower(filepath.Ext(file.Filename))
 	if ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".webp" {
 		return response.Error(c, fiber.StatusBadRequest, "Format file harus berupa JPG, PNG, atau WebP", nil)
+	}
+
+	// Validate MIME type via magic bytes
+	f, err := file.Open()
+	if err != nil {
+		return response.Error(c, fiber.StatusInternalServerError, "Gagal membaca header file gambar", err.Error())
+	}
+	buf := make([]byte, 512)
+	n, _ := f.Read(buf)
+	f.Close()
+
+	mimeType := http.DetectContentType(buf[:n])
+	if !strings.HasPrefix(mimeType, "image/") && mimeType != "application/octet-stream" {
+		return response.Error(c, fiber.StatusBadRequest, "File yang diunggah bukan format gambar yang valid", nil)
 	}
 
 	targetDir := filepath.Join(h.uploadDir, "products")
@@ -69,9 +90,27 @@ func (h *UploadHandler) UploadAvatar(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusBadRequest, "File avatar tidak ditemukan dalam form-data", err.Error())
 	}
 
+	if file.Size > maxUploadSize {
+		return response.Error(c, fiber.StatusBadRequest, "Ukuran file avatar maksimal 5 MB", nil)
+	}
+
 	ext := strings.ToLower(filepath.Ext(file.Filename))
 	if ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".webp" {
 		return response.Error(c, fiber.StatusBadRequest, "Format file harus berupa JPG, PNG, atau WebP", nil)
+	}
+
+	// Validate MIME type via magic bytes
+	f, err := file.Open()
+	if err != nil {
+		return response.Error(c, fiber.StatusInternalServerError, "Gagal membaca header file avatar", err.Error())
+	}
+	buf := make([]byte, 512)
+	n, _ := f.Read(buf)
+	f.Close()
+
+	mimeType := http.DetectContentType(buf[:n])
+	if !strings.HasPrefix(mimeType, "image/") && mimeType != "application/octet-stream" {
+		return response.Error(c, fiber.StatusBadRequest, "File yang diunggah bukan format gambar yang valid", nil)
 	}
 
 	targetDir := filepath.Join(h.uploadDir, "avatars")
