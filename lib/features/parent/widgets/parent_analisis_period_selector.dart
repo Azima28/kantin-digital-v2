@@ -31,107 +31,80 @@ class ParentAnalisisPeriodSelector extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            // 3-Segment Sliding Tab Bar (Hari Ini, Minggu, Bulan)
-            Expanded(
-              child: Container(
-                height: 42,
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  color: context.cardBg,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: context.dividerCol, width: 0.8),
-                ),
-                child: Row(
-                  children: [
-                    _buildTab(context, 'Hari Ini', 'Hari Ini'),
-                    _buildTab(context, 'Minggu Ini', 'Minggu'),
-                    _buildTab(context, 'Bulan Ini', 'Bulan'),
-                  ],
-                ),
+        // 1. Full-Width 3-Segment Sliding Tab Bar (Hari Ini, Minggu, Bulan)
+        Container(
+          height: 44,
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: context.cardBg,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: context.dividerCol, width: 0.8),
+          ),
+          child: Row(
+            children: [
+              _buildTab(context, 'Hari Ini', 'Hari Ini'),
+              _buildTab(context, 'Minggu Ini', 'Minggu'),
+              _buildTab(context, 'Bulan Ini', 'Bulan'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // 2. Full-Width Date Filter Bar
+        InkWell(
+          onTap: onOpenCustomDatePicker,
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            height: 42,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              color: isCustomActive
+                  ? Nebula.teal.withValues(alpha: 0.12)
+                  : context.cardBg,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isCustomActive ? Nebula.teal : context.dividerCol,
+                width: isCustomActive ? 1.5 : 0.8,
               ),
             ),
-            const SizedBox(width: 8),
-
-            // Separate Date Filter Button (Opens Popup Dialog)
-            InkWell(
-              onTap: onOpenCustomDatePicker,
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                height: 42,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: isCustomActive
-                      ? Nebula.teal.withValues(alpha: 0.15)
-                      : context.cardBg,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isCustomActive ? Nebula.teal : context.dividerCol,
-                    width: isCustomActive ? 1.5 : 0.8,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
                   children: [
                     Icon(
                       isCustomActive ? Icons.event_available_rounded : CupertinoIcons.calendar,
                       size: 16,
                       color: isCustomActive ? Nebula.teal : context.textSecondary,
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     Text(
-                      'Pilih Tanggal',
+                      isCustomActive
+                          ? 'Rentang: ${DateFormat('dd MMM', 'id_ID').format(customDateRange!.start)} - ${DateFormat('dd MMM yyyy', 'id_ID').format(customDateRange!.end)}'
+                          : 'Pilih Rentang Tanggal...',
                       style: GoogleFonts.inter(
-                        fontSize: 12,
+                        fontSize: 12.5,
                         fontWeight: isCustomActive ? FontWeight.w800 : FontWeight.w600,
-                        color: isCustomActive ? Nebula.teal : context.textPrimary,
+                        color: isCustomActive ? Nebula.teal : context.textSecondary,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ),
-          ],
-        ),
-
-        // If Custom Filter is Active, show clean pill tag with clear (X) action
-        if (isCustomActive)
-          Padding(
-            padding: const EdgeInsets.only(top: 10.0),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Nebula.teal.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Nebula.teal.withValues(alpha: 0.25), width: 0.8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.date_range_rounded, size: 14, color: Nebula.teal),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Periode Kustom: ${DateFormat('dd MMM', 'id_ID').format(customDateRange!.start)} - ${DateFormat('dd MMM yyyy', 'id_ID').format(customDateRange!.end)}',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Nebula.teal,
-                      ),
-                    ),
-                  ),
+                if (isCustomActive)
                   InkWell(
                     onTap: onClearCustomDate,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                     child: Padding(
-                      padding: const EdgeInsets.all(2.0),
+                      padding: const EdgeInsets.all(4.0),
                       child: Icon(Icons.close_rounded, size: 16, color: context.textSecondary),
                     ),
-                  ),
-                ],
-              ),
+                  )
+                else
+                  Icon(CupertinoIcons.chevron_right, size: 14, color: context.textSecondary.withValues(alpha: 0.6)),
+              ],
             ),
           ),
+        ),
       ],
     );
   }

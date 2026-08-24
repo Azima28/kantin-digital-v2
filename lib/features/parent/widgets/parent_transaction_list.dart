@@ -130,109 +130,80 @@ class ParentTransactionList extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        // 2. Filter Row: Type Segmented Tabs + Date Filter Button
-        Row(
-          children: [
-            // Sliding Segmented Tab Bar (Semua, Belanja, Top-up)
-            Expanded(
-              flex: 5,
-              child: Container(
-                height: 42,
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  color: context.cardBg,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: context.dividerCol, width: 0.8),
-                ),
-                child: Row(
-                  children: [
-                    _buildTypeTab(context, 'Semua', AppStrings.labelAll),
-                    _buildTypeTab(context, 'Belanja', 'Belanja'),
-                    _buildTypeTab(context, 'Top-up', 'Top-up'),
-                  ],
-                ),
+        // 2. Full-Width Sliding Segmented Type Filter Tabs
+        Container(
+          height: 44,
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: context.cardBg,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: context.dividerCol, width: 0.8),
+          ),
+          child: Row(
+            children: [
+              _buildTypeTab(context, 'Semua', AppStrings.labelAll),
+              _buildTypeTab(context, 'Belanja', 'Belanja'),
+              _buildTypeTab(context, 'Top-up', 'Top-up'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // 3. Dedicated Date Filter Bar
+        InkWell(
+          onTap: onPickDateRange,
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            height: 42,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              color: hasDateFilter
+                  ? Nebula.teal.withValues(alpha: 0.12)
+                  : context.cardBg,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: hasDateFilter ? Nebula.teal : context.dividerCol,
+                width: hasDateFilter ? 1.5 : 0.8,
               ),
             ),
-            const SizedBox(width: 8),
-
-            // Date Picker Button
-            InkWell(
-              onTap: onPickDateRange,
-              borderRadius: BorderRadius.circular(14),
-              child: Container(
-                height: 42,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: hasDateFilter
-                      ? Nebula.teal.withValues(alpha: 0.12)
-                      : context.cardBg,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: hasDateFilter ? Nebula.teal : context.dividerCol,
-                    width: hasDateFilter ? 1.5 : 0.8,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
                   children: [
                     Icon(
                       hasDateFilter ? Icons.event_available_rounded : CupertinoIcons.calendar,
                       size: 16,
                       color: hasDateFilter ? Nebula.teal : context.textSecondary,
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     Text(
-                      'Pilih Tanggal',
+                      hasDateFilter
+                          ? 'Rentang: ${AppDateFormatter.formatDate(historyDateRange!.start)} - ${AppDateFormatter.formatDate(historyDateRange!.end)}'
+                          : 'Pilih Rentang Tanggal...',
                       style: GoogleFonts.inter(
-                        fontSize: 12,
+                        fontSize: 12.5,
                         fontWeight: hasDateFilter ? FontWeight.w800 : FontWeight.w600,
-                        color: hasDateFilter ? Nebula.teal : context.textPrimary,
+                        color: hasDateFilter ? Nebula.teal : context.textSecondary,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ),
-          ],
-        ),
-
-        // Active Date Range Pill Indicator
-        if (hasDateFilter)
-          Padding(
-            padding: const EdgeInsets.only(top: 10.0),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-              decoration: BoxDecoration(
-                color: Nebula.teal.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Nebula.teal.withValues(alpha: 0.25), width: 0.8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.date_range_rounded, size: 14, color: Nebula.teal),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Rentang: ${AppDateFormatter.formatDate(historyDateRange!.start)} - ${AppDateFormatter.formatDate(historyDateRange!.end)}',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Nebula.teal,
-                      ),
-                    ),
-                  ),
+                if (hasDateFilter)
                   InkWell(
                     onTap: onResetDateRange,
                     borderRadius: BorderRadius.circular(8),
                     child: Padding(
-                      padding: const EdgeInsets.all(2.0),
+                      padding: const EdgeInsets.all(4.0),
                       child: Icon(Icons.close_rounded, size: 16, color: context.textSecondary),
                     ),
-                  ),
-                ],
-              ),
+                  )
+                else
+                  Icon(CupertinoIcons.chevron_right, size: 14, color: context.textSecondary.withValues(alpha: 0.6)),
+              ],
             ),
           ),
+        ),
         const SizedBox(height: 16),
 
         // 3. Grouped List of Transactions
