@@ -20,7 +20,7 @@ import 'package:kantin_digital/features/parent/widgets/parent_analisis_period_se
 import 'package:kantin_digital/features/parent/widgets/parent_category_breakdown.dart';
 import 'package:kantin_digital/features/parent/widgets/parent_favorite_products.dart';
 import 'package:kantin_digital/features/parent/widgets/parent_transaction_list.dart';
-import 'package:kantin_digital/features/parent/widgets/parent_receipt_bottom_sheet.dart';
+import 'package:kantin_digital/features/parent/screens/parent_transaction_detail_screen.dart';
 import 'package:kantin_digital/features/parent/widgets/parent_settings_section.dart';
 import 'package:kantin_digital/features/parent/widgets/parent_dashboard_header.dart';
 import 'package:kantin_digital/features/parent/widgets/parent_home_tab.dart';
@@ -246,6 +246,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
           _currentIndex = 2; // Switch to Riwayat tab
         });
       },
+      onTransactionTap: _openTransactionDetailScreen,
     );
   }
 
@@ -428,20 +429,17 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
       },
       onResetDateRange: () => setState(() => _historyDateRange = null),
       getItemsSummary: _getItemsSummary,
-      onTransactionTap: _showReceiptBottomSheet,
+      onTransactionTap: _openTransactionDetailScreen,
     );
   }
-  void _showReceiptBottomSheet(OperatorTransaction tx) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: context.cardBg,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (context) {
-        return ParentReceiptBottomSheet(
+
+  void _openTransactionDetailScreen(OperatorTransaction tx) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ParentTransactionDetailScreen(
           transaction: tx,
-          getItemsSummary: _getItemsSummary,
-        );
-      },
+        ),
+      ),
     );
   }
 

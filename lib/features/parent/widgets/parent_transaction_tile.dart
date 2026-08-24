@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,6 +31,20 @@ class ParentTransactionTile extends ConsumerWidget {
     final bool isIncoming = isTopup || isRefund;
     final String canteen = transaction.canteenName ?? 'Stan Kantin';
 
+    // Extract product / transaction thumbnail image
+    String? thumbUrl = transaction.imageUrl;
+    if (thumbUrl == null || thumbUrl.isEmpty) {
+      final items = transaction.transactionItems;
+      if (items != null && items.isNotEmpty) {
+        for (final item in items) {
+          if (item.imageUrl != null && item.imageUrl!.isNotEmpty) {
+            thumbUrl = item.imageUrl;
+            break;
+          }
+        }
+      }
+    }
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -37,24 +52,32 @@ class ParentTransactionTile extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           children: [
-            // Transaction Icon Avatar
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: isIncoming
-                    ? Nebula.teal.withValues(alpha: 0.12)
-                    : Nebula.teal.withValues(alpha: 0.08),
+            // Transaction Image Thumbnail or Styled Icon Badge
+            if (thumbUrl != null && thumbUrl.isNotEmpty)
+              ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                isTopup
-                    ? Icons.account_balance_wallet_rounded
-                    : (isRefund ? CupertinoIcons.arrow_uturn_left : Icons.restaurant_rounded),
-                color: primaryTeal,
-                size: 18,
-              ),
-            ),
+                child: CachedNetworkImage(
+                  imageUrl: thumbUrl,
+                  width: 42,
+                  height: 42,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: Nebula.teal.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Center(
+                      child: CupertinoActivityIndicator(radius: 7),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) =>
+                      _buildFallbackAvatar(context, isTopup, isRefund, primaryTeal),
+                ),
+              )
+            else
+              _buildFallbackAvatar(context, isTopup, isRefund, primaryTeal),
             const SizedBox(width: 12),
 
             // Title & Items Summary
@@ -97,6 +120,35 @@ class ParentTransactionTile extends ConsumerWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFallbackAvatar(
+      BuildContext context, bool isTopup, bool isRefund, Color primaryTeal) {
+    final Color badgeColor = isTopup
+        ? Nebula.teal
+        : (isRefund ? Nebula.amber : primaryTeal);
+
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: badgeColor.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: badgeColor.withValues(alpha: 0.20),
+          width: 0.8,
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          isTopup
+              ? Icons.account_balance_wallet_rounded
+              : (isRefund ? CupertinoIcons.arrow_uturn_left : Icons.restaurant_rounded),
+          color: badgeColor,
+          size: 19,
         ),
       ),
     );

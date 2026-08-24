@@ -21,6 +21,7 @@ class ParentHomeTab extends StatelessWidget {
   final double? dailyLimit;
   final List<OperatorTransaction> transactions;
   final VoidCallback onViewAllHistory;
+  final void Function(OperatorTransaction tx)? onTransactionTap;
 
   const ParentHomeTab({
     super.key,
@@ -31,6 +32,7 @@ class ParentHomeTab extends StatelessWidget {
     required this.dailyLimit,
     required this.transactions,
     required this.onViewAllHistory,
+    this.onTransactionTap,
   });
 
   double _getTodaySpending() {
@@ -194,7 +196,10 @@ class ParentHomeTab extends StatelessWidget {
                   Divider(height: 1, color: context.dividerCol),
               itemBuilder: (context, i) {
                 final tx = todayTxs[i];
-                return ParentTransactionTile(transaction: tx);
+                return ParentTransactionTile(
+                  transaction: tx,
+                  onTap: onTransactionTap != null ? () => onTransactionTap!(tx) : null,
+                );
               },
             ),
           ),
