@@ -10,6 +10,7 @@ import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kantin_digital/features/public/providers/public_providers.dart';
 import 'package:kantin_digital/core/utils/responsive.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/siswa/providers/student_cart_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
@@ -268,6 +269,8 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
       orElse: () => stalls.first,
     );
 
+    final bool isSearching = _searchQuery.trim().isNotEmpty;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Stack(
@@ -284,6 +287,7 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
                       _randomPromoBanners.clear();
                     });
                     ref.invalidate(publicMenuProvider(null));
+                    ref.invalidate(publicCanteensProvider);
                   },
                   child: SingleChildScrollView(
                     controller: _scrollController,
@@ -292,46 +296,84 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // 1. Full-Bleed Hero Promo Banner with Overlapping Top Nav and Floating Search Bar
-                        Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            _buildPromoBannerCarousel(allProductsAsync, activeStall),
-                            Positioned(
-                              top: 14,
-                              left: 16,
-                              right: 16,
-                              child: _buildTopHeroNav(context),
+                        if (isSearching) ...[
+                          // ── SEARCH MODE TOP BAR ──
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                            child: Row(
+                              children: [
+                                GestureDetector(
+                                  onTap: _resetFilters,
+                                  child: Container(
+                                    width: 38,
+                                    height: 38,
+                                    decoration: BoxDecoration(
+                                      color: context.cardBg,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: context.borderLight, width: 0.8),
+                                    ),
+                                    child: const Icon(CupertinoIcons.left_chevron, size: 18),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(child: _buildSearchInput()),
+                              ],
                             ),
-                            Positioned(
-                              bottom: -22,
-                              left: 16,
-                              right: 16,
-                              child: _buildSearchInput(),
+                          ),
+
+                          // ── IMMEDIATE SEARCH RESULTS (STALLS & PRODUCTS) ──
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 10, 16, 90),
+                            child: _buildSearchResultsView(
+                              context,
+                              ref,
+                              allProductsAsync,
+                              canteensAsync,
+                              isDesktop,
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 38),
+                          ),
+                        ] else ...[
+                          // 1. Full-Bleed Hero Promo Banner with Overlapping Top Nav and Floating Search Bar
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              _buildPromoBannerCarousel(allProductsAsync, activeStall),
+                              Positioned(
+                                top: 14,
+                                left: 16,
+                                right: 16,
+                                child: _buildTopHeroNav(context),
+                              ),
+                              Positioned(
+                                bottom: -22,
+                                left: 16,
+                                right: 16,
+                                child: _buildSearchInput(),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 38),
 
-                        // 2. Section 1: "Sambil kumpul bareng teman" (6 items Horizontal Slider)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: _buildPopularSliderSection(allProductsAsync, activeStall),
-                        ),
-                        const SizedBox(height: 24),
+                          // 2. Section 1: "Sambil kumpul bareng teman" (6 items Horizontal Slider)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: _buildPopularSliderSection(allProductsAsync, activeStall),
+                          ),
+                          const SizedBox(height: 24),
 
-                        // 3. Section 2: "Kuliner sesuai seleramu" (Categories)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: _buildKulinerSesuaiSeleramuSection(),
-                        ),
-                        const SizedBox(height: 24),
+                          // 3. Section 2: "Kuliner sesuai seleramu" (Categories)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: _buildKulinerSesuaiSeleramuSection(),
+                          ),
+                          const SizedBox(height: 24),
 
-                        // 4. Section 3: Product List in Card Panjang (1x1 List View)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
-                          child: _buildProductsListArea(context, ref, allProductsAsync, activeStall, isDesktop),
-                        ),
+                          // 4. Section 3: Product List in Card Panjang (1x1 List View)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
+                            child: _buildProductsListArea(context, ref, allProductsAsync, activeStall, isDesktop),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -1126,6 +1168,346 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
           }).toList(),
         ),
       ],
+    );
+  }
+
+  // ─── INSTANT SEARCH RESULTS VIEW (STALLS + PRODUCTS) ───
+  Widget _buildSearchResultsView(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<List<ProductWithCanteen>> productsAsync,
+    AsyncValue<List<CanteenOperator>> canteensAsync,
+    bool isDesktop,
+  ) {
+    final query = _searchQuery.trim().toLowerCase();
+
+    final List<CanteenOperator> allCanteens = canteensAsync.maybeWhen(
+      data: (list) => list,
+      orElse: () => [],
+    );
+
+    final List<ProductWithCanteen> allProducts = productsAsync.maybeWhen(
+      data: (list) => list,
+      orElse: () => [],
+    );
+
+    // 1. Matching Canteens / Stalls (Misal pencarian: "sta", "bude", "ani", "bakso", "utama")
+    final matchingCanteens = allCanteens.where((c) {
+      return c.canteenName.toLowerCase().contains(query);
+    }).toList();
+
+    // 2. Matching Products / Menu Items
+    final matchingProducts = allProducts.where((p) {
+      final pName = p.product.name.toLowerCase();
+      final cName = p.canteenName.toLowerCase();
+      final cat = p.product.category.toLowerCase();
+      return pName.contains(query) || cName.contains(query) || cat.contains(query);
+    }).toList();
+
+    // 3. Empty State if nothing matches
+    if (matchingCanteens.isEmpty && matchingProducts.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 70,
+                height: 70,
+                decoration: BoxDecoration(
+                  color: Nebula.teal.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(CupertinoIcons.search, size: 34, color: Nebula.teal),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Tidak Ditemukan',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: context.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Tidak ada toko atau menu yang cocok dengan "$_searchQuery". Coba gunakan kata kunci lain.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 12.5,
+                  color: context.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              OutlinedButton(
+                onPressed: _resetFilters,
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Nebula.teal),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                ),
+                child: Text(
+                  'Hapus Pencarian',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Nebula.teal),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── SECTION 1: TOKO / STAN KANTIN ──
+        if (matchingCanteens.isNotEmpty) ...[
+          Row(
+            children: [
+              const Icon(Icons.storefront_rounded, size: 18, color: Nebula.teal),
+              const SizedBox(width: 6),
+              Text(
+                'Stan / Toko Kantin (${matchingCanteens.length})',
+                style: GoogleFonts.inter(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: context.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ...matchingCanteens.map((canteen) => _buildCanteenSearchResultCard(context, canteen, allProducts)),
+          const SizedBox(height: 24),
+        ],
+
+        // ── SECTION 2: MENU MAKANAN & MINUMAN ──
+        if (matchingProducts.isNotEmpty) ...[
+          Row(
+            children: [
+              const Icon(Icons.restaurant_menu_rounded, size: 18, color: Nebula.teal),
+              const SizedBox(width: 6),
+              Text(
+                'Menu Makanan & Minuman (${matchingProducts.length})',
+                style: GoogleFonts.inter(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: context.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: matchingProducts.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              return _buildSingleColumnProductCard(context, matchingProducts[index]);
+            },
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCanteenSearchResultCard(BuildContext context, CanteenOperator canteen, List<ProductWithCanteen> allProducts) {
+    final stallProducts = allProducts.where((p) => p.product.operatorId == canteen.id).toList();
+    final isDark = context.isDark;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: context.cardBg,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: context.borderLight, width: 0.8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => context.push('/public/stan/${canteen.id}'),
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top Row: Stan Avatar, Name, Rating, and "Kunjungi" button
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Nebula.teal.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Center(
+                        child: Icon(Icons.storefront_rounded, color: Nebula.teal, size: 24),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            canteen.canteenName,
+                            style: GoogleFonts.inter(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: context.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF10B981),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.star_rounded, size: 10, color: Colors.white),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      canteen.rating > 0 ? canteen.rating.toStringAsFixed(1) : '4.8',
+                                      style: const TextStyle(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  'Buka',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFF10B981),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                canteen.isDeliveryEnabled ? 'Bisa Antar' : 'Ambil di Stan',
+                                style: GoogleFonts.inter(
+                                  fontSize: 10.5,
+                                  color: context.textSecondary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Nebula.teal.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Kunjungi',
+                            style: GoogleFonts.inter(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: Nebula.teal,
+                            ),
+                          ),
+                          const SizedBox(width: 3),
+                          const Icon(CupertinoIcons.chevron_right, size: 11, color: Nebula.teal),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Preview 2-3 popular menus from this stall
+                if (stallProducts.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Divider(color: context.dividerCol, height: 1),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Menu dari ${canteen.canteenName}:',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: context.textSecondary,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: stallProducts.take(3).map((sp) {
+                      final p = sp.product;
+                      final formattedPrice = CurrencyFormatter.format(p.price);
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: context.surfaceBg,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: context.borderLight, width: 0.6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              p.name,
+                              style: GoogleFonts.inter(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: context.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              formattedPrice,
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF10B981),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
