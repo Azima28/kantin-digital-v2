@@ -2,6 +2,7 @@ package http
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"kantin-backend/internal/domain"
@@ -14,21 +15,111 @@ import (
 type StudentHandler struct {
 	paymentService *service.PaymentService
 	notifService   *service.NotificationService
+	tokenMaker     *token.TokenMaker
 }
 
-func NewStudentHandler(paymentService *service.PaymentService, notifService *service.NotificationService) *StudentHandler {
+func NewStudentHandler(paymentService *service.PaymentService, notifService *service.NotificationService, tokenMaker *token.TokenMaker) *StudentHandler {
 	return &StudentHandler{
 		paymentService: paymentService,
 		notifService:   notifService,
+		tokenMaker:     tokenMaker,
 	}
 }
 
+type PublicStudentProfile struct {
+	ID        string  `json:"id"`
+	FullName  string  `json:"full_name"`
+	Class     string  `json:"class"`
+	Rombel    string  `json:"rombel"`
+	NISN      *string `json:"nisn,omitempty"`
+	AvatarURL *string `json:"avatar_url,omitempty"`
+}
+
 func (h *StudentHandler) LookupStudent(c *fiber.Ctx) error {
+	nisn := c.Query("nisn", "")
+	if nisn == "" {
+		nisn = c.Query("nis", "")
+	}
+
+	// 1. If querying by NISN (public parent portal lookup)
+	if nisn != "" {
+		student, err := h.paymentService.GetStudentByNISN(c.Context(), nisn)
+		if err != nil {
+			return response.Error(c, fiber.StatusNotFound, "Data siswa tidak ditemukan", err.Error())
+		}
+		fullName := "Siswa"
+		var avatarURL *string
+		var nisnPtr *string
+		if student.Profile != nil {
+			fullName = student.Profile.FullName
+			avatarURL = student.Profile.AvatarURL
+			nisnPtr = student.Profile.NISN
+		}
+		publicProfile := PublicStudentProfile{
+			ID:        student.ID,
+			FullName:  fullName,
+			Class:     student.Class,
+			Rombel:    student.Rombel,
+			NISN:      nisnPtr,
+			AvatarURL: avatarURL,
+		}
+		return response.Success(c, fiber.StatusOK, "Data siswa ditemukan", publicProfile)
+	}
+
+	// 2. For ID queries or search / list queries, authentication is mandatory
+	tokenStr := c.Get("Authorization")
+	if len(tokenStr) > 7 && strings.HasPrefix(tokenStr, "Bearer ") {
+		tokenStr = tokenStr[7:]
+	} else {
+		tokenStr = c.Cookies("access_token")
+	}
+
+	if tokenStr == "" {
+		return response.Error(c, fiber.StatusUnauthorized, "Autentikasi diperlukan untuk mencari atau mengakses data siswa", nil)
+	}
+
+	claims, err := h.tokenMaker.VerifyToken(tokenStr)
+	if err != nil || claims == nil {
+		return response.Error(c, fiber.StatusUnauthorized, "Token autentikasi tidak valid atau telah kedaluwarsa", nil)
+	}
+
 	studentID := c.Query("id", "")
 	if studentID == "" {
 		studentID = c.Query("student_id", "")
 	}
+
+	// If lookup by ID
 	if studentID != "" {
+		// Authorization check for ID lookup:
+		// Allowed: super_admin, admin, petugas_keuangan, petugas_kantin
+		// If student: only their own ID
+		// If parent: only their linked children
+		switch claims.Role {
+		case domain.RoleSuperAdmin, domain.RoleAdmin, domain.RolePetugasKeuangan, domain.RolePetugasKantin:
+			// Allowed
+		case domain.RoleStudent:
+			if claims.UserID != studentID {
+				return response.Error(c, fiber.StatusForbidden, "Akses ditolak: Anda hanya dapat melihat profil akun Anda sendiri", nil)
+			}
+		case domain.RoleParent:
+			children, err := h.paymentService.GetParentChildren(c.Context(), claims.UserID)
+			if err != nil {
+				return response.Error(c, fiber.StatusInternalServerError, "Gagal memverifikasi relasi anak", err.Error())
+			}
+			isLinked := false
+			for _, child := range children {
+				if child.ID == studentID {
+					isLinked = true
+					break
+				}
+			}
+			if !isLinked {
+				return response.Error(c, fiber.StatusForbidden, "Akses ditolak: Anda tidak memiliki akses ke siswa ini", nil)
+			}
+		default:
+			return response.Error(c, fiber.StatusForbidden, "Akses ditolak", nil)
+		}
+
 		student, err := h.paymentService.GetStudentDetail(c.Context(), studentID)
 		if err != nil {
 			return response.Error(c, fiber.StatusNotFound, "Data siswa tidak ditemukan", err.Error())
@@ -36,36 +127,22 @@ func (h *StudentHandler) LookupStudent(c *fiber.Ctx) error {
 		return response.Success(c, fiber.StatusOK, "Data detail siswa ditemukan", student)
 	}
 
+	// Search or Full List lookup
+	// Only authorized staff (finance, cashier, admin) can search across all students
+	if claims.Role != domain.RoleSuperAdmin && claims.Role != domain.RoleAdmin && claims.Role != domain.RolePetugasKeuangan && claims.Role != domain.RolePetugasKantin {
+		return response.Error(c, fiber.StatusForbidden, "Akses ditolak: Hanya petugas atau staf yang berwenang mencari data siswa", nil)
+	}
+
 	search := c.Query("search", "")
 	if search == "" {
 		search = c.Query("q", "")
 	}
-	if search != "" || c.Request().URI().QueryArgs().Has("search") || c.Request().URI().QueryArgs().Has("q") {
-		students, err := h.paymentService.SearchStudents(c.Context(), search)
-		if err != nil {
-			return response.Error(c, fiber.StatusInternalServerError, "Gagal mencari data siswa", err.Error())
-		}
-		return response.Success(c, fiber.StatusOK, "Hasil pencarian siswa", students)
-	}
 
-	nisn := c.Query("nisn", "")
-	if nisn == "" {
-		nisn = c.Query("nis", "")
-	}
-	if nisn != "" {
-		student, err := h.paymentService.GetStudentByNISN(c.Context(), nisn)
-		if err != nil {
-			return response.Error(c, fiber.StatusNotFound, "Data siswa tidak ditemukan", err.Error())
-		}
-		return response.Success(c, fiber.StatusOK, "Data siswa ditemukan", student.Profile)
-	}
-
-	// Default fallback: return student list
-	students, err := h.paymentService.SearchStudents(c.Context(), "")
+	students, err := h.paymentService.SearchStudents(c.Context(), search)
 	if err != nil {
-		return response.Error(c, fiber.StatusInternalServerError, "Gagal memuat data siswa", err.Error())
+		return response.Error(c, fiber.StatusInternalServerError, "Gagal mencari data siswa", err.Error())
 	}
-	return response.Success(c, fiber.StatusOK, "Daftar siswa", students)
+	return response.Success(c, fiber.StatusOK, "Hasil pencarian siswa", students)
 }
 
 func (h *StudentHandler) GetMyProfile(c *fiber.Ctx) error {

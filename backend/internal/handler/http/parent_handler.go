@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"kantin-backend/internal/domain"
 	"kantin-backend/internal/handler/http/middleware"
 	"kantin-backend/internal/pkg/response"
 	"kantin-backend/internal/pkg/token"
@@ -21,7 +22,7 @@ func (h *ParentHandler) Dashboard(c *fiber.Ctx) error {
 	studentID := c.Params("studentId")
 
 	// Verify parent relation if caller is parent
-	if claims.Role == "parent" {
+	if claims.Role == domain.RoleParent {
 		children, err := h.paymentService.GetParentChildren(c.Context(), claims.UserID)
 		if err != nil {
 			return response.Error(c, fiber.StatusInternalServerError, "Gagal memuat relasi anak", err.Error())
@@ -64,6 +65,12 @@ type UpdateStudentSettingsRequest struct {
 }
 
 func (h *ParentHandler) UpdateStudentSettings(c *fiber.Ctx) error {
+	claimsVal := c.Locals(middleware.UserClaimsKey)
+	if claimsVal == nil {
+		return response.Error(c, fiber.StatusUnauthorized, "Autentikasi diperlukan", nil)
+	}
+	claims := claimsVal.(*token.JWTClaims)
+
 	var req UpdateStudentSettingsRequest
 	if err := c.BodyParser(&req); err != nil {
 		return response.Error(c, fiber.StatusBadRequest, "Payload pengaturan siswa tidak valid", err.Error())
@@ -71,6 +78,31 @@ func (h *ParentHandler) UpdateStudentSettings(c *fiber.Ctx) error {
 
 	if req.StudentID == "" {
 		return response.Error(c, fiber.StatusBadRequest, "Student ID wajib disertakan", nil)
+	}
+
+	// Authorization Check:
+	// Allowed roles: super_admin, admin, petugas_keuangan, or parent (only for their own linked child)
+	switch claims.Role {
+	case domain.RoleSuperAdmin, domain.RoleAdmin, domain.RolePetugasKeuangan:
+		// Authorized staff
+	case domain.RoleParent:
+		// Verify caller is linked to req.StudentID in parent_students
+		children, err := h.paymentService.GetParentChildren(c.Context(), claims.UserID)
+		if err != nil {
+			return response.Error(c, fiber.StatusInternalServerError, "Gagal memverifikasi relasi anak", err.Error())
+		}
+		isLinked := false
+		for _, child := range children {
+			if child.ID == req.StudentID {
+				isLinked = true
+				break
+			}
+		}
+		if !isLinked {
+			return response.Error(c, fiber.StatusForbidden, "Akses ditolak: Anda tidak memiliki akses ke pengaturan siswa ini", nil)
+		}
+	default:
+		return response.Error(c, fiber.StatusForbidden, "Akses ditolak: Peran Anda tidak memiliki izin mengubah pengaturan siswa", nil)
 	}
 
 	if err := h.paymentService.UpdateStudentSettings(c.Context(), req.StudentID, req.DailyLimit, req.IsActive, req.WaEnabled, req.ParentPhone); err != nil {

@@ -47,12 +47,13 @@ func (h *OrderHandler) CreateOrder(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusBadRequest, err.Error(), nil)
 	}
 
-	// Broadcast Realtime Event to Canteen Stall Operator & Global room
-	h.hub.BroadcastToRoom("all", "order:new", order)
+	// Broadcast Realtime Event to targeted Canteen Stall Operator & Student rooms
 	if order.OperatorID != nil {
 		room := fmt.Sprintf("canteen:%s", *order.OperatorID)
 		h.hub.BroadcastToRoom(room, "order:new", order)
 	}
+	studentRoom := fmt.Sprintf("student:%s", order.StudentID)
+	h.hub.BroadcastToRoom(studentRoom, "order:new", order)
 
 	return response.Success(c, fiber.StatusCreated, "Pesanan berhasil dibuat", order)
 }
@@ -173,7 +174,7 @@ func (h *OrderHandler) MarkMessagesAsRead(c *fiber.Ctx) error {
 	if err := h.orderService.MarkMessagesAsRead(c.Context(), orderID, claims.UserID); err != nil {
 		return response.Error(c, fiber.StatusInternalServerError, "Gagal memperbarui status pesan", err.Error())
 	}
-	h.hub.BroadcastToRoom("all", "order:messages_read", map[string]interface{}{
+	h.hub.BroadcastToRoom(fmt.Sprintf("order:%s", orderID), "order:messages_read", map[string]interface{}{
 		"order_id":  orderID,
 		"reader_id": claims.UserID,
 	})

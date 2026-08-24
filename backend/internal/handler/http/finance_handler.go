@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"kantin-backend/internal/domain"
 	"kantin-backend/internal/handler/http/middleware"
 	"kantin-backend/internal/pkg/response"
 	"kantin-backend/internal/pkg/token"
@@ -100,6 +101,10 @@ type TopupRequest struct {
 
 func (h *FinanceHandler) Topup(c *fiber.Ctx) error {
 	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
+	if claims.Role != domain.RolePetugasKeuangan && claims.Role != domain.RoleSuperAdmin && claims.Role != domain.RoleAdmin {
+		return response.Error(c, fiber.StatusForbidden, "Akses ditolak: Hanya Petugas Keuangan atau Administrator yang berwenang memproses top-up tunai", nil)
+	}
+
 	var req TopupRequest
 	if err := c.BodyParser(&req); err != nil {
 		return response.Error(c, fiber.StatusBadRequest, "Payload top-up tidak valid", err.Error())
@@ -134,6 +139,10 @@ type MerchantWithdrawRequest struct {
 
 func (h *FinanceHandler) MerchantWithdraw(c *fiber.Ctx) error {
 	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
+	if claims.Role != domain.RolePetugasKeuangan && claims.Role != domain.RoleSuperAdmin && claims.Role != domain.RoleAdmin {
+		return response.Error(c, fiber.StatusForbidden, "Akses ditolak: Hanya Petugas Keuangan atau Administrator yang berwenang memproses penarikan dana stan", nil)
+	}
+
 	var req MerchantWithdrawRequest
 	if err := c.BodyParser(&req); err != nil {
 		return response.Error(c, fiber.StatusBadRequest, "Payload pencairan dana tidak valid", err.Error())

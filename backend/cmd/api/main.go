@@ -75,7 +75,7 @@ func main() {
 	catalogH := httpHandler.NewCatalogHandler(catalogService)
 	orderH := httpHandler.NewOrderHandler(orderService, hub)
 	posH := httpHandler.NewPOSHandler(paymentService)
-	studentH := httpHandler.NewStudentHandler(paymentService, notifService)
+	studentH := httpHandler.NewStudentHandler(paymentService, notifService, tokenMaker)
 	financeH := httpHandler.NewFinanceHandler(paymentService)
 	adminH := httpHandler.NewAdminHandler(paymentService, catalogService, hub)
 	parentH := httpHandler.NewParentHandler(paymentService)
@@ -141,15 +141,45 @@ func main() {
 			}
 
 			room := c.Query("room", "all")
+			var claims *token.JWTClaims
+			if tokenStr != "" {
+				var err error
+				claims, err = tokenMaker.VerifyToken(tokenStr)
+				if err == nil && claims != nil {
+					c.Locals("user_claims", claims)
+				}
+			}
+
 			if room != "all" && room != "public" {
-				if tokenStr == "" {
-					return fiber.NewError(fiber.StatusUnauthorized, "Token autentikasi wajib untuk bergabung ke room privat")
+				if claims == nil {
+					return fiber.NewError(fiber.StatusUnauthorized, "Token autentikasi valid wajib untuk bergabung ke room privat")
 				}
-				claims, err := tokenMaker.VerifyToken(tokenStr)
-				if err != nil {
-					return fiber.NewError(fiber.StatusUnauthorized, "Token autentikasi tidak valid")
+
+				// Verify room access control based on room prefix
+				if strings.HasPrefix(room, "student:") {
+					targetID := strings.TrimPrefix(room, "student:")
+					if claims.UserID != targetID && claims.Role != domain.RoleAdmin && claims.Role != domain.RoleSuperAdmin && claims.Role != domain.RolePetugasKeuangan {
+						return fiber.NewError(fiber.StatusForbidden, "Akses room siswa ditolak")
+					}
+				} else if strings.HasPrefix(room, "canteen:") {
+					targetID := strings.TrimPrefix(room, "canteen:")
+					if claims.UserID != targetID && claims.Role != domain.RoleAdmin && claims.Role != domain.RoleSuperAdmin && claims.Role != domain.RolePetugasKeuangan {
+						return fiber.NewError(fiber.StatusForbidden, "Akses room kantin ditolak")
+					}
+				} else if strings.HasPrefix(room, "order:") {
+					orderID := strings.TrimPrefix(room, "order:")
+					if claims.Role != domain.RoleAdmin && claims.Role != domain.RoleSuperAdmin && claims.Role != domain.RolePetugasKeuangan {
+						order, err := orderRepo.GetOrderByID(c.Context(), orderID)
+						if err != nil || order == nil {
+							return fiber.NewError(fiber.StatusNotFound, "Pesanan tidak ditemukan")
+						}
+						isStudent := order.StudentID == claims.UserID
+						isOperator := order.OperatorID != nil && *order.OperatorID == claims.UserID
+						if !isStudent && !isOperator {
+							return fiber.NewError(fiber.StatusForbidden, "Akses chat room pesanan ditolak")
+						}
+					}
 				}
-				c.Locals("user_claims", claims)
 			}
 
 			c.Locals("allowed", true)
@@ -207,7 +237,6 @@ func main() {
 		{
 			studentGroup.Get("/me", studentH.GetMyProfile)
 			studentGroup.Get("/transactions", studentH.GetTransactions)
-			studentGroup.Post("/topup", financeH.Topup)
 		}
 
 		// Orders
@@ -264,9 +293,8 @@ func main() {
 		parentGroup := authRequired.Group("/parent", middleware.RequireRoles(domain.RoleParent, domain.RoleSuperAdmin, domain.RoleAdmin))
 		{
 			parentGroup.Get("/dashboard/:studentId", parentH.Dashboard)
-			parentGroup.Post("/topup", financeH.Topup)
 		}
-		authRequired.Patch("/student/settings", parentH.UpdateStudentSettings)
+		authRequired.Patch("/student/settings", middleware.RequireRoles(domain.RoleParent, domain.RoleSuperAdmin, domain.RoleAdmin, domain.RolePetugasKeuangan), parentH.UpdateStudentSettings)
 		authRequired.Patch("/student/card-status", middleware.RequireRoles(domain.RolePetugasKeuangan, domain.RoleSuperAdmin, domain.RoleAdmin), studentH.UpdateCardStatus)
 		authRequired.Patch("/users/:id/status", middleware.RequireRoles(domain.RolePetugasKeuangan, domain.RoleSuperAdmin, domain.RoleAdmin), adminH.UpdateStatus)
 

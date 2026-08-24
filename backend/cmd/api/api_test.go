@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
@@ -43,8 +44,9 @@ func setupTestApp() *fiber.App {
 	catalogH := httpHandler.NewCatalogHandler(catalogService)
 	orderH := httpHandler.NewOrderHandler(orderService, hub)
 	posH := httpHandler.NewPOSHandler(paymentService)
-	studentH := httpHandler.NewStudentHandler(paymentService, notifService)
+	studentH := httpHandler.NewStudentHandler(paymentService, notifService, tokenMaker)
 	financeH := httpHandler.NewFinanceHandler(paymentService)
+	parentH := httpHandler.NewParentHandler(paymentService)
 	uploadH := httpHandler.NewUploadHandler(cfg.UploadDir, &postgres.DB{})
 
 	app := fiber.New()
@@ -59,6 +61,7 @@ func setupTestApp() *fiber.App {
 	api.Post("/auth/login", authH.Login)
 	api.Get("/canteens", catalogH.ListCanteens)
 	api.Get("/products", catalogH.ListProducts)
+	api.Get("/student/lookup", studentH.LookupStudent)
 
 	authRequired := api.Group("/", middleware.AuthMiddleware(tokenMaker))
 	authRequired.Get("/auth/me", authH.Me)
@@ -72,6 +75,8 @@ func setupTestApp() *fiber.App {
 
 	financeGroup := authRequired.Group("/finance", middleware.RequireRoles(domain.RolePetugasKeuangan))
 	financeGroup.Post("/topup", financeH.Topup)
+
+	authRequired.Patch("/student/settings", middleware.RequireRoles(domain.RoleParent, domain.RoleSuperAdmin, domain.RoleAdmin, domain.RolePetugasKeuangan), parentH.UpdateStudentSettings)
 
 	authRequired.Post("/orders", orderH.CreateOrder)
 
@@ -124,5 +129,60 @@ func TestAuthProtectedRoutesRejection(t *testing.T) {
 	resp3, _ := app.Test(req3)
 	if resp3.StatusCode != fiber.StatusUnauthorized {
 		t.Errorf("Expected 401 Unauthorized for /api/v1/pos/scan-card, got %d", resp3.StatusCode)
+	}
+
+	// 4. /api/v1/student/lookup without token and no nisn -> 401 Unauthorized
+	req4 := httptest.NewRequest("GET", "/api/v1/student/lookup", nil)
+	resp4, _ := app.Test(req4)
+	if resp4.StatusCode != fiber.StatusUnauthorized {
+		t.Errorf("Expected 401 Unauthorized for /api/v1/student/lookup without auth/nisn, got %d", resp4.StatusCode)
+	}
+
+	// 5. /api/v1/student/settings without token -> 401 Unauthorized
+	req5 := httptest.NewRequest("PATCH", "/api/v1/student/settings", nil)
+	resp5, _ := app.Test(req5)
+	if resp5.StatusCode != fiber.StatusUnauthorized {
+		t.Errorf("Expected 401 Unauthorized for /api/v1/student/settings without auth, got %d", resp5.StatusCode)
+	}
+}
+
+func TestTopupRoleEnforcement(t *testing.T) {
+	app := setupTestApp()
+	cfg := config.LoadConfig()
+	tokenMaker := token.NewTokenMaker(cfg.JWTSecret, cfg.JWTExpiryHours)
+
+	// Create student token
+	studentUser := &domain.UserProfile{
+		ID:       "student-uuid-123",
+		FullName: "Ahmad Siswa",
+		Role:     domain.RoleStudent,
+	}
+	studentToken, _, err := tokenMaker.CreateToken(studentUser)
+	if err != nil {
+		t.Fatalf("Failed to create student token: %v", err)
+	}
+
+	// 1. Student trying to call /finance/topup must receive 403 Forbidden
+	bodyJSON := `{"student_id":"student-uuid-123","amount":50000}`
+	req := httptest.NewRequest("POST", "/api/v1/finance/topup", strings.NewReader(bodyJSON))
+	req.Header.Set("Authorization", "Bearer "+studentToken)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("Failed to execute request: %v", err)
+	}
+
+	if resp.StatusCode != fiber.StatusForbidden {
+		t.Errorf("Expected 403 Forbidden when student calls /finance/topup, got %d", resp.StatusCode)
+	}
+
+	// 2. Direct student topup endpoint /student/topup should be 404 Not Found (removed route)
+	req2 := httptest.NewRequest("POST", "/api/v1/student/topup", strings.NewReader(bodyJSON))
+	req2.Header.Set("Authorization", "Bearer "+studentToken)
+	req2.Header.Set("Content-Type", "application/json")
+	resp2, _ := app.Test(req2)
+
+	if resp2.StatusCode != fiber.StatusNotFound && resp2.StatusCode != fiber.StatusMethodNotAllowed {
+		t.Errorf("Expected 404/405 for removed /student/topup route, got %d", resp2.StatusCode)
 	}
 }
