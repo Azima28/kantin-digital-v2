@@ -388,22 +388,41 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
       onHistoryTypeFilterChanged: (val) => setState(() => _historyTypeFilter = val),
       historyDateRange: _historyDateRange,
       onPickDateRange: () async {
-        final range = await showDateRangePicker(
+        final now = DateTime.now();
+        final picked = await showDatePicker(
           context: context,
-          firstDate: DateTime.now().subtract(const Duration(days: 365)),
-          lastDate: DateTime.now(),
+          initialDate: _historyDateRange?.start ?? now,
+          firstDate: DateTime(2020, 1, 1),
+          lastDate: DateTime(2100, 12, 31),
+          helpText: 'PILIH TANGGAL RIWAYAT',
+          cancelText: 'Batal',
+          confirmText: 'Pilih',
           builder: (context, child) {
+            final isDark = context.isDark;
+            final bgCard = isDark ? const Color(0xFF1E293B) : Colors.white;
+            final textPrimary = isDark ? Colors.white : const Color(0xFF0F172A);
             return Theme(
               data: Theme.of(context).copyWith(
-                colorScheme: ColorScheme.light(primary: Nebula.teal),
+                colorScheme: Theme.of(context).colorScheme.copyWith(
+                      primary: Nebula.teal,
+                      onPrimary: Colors.white,
+                      surface: bgCard,
+                      onSurface: textPrimary,
+                      surfaceTint: Colors.transparent,
+                    ),
+                dialogTheme: DialogThemeData(
+                  backgroundColor: bgCard,
+                  surfaceTintColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                ),
               ),
               child: child!,
             );
           },
         );
-        if (range != null) {
+        if (picked != null) {
           setState(() {
-            _historyDateRange = range;
+            _historyDateRange = DateTimeRange(start: picked, end: picked);
           });
         }
       },

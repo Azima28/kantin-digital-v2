@@ -34,8 +34,6 @@ class ParentTransactionList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color primaryTeal = Nebula.teal;
-
     // Apply search filter
     final String query = searchController.text.toLowerCase().trim();
     var filtered = transactions.where((tx) {
@@ -76,17 +74,19 @@ class ParentTransactionList extends StatelessWidget {
       grouped[dateStr]!.add(tx);
     }
 
+    final bool hasDateFilter = historyDateRange != null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Search bar
+        // 1. Search bar with rounded 16px corners
         TextField(
           controller: searchController,
           onChanged: (_) {},
           style: GoogleFonts.inter(fontSize: 13.5, fontWeight: FontWeight.w500, color: context.textPrimary),
           decoration: InputDecoration(
             filled: true,
-            fillColor: context.isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+            fillColor: context.surfaceBg,
             hintText: 'Cari transaksi atau nama stan...',
             hintStyle: GoogleFonts.inter(
               color: context.textSecondary.withValues(alpha: 0.75),
@@ -115,110 +115,154 @@ class ParentTransactionList extends StatelessWidget {
               horizontal: 14,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: context.isDark ? context.borderLight : const Color(0xFFE2E8F0),
-                width: 0.8,
-              ),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: context.dividerCol, width: 0.8),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: context.isDark ? context.borderLight : const Color(0xFFE2E8F0),
-                width: 0.8,
-              ),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: context.dividerCol, width: 0.8),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Nebula.teal,
-                width: 1.2,
-              ),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Nebula.teal, width: 1.5),
             ),
           ),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 12),
 
-        // Type Segment Filter
+        // 2. Filter Row: Type Segmented Tabs + Date Filter Button
         Row(
           children: [
+            // Sliding Segmented Tab Bar (Semua, Belanja, Top-up)
             Expanded(
-              child: CupertinoSegmentedControl<String>(
-                groupValue: historyTypeFilter,
-                selectedColor: primaryTeal,
-                unselectedColor: context.cardBg,
-                borderColor: context.dividerCol,
-                pressedColor: Nebula.teal.withValues(alpha: 0.1),
-                children: const {
-                  'Semua': Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Text(AppStrings.labelAll, style: TextStyle(fontSize: 11))),
-                  'Belanja': Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Text('Belanja', style: TextStyle(fontSize: 11))),
-                  'Top-up': Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Text('Top-up', style: TextStyle(fontSize: 11))),
-                },
-                onValueChanged: onHistoryTypeFilterChanged,
+              flex: 5,
+              child: Container(
+                height: 42,
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  color: context.cardBg,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: context.dividerCol, width: 0.8),
+                ),
+                child: Row(
+                  children: [
+                    _buildTypeTab(context, 'Semua', AppStrings.labelAll),
+                    _buildTypeTab(context, 'Belanja', 'Belanja'),
+                    _buildTypeTab(context, 'Top-up', 'Top-up'),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+
+            // Date Picker Button
+            InkWell(
+              onTap: onPickDateRange,
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                height: 42,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: hasDateFilter
+                      ? Nebula.teal.withValues(alpha: 0.12)
+                      : context.cardBg,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: hasDateFilter ? Nebula.teal : context.dividerCol,
+                    width: hasDateFilter ? 1.5 : 0.8,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      hasDateFilter ? Icons.event_available_rounded : CupertinoIcons.calendar,
+                      size: 16,
+                      color: hasDateFilter ? Nebula.teal : context.textSecondary,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Pilih Tanggal',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: hasDateFilter ? FontWeight.w800 : FontWeight.w600,
+                        color: hasDateFilter ? Nebula.teal : context.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
 
-        // Date Picker button
-        OutlinedButton.icon(
-          style: OutlinedButton.styleFrom(
-            side: BorderSide(color: context.dividerCol),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8)),
-          ),
-          onPressed: onPickDateRange,
-          icon: Icon(CupertinoIcons.calendar,
-              color: primaryTeal, size: 16),
-          label: Text(
-            historyDateRange != null
-                ? '${AppDateFormatter.formatDate(historyDateRange!.start)} - ${AppDateFormatter.formatDate(historyDateRange!.end)}'
-                : '${AppStrings.buttonSelect} Rentang Tanggal...',
-            style: GoogleFonts.inter(
-                fontSize: 12, fontWeight: FontWeight.w600, color: primaryTeal),
-          ),
-        ),
-        if (historyDateRange != null)
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: onResetDateRange,
-              child: Text('Reset Tanggal',
-                  style: TextStyle(fontSize: 11, color: Nebula.rose)),
+        // Active Date Range Pill Indicator
+        if (hasDateFilter)
+          Padding(
+            padding: const EdgeInsets.only(top: 10.0),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              decoration: BoxDecoration(
+                color: Nebula.teal.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Nebula.teal.withValues(alpha: 0.25), width: 0.8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.date_range_rounded, size: 14, color: Nebula.teal),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Rentang: ${AppDateFormatter.formatDate(historyDateRange!.start)} - ${AppDateFormatter.formatDate(historyDateRange!.end)}',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Nebula.teal,
+                      ),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: onResetDateRange,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(2.0),
+                      child: Icon(Icons.close_rounded, size: 16, color: context.textSecondary),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         const SizedBox(height: 16),
 
-        // Grouped List
+        // 3. Grouped List of Transactions
         if (grouped.isEmpty)
           Container(
             padding: const EdgeInsets.symmetric(vertical: 64),
+            decoration: BoxDecoration(
+              color: context.cardBg,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: context.borderLight, width: 0.8),
+            ),
             child: Center(
               child: Column(
                 children: [
-                  Icon(CupertinoIcons.tray,
-                      color: context.textSecondary, size: 40),
-                  const SizedBox(height: 12),
-                  Text('${AppStrings.labelTransaction} tidak ditemukan.',
-                      style: GoogleFonts.inter(
-                          color: context.textSecondary, fontSize: 13)),
+                  Icon(CupertinoIcons.tray, color: context.textSecondary.withValues(alpha: 0.5), size: 40),
+                  const SizedBox(height: 10),
+                  Text(
+                    '${AppStrings.labelTransaction} tidak ditemukan.',
+                    style: GoogleFonts.inter(color: context.textSecondary, fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
                 ],
               ),
             ),
           )
         else
-          ListView.builder(
+          ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: grouped.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 16),
             itemBuilder: (context, index) {
               final dateHeader = grouped.keys.elementAt(index);
               final dayTxs = grouped[dateHeader]!;
@@ -227,30 +271,36 @@ class ParentTransactionList extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
                     child: Text(
                       dateHeader.toUpperCase(),
                       style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: context.textSecondary,
-                          letterSpacing: 0.5),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: context.textSecondary,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
+                  const SizedBox(height: 6),
                   Container(
                     decoration: BoxDecoration(
                       color: context.cardBg,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                          color: context.dividerCol, width: 1),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: context.borderLight, width: 0.8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: dayTxs.length,
-                      separatorBuilder: (context, i) =>
-                          Divider(height: 1, color: context.dividerCol),
+                      separatorBuilder: (context, i) => Divider(height: 1, color: context.dividerCol),
                       itemBuilder: (context, i) {
                         final tx = dayTxs[i];
                         return ParentTransactionTile(
@@ -265,6 +315,41 @@ class ParentTransactionList extends StatelessWidget {
             },
           ),
       ],
+    );
+  }
+
+  Widget _buildTypeTab(BuildContext context, String key, String label) {
+    final isSelected = historyTypeFilter == key;
+    return Expanded(
+      child: InkWell(
+        onTap: () => onHistoryTypeFilterChanged(key),
+        borderRadius: BorderRadius.circular(10),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isSelected ? Nebula.teal : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Nebula.teal.withValues(alpha: 0.25),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+              color: isSelected ? Colors.white : context.textSecondary,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

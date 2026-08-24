@@ -8,7 +8,7 @@ import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 /// A tile widget showing a single transaction entry with icon, description,
-/// and amount.
+/// and amount with smooth responsive layout and generous corner radius.
 class ParentTransactionTile extends ConsumerWidget {
   final OperatorTransaction transaction;
   final VoidCallback? onTap;
@@ -30,41 +30,73 @@ class ParentTransactionTile extends ConsumerWidget {
     final bool isIncoming = isTopup || isRefund;
     final String canteen = transaction.canteenName ?? 'Stan Kantin';
 
-    return ListTile(
+    return InkWell(
       onTap: onTap,
-      leading: CircleAvatar(
-        backgroundColor: isIncoming
-            ? Nebula.teal.withValues(alpha: 0.15)
-            : Nebula.teal.withValues(alpha: 0.1),
-        child: Icon(
-          isTopup ? Icons.account_balance : (isRefund ? CupertinoIcons.arrow_uturn_left : Icons.restaurant),
-          color: isIncoming ? primaryTeal : primaryTeal,
-          size: 18,
-        ),
-      ),
-      title: Text(
-        isTopup ? 'Top-Up Berhasil' : (isRefund ? 'Dana Dikembalikan (Refund)' : canteen),
-        style: GoogleFonts.inter(
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          color: context.textPrimary,
-        ),
-      ),
-      subtitle: Text(
-        _getItemsSummary(transaction),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: GoogleFonts.inter(
-          fontSize: 12,
-          color: context.textSecondary,
-        ),
-      ),
-      trailing: Text(
-        '${isIncoming ? "+" : "-"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
-        style: GoogleFonts.inter(
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          color: isIncoming ? Nebula.teal : context.textPrimary,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            // Transaction Icon Avatar
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: isIncoming
+                    ? Nebula.teal.withValues(alpha: 0.12)
+                    : Nebula.teal.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                isTopup
+                    ? Icons.account_balance_wallet_rounded
+                    : (isRefund ? CupertinoIcons.arrow_uturn_left : Icons.restaurant_rounded),
+                color: primaryTeal,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // Title & Items Summary
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isTopup ? 'Top-Up Saldo' : (isRefund ? 'Pengembalian Dana (Refund)' : canteen),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: context.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    _getItemsSummary(transaction),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 11.5,
+                      color: context.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+
+            // Trailing Amount
+            Text(
+              '${isIncoming ? "+" : "-"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
+              style: GoogleFonts.inter(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w800,
+                color: isIncoming ? Nebula.teal : context.textPrimary,
+              ),
+            ),
+          ],
         ),
       ),
     );
