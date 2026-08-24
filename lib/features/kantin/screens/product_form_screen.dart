@@ -853,49 +853,73 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top Row: Group Title & Actions
+                // Top Row: Group Title on left, Edit Title & Delete side by side on right
                 Row(
                   children: [
                     Expanded(
+                      child: Text(
+                        group.title,
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: context.textPrimary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Static Edit & Delete buttons side-by-side
+                    Container(
+                      decoration: BoxDecoration(
+                        color: context.cardBg,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: context.dividerCol, width: 0.8),
+                      ),
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Flexible(
-                            child: Text(
-                              group.title,
-                              style: GoogleFonts.inter(
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.w800,
-                                color: context.textPrimary,
+                          InkWell(
+                            onTap: () => _showEditGroupTitleDialog(group),
+                            borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(CupertinoIcons.pencil, size: 13, color: Nebula.teal),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Ubah',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Nebula.teal,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          Container(width: 1, height: 18, color: context.dividerCol),
                           InkWell(
-                            onTap: () => _showEditGroupTitleDialog(group),
-                            borderRadius: BorderRadius.circular(6),
+                            onTap: () {
+                              setState(() {
+                                _modifierGroups.removeAt(groupIndex);
+                              });
+                            },
+                            borderRadius: const BorderRadius.horizontal(right: Radius.circular(8)),
                             child: const Padding(
-                              padding: EdgeInsets.all(3.0),
-                              child: Icon(CupertinoIcons.pencil, size: 14, color: Nebula.teal),
+                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                              child: Icon(CupertinoIcons.trash, size: 13, color: Nebula.rose),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(CupertinoIcons.trash, size: 16, color: Nebula.rose),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                      onPressed: () {
-                        setState(() {
-                          _modifierGroups.removeAt(groupIndex);
-                        });
-                      },
-                    ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
 
-                // Direct Segmented Switch Bar (Replaces 3-dots popup menu)
+                // Direct Segmented Switch Bar
                 Container(
                   padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
@@ -1023,10 +1047,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             ),
                             const SizedBox(width: 6),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                               decoration: BoxDecoration(
                                 color: item.price > 0 ? Nebula.teal.withValues(alpha: 0.12) : context.cardBg,
                                 borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: context.borderLight, width: 0.5),
                               ),
                               child: Text(
                                 item.price > 0 ? '+${CurrencyFormatter.format(item.price)}' : 'Gratis',
@@ -1037,24 +1062,43 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 4),
-                            IconButton(
-                              icon: const Icon(CupertinoIcons.pencil, size: 14),
-                              color: context.textSecondary,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
-                              onPressed: () => _showEditItemDialog(group, itemIndex),
-                            ),
-                            IconButton(
-                              icon: const Icon(CupertinoIcons.xmark, size: 14),
-                              color: Nebula.rose,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
-                              onPressed: () {
-                                setState(() {
-                                  group.items.removeAt(itemIndex);
-                                });
-                              },
+                            const SizedBox(width: 6),
+                            // Action Buttons side by side with clean touch targets
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                InkWell(
+                                  onTap: () => _showEditItemDialog(group, itemIndex),
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(5),
+                                    decoration: BoxDecoration(
+                                      color: context.cardBg,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: context.borderLight, width: 0.5),
+                                    ),
+                                    child: const Icon(CupertinoIcons.pencil, size: 13, color: Nebula.teal),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      group.items.removeAt(itemIndex);
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(5),
+                                    decoration: BoxDecoration(
+                                      color: Nebula.rose.withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: Nebula.rose.withValues(alpha: 0.2), width: 0.5),
+                                    ),
+                                    child: const Icon(CupertinoIcons.trash, size: 13, color: Nebula.rose),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -1065,7 +1109,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
                 // Inline Item Creator for this specific Group
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: context.surfaceBg.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(12),
@@ -1090,39 +1134,59 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                 isDense: true,
                                 hintText: 'Nama pilihan...',
                                 hintStyle: GoogleFonts.inter(fontSize: 11.5, color: context.textSecondary),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                filled: true,
+                                fillColor: context.cardBg,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(color: context.dividerCol, width: 0.8),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(color: context.dividerCol, width: 0.8),
+                                ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 8),
                           Expanded(
                             flex: 2,
                             child: TextField(
                               controller: group.itemPriceController,
                               keyboardType: TextInputType.number,
-                              style: GoogleFonts.inter(fontSize: 12.5, color: context.textPrimary),
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w700, color: context.textPrimary),
                               decoration: InputDecoration(
                                 isDense: true,
-                                prefixText: '+Rp ',
-                                hintText: '0',
+                                hintText: 'Rp 0',
                                 hintStyle: GoogleFonts.inter(fontSize: 11.5, color: context.textSecondary),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                filled: true,
+                                fillColor: context.cardBg,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 9),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(color: context.dividerCol, width: 0.8),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(color: context.dividerCol, width: 0.8),
+                                ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 8),
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Nebula.teal,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              minimumSize: const Size(0, 36),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                              minimumSize: const Size(0, 38),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                               elevation: 0,
                             ),
                             onPressed: () {
                               final name = group.itemNameController.text.trim();
-                              final price = int.tryParse(group.itemPriceController.text.trim()) ?? 0;
+                              final price = int.tryParse(group.itemPriceController.text.trim().replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
                               if (name.isNotEmpty) {
                                 setState(() {
                                   group.items.add(ModifierItem(name: name, price: price));
@@ -1131,7 +1195,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                 });
                               }
                             },
-                            child: Text('+ Tambah', style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                            child: Text('+ Tambah', style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w800)),
                           ),
                         ],
                       ),
