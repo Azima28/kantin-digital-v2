@@ -82,6 +82,7 @@ class PublicMenuScreen extends ConsumerStatefulWidget {
 
 class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
   late final PageController _promoPageController = PageController(
     initialPage: 0,
@@ -96,18 +97,29 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
   String? _selectedCategory;
   String? _selectedCanteenId = 'semua';
   Timer? _debounce;
+  bool _isSearchFocused = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _searchFocusNode.addListener(_onFocusChange);
     _startPromoTimer();
     if (widget.initialSearch != null && widget.initialSearch!.isNotEmpty) {
       _searchController.text = widget.initialSearch!;
       _searchQuery = widget.initialSearch!;
+      _isSearchFocused = true;
     }
     if (widget.initialCanteenId != null && widget.initialCanteenId!.isNotEmpty) {
       _selectedCanteenId = widget.initialCanteenId!;
+    }
+  }
+
+  void _onFocusChange() {
+    if (_searchFocusNode.hasFocus != _isSearchFocused) {
+      setState(() {
+        _isSearchFocused = _searchFocusNode.hasFocus;
+      });
     }
   }
 
@@ -175,6 +187,8 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
 
   @override
   void dispose() {
+    _searchFocusNode.removeListener(_onFocusChange);
+    _searchFocusNode.dispose();
     _promoTimer?.cancel();
     _promoPageController.dispose();
     _searchController.dispose();
@@ -206,12 +220,22 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
 
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () {
+    _debounce = Timer(const Duration(milliseconds: 150), () {
       if (mounted) {
         setState(() {
           _searchQuery = query;
         });
       }
+    });
+  }
+
+  void _closeSearch() {
+    _searchFocusNode.unfocus();
+    _searchController.clear();
+    _debounce?.cancel();
+    setState(() {
+      _searchQuery = '';
+      _isSearchFocused = false;
     });
   }
 
@@ -269,7 +293,7 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
       orElse: () => stalls.first,
     );
 
-    final bool isSearching = _searchQuery.trim().isNotEmpty;
+    final bool isSearchActive = _isSearchFocused || _searchQuery.trim().isNotEmpty;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -280,103 +304,41 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 1000),
-                child: RefreshIndicator(
-                  onRefresh: () async {
-                    setState(() {
-                      _shuffledRecommendations.clear();
-                      _randomPromoBanners.clear();
-                    });
-                    ref.invalidate(publicMenuProvider(null));
-                    ref.invalidate(publicCanteensProvider);
-                  },
-                  child: SingleChildScrollView(
-                    controller: _scrollController,
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: EdgeInsets.zero,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (isSearching) ...[
-                          // ── SEARCH MODE TOP BAR ──
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                            child: Row(
-                              children: [
-                                GestureDetector(
-                                  onTap: _resetFilters,
-                                  child: Container(
-                                    width: 38,
-                                    height: 38,
-                                    decoration: BoxDecoration(
-                                      color: context.cardBg,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: context.borderLight, width: 0.8),
-                                    ),
-                                    child: const Icon(CupertinoIcons.left_chevron, size: 18),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(child: _buildSearchInput()),
-                              ],
-                            ),
-                          ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── UNIFIED ANIMATED TOP HEADER (Hero / Sticky Search) ──
+                    _buildAnimatedHeader(context, isSearchActive, allProductsAsync, activeStall),
 
-                          // ── IMMEDIATE SEARCH RESULTS (STALLS & PRODUCTS) ──
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 10, 16, 90),
-                            child: _buildSearchResultsView(
-                              context,
-                              ref,
-                              allProductsAsync,
-                              canteensAsync,
-                              isDesktop,
-                            ),
+                    // ── BODY CONTENT (Smooth Transition between Discovery & Search Results) ──
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: () async {
+                          setState(() {
+                            _shuffledRecommendations.clear();
+                            _randomPromoBanners.clear();
+                          });
+                          ref.invalidate(publicMenuProvider(null));
+                          ref.invalidate(publicCanteensProvider);
+                        },
+                        child: SingleChildScrollView(
+                          controller: _scrollController,
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: EdgeInsets.zero,
+                          child: AnimatedCrossFade(
+                            duration: const Duration(milliseconds: 280),
+                            firstCurve: Curves.easeInOutCubic,
+                            secondCurve: Curves.easeInOutCubic,
+                            crossFadeState: isSearchActive
+                                ? CrossFadeState.showSecond
+                                : CrossFadeState.showFirst,
+                            firstChild: _buildDiscoveryView(context, ref, allProductsAsync, activeStall, isDesktop),
+                            secondChild: _buildSearchResultsView(context, ref, allProductsAsync, canteensAsync, isDesktop),
                           ),
-                        ] else ...[
-                          // 1. Full-Bleed Hero Promo Banner with Overlapping Top Nav and Floating Search Bar
-                          Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              _buildPromoBannerCarousel(allProductsAsync, activeStall),
-                              Positioned(
-                                top: 14,
-                                left: 16,
-                                right: 16,
-                                child: _buildTopHeroNav(context),
-                              ),
-                              Positioned(
-                                bottom: -22,
-                                left: 16,
-                                right: 16,
-                                child: _buildSearchInput(),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 38),
-
-                          // 2. Section 1: "Sambil kumpul bareng teman" (6 items Horizontal Slider)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: _buildPopularSliderSection(allProductsAsync, activeStall),
-                          ),
-                          const SizedBox(height: 24),
-
-                          // 3. Section 2: "Kuliner sesuai seleramu" (Categories)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: _buildKulinerSesuaiSeleramuSection(),
-                          ),
-                          const SizedBox(height: 24),
-
-                          // 4. Section 3: Product List in Card Panjang (1x1 List View)
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
-                            child: _buildProductsListArea(context, ref, allProductsAsync, activeStall, isDesktop),
-                          ),
-                        ],
-                      ],
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
@@ -390,6 +352,126 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAnimatedHeader(
+    BuildContext context,
+    bool isSearchActive,
+    AsyncValue<List<ProductWithCanteen>> allProductsAsync,
+    _CanteenStallInfo activeStall,
+  ) {
+    return Container(
+      color: context.surfaceBg,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 1. Hero Promo Carousel & Top Nav (Smoothly collapses to height 0 when search is active)
+          AnimatedSize(
+            duration: const Duration(milliseconds: 320),
+            curve: Curves.easeInOutCubic,
+            alignment: Alignment.topCenter,
+            child: isSearchActive
+                ? const SizedBox(width: double.infinity, height: 0)
+                : Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      _buildPromoBannerCarousel(allProductsAsync, activeStall),
+                      Positioned(
+                        top: 14,
+                        left: 16,
+                        right: 16,
+                        child: _buildTopHeroNav(context),
+                      ),
+                    ],
+                  ),
+          ),
+
+          // 2. Persistent Single Search Bar Row (Preserves focus & key)
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              16,
+              isSearchActive ? 12 : 12,
+              16,
+              isSearchActive ? 10 : 14,
+            ),
+            child: Row(
+              children: [
+                // Slide-in Back Button
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOutCubic,
+                  child: isSearchActive
+                      ? Padding(
+                          padding: const EdgeInsets.only(right: 10),
+                          child: GestureDetector(
+                            onTap: _closeSearch,
+                            child: Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: context.cardBg,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: context.borderLight, width: 0.8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: context.isDark ? 0.2 : 0.05),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(CupertinoIcons.left_chevron, size: 17),
+                            ),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+
+                // The Persistent Search Input Field
+                Expanded(
+                  child: _buildSearchInputField(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDiscoveryView(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<List<ProductWithCanteen>> allProductsAsync,
+    _CanteenStallInfo activeStall,
+    bool isDesktop,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 12),
+
+        // 1. Section 1: "Rekomendasi untukmu" (Horizontal Slider)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _buildPopularSliderSection(allProductsAsync, activeStall),
+        ),
+        const SizedBox(height: 24),
+
+        // 2. Section 2: "Kuliner sesuai seleramu" (Categories)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _buildKulinerSesuaiSeleramuSection(),
+        ),
+        const SizedBox(height: 24),
+
+        // 3. Section 3: Product List in Card Panjang (1x1 List View)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
+          child: _buildProductsListArea(context, ref, allProductsAsync, activeStall, isDesktop),
+        ),
+      ],
     );
   }
 
@@ -498,12 +580,17 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
     );
   }
 
-  Widget _buildSearchInput() {
+  Widget _buildSearchInputField() {
+    final bool hasText = _searchController.text.isNotEmpty;
+
     return Container(
       decoration: BoxDecoration(
         color: context.cardBg,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: context.borderLight, width: 0.8),
+        border: Border.all(
+          color: _isSearchFocused ? Nebula.teal : context.borderLight,
+          width: _isSearchFocused ? 1.4 : 0.8,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: context.isDark ? 0.22 : 0.05),
@@ -514,20 +601,24 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
       ),
       child: TextField(
         controller: _searchController,
+        focusNode: _searchFocusNode,
         onChanged: _onSearchChanged,
         style: GoogleFonts.inter(fontSize: 13.5, color: context.textPrimary),
         decoration: InputDecoration(
           hintText: 'Lagi mau jajan apa hari ini?',
           hintStyle: GoogleFonts.inter(fontSize: 13, color: context.textSecondary),
           prefixIcon: const Icon(CupertinoIcons.search, color: Nebula.teal, size: 19),
-          suffixIcon: _searchController.text.isNotEmpty
+          suffixIcon: hasText
               ? GestureDetector(
-                  onTap: _resetFilters,
-                  child: const Icon(CupertinoIcons.clear_circled_solid, color: Starlight.dim, size: 16),
+                  onTap: () {
+                    _searchController.clear();
+                    _onSearchChanged('');
+                  },
+                  child: const Icon(CupertinoIcons.clear_circled_solid, color: Starlight.dim, size: 17),
                 )
               : const Padding(
                   padding: EdgeInsets.only(right: 14),
-                  child: Icon(Icons.restaurant, color: Nebula.teal, size: 20),
+                  child: Icon(Icons.restaurant, color: Nebula.teal, size: 19),
                 ),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
@@ -1191,6 +1282,10 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
       orElse: () => [],
     );
 
+    if (query.isEmpty) {
+      return _buildSearchSuggestions(context, allProducts);
+    }
+
     // 1. Matching Canteens / Stalls (Misal pencarian: "sta", "bude", "ani", "bakso", "utama")
     final matchingCanteens = allCanteens.where((c) {
       return c.canteenName.toLowerCase().contains(query);
@@ -1258,58 +1353,146 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ── SECTION 1: TOKO / STAN KANTIN ──
-        if (matchingCanteens.isNotEmpty) ...[
-          Row(
-            children: [
-              const Icon(Icons.storefront_rounded, size: 18, color: Nebula.teal),
-              const SizedBox(width: 6),
-              Text(
-                'Stan / Toko Kantin (${matchingCanteens.length})',
-                style: GoogleFonts.inter(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: context.textPrimary,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 90),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── SECTION 1: TOKO / STAN KANTIN ──
+          if (matchingCanteens.isNotEmpty) ...[
+            Row(
+              children: [
+                const Icon(Icons.storefront_rounded, size: 18, color: Nebula.teal),
+                const SizedBox(width: 6),
+                Text(
+                  'Stan / Toko Kantin (${matchingCanteens.length})',
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: context.textPrimary,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          ...matchingCanteens.map((canteen) => _buildCanteenSearchResultCard(context, canteen, allProducts)),
-          const SizedBox(height: 24),
-        ],
+              ],
+            ),
+            const SizedBox(height: 10),
+            ...matchingCanteens.map((canteen) => _buildCanteenSearchResultCard(context, canteen, allProducts)),
+            const SizedBox(height: 24),
+          ],
 
-        // ── SECTION 2: MENU MAKANAN & MINUMAN ──
-        if (matchingProducts.isNotEmpty) ...[
+          // ── SECTION 2: MENU MAKANAN & MINUMAN ──
+          if (matchingProducts.isNotEmpty) ...[
+            Row(
+              children: [
+                const Icon(Icons.restaurant_menu_rounded, size: 18, color: Nebula.teal),
+                const SizedBox(width: 6),
+                Text(
+                  'Menu Makanan & Minuman (${matchingProducts.length})',
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: context.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: matchingProducts.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                return _buildSingleColumnProductCard(context, matchingProducts[index]);
+              },
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchSuggestions(BuildContext context, List<ProductWithCanteen> allProducts) {
+    final List<String> popularKeywords = [
+      'Bakso',
+      'Nasi Goreng',
+      'Es Jeruk',
+      'Dimsum',
+      'Ayam Geprek',
+      'Mie Ayam',
+      'Soto',
+      'Jus Alpukat',
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Row(
             children: [
-              const Icon(Icons.restaurant_menu_rounded, size: 18, color: Nebula.teal),
+              const Icon(CupertinoIcons.flame_fill, size: 16, color: Color(0xFFF97316)),
               const SizedBox(width: 6),
               Text(
-                'Menu Makanan & Minuman (${matchingProducts.length})',
+                'Pencarian Populer',
                 style: GoogleFonts.inter(
-                  fontSize: 15,
+                  fontSize: 14.5,
                   fontWeight: FontWeight.w800,
                   color: context.textPrimary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: matchingProducts.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              return _buildSingleColumnProductCard(context, matchingProducts[index]);
-            },
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: popularKeywords.map((kw) {
+              return PressScale(
+                scale: 0.95,
+                onTap: () {
+                  _searchController.text = kw;
+                  _searchController.selection = TextSelection.fromPosition(
+                    TextPosition(offset: kw.length),
+                  );
+                  setState(() {
+                    _searchQuery = kw;
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: context.cardBg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: context.borderLight, width: 0.8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: context.isDark ? 0.2 : 0.03),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(CupertinoIcons.search, size: 13, color: Nebula.teal),
+                      const SizedBox(width: 6),
+                      Text(
+                        kw,
+                        style: GoogleFonts.inter(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: context.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
           ),
         ],
-      ],
+      ),
     );
   }
 
