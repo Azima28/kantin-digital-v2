@@ -162,11 +162,22 @@ class NfcPaymentNotifier extends StateNotifier<NfcPaymentState> {
     try {
       final apiClient = _ref.read(apiClientProvider);
 
-      final List<Map<String, dynamic>> itemsPayload = items.map((item) => {
-        'product_id': item.productId,
-        'quantity': item.quantity,
-        'unit_price': item.price,
-        'custom_notes': item.notes ?? '',
+      final List<Map<String, dynamic>> itemsPayload = items.map((item) {
+        String customNotes = item.notes ?? '';
+        if (item.selectedOptions.isNotEmpty) {
+          final optionsStr = item.selectedOptions.join(', ');
+          customNotes = customNotes.isNotEmpty
+              ? '$optionsStr | $customNotes'
+              : optionsStr;
+        }
+        return {
+          'product_id': item.productId,
+          'product_name': item.name,
+          'quantity': item.quantity,
+          'unit_price': item.price,
+          'selected_options': item.selectedOptions,
+          'custom_notes': customNotes,
+        };
       }).toList();
 
       final response = await apiClient.post(

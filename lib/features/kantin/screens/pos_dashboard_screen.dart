@@ -18,6 +18,7 @@ import 'package:kantin_digital/features/kantin/providers/cart_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
+import 'package:kantin_digital/features/kantin/widgets/pos_product_option_sheet.dart';
 
 class PosDashboardScreen extends ConsumerStatefulWidget {
   const PosDashboardScreen({super.key});
@@ -250,20 +251,13 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                               (context, index) {
                                 final product =
                                     filteredProducts[index];
-                                final id = product.id;
-                                final name = product.name;
-                                final price = product.price;
-                                final imageUrl = product.imageUrl;
                                 final cartItem = cartState.items
-                                    .where((item) => item.productId == id)
+                                    .where((item) => item.productId == product.id)
                                     .firstOrNull;
                                 final quantity = cartItem?.quantity ?? 0;
 
                                 return _buildProductCard(
-                                  id: id,
-                                  name: name,
-                                  price: price,
-                                  imageUrl: imageUrl,
+                                  product: product,
                                   quantity: quantity,
                                 );
                               },
@@ -315,9 +309,9 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
               // Floating Cart Bar (Teal GoFood/GrabFood style)
               if (cartState.totalItems > 0)
                 Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: 16,
+                  left: 12,
+                  right: 12,
+                  bottom: 12,
                   child: SafeArea(
                     child: PressScale(
                       onTap: () {
@@ -325,7 +319,7 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
+                            horizontal: 12, vertical: 10),
                         decoration: BoxDecoration(
                           color: Nebula.teal,
                           borderRadius: BorderRadius.circular(20),
@@ -342,7 +336,7 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                             // Item Count Chip
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 5),
+                                  horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.22),
                                 borderRadius: BorderRadius.circular(10),
@@ -353,13 +347,13 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                                   const Icon(
                                     CupertinoIcons.bag_fill,
                                     color: Colors.white,
-                                    size: 16,
+                                    size: 14,
                                   ),
-                                  const SizedBox(width: 6),
+                                  const SizedBox(width: 4),
                                   Text(
                                     '${cartState.totalItems} Item',
                                     style: GoogleFonts.inter(
-                                      fontSize: 12,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w800,
                                       color: Colors.white,
                                     ),
@@ -367,19 +361,27 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 8),
 
-                            // Total Price
+                            // Total Price (Fitted to single line, no wrapping)
                             Expanded(
-                              child: Text(
-                                CurrencyFormatter.format(cartState.totalAmount),
-                                style: GoogleFonts.inter(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  CurrencyFormatter.format(cartState.totalAmount),
+                                  maxLines: 1,
+                                  softWrap: false,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                    letterSpacing: -0.2,
+                                  ),
                                 ),
                               ),
                             ),
+                            const SizedBox(width: 6),
 
                             // Action label & Chevron icon
                             Row(
@@ -388,16 +390,16 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
                                 Text(
                                   'Lihat Keranjang',
                                   style: GoogleFonts.inter(
-                                    fontSize: 12,
+                                    fontSize: 11.5,
                                     fontWeight: FontWeight.w700,
                                     color: Colors.white,
                                   ),
                                 ),
-                                const SizedBox(width: 4),
+                                const SizedBox(width: 2),
                                 const Icon(
                                   CupertinoIcons.chevron_right,
                                   color: Colors.white,
-                                  size: 14,
+                                  size: 12,
                                 ),
                               ],
                             ),
@@ -416,111 +418,156 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
 
   /// Builds a single product card for the grid
   Widget _buildProductCard({
-    required String id,
-    required String name,
-    required int price,
-    required String? imageUrl,
+    required Product product,
     required int quantity,
   }) {
+    final hasOptions = product.customizableOptions.isNotEmpty;
+
     return NebulaCard(
       padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Product Image
-          Expanded(
-            flex: 5,
-            child: ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
-              child: imageUrl != null && imageUrl.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: imageUrl,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: context.surfaceBg,
-                        child: const Center(
-                            child: CupertinoActivityIndicator()),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: context.surfaceBg,
-                        child: Icon(CupertinoIcons.photo,
-                            color: context.textSecondary, size: 28),
-                      ),
-                    )
-                  : Container(
-                      color: context.surfaceBg,
-                      child: Center(
-                        child: Icon(CupertinoIcons.cart,
-                            color: context.textSecondary, size: 28),
-                      ),
-                    ),
-            ),
-          ),
-
-          // Product Info
-          Expanded(
-            flex: 4,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          if (hasOptions) {
+            PosProductOptionSheet.show(context, product);
+          } else {
+            ref.read(cartProvider.notifier).addProduct(product.id, product.name, product.price);
+          }
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Product Image with optional Options Badge
+            Expanded(
+              flex: 5,
+              child: Stack(
                 children: [
-                  // Product Name
-                  Text(
-                    name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: context.textPrimary,
-                      height: 1.3,
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(16)),
+                      child: product.imageUrl != null && product.imageUrl!.isNotEmpty
+                          ? CachedNetworkImage(
+                              imageUrl: product.imageUrl!,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
+                                color: context.surfaceBg,
+                                child: const Center(
+                                    child: CupertinoActivityIndicator()),
+                              ),
+                              errorWidget: (context, url, error) => Container(
+                                color: context.surfaceBg,
+                                child: Icon(CupertinoIcons.photo,
+                                    color: context.textSecondary, size: 28),
+                              ),
+                            )
+                          : Container(
+                              color: context.surfaceBg,
+                              child: Center(
+                                child: Icon(CupertinoIcons.cart,
+                                    color: context.textSecondary, size: 28),
+                              ),
+                            ),
                     ),
                   ),
-
-                  // Price + Quantity Selector
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        CurrencyFormatter.format(price),
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: Nebula.teal,
+                  if (hasOptions)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.65),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 0.5),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.tune_rounded, size: 10, color: Colors.white),
+                            const SizedBox(width: 3),
+                            Text(
+                              'Opsi',
+                              style: GoogleFonts.inter(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      _buildQuantitySelector(
-                        id: id,
-                        name: name,
-                        price: price,
-                        quantity: quantity,
-                      ),
-                    ],
-                  ),
+                    ),
                 ],
               ),
             ),
-          ),
-        ],
+
+            // Product Info
+            Expanded(
+              flex: 4,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Product Name
+                    Text(
+                      product.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: context.textPrimary,
+                        height: 1.3,
+                      ),
+                    ),
+
+                    // Price + Quantity Selector
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          CurrencyFormatter.format(product.price),
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: Nebula.teal,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        _buildQuantitySelector(
+                          product: product,
+                          quantity: quantity,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildQuantitySelector({
-    required String id,
-    required String name,
-    required int price,
+    required Product product,
     required int quantity,
   }) {
+    final hasOptions = product.customizableOptions.isNotEmpty;
+
     if (quantity == 0) {
       return GestureDetector(
         onTap: () {
-          ref.read(cartProvider.notifier).addProduct(id, name, price);
+          if (hasOptions) {
+            PosProductOptionSheet.show(context, product);
+          } else {
+            ref.read(cartProvider.notifier).addProduct(product.id, product.name, product.price);
+          }
         },
         child: Container(
           width: double.infinity,
@@ -529,18 +576,18 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
             color: Nebula.teal.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                CupertinoIcons.add,
-                size: 14,
+                hasOptions ? Icons.tune_rounded : CupertinoIcons.add,
+                size: 13,
                 color: Nebula.teal,
               ),
-              SizedBox(width: 4),
+              const SizedBox(width: 4),
               Text(
-                'Tambah',
-                style: TextStyle(
+                hasOptions ? 'Pilih Opsi' : 'Tambah',
+                style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   color: Nebula.teal,
@@ -559,7 +606,7 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
           onTap: () {
             ref
                 .read(cartProvider.notifier)
-                .decreaseQuantity(id, name);
+                .decreaseQuantity(product.id, product.name);
           },
           child: Container(
             width: 26,
@@ -596,9 +643,13 @@ class _PosDashboardScreenState extends ConsumerState<PosDashboardScreen> {
         ),
         GestureDetector(
           onTap: () {
-            ref
-                .read(cartProvider.notifier)
-                .increaseQuantity(id, name);
+            if (hasOptions) {
+              PosProductOptionSheet.show(context, product);
+            } else {
+              ref
+                  .read(cartProvider.notifier)
+                  .increaseQuantity(product.id, product.name);
+            }
           },
           child: Container(
             width: 26,

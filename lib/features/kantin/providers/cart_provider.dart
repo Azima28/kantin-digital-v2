@@ -3,15 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class CartItem {
   final String? productId; // null for custom extra charge
   final String name;
-  final int price;
+  final int basePrice;
+  final int price; // unit price (base + options)
   final int quantity;
+  final List<String> selectedOptions;
   final String? notes;
 
   CartItem({
     this.productId,
     required this.name,
     required this.price,
+    this.basePrice = 0,
     required this.quantity,
+    this.selectedOptions = const <String>[],
     this.notes,
   });
 
@@ -21,14 +25,18 @@ class CartItem {
     String? productId,
     String? name,
     int? price,
+    int? basePrice,
     int? quantity,
+    List<String>? selectedOptions,
     String? notes,
   }) {
     return CartItem(
       productId: productId ?? this.productId,
       name: name ?? this.name,
       price: price ?? this.price,
+      basePrice: basePrice ?? this.basePrice,
       quantity: quantity ?? this.quantity,
+      selectedOptions: selectedOptions ?? this.selectedOptions,
       notes: notes ?? this.notes,
     );
   }
@@ -51,18 +59,40 @@ class CartState {
 class CartNotifier extends StateNotifier<CartState> {
   CartNotifier() : super(const CartState());
 
-  void addProduct(String id, String name, int price) {
+  bool _listsEqual(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  void addProduct(
+    String id,
+    String name,
+    int price, {
+    int? basePrice,
+    List<String> selectedOptions = const <String>[],
+    String? notes,
+    int quantity = 1,
+  }) {
     final List<CartItem> items = List<CartItem>.from(state.items);
-    final int index = items.indexWhere((CartItem item) => item.productId == id);
+    final int index = items.indexWhere((CartItem item) =>
+        item.productId == id &&
+        _listsEqual(item.selectedOptions, selectedOptions) &&
+        (item.notes ?? '') == (notes ?? ''));
 
     if (index != -1) {
-      items[index] = items[index].copyWith(quantity: items[index].quantity + 1);
+      items[index] = items[index].copyWith(quantity: items[index].quantity + quantity);
     } else {
       items.add(CartItem(
         productId: id,
         name: name,
         price: price,
-        quantity: 1,
+        basePrice: basePrice ?? price,
+        quantity: quantity,
+        selectedOptions: selectedOptions,
+        notes: notes,
       ));
     }
     state = CartState(items: items);
@@ -79,6 +109,7 @@ class CartNotifier extends StateNotifier<CartState> {
         productId: null,
         name: name,
         price: price,
+        basePrice: price,
         quantity: 1,
       ));
     }
@@ -99,9 +130,14 @@ class CartNotifier extends StateNotifier<CartState> {
     state = CartState(items: items);
   }
 
-  void decreaseQuantity(String? id, String name) {
+  void decreaseQuantity(String? id, String name, {List<String>? selectedOptions, String? notes}) {
     final List<CartItem> items = List<CartItem>.from(state.items);
-    final int index = items.indexWhere((CartItem item) => item.productId == id && item.name == name);
+    final int index = items.indexWhere((CartItem item) {
+      if (item.productId != id || item.name != name) return false;
+      if (selectedOptions != null && !_listsEqual(item.selectedOptions, selectedOptions)) return false;
+      if (notes != null && (item.notes ?? '') != notes) return false;
+      return true;
+    });
 
     if (index != -1) {
       if (items[index].quantity > 1) {
@@ -113,9 +149,14 @@ class CartNotifier extends StateNotifier<CartState> {
     }
   }
 
-  void increaseQuantity(String? id, String name) {
+  void increaseQuantity(String? id, String name, {List<String>? selectedOptions, String? notes}) {
     final List<CartItem> items = List<CartItem>.from(state.items);
-    final int index = items.indexWhere((CartItem item) => item.productId == id && item.name == name);
+    final int index = items.indexWhere((CartItem item) {
+      if (item.productId != id || item.name != name) return false;
+      if (selectedOptions != null && !_listsEqual(item.selectedOptions, selectedOptions)) return false;
+      if (notes != null && (item.notes ?? '') != notes) return false;
+      return true;
+    });
 
     if (index != -1) {
       items[index] = items[index].copyWith(quantity: items[index].quantity + 1);

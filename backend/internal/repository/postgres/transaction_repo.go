@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -62,14 +63,15 @@ func (r *TransactionRepo) ProcessPurchase(ctx context.Context, p CheckoutParams)
 		var dbName string
 		var dbPrice int
 		var isAvailable bool
+		var optBytes []byte
 
 		queryProduct := `
-			SELECT id, operator_id, name, price, is_available
+			SELECT id, operator_id, name, price, is_available, customizable_options
 			FROM public.products
 			WHERE id::text = $1 OR LOWER(name) = LOWER($1)
 			LIMIT 1`
 		err := tx.QueryRow(ctx, queryProduct, productRef).Scan(
-			&dbID, &dbOperatorID, &dbName, &dbPrice, &isAvailable,
+			&dbID, &dbOperatorID, &dbName, &dbPrice, &isAvailable, &optBytes,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("produk '%s' tidak ditemukan di menu stan", productRef)
@@ -87,11 +89,37 @@ func (r *TransactionRepo) ProcessPurchase(ctx context.Context, p CheckoutParams)
 			p.Items[i].Quantity = 1
 		}
 
+		// Calculate extra option addons from authoritative DB options
+		var dbOptions []string
+		if len(optBytes) > 0 {
+			_ = json.Unmarshal(optBytes, &dbOptions)
+		}
+
+		addonPrice := 0
+		if p.Items[i].CustomNotes != nil && *p.Items[i].CustomNotes != "" {
+			noteParts := strings.Split(*p.Items[i].CustomNotes, ",")
+			for _, part := range noteParts {
+				trimmed := strings.TrimSpace(part)
+				if idx := strings.Index(trimmed, "|"); idx != -1 {
+					trimmed = strings.TrimSpace(trimmed[:idx])
+				}
+				for _, validOpt := range dbOptions {
+					if strings.EqualFold(validOpt, trimmed) ||
+						strings.HasPrefix(strings.ToLower(validOpt), strings.ToLower(trimmed)) ||
+						strings.HasPrefix(strings.ToLower(trimmed), strings.ToLower(validOpt)) {
+						addonPrice += parseOptionAddonPrice(validOpt)
+						break
+					}
+				}
+			}
+		}
+
+		unitPrice := dbPrice + addonPrice
 		p.Items[i].ProductID = &dbID
 		p.Items[i].ProductName = &dbName
-		p.Items[i].UnitPrice = dbPrice
+		p.Items[i].UnitPrice = unitPrice
 
-		authoritativeTotal += dbPrice * p.Items[i].Quantity
+		authoritativeTotal += unitPrice * p.Items[i].Quantity
 	}
 
 	if authoritativeTotal <= 0 {
