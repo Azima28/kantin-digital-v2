@@ -19,6 +19,18 @@ int extractOptionAddonPrice(String optionText) {
   return 0;
 }
 
+class OptionCategory {
+  final String title;
+  final bool isSingleSelect;
+  final List<String> options;
+
+  OptionCategory({
+    required this.title,
+    required this.isSingleSelect,
+    required this.options,
+  });
+}
+
 /// Modal Bottom Sheet for POS Cashier to customize product options, toppings, and notes
 class PosProductOptionSheet extends ConsumerStatefulWidget {
   final Product product;
@@ -42,6 +54,50 @@ class _PosProductOptionSheetState extends ConsumerState<PosProductOptionSheet> {
   final Set<String> _selectedOptions = <String>{};
   final TextEditingController _notesController = TextEditingController();
   int _quantity = 1;
+  late List<OptionCategory> _categories;
+
+  @override
+  void initState() {
+    super.initState();
+    _categories = _groupOptions(widget.product.customizableOptions);
+  }
+
+  List<OptionCategory> _groupOptions(List<String> rawOptions) {
+    final Map<String, List<String>> map = {};
+    for (final opt in rawOptions) {
+      final clean = opt.trim();
+      if (clean.isEmpty) continue;
+
+      String groupTitle = 'Pilihan Varian';
+      if (clean.contains(': ')) {
+        groupTitle = clean.split(': ')[0].trim();
+      }
+      map.putIfAbsent(groupTitle, () => []).add(clean);
+    }
+
+    final List<OptionCategory> categories = [];
+    map.forEach((title, opts) {
+      final lower = title.toLowerCase();
+      final isSingle = lower.contains('level') ||
+          lower.contains('pedas') ||
+          lower.contains('asin') ||
+          lower.contains('rasa') ||
+          lower.contains('porsi') ||
+          lower.contains('ukuran') ||
+          lower.contains('suhu') ||
+          lower.contains('es') ||
+          lower.contains('gula') ||
+          lower.contains('pilih 1');
+
+      categories.add(OptionCategory(
+        title: title,
+        isSingleSelect: isSingle,
+        options: opts,
+      ));
+    });
+
+    return categories;
+  }
 
   @override
   void dispose() {
@@ -60,12 +116,24 @@ class _PosProductOptionSheetState extends ConsumerState<PosProductOptionSheet> {
   int get _unitPrice => widget.product.price + _addonPricePerItem;
   int get _totalPrice => _unitPrice * _quantity;
 
-  void _toggleOption(String option) {
+  void _toggleOption(String option, bool isSingleSelect, List<String> groupOptions) {
     setState(() {
-      if (_selectedOptions.contains(option)) {
-        _selectedOptions.remove(option);
+      if (isSingleSelect) {
+        if (_selectedOptions.contains(option)) {
+          _selectedOptions.remove(option);
+        } else {
+          // Deselect other options in this category
+          for (final o in groupOptions) {
+            _selectedOptions.remove(o);
+          }
+          _selectedOptions.add(option);
+        }
       } else {
-        _selectedOptions.add(option);
+        if (_selectedOptions.contains(option)) {
+          _selectedOptions.remove(option);
+        } else {
+          _selectedOptions.add(option);
+        }
       }
     });
   }
@@ -98,8 +166,6 @@ class _PosProductOptionSheetState extends ConsumerState<PosProductOptionSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final options = widget.product.customizableOptions;
-
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.88,
@@ -233,121 +299,10 @@ class _PosProductOptionSheetState extends ConsumerState<PosProductOptionSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Options Heading
-                    if (options.isNotEmpty) ...[
-                      Row(
-                        children: [
-                          const Icon(Icons.tune_rounded, size: 18, color: Nebula.teal),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Pilihan Varian & Tambahan',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              color: context.textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Pilih opsi yang dipesan siswa (bisa pilih lebih dari satu)',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: context.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Options List
-                      ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: options.length,
-                        separatorBuilder: (context, index) => const SizedBox(height: 8),
-                        itemBuilder: (context, index) {
-                          final opt = options[index];
-                          final isSelected = _selectedOptions.contains(opt);
-                          final addonPrice = extractOptionAddonPrice(opt);
-
-                          return InkWell(
-                            onTap: () => _toggleOption(opt),
-                            borderRadius: BorderRadius.circular(12),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? Nebula.teal.withValues(alpha: 0.08)
-                                    : context.surfaceBg,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: isSelected ? Nebula.teal : context.dividerCol,
-                                  width: isSelected ? 1.5 : 0.8,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  // Custom Checkbox
-                                  Container(
-                                    width: 22,
-                                    height: 22,
-                                    decoration: BoxDecoration(
-                                      color: isSelected ? Nebula.teal : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(
-                                        color: isSelected ? Nebula.teal : context.textSecondary,
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                    child: isSelected
-                                        ? const Icon(Icons.check, size: 16, color: Colors.white)
-                                        : null,
-                                  ),
-                                  const SizedBox(width: 12),
-
-                                  // Option Name
-                                  Expanded(
-                                    child: Text(
-                                      opt,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 13.5,
-                                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                        color: isSelected ? Nebula.teal : context.textPrimary,
-                                      ),
-                                    ),
-                                  ),
-
-                                  // Price Tag (if extra cost)
-                                  if (addonPrice > 0)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? Nebula.teal.withValues(alpha: 0.18)
-                                            : context.cardBg,
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                          color: isSelected ? Nebula.teal : context.borderLight,
-                                          width: 0.6,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        '+${CurrencyFormatter.format(addonPrice)}',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.w700,
-                                          color: isSelected ? Nebula.teal : context.textSecondary,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 20),
+                    // Render Category-Grouped Options
+                    for (int catIdx = 0; catIdx < _categories.length; catIdx++) ...[
+                      _buildCategorySection(_categories[catIdx]),
+                      const SizedBox(height: 18),
                     ],
 
                     // Custom Notes Section
@@ -358,7 +313,7 @@ class _PosProductOptionSheetState extends ConsumerState<PosProductOptionSheet> {
                         Text(
                           'Catatan Khusus Pesanan',
                           style: GoogleFonts.inter(
-                            fontSize: 14,
+                            fontSize: 13.5,
                             fontWeight: FontWeight.w800,
                             color: context.textPrimary,
                           ),
@@ -371,7 +326,7 @@ class _PosProductOptionSheetState extends ConsumerState<PosProductOptionSheet> {
                       maxLines: 2,
                       style: GoogleFonts.inter(fontSize: 13, color: context.textPrimary),
                       decoration: InputDecoration(
-                        hintText: 'Contoh: Jangan pakai seledri, bungkus terpisah',
+                        hintText: 'Contoh: Jangan pakai seledri, kuah dipisah',
                         hintStyle: GoogleFonts.inter(fontSize: 12, color: context.textSecondary),
                         filled: true,
                         fillColor: context.surfaceBg,
@@ -477,6 +432,136 @@ class _PosProductOptionSheetState extends ConsumerState<PosProductOptionSheet> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCategorySection(OptionCategory category) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Category Header with Single/Multi Badge
+        Row(
+          children: [
+            Text(
+              category.title,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: context.textPrimary,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: category.isSingleSelect
+                    ? Nebula.teal.withValues(alpha: 0.1)
+                    : Nebula.amber.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                category.isSingleSelect ? 'Pilih 1' : 'Pilih Banyak',
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: category.isSingleSelect ? Nebula.teal : Nebula.amber,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+
+        // Category Items
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: category.options.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 6),
+          itemBuilder: (context, index) {
+            final opt = category.options[index];
+            final isSelected = _selectedOptions.contains(opt);
+            final addonPrice = extractOptionAddonPrice(opt);
+
+            // Display name without group prefix
+            String displayName = opt;
+            if (displayName.contains(': ')) {
+              displayName = displayName.substring(displayName.indexOf(': ') + 2);
+            }
+            if (displayName.contains(' (+Rp ')) {
+              displayName = displayName.split(' (+Rp ')[0];
+            }
+
+            return InkWell(
+              onTap: () => _toggleOption(opt, category.isSingleSelect, category.options),
+              borderRadius: BorderRadius.circular(12),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? Nebula.teal.withValues(alpha: 0.08)
+                      : context.surfaceBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected ? Nebula.teal : context.dividerCol,
+                    width: isSelected ? 1.5 : 0.8,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    // Icon Radio or Checkbox
+                    Icon(
+                      category.isSingleSelect
+                          ? (isSelected ? Icons.radio_button_checked : Icons.radio_button_off)
+                          : (isSelected ? Icons.check_box : Icons.check_box_outline_blank),
+                      size: 18,
+                      color: isSelected ? Nebula.teal : context.textSecondary,
+                    ),
+                    const SizedBox(width: 12),
+
+                    // Option Display Name
+                    Expanded(
+                      child: Text(
+                        displayName,
+                        style: GoogleFonts.inter(
+                          fontSize: 13.5,
+                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                          color: isSelected ? Nebula.teal : context.textPrimary,
+                        ),
+                      ),
+                    ),
+
+                    // Price Tag (if extra cost)
+                    if (addonPrice > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? Nebula.teal.withValues(alpha: 0.18)
+                              : context.cardBg,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected ? Nebula.teal : context.borderLight,
+                            width: 0.6,
+                          ),
+                        ),
+                        child: Text(
+                          '+${CurrencyFormatter.format(addonPrice)}',
+                          style: GoogleFonts.inter(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: isSelected ? Nebula.teal : context.textSecondary,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }

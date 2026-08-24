@@ -20,6 +20,45 @@ import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/app_toast.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 
+/// Data models for GoFood / GrabFood Merchant-style Modifier Groups
+class ModifierItem {
+  String name;
+  int price;
+
+  ModifierItem({required this.name, this.price = 0});
+
+  String toFormattedString(String groupTitle) {
+    final cleanName = name.trim();
+    final cleanGroup = groupTitle.trim();
+    final pricePart = price > 0 ? ' (+Rp ${CurrencyFormatter.format(price).replaceAll('Rp ', '')})' : '';
+    if (cleanGroup.isNotEmpty) {
+      return '$cleanGroup: $cleanName$pricePart';
+    }
+    return '$cleanName$pricePart';
+  }
+}
+
+class ModifierGroup {
+  String id;
+  String title;
+  bool isSingleSelect; // true: pilih 1 (e.g. Level Pedas, Level Asin), false: pilih banyak (e.g. Topping)
+  List<ModifierItem> items;
+  final TextEditingController itemNameController = TextEditingController();
+  final TextEditingController itemPriceController = TextEditingController();
+
+  ModifierGroup({
+    required this.id,
+    required this.title,
+    this.isSingleSelect = true,
+    List<ModifierItem>? items,
+  }) : items = items ?? [];
+
+  void dispose() {
+    itemNameController.dispose();
+    itemPriceController.dispose();
+  }
+}
+
 /// Professional Merchant Product Form Screen (GoFood / GrabFood Merchant Standard)
 class ProductFormScreen extends ConsumerStatefulWidget {
   final Product? initialProduct;
@@ -33,16 +72,15 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _priceController;
-  final TextEditingController _optionNameController = TextEditingController();
-  final TextEditingController _optionPriceController = TextEditingController();
 
   late String _selectedCategory;
-  List<String> _customizableOptions = [];
+  final List<ModifierGroup> _modifierGroups = [];
   bool _isLoading = false;
 
   XFile? _imageFile;
   final ImagePicker _picker = ImagePicker();
   bool _imageDeleted = false;
+  int _groupCounter = 1;
 
   @override
   void initState() {
@@ -53,113 +91,244 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       text: product?.price != null ? product!.price.toString() : '',
     );
     _selectedCategory = product?.category ?? 'makanan';
-    _customizableOptions = product?.customizableOptions != null
-        ? List<String>.from(product!.customizableOptions)
-        : [];
+
+    _parseInitialOptions(product?.customizableOptions ?? []);
+  }
+
+  void _parseInitialOptions(List<String> rawOptions) {
+    final Map<String, List<ModifierItem>> grouped = {};
+
+    for (final opt in rawOptions) {
+      final clean = opt.trim();
+      if (clean.isEmpty) continue;
+
+      String groupTitle = 'Pilihan Tambahan';
+      String itemPart = clean;
+
+      if (clean.contains(': ')) {
+        final parts = clean.split(': ');
+        groupTitle = parts[0].trim();
+        itemPart = parts.sublist(1).join(': ').trim();
+      }
+
+      int price = 0;
+      String name = itemPart;
+      if (itemPart.contains(' (+Rp ')) {
+        final sub = itemPart.split(' (+Rp ');
+        name = sub[0].trim();
+        final priceStr = sub[1].replaceAll(')', '').replaceAll('.', '').replaceAll(',', '').trim();
+        price = int.tryParse(priceStr) ?? 0;
+      }
+
+      grouped.putIfAbsent(groupTitle, () => []).add(ModifierItem(name: name, price: price));
+    }
+
+    grouped.forEach((title, items) {
+      final lower = title.toLowerCase();
+      final isSingle = lower.contains('level') ||
+          lower.contains('pedas') ||
+          lower.contains('asin') ||
+          lower.contains('rasa') ||
+          lower.contains('porsi') ||
+          lower.contains('ukuran') ||
+          lower.contains('suhu') ||
+          lower.contains('es') ||
+          lower.contains('gula') ||
+          lower.contains('pilih 1');
+
+      _modifierGroups.add(ModifierGroup(
+        id: 'group_${_groupCounter++}',
+        title: title,
+        isSingleSelect: isSingle,
+        items: items,
+      ));
+    });
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _priceController.dispose();
-    _optionNameController.dispose();
-    _optionPriceController.dispose();
+    for (final g in _modifierGroups) {
+      g.dispose();
+    }
     super.dispose();
   }
 
-  Map<String, dynamic> _parseOption(String opt) {
-    String cleanOpt = opt.trim();
-    if (cleanOpt.contains(' (+Rp ')) {
-      final parts = cleanOpt.split(' (+Rp ');
-      final name = parts[0].trim();
-      final priceStr = parts[1].replaceAll(')', '').replaceAll('.', '').replaceAll(',', '').trim();
-      final price = int.tryParse(priceStr) ?? 0;
-      return {'name': name, 'price': price};
-    }
-    return {'name': cleanOpt, 'price': 0};
-  }
-
-  void _addOptionDirect(String name, int price) {
-    final String trimmedName = name.trim();
-    if (trimmedName.isEmpty) return;
-
-    final String formattedOpt = price > 0
-        ? '$trimmedName (+Rp ${CurrencyFormatter.format(price).replaceAll('Rp ', '')})'
-        : trimmedName;
-
-    final bool exists = _customizableOptions.any((opt) {
-      final parsed = _parseOption(opt);
-      return parsed['name'].toString().toLowerCase() == trimmedName.toLowerCase();
-    });
-
-    if (exists) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Varian "$trimmedName" sudah ada dalam daftar'),
-          backgroundColor: Nebula.rose,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
+  void _addNewGroup({String? title, bool isSingleSelect = true, List<ModifierItem>? initialItems}) {
     setState(() {
-      _customizableOptions.add(formattedOpt);
-      _optionNameController.clear();
-      _optionPriceController.clear();
+      _modifierGroups.add(ModifierGroup(
+        id: 'group_${_groupCounter++}',
+        title: title ?? 'Grup Pilihan ${_modifierGroups.length + 1}',
+        isSingleSelect: isSingleSelect,
+        items: initialItems ?? [],
+      ));
     });
   }
 
-  void _addPresetGroup(List<Map<String, dynamic>> presetItems) {
-    int addedCount = 0;
-    setState(() {
-      for (final item in presetItems) {
-        final String name = item['name'] as String;
-        final int price = (item['price'] as num?)?.toInt() ?? 0;
-        final String formattedOpt = price > 0
-            ? '$name (+Rp ${CurrencyFormatter.format(price).replaceAll('Rp ', '')})'
-            : name;
+  void _showAddGroupDialog() {
+    final titleController = TextEditingController();
+    bool isSingleSelect = true;
 
-        final bool exists = _customizableOptions.any((opt) {
-          final parsed = _parseOption(opt);
-          return parsed['name'].toString().toLowerCase() == name.toLowerCase();
-        });
-
-        if (!exists) {
-          _customizableOptions.add(formattedOpt);
-          addedCount++;
-        }
-      }
-    });
-
-    if (addedCount > 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$addedCount varian berhasil ditambahkan dari preset'),
-          backgroundColor: Nebula.teal,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => Dialog(
+          backgroundColor: Colors.transparent,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 440),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: ctx.cardBg,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: ctx.dividerCol, width: 0.8),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Tambah Grup Variasi Baru',
+                    style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w800, color: ctx.textPrimary),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Contoh: Tingkat Kepedasan, Tingkat Keasinan, Pilihan Topping, Ukuran Porsi',
+                    style: GoogleFonts.inter(fontSize: 12, color: ctx.textSecondary),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: titleController,
+                    autofocus: true,
+                    style: GoogleFonts.inter(fontSize: 14, color: ctx.textPrimary),
+                    decoration: const InputDecoration(
+                      labelText: 'Nama Grup Variasi',
+                      hintText: 'Contoh: Tingkat Keasinan',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Aturan Pemilihan Pelanggan:',
+                    style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w700, color: ctx.textPrimary),
+                  ),
+                  const SizedBox(height: 10),
+                  InkWell(
+                    onTap: () => setDialogState(() => isSingleSelect = true),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isSingleSelect ? Nebula.teal.withValues(alpha: 0.08) : ctx.surfaceBg,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSingleSelect ? Nebula.teal : ctx.dividerCol,
+                          width: isSingleSelect ? 1.5 : 0.8,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isSingleSelect ? Icons.radio_button_checked : Icons.radio_button_off,
+                            color: isSingleSelect ? Nebula.teal : ctx.textSecondary,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Pilih 1 (Wajib / Radio)', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: ctx.textPrimary)),
+                                Text('Pelanggan hanya boleh memilih 1 opsi (misal: Level Asin / Pedas)', style: GoogleFonts.inter(fontSize: 11, color: ctx.textSecondary)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () => setDialogState(() => isSingleSelect = false),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: !isSingleSelect ? Nebula.teal.withValues(alpha: 0.08) : ctx.surfaceBg,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: !isSingleSelect ? Nebula.teal : ctx.dividerCol,
+                          width: !isSingleSelect ? 1.5 : 0.8,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            !isSingleSelect ? Icons.check_box : Icons.check_box_outline_blank,
+                            color: !isSingleSelect ? Nebula.teal : ctx.textSecondary,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Pilih Banyak (Opsional / Checkbox)', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: ctx.textPrimary)),
+                                Text('Pelanggan bisa memilih lebih dari 1 opsi (misal: Ekstra Topping)', style: GoogleFonts.inter(fontSize: 11, color: ctx.textSecondary)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: Text('Batal', style: TextStyle(color: ctx.textSecondary)),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Nebula.teal,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () {
+                          final title = titleController.text.trim();
+                          if (title.isNotEmpty) {
+                            _addNewGroup(title: title, isSingleSelect: isSingleSelect);
+                            Navigator.pop(ctx);
+                          }
+                        },
+                        child: const Text('Buat Grup'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
-      );
-    }
-  }
-
-  void _showEditOptionDialog(int index) {
-    final String currentOpt = _customizableOptions[index];
-    final parsed = _parseOption(currentOpt);
-    final editNameController = TextEditingController(text: parsed['name'] as String);
-    final editPriceController = TextEditingController(
-      text: (parsed['price'] as int) > 0 ? parsed['price'].toString() : '',
+      ),
     );
+  }
+
+  void _showEditItemDialog(ModifierGroup group, int itemIndex) {
+    final item = group.items[itemIndex];
+    final nameController = TextEditingController(text: item.name);
+    final priceController = TextEditingController(text: item.price > 0 ? item.price.toString() : '');
 
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
         backgroundColor: Colors.transparent,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
+          constraints: const BoxConstraints(maxWidth: 400),
           child: Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
               color: ctx.cardBg,
               borderRadius: BorderRadius.circular(20),
@@ -170,25 +339,18 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Ubah Pilihan Varian',
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: ctx.textPrimary,
-                  ),
+                  'Ubah Opsi Pilihan',
+                  style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w800, color: ctx.textPrimary),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
                 TextField(
-                  controller: editNameController,
+                  controller: nameController,
                   style: GoogleFonts.inter(fontSize: 14, color: ctx.textPrimary),
-                  decoration: const InputDecoration(
-                    labelText: 'Nama Varian / Topping',
-                    hintText: 'Contoh: Ekstra Telur',
-                  ),
+                  decoration: const InputDecoration(labelText: 'Nama Pilihan'),
                 ),
                 const SizedBox(height: 12),
                 TextField(
-                  controller: editPriceController,
+                  controller: priceController,
                   keyboardType: TextInputType.number,
                   style: GoogleFonts.inter(fontSize: 14, color: ctx.textPrimary),
                   decoration: const InputDecoration(
@@ -212,14 +374,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         foregroundColor: Colors.white,
                       ),
                       onPressed: () {
-                        final String name = editNameController.text.trim();
-                        final int price = int.tryParse(editPriceController.text.trim()) ?? 0;
+                        final name = nameController.text.trim();
+                        final price = int.tryParse(priceController.text.trim()) ?? 0;
                         if (name.isNotEmpty) {
-                          final String newOpt = price > 0
-                              ? '$name (+Rp ${CurrencyFormatter.format(price).replaceAll('Rp ', '')})'
-                              : name;
                           setState(() {
-                            _customizableOptions[index] = newOpt;
+                            item.name = name;
+                            item.price = price;
                           });
                           Navigator.pop(ctx);
                         }
@@ -300,6 +460,14 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         finalImageUrl = widget.initialProduct!.imageUrl;
       }
 
+      // Compile modifier groups into serialized string options
+      final List<String> compiledOptions = [];
+      for (final group in _modifierGroups) {
+        for (final item in group.items) {
+          compiledOptions.add(item.toFormattedString(group.title));
+        }
+      }
+
       final payload = {
         'operator_id': operatorId,
         'name': _nameController.text.trim(),
@@ -307,7 +475,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         'category': _selectedCategory,
         'is_available': widget.initialProduct?.isAvailable ?? true,
         'image_url': finalImageUrl,
-        'customizable_options': _customizableOptions,
+        'customizable_options': compiledOptions,
       };
 
       final response = isEdit
@@ -528,9 +696,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     const SizedBox(height: 24),
 
                     // ══════════════════════════════════════════════════════════
-                    // GOFOOD / GRABFOOD STYLE VARIANT & MODIFIERS MANAGEMENT
+                    // DYNAMIC MODIFIER GROUPS MANAGER (GoFood / GrabFood Standard)
                     // ══════════════════════════════════════════════════════════
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
                           padding: const EdgeInsets.all(8),
@@ -546,11 +715,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Pilihan Variasi & Topping',
+                                'Grup Variasi & Pilihan Kustomisasi',
                                 style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w800, color: context.textPrimary),
                               ),
+                              const SizedBox(height: 2),
                               Text(
-                                'Atur varian rasa, kepedasan, level es, atau topping tambahan yang bisa dipilih pembeli.',
+                                'Atur kategori pilihan seperti Tingkat Kepedasan, Tingkat Keasinan, Ukuran Porsi, atau Ekstra Topping.',
                                 style: GoogleFonts.inter(fontSize: 12, color: context.textSecondary),
                               ),
                             ],
@@ -560,226 +730,134 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Quick Preset Template Buttons
+                    // Add Group Button & Quick Suggestion Chips
+                    Row(
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: _showAddGroupDialog,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Nebula.teal,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            elevation: 0,
+                          ),
+                          icon: const Icon(CupertinoIcons.plus, size: 16),
+                          label: Text(
+                            'Tambah Grup Variasi',
+                            style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Quick Suggested Templates Chips
                     Text(
-                      'Template Preset Populer',
-                      style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w700, color: context.textSecondary),
+                      'Saran Template Cepat (1-Klik Tambah Grup):',
+                      style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w600, color: context.textSecondary),
                     ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        _buildPresetActionChip(
+                        _buildQuickTemplateChip(
                           icon: Icons.local_fire_department_rounded,
-                          label: 'Level Pedas (0 - 3)',
-                          onTap: () => _addPresetGroup([
-                            {'name': 'Level 0 (Tidak Pedas)', 'price': 0},
-                            {'name': 'Level 1 (Sedang)', 'price': 0},
-                            {'name': 'Level 2 (Pedas)', 'price': 0},
-                            {'name': 'Level 3 (Ekstra Pedas)', 'price': 1000},
-                          ]),
+                          label: '+ Grup Kepedasan',
+                          onTap: () => _addNewGroup(
+                            title: 'Tingkat Kepedasan',
+                            isSingleSelect: true,
+                            initialItems: [
+                              ModifierItem(name: 'Level 0 (Tidak Pedas)', price: 0),
+                              ModifierItem(name: 'Level 1 (Sedang)', price: 0),
+                              ModifierItem(name: 'Level 2 (Pedas)', price: 0),
+                              ModifierItem(name: 'Level 3 (Ekstra Pedas)', price: 1000),
+                            ],
+                          ),
                         ),
-                        _buildPresetActionChip(
-                          icon: Icons.ac_unit_rounded,
-                          label: 'Tingkat Es & Gula',
-                          onTap: () => _addPresetGroup([
-                            {'name': 'Es Normal (100%)', 'price': 0},
-                            {'name': 'Sedikit Es (Less Ice)', 'price': 0},
-                            {'name': 'Tanpa Es (No Ice)', 'price': 0},
-                            {'name': 'Sedikit Manis (Less Sugar)', 'price': 0},
-                          ]),
+                        _buildQuickTemplateChip(
+                          icon: Icons.grain_rounded,
+                          label: '+ Grup Keasinan / Rasa',
+                          onTap: () => _addNewGroup(
+                            title: 'Pilihan Rasa / Asin',
+                            isSingleSelect: true,
+                            initialItems: [
+                              ModifierItem(name: 'Asin Normal', price: 0),
+                              ModifierItem(name: 'Kurang Asin', price: 0),
+                              ModifierItem(name: 'Ekstra Asin / Gurih', price: 0),
+                            ],
+                          ),
                         ),
-                        _buildPresetActionChip(
-                          icon: Icons.straighten_rounded,
-                          label: 'Ukuran Porsi',
-                          onTap: () => _addPresetGroup([
-                            {'name': 'Porsi Reguler', 'price': 0},
-                            {'name': 'Porsi Jumbo', 'price': 4000},
-                          ]),
-                        ),
-                        _buildPresetActionChip(
+                        _buildQuickTemplateChip(
                           icon: Icons.add_circle_outline_rounded,
-                          label: 'Topping Populer',
-                          onTap: () => _addPresetGroup([
-                            {'name': 'Ekstra Telur Dadar', 'price': 3000},
-                            {'name': 'Ekstra Keju Parut', 'price': 2500},
-                            {'name': 'Ekstra Sosis', 'price': 2000},
-                          ]),
+                          label: '+ Grup Topping Ekstra',
+                          onTap: () => _addNewGroup(
+                            title: 'Topping Tambahan',
+                            isSingleSelect: false,
+                            initialItems: [
+                              ModifierItem(name: 'Ekstra Telur Dadar', price: 3000),
+                              ModifierItem(name: 'Ekstra Keju Parut', price: 2500),
+                              ModifierItem(name: 'Ekstra Sosis', price: 2000),
+                            ],
+                          ),
+                        ),
+                        _buildQuickTemplateChip(
+                          icon: Icons.straighten_rounded,
+                          label: '+ Grup Ukuran Porsi',
+                          onTap: () => _addNewGroup(
+                            title: 'Ukuran Porsi',
+                            isSingleSelect: true,
+                            initialItems: [
+                              ModifierItem(name: 'Porsi Reguler', price: 0),
+                              ModifierItem(name: 'Porsi Jumbo', price: 4000),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 20),
 
-                    // Manual Option Input Box
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: context.surfaceBg,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: context.dividerCol, width: 0.8),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Tambah Varian / Topping Manual',
-                            style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w700, color: context.textPrimary),
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
+                    // Render Dynamic Modifier Groups
+                    if (_modifierGroups.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                        decoration: BoxDecoration(
+                          color: context.surfaceBg.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: context.dividerCol, width: 0.8),
+                        ),
+                        child: Center(
+                          child: Column(
                             children: [
-                              Expanded(
-                                flex: 3,
-                                child: TextField(
-                                  controller: _optionNameController,
-                                  style: GoogleFonts.inter(fontSize: 13.5, color: context.textPrimary),
-                                  decoration: const InputDecoration(
-                                    hintText: 'Nama varian (misal: Telur Dadar)',
-                                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                  ),
-                                ),
+                              Icon(Icons.tune_rounded, size: 32, color: context.textSecondary.withValues(alpha: 0.5)),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Belum ada grup variasi untuk jajanan ini.',
+                                style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: context.textPrimary),
                               ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                flex: 2,
-                                child: TextField(
-                                  controller: _optionPriceController,
-                                  keyboardType: TextInputType.number,
-                                  style: GoogleFonts.inter(fontSize: 13.5, color: context.textPrimary),
-                                  decoration: const InputDecoration(
-                                    prefixText: '+Rp ',
-                                    hintText: '0',
-                                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Nebula.teal,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                  elevation: 0,
-                                ),
-                                onPressed: () {
-                                  final name = _optionNameController.text.trim();
-                                  final price = int.tryParse(_optionPriceController.text.trim()) ?? 0;
-                                  if (name.isNotEmpty) {
-                                    _addOptionDirect(name, price);
-                                  }
-                                },
-                                child: const Text('+ Tambah', style: TextStyle(fontWeight: FontWeight.w700)),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Klik tombol "+ Tambah Grup Variasi" di atas untuk membuat kategori pilihan baru.',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.inter(fontSize: 11.5, color: context.textSecondary),
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Configured Options List
-                    if (_customizableOptions.isEmpty)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                        decoration: BoxDecoration(
-                          color: context.surfaceBg.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: context.dividerCol.withValues(alpha: 0.5), width: 0.5),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Belum ada variasi atau topping yang ditambahkan.\nGunakan preset di atas atau ketik manual.',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.inter(fontSize: 12, color: context.textSecondary, fontStyle: FontStyle.italic),
-                          ),
                         ),
                       )
-                    else ...[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Daftar Pilihan (${_customizableOptions.length})',
-                            style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: context.textPrimary),
-                          ),
-                          TextButton(
-                            onPressed: () => setState(() => _customizableOptions.clear()),
-                            style: TextButton.styleFrom(foregroundColor: Nebula.rose, padding: EdgeInsets.zero),
-                            child: const Text('Hapus Semua', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
+                    else
                       ListView.separated(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _customizableOptions.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
-                        itemBuilder: (context, index) {
-                          final opt = _customizableOptions[index];
-                          final parsed = _parseOption(opt);
-                          final String name = parsed['name'] as String;
-                          final int price = parsed['price'] as int;
-
-                          return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: context.cardBg,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: context.borderLight, width: 0.8),
-                            ),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 12,
-                                  backgroundColor: Nebula.teal.withValues(alpha: 0.1),
-                                  child: Text(
-                                    '${index + 1}',
-                                    style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w800, color: Nebula.teal),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    name,
-                                    style: GoogleFonts.inter(fontSize: 13.5, fontWeight: FontWeight.w600, color: context.textPrimary),
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: price > 0 ? Nebula.teal.withValues(alpha: 0.12) : context.surfaceBg,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    price > 0 ? '+${CurrencyFormatter.format(price)}' : 'Gratis',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.w700,
-                                      color: price > 0 ? Nebula.teal : context.textSecondary,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                IconButton(
-                                  icon: const Icon(CupertinoIcons.pencil, size: 16),
-                                  color: context.textSecondary,
-                                  onPressed: () => _showEditOptionDialog(index),
-                                ),
-                                IconButton(
-                                  icon: const Icon(CupertinoIcons.trash, size: 16),
-                                  color: Nebula.rose,
-                                  onPressed: () => setState(() => _customizableOptions.removeAt(index)),
-                                ),
-                              ],
-                            ),
-                          );
+                        itemCount: _modifierGroups.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 16),
+                        itemBuilder: (context, groupIndex) {
+                          final group = _modifierGroups[groupIndex];
+                          return _buildModifierGroupCard(group, groupIndex);
                         },
                       ),
-                    ],
 
                     const SizedBox(height: 36),
 
@@ -814,7 +892,312 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     );
   }
 
-  Widget _buildPresetActionChip({
+  Widget _buildModifierGroupCard(ModifierGroup group, int groupIndex) {
+    return Container(
+      decoration: BoxDecoration(
+        color: context.cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.borderLight, width: 0.8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Group Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: context.surfaceBg,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              border: Border(bottom: BorderSide(color: context.dividerCol, width: 0.8)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              group.title,
+                              style: GoogleFonts.inter(fontSize: 14.5, fontWeight: FontWeight.w800, color: context.textPrimary),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          InkWell(
+                            onTap: () => _showEditGroupTitleDialog(group),
+                            child: const Icon(CupertinoIcons.pencil, size: 14, color: Nebula.teal),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: group.isSingleSelect ? Nebula.teal.withValues(alpha: 0.1) : Nebula.amber.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          group.isSingleSelect ? 'Pilih 1 (Wajib / Radio)' : 'Pilih Banyak (Opsional / Checkbox)',
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: group.isSingleSelect ? Nebula.teal : Nebula.amber,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Toggle Single/Multi
+                PopupMenuButton<bool>(
+                  tooltip: 'Ubah Aturan',
+                  icon: const Icon(Icons.more_vert, size: 18),
+                  onSelected: (val) {
+                    setState(() {
+                      group.isSingleSelect = val;
+                    });
+                  },
+                  itemBuilder: (ctx) => [
+                    const PopupMenuItem(
+                      value: true,
+                      child: Text('Atur sebagai: Pilih 1 (Radio)'),
+                    ),
+                    const PopupMenuItem(
+                      value: false,
+                      child: Text('Atur sebagai: Pilih Banyak (Checkbox)'),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  icon: const Icon(CupertinoIcons.trash, size: 16, color: Nebula.rose),
+                  onPressed: () {
+                    setState(() {
+                      _modifierGroups.removeAt(groupIndex);
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          // Group Items List
+          Padding(
+            padding: const EdgeInsets.all(14.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (group.items.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Text(
+                      'Belum ada pilihan di dalam grup ini. Tambahkan pilihan di bawah.',
+                      style: GoogleFonts.inter(fontSize: 11.5, color: context.textSecondary, fontStyle: FontStyle.italic),
+                    ),
+                  )
+                else
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: group.items.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 6),
+                    itemBuilder: (context, itemIndex) {
+                      final item = group.items[itemIndex];
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: context.surfaceBg,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: context.dividerCol, width: 0.5),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              group.isSingleSelect ? Icons.radio_button_checked : Icons.check_box_outlined,
+                              size: 16,
+                              color: Nebula.teal,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                item.name,
+                                style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: context.textPrimary),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: item.price > 0 ? Nebula.teal.withValues(alpha: 0.12) : context.cardBg,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                item.price > 0 ? '+${CurrencyFormatter.format(item.price)}' : 'Gratis',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: item.price > 0 ? Nebula.teal : context.textSecondary,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            IconButton(
+                              icon: const Icon(CupertinoIcons.pencil, size: 14),
+                              color: context.textSecondary,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                              onPressed: () => _showEditItemDialog(group, itemIndex),
+                            ),
+                            IconButton(
+                              icon: const Icon(CupertinoIcons.xmark, size: 14),
+                              color: Nebula.rose,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                              onPressed: () {
+                                setState(() {
+                                  group.items.removeAt(itemIndex);
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                const SizedBox(height: 12),
+
+                // Inline Item Creator for this specific Group
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: context.surfaceBg.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: context.dividerCol, width: 0.6),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: TextField(
+                          controller: group.itemNameController,
+                          style: GoogleFonts.inter(fontSize: 12.5, color: context.textPrimary),
+                          decoration: InputDecoration(
+                            isDense: true,
+                            hintText: 'Tambah opsi ke "${group.title}"...',
+                            hintStyle: GoogleFonts.inter(fontSize: 11.5, color: context.textSecondary),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                          controller: group.itemPriceController,
+                          keyboardType: TextInputType.number,
+                          style: GoogleFonts.inter(fontSize: 12.5, color: context.textPrimary),
+                          decoration: InputDecoration(
+                            isDense: true,
+                            prefixText: '+Rp ',
+                            hintText: '0',
+                            hintStyle: GoogleFonts.inter(fontSize: 11.5, color: context.textSecondary),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Nebula.teal,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          minimumSize: const Size(0, 36),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          elevation: 0,
+                        ),
+                        onPressed: () {
+                          final name = group.itemNameController.text.trim();
+                          final price = int.tryParse(group.itemPriceController.text.trim()) ?? 0;
+                          if (name.isNotEmpty) {
+                            setState(() {
+                              group.items.add(ModifierItem(name: name, price: price));
+                              group.itemNameController.clear();
+                              group.itemPriceController.clear();
+                            });
+                          }
+                        },
+                        child: Text('+ Tambah', style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditGroupTitleDialog(ModifierGroup group) {
+    final titleController = TextEditingController(text: group.title);
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: ctx.cardBg,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: ctx.dividerCol, width: 0.8),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Ubah Nama Grup Variasi', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w800, color: ctx.textPrimary)),
+              const SizedBox(height: 12),
+              TextField(
+                controller: titleController,
+                autofocus: true,
+                style: GoogleFonts.inter(fontSize: 14, color: ctx.textPrimary),
+                decoration: const InputDecoration(labelText: 'Nama Grup'),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Batal', style: TextStyle(color: ctx.textSecondary))),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: Nebula.teal, foregroundColor: Colors.white),
+                    onPressed: () {
+                      final title = titleController.text.trim();
+                      if (title.isNotEmpty) {
+                        setState(() => group.title = title);
+                        Navigator.pop(ctx);
+                      }
+                    },
+                    child: const Text('Simpan'),
+                  ),
+                ],
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickTemplateChip({
     required IconData icon,
     required String label,
     required VoidCallback onTap,
@@ -822,31 +1205,20 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     return PressScale(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: context.cardBg,
-          borderRadius: BorderRadius.circular(10),
+          color: context.surfaceBg,
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(color: context.borderLight, width: 0.8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 15, color: Nebula.teal),
-            const SizedBox(width: 6),
+            Icon(icon, size: 13, color: Nebula.teal),
+            const SizedBox(width: 5),
             Text(
               label,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: context.textPrimary,
-              ),
+              style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: context.textPrimary),
             ),
           ],
         ),
