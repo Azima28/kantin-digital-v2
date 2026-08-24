@@ -168,6 +168,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   void _showAddGroupDialog() {
     final titleController = TextEditingController();
     bool isSingleSelect = true;
+    String? errorMessage;
 
     showDialog(
       context: context,
@@ -201,9 +202,15 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     controller: titleController,
                     autofocus: true,
                     style: GoogleFonts.inter(fontSize: 14, color: ctx.textPrimary),
-                    decoration: const InputDecoration(
+                    onChanged: (val) {
+                      if (errorMessage != null) {
+                        setDialogState(() => errorMessage = null);
+                      }
+                    },
+                    decoration: InputDecoration(
                       labelText: 'Nama Grup Variasi',
                       hintText: 'Contoh: Tingkat Keasinan',
+                      errorText: errorMessage,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -237,8 +244,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Pilih 1 (Wajib / Radio)', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: ctx.textPrimary)),
-                                Text('Pelanggan hanya boleh memilih 1 opsi (misal: Level Asin / Pedas)', style: GoogleFonts.inter(fontSize: 11, color: ctx.textSecondary)),
+                                Text('Pilih 1', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: ctx.textPrimary)),
+                                Text('Pelanggan hanya memilih 1 opsi (misal: Level Asin / Pedas)', style: GoogleFonts.inter(fontSize: 11, color: ctx.textSecondary)),
                               ],
                             ),
                           ),
@@ -272,7 +279,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Pilih Banyak (Opsional / Checkbox)', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: ctx.textPrimary)),
+                                Text('Pilih Banyak', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: ctx.textPrimary)),
                                 Text('Pelanggan bisa memilih lebih dari 1 opsi (misal: Ekstra Topping)', style: GoogleFonts.inter(fontSize: 11, color: ctx.textSecondary)),
                               ],
                             ),
@@ -297,10 +304,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         ),
                         onPressed: () {
                           final title = titleController.text.trim();
-                          if (title.isNotEmpty) {
-                            _addNewGroup(title: title, isSingleSelect: isSingleSelect);
-                            Navigator.pop(ctx);
+                          if (title.isEmpty) {
+                            setDialogState(() => errorMessage = 'Nama grup variasi wajib diisi');
+                            return;
                           }
+                          _addNewGroup(title: title, isSingleSelect: isSingleSelect);
+                          Navigator.pop(ctx);
                         },
                         child: const Text('Buat Grup'),
                       ),
@@ -950,7 +959,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  'Pilih 1 (Radio)',
+                                  'Pilih 1',
                                   style: GoogleFonts.inter(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w700,
@@ -983,7 +992,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  'Pilih Banyak (Checkbox)',
+                                  'Pilih Banyak',
                                   style: GoogleFonts.inter(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w700,
@@ -1212,49 +1221,63 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   void _showEditGroupTitleDialog(ModifierGroup group) {
     final titleController = TextEditingController(text: group.title);
+    String? errorMessage;
+
     showDialog(
       context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: ctx.cardBg,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: ctx.dividerCol, width: 0.8),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Ubah Nama Grup Variasi', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w800, color: ctx.textPrimary)),
-              const SizedBox(height: 12),
-              TextField(
-                controller: titleController,
-                autofocus: true,
-                style: GoogleFonts.inter(fontSize: 14, color: ctx.textPrimary),
-                decoration: const InputDecoration(labelText: 'Nama Grup'),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Batal', style: TextStyle(color: ctx.textSecondary))),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: Nebula.teal, foregroundColor: Colors.white),
-                    onPressed: () {
-                      final title = titleController.text.trim();
-                      if (title.isNotEmpty) {
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: ctx.cardBg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: ctx.dividerCol, width: 0.8),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Ubah Nama Grup Variasi', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w800, color: ctx.textPrimary)),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: titleController,
+                  autofocus: true,
+                  style: GoogleFonts.inter(fontSize: 14, color: ctx.textPrimary),
+                  onChanged: (val) {
+                    if (errorMessage != null) {
+                      setDialogState(() => errorMessage = null);
+                    }
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Nama Grup',
+                    errorText: errorMessage,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Batal', style: TextStyle(color: ctx.textSecondary))),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: Nebula.teal, foregroundColor: Colors.white),
+                      onPressed: () {
+                        final title = titleController.text.trim();
+                        if (title.isEmpty) {
+                          setDialogState(() => errorMessage = 'Nama grup wajib diisi');
+                          return;
+                        }
                         setState(() => group.title = title);
                         Navigator.pop(ctx);
-                      }
-                    },
-                    child: const Text('Simpan'),
-                  ),
-                ],
-              )
-            ],
+                      },
+                      child: const Text('Simpan'),
+                    ),
+                  ],
+                )
+              ],
+            ),
           ),
         ),
       ),
