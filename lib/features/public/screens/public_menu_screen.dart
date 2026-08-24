@@ -917,7 +917,7 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
                           // Rating & Canteen Row
                           Row(
                             children: [
-                              if (product.hasRating || product.rating > 0) ...[
+                              if (product.hasRating) ...[
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                                   decoration: BoxDecoration(
@@ -930,7 +930,7 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
                                       const Icon(Icons.star_rounded, size: 9.5, color: Colors.white),
                                       const SizedBox(width: 2),
                                       Text(
-                                        product.rating > 0 ? product.rating.toStringAsFixed(1) : '5.0',
+                                        product.rating.toStringAsFixed(1),
                                         style: const TextStyle(
                                           fontSize: 9.5,
                                           fontWeight: FontWeight.bold,
@@ -1473,7 +1473,7 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
                       const SizedBox(height: 3),
                       Row(
                         children: [
-                          if (product.hasRating || product.rating > 0) ...[
+                          if (product.hasRating) ...[
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                               decoration: BoxDecoration(
@@ -1486,7 +1486,7 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
                                   const Icon(Icons.star_rounded, size: 9.5, color: Colors.white),
                                   const SizedBox(width: 2),
                                   Text(
-                                    product.rating > 0 ? product.rating.toStringAsFixed(1) : '5.0',
+                                    product.rating.toStringAsFixed(1),
                                     style: const TextStyle(
                                       fontSize: 9.5,
                                       fontWeight: FontWeight.bold,

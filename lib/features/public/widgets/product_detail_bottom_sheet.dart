@@ -295,7 +295,7 @@ class _ProductDetailBottomSheetState
                       ),
                       Row(
                         children: [
-                          if (product.hasRating || product.rating > 0) ...[
+                          if (product.hasRating) ...[
                             Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 6, vertical: 2.5),
@@ -310,9 +310,7 @@ class _ProductDetailBottomSheetState
                                       size: 12, color: Colors.white),
                                   const SizedBox(width: 2),
                                   Text(
-                                    product.rating > 0
-                                        ? product.rating.toStringAsFixed(1)
-                                        : '5.0',
+                                    product.rating.toStringAsFixed(1),
                                     style: const TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
@@ -331,6 +329,15 @@ class _ProductDetailBottomSheetState
                                 fontSize: 12,
                                 color: context.textSecondary,
                                 fontWeight: FontWeight.w600,
+                              ),
+                            )
+                          else
+                            Text(
+                              'Menu Baru',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                color: context.textSecondary,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                         ],
