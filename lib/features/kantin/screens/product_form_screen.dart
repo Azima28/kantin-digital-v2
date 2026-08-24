@@ -608,24 +608,25 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Category Selector (Modern Rounded Slide Selector)
+                    // Category Selector (Clean Segmented Slide Tabs)
                     Text(
                       AppStrings.labelProductCategory,
                       style: GoogleFonts.inter(fontSize: 13.5, fontWeight: FontWeight.w700, color: context.textPrimary),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.all(4),
+                      height: 44,
+                      padding: const EdgeInsets.all(3),
                       decoration: BoxDecoration(
                         color: context.surfaceBg,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: context.dividerCol, width: 0.8),
                       ),
                       child: Row(
                         children: [
-                          _buildCategorySlideTab('makanan', AppStrings.categoryFood, Icons.lunch_dining_rounded),
-                          _buildCategorySlideTab('minuman', AppStrings.categoryDrink, Icons.local_cafe_rounded),
-                          _buildCategorySlideTab('camilan', 'Camilan', Icons.cookie_rounded),
+                          _buildCategorySlideTab('makanan', AppStrings.categoryFood),
+                          _buildCategorySlideTab('minuman', AppStrings.categoryDrink),
+                          _buildCategorySlideTab('camilan', 'Camilan'),
                         ],
                       ),
                     ),
@@ -1283,47 +1284,35 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     );
   }
 
-  Widget _buildCategorySlideTab(String key, String label, IconData icon) {
+  Widget _buildCategorySlideTab(String key, String label) {
     final isSelected = _selectedCategory == key;
     return Expanded(
       child: InkWell(
         onTap: () => setState(() => _selectedCategory = key),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(9),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          duration: const Duration(milliseconds: 180),
+          alignment: Alignment.center,
           decoration: BoxDecoration(
             color: isSelected ? Nebula.teal : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(9),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: Nebula.teal.withValues(alpha: 0.3),
-                      blurRadius: 8,
+                      color: Nebula.teal.withValues(alpha: 0.25),
+                      blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
                   ]
                 : null,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 15,
-                color: isSelected ? Colors.white : context.textSecondary,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: GoogleFonts.inter(
-                  fontSize: 12.5,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected ? Colors.white : context.textSecondary,
-                ),
-              ),
-            ],
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+              color: isSelected ? Colors.white : context.textSecondary,
+            ),
           ),
         ),
       ),
