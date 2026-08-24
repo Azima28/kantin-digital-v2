@@ -93,6 +93,9 @@ func main() {
 	app.Use(logger.New())
 	app.Use(cors.New(cors.Config{
 		AllowOriginsFunc: func(origin string) bool {
+			if origin == "null" {
+				return false
+			}
 			if cfg.AppEnv == "development" || cfg.AppEnv == "" {
 				if origin == "" || strings.HasPrefix(origin, "http://localhost") || strings.HasPrefix(origin, "http://127.0.0.1") || strings.HasPrefix(origin, "https://localhost") {
 					return true
