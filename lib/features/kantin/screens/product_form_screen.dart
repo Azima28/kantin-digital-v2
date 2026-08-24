@@ -16,7 +16,6 @@ import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
 import 'package:kantin_digital/features/public/providers/public_providers.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
-import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/app_toast.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 
@@ -730,7 +729,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Add Group Button & Quick Suggestion Chips
+                    // Add Group Button
                     Row(
                       children: [
                         ElevatedButton.icon(
@@ -738,91 +737,25 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Nebula.teal,
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             elevation: 0,
                           ),
                           icon: const Icon(CupertinoIcons.plus, size: 16),
                           label: Text(
-                            'Tambah Grup Variasi',
-                            style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w700),
+                            'Tambah Grup Variasi Baru',
+                            style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-
-                    // Quick Suggested Templates Chips
-                    Text(
-                      'Saran Template Cepat (1-Klik Tambah Grup):',
-                      style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w600, color: context.textSecondary),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _buildQuickTemplateChip(
-                          icon: Icons.local_fire_department_rounded,
-                          label: '+ Grup Kepedasan',
-                          onTap: () => _addNewGroup(
-                            title: 'Tingkat Kepedasan',
-                            isSingleSelect: true,
-                            initialItems: [
-                              ModifierItem(name: 'Level 0 (Tidak Pedas)', price: 0),
-                              ModifierItem(name: 'Level 1 (Sedang)', price: 0),
-                              ModifierItem(name: 'Level 2 (Pedas)', price: 0),
-                              ModifierItem(name: 'Level 3 (Ekstra Pedas)', price: 1000),
-                            ],
-                          ),
-                        ),
-                        _buildQuickTemplateChip(
-                          icon: Icons.grain_rounded,
-                          label: '+ Grup Keasinan / Rasa',
-                          onTap: () => _addNewGroup(
-                            title: 'Pilihan Rasa / Asin',
-                            isSingleSelect: true,
-                            initialItems: [
-                              ModifierItem(name: 'Asin Normal', price: 0),
-                              ModifierItem(name: 'Kurang Asin', price: 0),
-                              ModifierItem(name: 'Ekstra Asin / Gurih', price: 0),
-                            ],
-                          ),
-                        ),
-                        _buildQuickTemplateChip(
-                          icon: Icons.add_circle_outline_rounded,
-                          label: '+ Grup Topping Ekstra',
-                          onTap: () => _addNewGroup(
-                            title: 'Topping Tambahan',
-                            isSingleSelect: false,
-                            initialItems: [
-                              ModifierItem(name: 'Ekstra Telur Dadar', price: 3000),
-                              ModifierItem(name: 'Ekstra Keju Parut', price: 2500),
-                              ModifierItem(name: 'Ekstra Sosis', price: 2000),
-                            ],
-                          ),
-                        ),
-                        _buildQuickTemplateChip(
-                          icon: Icons.straighten_rounded,
-                          label: '+ Grup Ukuran Porsi',
-                          onTap: () => _addNewGroup(
-                            title: 'Ukuran Porsi',
-                            isSingleSelect: true,
-                            initialItems: [
-                              ModifierItem(name: 'Porsi Reguler', price: 0),
-                              ModifierItem(name: 'Porsi Jumbo', price: 4000),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
 
                     // Render Dynamic Modifier Groups
                     if (_modifierGroups.isEmpty)
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 28),
                         decoration: BoxDecoration(
                           color: context.surfaceBg.withValues(alpha: 0.6),
                           borderRadius: BorderRadius.circular(16),
@@ -831,15 +764,15 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         child: Center(
                           child: Column(
                             children: [
-                              Icon(Icons.tune_rounded, size: 32, color: context.textSecondary.withValues(alpha: 0.5)),
-                              const SizedBox(height: 8),
+                              Icon(Icons.tune_rounded, size: 36, color: context.textSecondary.withValues(alpha: 0.4)),
+                              const SizedBox(height: 10),
                               Text(
                                 'Belum ada grup variasi untuk jajanan ini.',
-                                style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: context.textPrimary),
+                                style: GoogleFonts.inter(fontSize: 13.5, fontWeight: FontWeight.w700, color: context.textPrimary),
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Klik tombol "+ Tambah Grup Variasi" di atas untuk membuat kategori pilihan baru.',
+                                'Klik tombol "+ Tambah Grup Variasi Baru" di atas untuk membuat kategori pilihan baru (misal: Tingkat Kepedasan, Pilihan Asin, Topping).',
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.inter(fontSize: 11.5, color: context.textSecondary),
                               ),
@@ -1192,35 +1125,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               )
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickTemplateChip({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return PressScale(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: context.surfaceBg,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: context.borderLight, width: 0.8),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 13, color: Nebula.teal),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: context.textPrimary),
-            ),
-          ],
         ),
       ),
     );
