@@ -40,12 +40,22 @@ func (s *AuthService) Login(ctx context.Context, identifier, password, expectedR
 	cleanID := strings.TrimSpace(identifier)
 	var authenticatedUser *domain.UserProfile
 
-	// 1. If expectedRole is "parent", prioritize finding the linked parent by Student NISN/Username first
+	// 1. If expectedRole is "parent", prioritize finding the linked parent by Student NISN/Username
 	if expectedRole == string(domain.RoleParent) || expectedRole == "parent" {
 		parentUser, parentErr := s.userRepo.FindParentByStudentNISN(ctx, cleanID)
-		if parentErr == nil && parentUser != nil && parentUser.Password != nil && *parentUser.Password != "" {
-			if hasher.CheckPassword(password, *parentUser.Password) || password == *parentUser.Password {
+		if parentErr == nil && parentUser != nil {
+			// Check parent's own password
+			if parentUser.Password != nil && *parentUser.Password != "" &&
+				(hasher.CheckPassword(password, *parentUser.Password) || password == *parentUser.Password) {
 				authenticatedUser = parentUser
+			} else {
+				// Fallback: check if password matches student's password (family login)
+				studentUser, studentErr := s.userRepo.FindByIdentifier(ctx, cleanID)
+				if studentErr == nil && studentUser != nil && studentUser.Password != nil && *studentUser.Password != "" {
+					if hasher.CheckPassword(password, *studentUser.Password) || password == *studentUser.Password {
+						authenticatedUser = parentUser
+					}
+				}
 			}
 		}
 	}
@@ -59,7 +69,18 @@ func (s *AuthService) Login(ctx context.Context, identifier, password, expectedR
 			}
 		} else if user != nil && user.Password != nil && *user.Password != "" {
 			if hasher.CheckPassword(password, *user.Password) || password == *user.Password {
-				authenticatedUser = user
+				if expectedRole == string(domain.RoleParent) || expectedRole == "parent" {
+					if user.Role == domain.RoleParent {
+						authenticatedUser = user
+					} else {
+						parentUser, parentErr := s.userRepo.FindParentByStudentNISN(ctx, cleanID)
+						if parentErr == nil && parentUser != nil {
+							authenticatedUser = parentUser
+						}
+					}
+				} else {
+					authenticatedUser = user
+				}
 			}
 		}
 	}
