@@ -504,11 +504,11 @@ func (r *OrderRepo) ListOrderMessages(ctx context.Context, orderID string) ([]do
 
 	rows, err := r.db.Pool.Query(ctx, query, orderID)
 	if err != nil {
-		return nil, err
+		return make([]domain.OrderMessage, 0), err
 	}
 	defer rows.Close()
 
-	var messages []domain.OrderMessage
+	messages := make([]domain.OrderMessage, 0)
 	for rows.Next() {
 		var m domain.OrderMessage
 		err := rows.Scan(
@@ -516,7 +516,7 @@ func (r *OrderRepo) ListOrderMessages(ctx context.Context, orderID string) ([]do
 			&m.SenderName,
 		)
 		if err != nil {
-			return nil, err
+			return make([]domain.OrderMessage, 0), err
 		}
 		messages = append(messages, m)
 	}

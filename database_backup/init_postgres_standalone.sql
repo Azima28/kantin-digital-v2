@@ -131,6 +131,7 @@ CREATE TABLE IF NOT EXISTS public.order_messages (
     sender_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     sender_role TEXT NOT NULL CHECK (sender_role IN ('student', 'petugas_kantin', 'system')),
     message TEXT NOT NULL,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
