@@ -15,6 +15,7 @@ import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/features/public/providers/public_providers.dart';
 import 'package:kantin_digital/features/public/widgets/stan_reviews_bottom_sheet.dart';
+import 'package:kantin_digital/features/public/widgets/product_detail_bottom_sheet.dart';
 import 'package:kantin_digital/features/siswa/providers/student_cart_provider.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
@@ -847,7 +848,6 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
         return Transform.scale(
           scale: scale,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             decoration: BoxDecoration(
               color: context.cardBg,
               borderRadius: BorderRadius.circular(16),
@@ -866,7 +866,21 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
                 ),
               ],
             ),
-            child: Row(
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => ProductDetailBottomSheet.show(
+                  context,
+                  product: product,
+                  stanId: stanId,
+                  stanName: stanName,
+                  deliveryFee: deliveryFee,
+                  description: _getProductDescription(product),
+                ),
+                borderRadius: BorderRadius.circular(16),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Product Image
@@ -1042,10 +1056,13 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
               ],
             ),
           ),
-        );
-      },
-    );
-  }
+        ),
+      ),
+    ),
+  );
+},
+);
+}
 
   // ─── 4. "ORANG-ORANG PADA DOYAN INI" HORIZONTAL SLIDER ───
   Widget _buildPopularHorizontalSlider(
@@ -1087,8 +1104,14 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
               return PressScale(
                 scale: 0.96,
                 onTap: () {
-                  setState(() => _highlightedProductId = product.id);
-                  _pulseController.forward(from: 0.0);
+                  ProductDetailBottomSheet.show(
+                    context,
+                    product: product,
+                    stanId: stanId,
+                    stanName: stanName,
+                    deliveryFee: deliveryFee,
+                    description: _getProductDescription(product),
+                  );
                 },
                 child: Container(
                   width: 145,
@@ -1374,7 +1397,6 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
@@ -1387,9 +1409,23 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
           ),
         ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => ProductDetailBottomSheet.show(
+            context,
+            product: product,
+            stanId: stanId,
+            stanName: stanName,
+            deliveryFee: deliveryFee,
+            description: _getProductDescription(product),
+          ),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
           // Left: Name, Description, Price
           Expanded(
             child: Column(
@@ -1532,8 +1568,11 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
           ),
         ],
       ),
-    );
-  }
+    ),
+  ),
+),
+);
+}
 
   // ─── 6. FLOATING CONTROLS: KERANJANG + TOMBOL MENU KATEGORI ───
   Widget _buildFloatingControls(List<String> categories) {
