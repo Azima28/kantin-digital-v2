@@ -15,15 +15,18 @@ if exist "C:\laragon\bin\postgresql\pgsql\bin\pg_ctl.exe" (
 
 :: 2. Stop old backend instance if any
 taskkill /F /IM api.exe >nul 2>&1
+taskkill /F /IM server.exe >nul 2>&1
 
 :: 3. Build and Start Go Backend API
 echo [*] Menjalankan Go Backend API Server (Port 8000)...
 cd /d "%~dp0backend"
-if exist "api.exe" (
+if exist "server.exe" (
+    start "Kantin Digital API (Port 8000)" "%~dp0backend\server.exe"
+) else if exist "api.exe" (
     start "Kantin Digital API (Port 8000)" "%~dp0backend\api.exe"
 ) else (
-    go build -o api.exe ./cmd/api
-    start "Kantin Digital API (Port 8000)" "%~dp0backend\api.exe"
+    go build -o server.exe ./cmd/api
+    start "Kantin Digital API (Port 8000)" "%~dp0backend\server.exe"
 )
 
 echo.

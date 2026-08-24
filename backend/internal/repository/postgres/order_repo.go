@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
@@ -19,27 +21,124 @@ func NewOrderRepo(db *DB) *OrderRepo {
 	return &OrderRepo{db: db}
 }
 
+// parseOptionAddonPrice extracts extra addon price from an option string like "telur (+Rp 3.000)" -> 3000
+func parseOptionAddonPrice(optionStr string) int {
+	re := regexp.MustCompile(`\(\+\s*(?:Rp\s*)?([0-9\.\,]+)\)`)
+	matches := re.FindStringSubmatch(optionStr)
+	if len(matches) > 1 {
+		clean := strings.ReplaceAll(matches[1], ".", "")
+		clean = strings.ReplaceAll(clean, ",", "")
+		clean = strings.ReplaceAll(clean, " ", "")
+		val, err := strconv.Atoi(clean)
+		if err == nil && val > 0 {
+			return val
+		}
+	}
+	return 0
+}
+
 func (r *OrderRepo) CreateOrder(ctx context.Context, order *domain.Order, items []domain.OrderItem) (*domain.Order, error) {
+	if len(items) == 0 {
+		return nil, errors.New("pesanan harus memiliki setidaknya 1 item")
+	}
+
 	tx, err := r.db.Pool.Begin(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer tx.Rollback(ctx)
 
-	// 1. Authoritative price calculation from products table
+	// 1. Authoritative price and product validation strictly from database
 	calculatedTotal := 0
 	for i := range items {
-		var dbPrice int
-		var dbName string
-		err := tx.QueryRow(ctx, `SELECT price, name FROM public.products WHERE LOWER(name) = LOWER($1) OR id::text = $1 LIMIT 1`, items[i].ProductName).Scan(&dbPrice, &dbName)
-		if err == nil {
-			items[i].Price = dbPrice
-			items[i].ProductName = dbName
+		productRef := ""
+		if items[i].ProductID != nil && strings.TrimSpace(*items[i].ProductID) != "" {
+			productRef = strings.TrimSpace(*items[i].ProductID)
+		} else if strings.TrimSpace(items[i].ProductName) != "" {
+			productRef = strings.TrimSpace(items[i].ProductName)
 		}
+
+		if productRef == "" {
+			return nil, errors.New("setiap item pesanan wajib menyertakan ID produk (product_id)")
+		}
+
+		var dbID string
+		var dbOperatorID string
+		var dbName string
+		var dbPrice int
+		var isAvailable bool
+		var optBytes []byte
+
+		// Query product strictly by ID (or fallback to exact name if legacy)
+		queryProduct := `
+			SELECT id, operator_id, name, price, is_available, customizable_options
+			FROM public.products
+			WHERE id::text = $1 OR LOWER(name) = LOWER($1)
+			LIMIT 1`
+		err := tx.QueryRow(ctx, queryProduct, productRef).Scan(
+			&dbID, &dbOperatorID, &dbName, &dbPrice, &isAvailable, &optBytes,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("produk '%s' tidak ditemukan di menu kantin", productRef)
+		}
+
+		if !isAvailable {
+			return nil, fmt.Errorf("produk '%s' sedang tidak tersedia (stok habis)", dbName)
+		}
+
+		if order.OperatorID != nil && *order.OperatorID != "" && !strings.EqualFold(dbOperatorID, *order.OperatorID) {
+			return nil, fmt.Errorf("produk '%s' bukan milik stan yang dipilih", dbName)
+		}
+
+		// Ensure order.OperatorID is locked to the product's operator
+		if order.OperatorID == nil || *order.OperatorID == "" {
+			order.OperatorID = &dbOperatorID
+		}
+
+		// Calculate extra topping / option prices from authoritative DB options
+		var dbOptions []string
+		if len(optBytes) > 0 {
+			_ = json.Unmarshal(optBytes, &dbOptions)
+		}
+
+		addonPrice := 0
+		var validatedOptions []string
+		for _, userOpt := range items[i].SelectedOptions {
+			trimmedUserOpt := strings.TrimSpace(userOpt)
+			if trimmedUserOpt == "" {
+				continue
+			}
+			matched := false
+			for _, validOpt := range dbOptions {
+				if strings.EqualFold(validOpt, trimmedUserOpt) ||
+					strings.HasPrefix(strings.ToLower(validOpt), strings.ToLower(trimmedUserOpt)) ||
+					strings.HasPrefix(strings.ToLower(trimmedUserOpt), strings.ToLower(validOpt)) {
+					addonPrice += parseOptionAddonPrice(validOpt)
+					validatedOptions = append(validatedOptions, validOpt)
+					matched = true
+					break
+				}
+			}
+			if !matched {
+				extra := parseOptionAddonPrice(trimmedUserOpt)
+				if extra > 0 {
+					addonPrice += extra
+				}
+				validatedOptions = append(validatedOptions, trimmedUserOpt)
+			}
+		}
+
+		unitPrice := dbPrice + addonPrice
 		if items[i].Quantity <= 0 {
 			items[i].Quantity = 1
 		}
-		calculatedTotal += items[i].Price * items[i].Quantity
+
+		items[i].ProductID = &dbID
+		items[i].ProductName = dbName
+		items[i].Price = unitPrice
+		items[i].SelectedOptions = validatedOptions
+
+		calculatedTotal += unitPrice * items[i].Quantity
 	}
 
 	// 2. Add delivery fee if applicable
@@ -47,22 +146,32 @@ func (r *OrderRepo) CreateOrder(ctx context.Context, order *domain.Order, items 
 		var deliveryFee int
 		var isDeliveryEnabled bool
 		err := tx.QueryRow(ctx, `SELECT delivery_fee, is_delivery_enabled FROM public.canteen_operators WHERE id = $1`, *order.OperatorID).Scan(&deliveryFee, &isDeliveryEnabled)
-		if err == nil && isDeliveryEnabled && order.DeliveryLocation != nil && *order.DeliveryLocation != "" {
+		if err == nil && isDeliveryEnabled && order.DeliveryLocation != nil && strings.TrimSpace(*order.DeliveryLocation) != "" && !strings.Contains(strings.ToLower(*order.DeliveryLocation), "pickup") && !strings.Contains(strings.ToLower(*order.DeliveryLocation), "ambil sendiri") {
 			calculatedTotal += deliveryFee
 		}
 	}
 
 	order.TotalAmount = calculatedTotal
 
-	// 3. Lock student balance row
+	// 3. Lock student balance row & validate account/card status
 	var currentBalance int
-	var isActive bool
-	err = tx.QueryRow(ctx, `SELECT balance, is_active FROM public.students WHERE id = $1 FOR UPDATE`, order.StudentID).Scan(&currentBalance, &isActive)
+	var isCardActive bool
+	var isProfileActive bool
+	var rfidUID *string
+	err = tx.QueryRow(ctx, `
+		SELECT s.balance, s.is_active, p.is_active, s.rfid_uid
+		FROM public.students s
+		JOIN public.profiles p ON p.id = s.id
+		WHERE s.id = $1
+		FOR UPDATE`, order.StudentID).Scan(&currentBalance, &isCardActive, &isProfileActive, &rfidUID)
 	if err != nil {
 		return nil, errors.New("data siswa tidak ditemukan")
 	}
-	if !isActive {
-		return nil, errors.New("kartu atau akun siswa sedang dinonaktifkan")
+	if !isProfileActive {
+		return nil, errors.New("transaksi ditolak: Akun siswa sedang dinonaktifkan / diblokir oleh admin")
+	}
+	if !isCardActive {
+		return nil, errors.New("transaksi ditolak: Kartu RFID siswa sedang diblokir / dibekukan")
 	}
 	if currentBalance < order.TotalAmount {
 		return nil, fmt.Errorf("saldo tidak mencukupi (Saldo: Rp %d, Total Tagihan: Rp %d)", currentBalance, order.TotalAmount)
@@ -90,11 +199,11 @@ func (r *OrderRepo) CreateOrder(ctx context.Context, order *domain.Order, items 
 	for i := range items {
 		optJSON, _ := json.Marshal(items[i].SelectedOptions)
 		queryItem := `
-			INSERT INTO public.order_items (order_id, product_name, quantity, price, selected_options)
-			VALUES ($1, $2, $3, $4, $5::jsonb)
+			INSERT INTO public.order_items (order_id, product_id, product_name, quantity, price, selected_options, notes)
+			VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)
 			RETURNING id`
 		err = tx.QueryRow(ctx, queryItem,
-			order.ID, items[i].ProductName, items[i].Quantity, items[i].Price, optJSON,
+			order.ID, items[i].ProductID, items[i].ProductName, items[i].Quantity, items[i].Price, optJSON, items[i].Notes,
 		).Scan(&items[i].ID)
 		if err != nil {
 			return nil, err
@@ -157,11 +266,12 @@ func (r *OrderRepo) GetOrderByID(ctx context.Context, orderID string) (*domain.O
 		}
 	}
 
-	// Fetch items
+	// Fetch items with image_url joined
 	itemsQuery := `
-		SELECT id, order_id, product_name, quantity, price, selected_options
-		FROM public.order_items
-		WHERE order_id = $1`
+		SELECT oi.id, oi.order_id, oi.product_id, oi.product_name, oi.quantity, oi.price, oi.selected_options, COALESCE(oi.notes, ''), p.image_url
+		FROM public.order_items oi
+		LEFT JOIN public.products p ON p.id = oi.product_id OR (oi.product_id IS NULL AND LOWER(p.name) = LOWER(oi.product_name))
+		WHERE oi.order_id = $1`
 
 	itemRows, err := r.db.Pool.Query(ctx, itemsQuery, orderID)
 	if err == nil {
@@ -169,7 +279,7 @@ func (r *OrderRepo) GetOrderByID(ctx context.Context, orderID string) (*domain.O
 		for itemRows.Next() {
 			var it domain.OrderItem
 			var optBytes []byte
-			if err := itemRows.Scan(&it.ID, &it.OrderID, &it.ProductName, &it.Quantity, &it.Price, &optBytes); err == nil {
+			if err := itemRows.Scan(&it.ID, &it.OrderID, &it.ProductID, &it.ProductName, &it.Quantity, &it.Price, &optBytes, &it.Notes, &it.ImageURL); err == nil {
 				if len(optBytes) > 0 {
 					_ = json.Unmarshal(optBytes, &it.SelectedOptions)
 				}
@@ -219,16 +329,16 @@ func (r *OrderRepo) ListOrdersByStudent(ctx context.Context, studentID string) (
 	// Fetch items for all student orders
 	for i := range orders {
 		itemsQuery := `
-			SELECT oi.id, oi.order_id, oi.product_name, oi.quantity, oi.price, oi.selected_options, p.image_url
+			SELECT oi.id, oi.order_id, oi.product_id, oi.product_name, oi.quantity, oi.price, oi.selected_options, COALESCE(oi.notes, ''), p.image_url
 			FROM public.order_items oi
-			LEFT JOIN public.products p ON LOWER(p.name) = LOWER(oi.product_name)
+			LEFT JOIN public.products p ON p.id = oi.product_id OR (oi.product_id IS NULL AND LOWER(p.name) = LOWER(oi.product_name))
 			WHERE oi.order_id = $1`
 		itemRows, err := r.db.Pool.Query(ctx, itemsQuery, orders[i].ID)
 		if err == nil {
 			for itemRows.Next() {
 				var it domain.OrderItem
 				var optBytes []byte
-				if err := itemRows.Scan(&it.ID, &it.OrderID, &it.ProductName, &it.Quantity, &it.Price, &optBytes, &it.ImageURL); err == nil {
+				if err := itemRows.Scan(&it.ID, &it.OrderID, &it.ProductID, &it.ProductName, &it.Quantity, &it.Price, &optBytes, &it.Notes, &it.ImageURL); err == nil {
 					if len(optBytes) > 0 {
 						_ = json.Unmarshal(optBytes, &it.SelectedOptions)
 					}
@@ -270,16 +380,16 @@ func (r *OrderRepo) ListOrdersByOperator(ctx context.Context, operatorID string,
 	// Fetch items for all operator orders
 	for i := range orders {
 		itemsQuery := `
-			SELECT oi.id, oi.order_id, oi.product_name, oi.quantity, oi.price, oi.selected_options, p.image_url
+			SELECT oi.id, oi.order_id, oi.product_id, oi.product_name, oi.quantity, oi.price, oi.selected_options, COALESCE(oi.notes, ''), p.image_url
 			FROM public.order_items oi
-			LEFT JOIN public.products p ON LOWER(p.name) = LOWER(oi.product_name)
+			LEFT JOIN public.products p ON p.id = oi.product_id OR (oi.product_id IS NULL AND LOWER(p.name) = LOWER(oi.product_name))
 			WHERE oi.order_id = $1`
 		itemRows, err := r.db.Pool.Query(ctx, itemsQuery, orders[i].ID)
 		if err == nil {
 			for itemRows.Next() {
 				var it domain.OrderItem
 				var optBytes []byte
-				if err := itemRows.Scan(&it.ID, &it.OrderID, &it.ProductName, &it.Quantity, &it.Price, &optBytes, &it.ImageURL); err == nil {
+				if err := itemRows.Scan(&it.ID, &it.OrderID, &it.ProductID, &it.ProductName, &it.Quantity, &it.Price, &optBytes, &it.Notes, &it.ImageURL); err == nil {
 					if len(optBytes) > 0 {
 						_ = json.Unmarshal(optBytes, &it.SelectedOptions)
 					}
@@ -308,88 +418,65 @@ func (r *OrderRepo) UpdateOrderStatus(ctx context.Context, orderID string, newSt
 		&prevStatus, &totalAmount, &operatorID, &studentID,
 	)
 	if err != nil {
-		return err
+		return errors.New("pesanan tidak ditemukan")
 	}
 
-	// 1. Idempotency Check: No-op if status is unchanged
 	if prevStatus == newStatus {
 		return nil
 	}
 
-	// 2. Strict State Machine Validation: Terminal states are immutable
-	if prevStatus == domain.OrderStatusSelesai {
-		return fmt.Errorf("pesanan sudah selesai dan tidak dapat diubah lagi")
-	}
-	if prevStatus == domain.OrderStatusDibatalkan {
-		return fmt.Errorf("pesanan sudah dibatalkan dan tidak dapat diubah lagi")
-	}
-
-	// 3. Update status in orders table
-	_, err = tx.Exec(ctx, `UPDATE public.orders SET status = $1, updated_at = NOW() WHERE id = $2`, newStatus, orderID)
-	if err != nil {
-		return err
-	}
-
-	// 4. Escrow Release: Transition to 'Selesai' exactly once
-	if newStatus == domain.OrderStatusSelesai {
-		if operatorID != nil && totalAmount > 0 {
-			// Credit canteen operator balance
+	// 1. If transitioning to Selesai: Release escrow funds to canteen operator
+	if newStatus == domain.OrderStatusSelesai && prevStatus != domain.OrderStatusSelesai {
+		if operatorID != nil && *operatorID != "" {
 			_, err = tx.Exec(ctx, `UPDATE public.canteen_operators SET balance_earned = balance_earned + $1 WHERE id = $2`, totalAmount, *operatorID)
 			if err != nil {
-				return err
+				return fmt.Errorf("gagal menambahkan saldo pendapatan stan: %w", err)
 			}
-
-			// Update corresponding transaction status to 'success'
-			res, _ := tx.Exec(ctx, `
-				UPDATE public.transactions
-				SET status = 'success', updated_at = NOW()
-				WHERE student_id = $1 AND operator_id = $2 AND total_amount = $3 AND status IN ('pending', 'pending_escrow')
-			`, studentID, *operatorID, totalAmount)
-
-			if res.RowsAffected() == 0 {
-				_, _ = tx.Exec(ctx, `
-					INSERT INTO public.transactions (student_id, operator_id, total_amount, type, status, purchase_method, created_at)
-					VALUES ($1, $2, $3, 'purchase', 'success', 'app_order', NOW())
-				`, studentID, *operatorID, totalAmount)
-			}
-
-			notifMsg := fmt.Sprintf("Pesanan Anda senilai Rp %d telah selesai disiapkan oleh kantin.", totalAmount)
-			_, _ = tx.Exec(ctx, `INSERT INTO public.notifications (student_id, title, message, type) VALUES ($1, 'Pesanan Selesai! 🎉', $2, 'system')`, studentID, notifMsg)
-
-			_, _ = tx.Exec(ctx, `INSERT INTO public.audit_logs (user_id, action, entity_name, entity_id, created_at) VALUES ($1, 'SELESAI_PESANAN', 'orders', $2, NOW())`, *operatorID, orderID)
 		}
+
+		// Update transaction status to 'success'
+		_, _ = tx.Exec(ctx, `
+			UPDATE public.transactions
+			SET status = 'success'
+			WHERE student_id = $1 AND operator_id = $2 AND total_amount = $3 AND status = 'pending'`,
+			studentID, operatorID, totalAmount,
+		)
+
+		// Send notification to student
+		_, _ = tx.Exec(ctx, `
+			INSERT INTO public.notifications (student_id, title, message, type)
+			VALUES ($1, 'Pesanan Selesai! 🎉', 'Pesanan Anda telah selesai diproses oleh stan.', 'general')`,
+			studentID,
+		)
 	}
 
-	// 5. Automatic Refund: Transition to 'Dibatalkan' exactly once
-	if newStatus == domain.OrderStatusDibatalkan {
-		if totalAmount > 0 {
-			// Refund student balance
-			_, err = tx.Exec(ctx, `UPDATE public.students SET balance = balance + $1 WHERE id = $2`, totalAmount, studentID)
-			if err != nil {
-				return err
-			}
-
-			if operatorID != nil {
-				// Mark corresponding transaction as refunded
-				res, _ := tx.Exec(ctx, `
-					UPDATE public.transactions
-					SET status = 'refunded', updated_at = NOW()
-					WHERE student_id = $1 AND operator_id = $2 AND total_amount = $3 AND status IN ('pending', 'pending_escrow')
-				`, studentID, *operatorID, totalAmount)
-
-				if res.RowsAffected() == 0 {
-					_, _ = tx.Exec(ctx, `
-						INSERT INTO public.transactions (student_id, operator_id, total_amount, type, status, purchase_method, created_at)
-						VALUES ($1, $2, $3, 'purchase', 'refunded', 'app_order', NOW())
-					`, studentID, *operatorID, totalAmount)
-				}
-
-				_, _ = tx.Exec(ctx, `INSERT INTO public.audit_logs (user_id, action, entity_name, entity_id, created_at) VALUES ($1, 'BATAL_PESANAN', 'orders', $2, NOW())`, *operatorID, orderID)
-			}
-
-			notifMsg := fmt.Sprintf("Pesanan senilai Rp %d dibatalkan. Saldo telah dikembalikan ke akun Anda.", totalAmount)
-			_, _ = tx.Exec(ctx, `INSERT INTO public.notifications (student_id, title, message, type) VALUES ($1, 'Pesanan Dibatalkan ❌', $2, 'refund')`, studentID, notifMsg)
+	// 2. If transitioning to Dibatalkan: Refund escrow funds back to student balance
+	if newStatus == domain.OrderStatusDibatalkan && prevStatus != domain.OrderStatusDibatalkan {
+		_, err = tx.Exec(ctx, `UPDATE public.students SET balance = balance + $1 WHERE id = $2`, totalAmount, studentID)
+		if err != nil {
+			return fmt.Errorf("gagal mengembalikan saldo siswa: %w", err)
 		}
+
+		// Update transaction status to 'refunded'
+		_, _ = tx.Exec(ctx, `
+			UPDATE public.transactions
+			SET status = 'refunded'
+			WHERE student_id = $1 AND operator_id = $2 AND total_amount = $3 AND status = 'pending'`,
+			studentID, operatorID, totalAmount,
+		)
+
+		// Send notification to student
+		_, _ = tx.Exec(ctx, `
+			INSERT INTO public.notifications (student_id, title, message, type)
+			VALUES ($1, 'Pesanan Dibatalkan ↩️', $2, 'general')`,
+			studentID, fmt.Sprintf("Pesanan dibatalkan. Dana sebesar Rp %d telah dikembalikan ke saldo kartu Anda.", totalAmount),
+		)
+	}
+
+	// Update order status in orders table
+	_, err = tx.Exec(ctx, `UPDATE public.orders SET status = $1 WHERE id = $2`, newStatus, orderID)
+	if err != nil {
+		return err
 	}
 
 	return tx.Commit(ctx)
@@ -397,18 +484,23 @@ func (r *OrderRepo) UpdateOrderStatus(ctx context.Context, orderID string, newSt
 
 func (r *OrderRepo) AddOrderMessage(ctx context.Context, msg *domain.OrderMessage) error {
 	query := `
-		INSERT INTO public.order_messages (order_id, sender_id, sender_role, sender_name, message)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO public.order_messages (order_id, sender_id, sender_role, message)
+		VALUES ($1, $2, $3, $4)
 		RETURNING id, created_at`
-	return r.db.Pool.QueryRow(ctx, query, msg.OrderID, msg.SenderID, msg.SenderRole, msg.SenderName, msg.Message).Scan(&msg.ID, &msg.CreatedAt)
+
+	return r.db.Pool.QueryRow(ctx, query,
+		msg.OrderID, msg.SenderID, msg.SenderRole, msg.Message,
+	).Scan(&msg.ID, &msg.CreatedAt)
 }
 
 func (r *OrderRepo) ListOrderMessages(ctx context.Context, orderID string) ([]domain.OrderMessage, error) {
 	query := `
-		SELECT id, order_id, sender_id, sender_role, COALESCE(sender_name, ''), message, COALESCE(is_read, false), created_at
-		FROM public.order_messages
-		WHERE order_id = $1
-		ORDER BY created_at ASC`
+		SELECT m.id, m.order_id, m.sender_id, m.sender_role, m.message, m.is_read, m.created_at,
+		       COALESCE(p.full_name, 'Pengguna') as sender_name
+		FROM public.order_messages m
+		LEFT JOIN public.profiles p ON p.id = m.sender_id
+		WHERE m.order_id = $1
+		ORDER BY m.created_at ASC`
 
 	rows, err := r.db.Pool.Query(ctx, query, orderID)
 	if err != nil {
@@ -416,58 +508,44 @@ func (r *OrderRepo) ListOrderMessages(ctx context.Context, orderID string) ([]do
 	}
 	defer rows.Close()
 
-	var list []domain.OrderMessage
+	var messages []domain.OrderMessage
 	for rows.Next() {
 		var m domain.OrderMessage
-		if err := rows.Scan(&m.ID, &m.OrderID, &m.SenderID, &m.SenderRole, &m.SenderName, &m.Message, &m.IsRead, &m.CreatedAt); err != nil {
+		err := rows.Scan(
+			&m.ID, &m.OrderID, &m.SenderID, &m.SenderRole, &m.Message, &m.IsRead, &m.CreatedAt,
+			&m.SenderName,
+		)
+		if err != nil {
 			return nil, err
 		}
-		list = append(list, m)
+		messages = append(messages, m)
 	}
-	return list, nil
+	return messages, nil
 }
 
-func (r *OrderRepo) MarkMessagesAsRead(ctx context.Context, orderID, myUserID string) error {
-	query := `UPDATE public.order_messages SET is_read = true WHERE order_id = $1 AND sender_id != $2`
-	_, err := r.db.Pool.Exec(ctx, query, orderID, myUserID)
+func (r *OrderRepo) MarkMessagesAsRead(ctx context.Context, orderID, readerID string) error {
+	query := `
+		UPDATE public.order_messages
+		SET is_read = true
+		WHERE order_id = $1 AND sender_id != $2`
+
+	_, err := r.db.Pool.Exec(ctx, query, orderID, readerID)
 	return err
 }
 
-func (r *OrderRepo) CreateReview(ctx context.Context, review *domain.OrderReview) (*domain.OrderReview, error) {
+func (r *OrderRepo) CreateReview(ctx context.Context, rev *domain.OrderReview) (*domain.OrderReview, error) {
 	query := `
-		INSERT INTO public.order_reviews (order_id, student_id, operator_id, rating, review_text, tags, is_anonymous, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-		ON CONFLICT (order_id) DO UPDATE
-		SET rating = EXCLUDED.rating, review_text = EXCLUDED.review_text, tags = EXCLUDED.tags, is_anonymous = EXCLUDED.is_anonymous, created_at = NOW()
+		INSERT INTO public.order_reviews (order_id, student_id, operator_id, rating, review_text, tags, is_anonymous)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id, created_at`
 
 	err := r.db.Pool.QueryRow(ctx, query,
-		review.OrderID, review.StudentID, review.OperatorID, review.Rating, review.ReviewText, review.Tags, review.IsAnonymous,
-	).Scan(&review.ID, &review.CreatedAt)
+		rev.OrderID, rev.StudentID, rev.OperatorID, rev.Rating, rev.ReviewText, rev.Tags, rev.IsAnonymous,
+	).Scan(&rev.ID, &rev.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
-
-	// Send categorized notification to canteen operator with type 'review'
-	reviewerName := "Siswa"
-	if !review.IsAnonymous {
-		_ = r.db.Pool.QueryRow(ctx, `SELECT full_name FROM public.profiles WHERE id = $1`, review.StudentID).Scan(&reviewerName)
-	}
-	notifTitle := fmt.Sprintf("Ulasan Baru (★ %d)", review.Rating)
-	notifMsg := fmt.Sprintf("%s memberi rating ★ %d untuk pesananmu.", reviewerName, review.Rating)
-	if review.ReviewText != "" {
-		notifMsg = fmt.Sprintf("%s: \"%s\"", reviewerName, review.ReviewText)
-	} else if len(review.Tags) > 0 {
-		notifMsg = fmt.Sprintf("%s: %s", reviewerName, strings.Join(review.Tags, ", "))
-	}
-
-	_, _ = r.db.Pool.Exec(ctx, `
-		INSERT INTO public.notifications (user_id, student_id, title, message, type, is_read, created_at)
-		VALUES ($1, NULL, $2, $3, 'review', false, NOW())`,
-		review.OperatorID, notifTitle, notifMsg,
-	)
-
-	return review, nil
+	return rev, nil
 }
 
 func (r *OrderRepo) GetReviewByOrderID(ctx context.Context, orderID string) (*domain.OrderReview, error) {
@@ -475,13 +553,12 @@ func (r *OrderRepo) GetReviewByOrderID(ctx context.Context, orderID string) (*do
 		SELECT r.id, r.order_id, r.student_id, r.operator_id, r.rating, r.review_text, r.tags, r.is_anonymous, r.created_at,
 		       p.full_name, p.avatar_url
 		FROM public.order_reviews r
-		JOIN public.profiles p ON p.id = r.student_id
+		LEFT JOIN public.profiles p ON p.id = r.student_id
 		WHERE r.order_id = $1`
 
 	row := r.db.Pool.QueryRow(ctx, query, orderID)
 	var rev domain.OrderReview
-	var fullName string
-	var avatarURL *string
+	var fullName, avatarURL *string
 	err := row.Scan(
 		&rev.ID, &rev.OrderID, &rev.StudentID, &rev.OperatorID, &rev.Rating, &rev.ReviewText, &rev.Tags, &rev.IsAnonymous, &rev.CreatedAt,
 		&fullName, &avatarURL,
@@ -497,36 +574,35 @@ func (r *OrderRepo) GetReviewByOrderID(ctx context.Context, orderID string) (*do
 		rev.StudentName = "Siswa (Anonim)"
 		rev.AvatarURL = nil
 	} else {
-		rev.StudentName = fullName
+		if fullName != nil {
+			rev.StudentName = *fullName
+		}
 		rev.AvatarURL = avatarURL
 	}
+
 	return &rev, nil
 }
 
-func (r *OrderRepo) ListCanteenReviews(ctx context.Context, operatorID string, limit int) ([]domain.OrderReview, error) {
-	if limit <= 0 {
-		limit = 20
-	}
+func (r *OrderRepo) ListCanteenReviews(ctx context.Context, canteenID string, limit int) ([]domain.OrderReview, error) {
 	query := `
 		SELECT r.id, r.order_id, r.student_id, r.operator_id, r.rating, r.review_text, r.tags, r.is_anonymous, r.created_at,
 		       p.full_name, p.avatar_url
 		FROM public.order_reviews r
-		JOIN public.profiles p ON p.id = r.student_id
+		LEFT JOIN public.profiles p ON p.id = r.student_id
 		WHERE r.operator_id = $1
 		ORDER BY r.created_at DESC
 		LIMIT $2`
 
-	rows, err := r.db.Pool.Query(ctx, query, operatorID, limit)
+	rows, err := r.db.Pool.Query(ctx, query, canteenID, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var list []domain.OrderReview
+	var reviews []domain.OrderReview
 	for rows.Next() {
 		var rev domain.OrderReview
-		var fullName string
-		var avatarURL *string
+		var fullName, avatarURL *string
 		err := rows.Scan(
 			&rev.ID, &rev.OrderID, &rev.StudentID, &rev.OperatorID, &rev.Rating, &rev.ReviewText, &rev.Tags, &rev.IsAnonymous, &rev.CreatedAt,
 			&fullName, &avatarURL,
@@ -538,10 +614,12 @@ func (r *OrderRepo) ListCanteenReviews(ctx context.Context, operatorID string, l
 			rev.StudentName = "Siswa (Anonim)"
 			rev.AvatarURL = nil
 		} else {
-			rev.StudentName = fullName
+			if fullName != nil {
+				rev.StudentName = *fullName
+			}
 			rev.AvatarURL = avatarURL
 		}
-		list = append(list, rev)
+		reviews = append(reviews, rev)
 	}
-	return list, nil
+	return reviews, nil
 }

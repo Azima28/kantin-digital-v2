@@ -107,11 +107,15 @@ CREATE TABLE IF NOT EXISTS public.orders (
 CREATE TABLE IF NOT EXISTS public.order_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id UUID NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
+    product_id UUID REFERENCES public.products(id) ON DELETE SET NULL,
     product_name TEXT NOT NULL,
     quantity INTEGER NOT NULL CHECK (quantity > 0),
     price INTEGER NOT NULL CHECK (price >= 0),
-    selected_options JSONB DEFAULT '[]'::jsonb
+    selected_options JSONB DEFAULT '[]'::jsonb,
+    notes TEXT DEFAULT ''
 );
+
+CREATE INDEX IF NOT EXISTS idx_order_items_product_id ON public.order_items(product_id);
 
 -- ---------------------------------------------------------------------
 -- 9. Table: public.order_messages

@@ -31,21 +31,6 @@ func (s *OrderService) CreateOrder(ctx context.Context, req CreateOrderRequest) 
 		return nil, errors.New("pesanan harus memiliki setidaknya 1 item")
 	}
 
-	calculatedItemsTotal := 0
-	for _, it := range req.Items {
-		if it.Quantity <= 0 {
-			return nil, errors.New("jumlah item harus lebih dari 0")
-		}
-		if it.Price < 0 {
-			return nil, errors.New("harga item tidak boleh negatif")
-		}
-		calculatedItemsTotal += it.Price * it.Quantity
-	}
-
-	if req.TotalAmount < calculatedItemsTotal {
-		req.TotalAmount = calculatedItemsTotal
-	}
-
 	order := &domain.Order{
 		StudentID:        req.StudentID,
 		StudentName:      req.StudentName,

@@ -20,10 +20,12 @@ const (
 type OrderItem struct {
 	ID              string   `json:"id"`
 	OrderID         string   `json:"order_id"`
+	ProductID       *string  `json:"product_id,omitempty"`
 	ProductName     string   `json:"product_name"`
 	Quantity        int      `json:"quantity"`
 	Price           int      `json:"price"`
 	SelectedOptions []string `json:"selected_options"`
+	Notes           string   `json:"notes,omitempty"`
 	ImageURL        *string  `json:"image_url,omitempty"`
 }
 

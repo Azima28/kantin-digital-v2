@@ -530,10 +530,12 @@ class _StudentPinPaymentModalState extends ConsumerState<StudentPinPaymentModal>
 
       final List<Map<String, dynamic>> orderItems = cartSnapshot.map((item) {
         return {
+          'product_id': item.productId,
           'product_name': item.name,
           'quantity': item.quantity,
           'price': item.price,
           'selected_options': item.selectedOptions,
+          'notes': item.notes ?? '',
         };
       }).toList();
 

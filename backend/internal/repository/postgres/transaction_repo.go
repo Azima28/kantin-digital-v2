@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -42,24 +43,61 @@ func (r *TransactionRepo) ProcessPurchase(ctx context.Context, p CheckoutParams)
 	}
 	defer tx.Rollback(ctx)
 
-	// 1. Authoritative price recalculation from database
+	// 1. Authoritative price and product validation strictly from database
 	authoritativeTotal := 0
 	for i := range p.Items {
-		if p.Items[i].ProductID != nil && *p.Items[i].ProductID != "" {
-			var dbPrice int
-			err := tx.QueryRow(ctx, `SELECT price FROM public.products WHERE id = $1`, *p.Items[i].ProductID).Scan(&dbPrice)
-			if err == nil && dbPrice > 0 {
-				p.Items[i].UnitPrice = dbPrice
-			}
+		productRef := ""
+		if p.Items[i].ProductID != nil && strings.TrimSpace(*p.Items[i].ProductID) != "" {
+			productRef = strings.TrimSpace(*p.Items[i].ProductID)
+		} else if p.Items[i].ProductName != nil && strings.TrimSpace(*p.Items[i].ProductName) != "" {
+			productRef = strings.TrimSpace(*p.Items[i].ProductName)
 		}
+
+		if productRef == "" {
+			return nil, errors.New("setiap item transaksi wajib menyertakan ID produk (product_id)")
+		}
+
+		var dbID string
+		var dbOperatorID string
+		var dbName string
+		var dbPrice int
+		var isAvailable bool
+
+		queryProduct := `
+			SELECT id, operator_id, name, price, is_available
+			FROM public.products
+			WHERE id::text = $1 OR LOWER(name) = LOWER($1)
+			LIMIT 1`
+		err := tx.QueryRow(ctx, queryProduct, productRef).Scan(
+			&dbID, &dbOperatorID, &dbName, &dbPrice, &isAvailable,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("produk '%s' tidak ditemukan di menu stan", productRef)
+		}
+
+		if !isAvailable {
+			return nil, fmt.Errorf("produk '%s' sedang tidak tersedia (stok habis)", dbName)
+		}
+
+		if p.OperatorID != "" && !strings.EqualFold(dbOperatorID, p.OperatorID) {
+			return nil, fmt.Errorf("produk '%s' bukan milik stan Anda", dbName)
+		}
+
 		if p.Items[i].Quantity <= 0 {
 			p.Items[i].Quantity = 1
 		}
-		authoritativeTotal += p.Items[i].UnitPrice * p.Items[i].Quantity
+
+		p.Items[i].ProductID = &dbID
+		p.Items[i].ProductName = &dbName
+		p.Items[i].UnitPrice = dbPrice
+
+		authoritativeTotal += dbPrice * p.Items[i].Quantity
 	}
-	if authoritativeTotal > 0 {
-		p.TotalAmount = authoritativeTotal
+
+	if authoritativeTotal <= 0 {
+		return nil, errors.New("total tagihan harus lebih dari 0")
 	}
+	p.TotalAmount = authoritativeTotal
 
 	// 2. Lock student row to prevent concurrent race condition (double spending)
 	var currentBalance int
