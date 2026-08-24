@@ -249,6 +249,48 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
     );
   }
 
+  Future<void> _openCustomDateDialog() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _customDateRange?.start ?? now,
+      firstDate: DateTime(2020, 1, 1),
+      lastDate: DateTime(2100, 12, 31),
+      helpText: 'PILIH TANGGAL ANALISIS',
+      cancelText: 'Batal',
+      confirmText: 'Pilih',
+      builder: (context, child) {
+        final isDark = context.isDark;
+        final bgCard = isDark ? const Color(0xFF1E293B) : Colors.white;
+        final textPrimary = isDark ? Colors.white : const Color(0xFF0F172A);
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+                  primary: Nebula.teal,
+                  onPrimary: Colors.white,
+                  surface: bgCard,
+                  onSurface: textPrimary,
+                  surfaceTint: Colors.transparent,
+                ),
+            dialogTheme: DialogThemeData(
+              backgroundColor: bgCard,
+              surfaceTintColor: Colors.transparent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _customDateRange = DateTimeRange(start: picked, end: picked);
+        _selectedPeriod = 'Kustom';
+      });
+    }
+  }
+
   Widget _buildAnalisisTab(List<OperatorTransaction> transactions) {
     final periodTxs = _filterTransactionsByPeriod(transactions, _selectedPeriod);
     final categorySpending = _calculateCategorySpending(periodTxs);
@@ -272,51 +314,22 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Cupertino Segmented Control
+        // Period Selector with Direct Popup Date Picker
         ParentAnalisisPeriodSelector(
           selectedPeriod: _selectedPeriod,
           customDateRange: _customDateRange,
-          onPeriodChanged: (val) async {
-            if (val == 'Kustom') {
-              final range = await showDateRangePicker(
-                context: context,
-                firstDate: DateTime(2000, 1, 1),
-                lastDate: DateTime(2100, 12, 31),
-                builder: (context, child) {
-                  return Theme(
-                    data: Theme.of(context).copyWith(
-                      colorScheme: Theme.of(context).colorScheme.copyWith(
-                            primary: Nebula.teal,
-                            onPrimary: Colors.white,
-                            surface: context.isDark ? const Color(0xFF1E293B) : Colors.white,
-                            surfaceTint: Colors.transparent,
-                          ),
-                      dialogTheme: DialogThemeData(
-                        backgroundColor: context.isDark ? const Color(0xFF1E293B) : Colors.white,
-                        surfaceTintColor: Colors.transparent,
-                      ),
-                      datePickerTheme: DatePickerThemeData(
-                        backgroundColor: context.isDark ? const Color(0xFF1E293B) : Colors.white,
-                        surfaceTintColor: Colors.transparent,
-                        headerBackgroundColor: context.isDark ? const Color(0xFF1E293B) : Colors.white,
-                        headerForegroundColor: context.isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                    child: child!,
-                  );
-                },
-              );
-              if (range != null) {
-                setState(() {
-                  _customDateRange = range;
-                  _selectedPeriod = val;
-                });
-              }
-            } else {
-              setState(() {
-                _selectedPeriod = val;
-              });
-            }
+          onPeriodChanged: (val) {
+            setState(() {
+              _selectedPeriod = val;
+              _customDateRange = null;
+            });
+          },
+          onOpenCustomDatePicker: _openCustomDateDialog,
+          onClearCustomDate: () {
+            setState(() {
+              _selectedPeriod = 'Minggu Ini';
+              _customDateRange = null;
+            });
           },
         ),
         const SizedBox(height: 16),

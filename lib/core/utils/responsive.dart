@@ -41,17 +41,16 @@ class Responsive {
     final w = MediaQuery.of(context).size.width;
     if (w >= 1200) return 6;
     if (w >= 900) return 4;
-    if (w >= 600) return 3;
-    return 2;
+    return 3;
   }
 
   /// Returns the childAspectRatio for the product grid.
   static double productGridAspectRatio(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     if (w >= 900) return 0.72;
-    if (w >= 600) return 0.68;
-    // Mobile: extra height for name + price + button
-    return 0.63;
+    if (w >= 600) return 0.65;
+    // Mobile 3-column layout: balanced height for image + title + price + button
+    return 0.58;
   }
 
   // ── Font Size ──────────────────────────────────────────────────
