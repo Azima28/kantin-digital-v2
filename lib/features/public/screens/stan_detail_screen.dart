@@ -14,6 +14,7 @@ import 'package:kantin_digital/core/utils/responsive.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/features/public/providers/public_providers.dart';
+import 'package:kantin_digital/features/public/widgets/stan_reviews_bottom_sheet.dart';
 import 'package:kantin_digital/features/siswa/providers/student_cart_provider.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
@@ -316,6 +317,7 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
           int deliveryFee = 2000;
           double stallRating = 0.0;
           bool hasStallRating = false;
+          int stallTotalReviews = 0;
 
           canteensAsync.whenData((stalls) {
             final match = stalls.where((s) => s.id == stanId).firstOrNull;
@@ -324,7 +326,8 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
               isDeliveryEnabled = match.isDeliveryEnabled;
               deliveryFee = match.deliveryFee;
               stallRating = match.rating;
-              hasStallRating = match.hasRating;
+              hasStallRating = match.hasRating || match.rating > 0;
+              stallTotalReviews = match.totalReviews;
             }
           });
 
@@ -397,7 +400,7 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Column(
                           children: [
-                            _buildStoreInfoCard(stanName, stanAvatar, isDeliveryEnabled, deliveryFee, stallRating, hasStallRating),
+                            _buildStoreInfoCard(stanId, stanName, stanAvatar, isDeliveryEnabled, deliveryFee, stallRating, stallTotalReviews, hasStallRating),
                             const SizedBox(height: 14),
 
                             // Highlighted Selected Product Card with Green Pulse
@@ -537,7 +540,16 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
   }
 
   // ─── 2. STORE INFO CARD DENGAN ANIMASI GESER DELIVERY/PICKUP & STATUS STAN ───
-  Widget _buildStoreInfoCard(String stanName, String stanAvatar, bool isDeliveryEnabled, int deliveryFee, double stallRating, bool hasStallRating) {
+  Widget _buildStoreInfoCard(
+    String stanId,
+    String stanName,
+    String stanAvatar,
+    bool isDeliveryEnabled,
+    int deliveryFee,
+    double stallRating,
+    int stallTotalReviews,
+    bool hasStallRating,
+  ) {
     final String formattedFee = deliveryFee
         .toStringAsFixed(0)
         .replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
@@ -560,63 +572,98 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Store Name & Verified Badge
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Text(
-                  stanName,
-                  style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: context.textPrimary,
-                    letterSpacing: -0.3,
+          // Store Name & Verified Badge (Clickable to open Reviews)
+          InkWell(
+            onTap: () => StanReviewsBottomSheet.show(
+              context,
+              canteenId: stanId,
+              canteenName: stanName,
+              averageRating: stallRating,
+              totalReviews: stallTotalReviews,
+            ),
+            borderRadius: BorderRadius.circular(8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(
+                    stanName,
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: context.textPrimary,
+                      letterSpacing: -0.3,
+                    ),
                   ),
                 ),
-              ),
-              const Icon(CupertinoIcons.chevron_right, size: 16, color: Colors.grey),
-            ],
+                const Icon(CupertinoIcons.chevron_right, size: 16, color: Colors.grey),
+              ],
+            ),
           ),
           const SizedBox(height: 8),
 
           // Operational Status & Store Rating
           Row(
             children: [
-              if (hasStallRating) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF10B981),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
+              // Clickable Rating Badge
+              InkWell(
+                onTap: () => StanReviewsBottomSheet.show(
+                  context,
+                  canteenId: stanId,
+                  canteenName: stanName,
+                  averageRating: stallRating,
+                  totalReviews: stallTotalReviews,
+                ),
+                borderRadius: BorderRadius.circular(6),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2.0),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.star, size: 11, color: Colors.white),
-                      const SizedBox(width: 2.5),
-                      Text(
-                        stallRating.toStringAsFixed(1),
-                        style: const TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.star_rounded, size: 13, color: Colors.white),
+                            const SizedBox(width: 3),
+                            Text(
+                              stallRating > 0 ? stallRating.toStringAsFixed(1) : '5.0',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                      const SizedBox(width: 6),
+                      Text(
+                        stallTotalReviews > 0 ? 'Rating ($stallTotalReviews)' : 'Rating',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: Nebula.teal,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(CupertinoIcons.chevron_right, size: 12, color: Nebula.teal),
                     ],
                   ),
                 ),
-                const SizedBox(width: 6),
-                Text(
-                  'Rating',
-                  style: GoogleFonts.inter(fontSize: 11.5, color: context.textSecondary, fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(width: 8),
-                const Text('•', style: TextStyle(color: Colors.grey)),
-                const SizedBox(width: 8),
-              ],
+              ),
+              const SizedBox(width: 8),
+              const Text('•', style: TextStyle(color: Colors.grey)),
+              const SizedBox(width: 8),
+
+              // Operational Status
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
                   color: const Color(0xFF10B981).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(6),
@@ -636,23 +683,6 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              const Text('•', style: TextStyle(color: Colors.grey)),
-              const SizedBox(width: 8),
-              Row(
-                children: const [
-                  Icon(Icons.verified_user_rounded, color: Color(0xFFEF4444), size: 14),
-                  SizedBox(width: 3),
-                  Text(
-                    'Pelayanan Prima',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFFEF4444),
-                    ),
-                  ),
-                ],
               ),
             ],
           ),
@@ -907,13 +937,56 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
                         ),
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        'Rp $formattedPrice',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF10B981),
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            'Rp $formattedPrice',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF10B981),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          if (product.hasRating || product.rating > 0) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.star_rounded, size: 9, color: Colors.white),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    product.rating > 0 ? product.rating.toStringAsFixed(1) : '5.0',
+                                    style: const TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                          ],
+                          if (product.totalSold > 0)
+                            Flexible(
+                              child: Text(
+                                '${product.totalSold} terjual',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontSize: 10,
+                                  color: context.textSecondary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ],
                   ),
@@ -1123,7 +1196,7 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
                           children: [
                             Text(
                               product.name,
-                              maxLines: 2,
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.inter(
                                 fontSize: 12.5,
@@ -1132,7 +1205,50 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
                                 height: 1.2,
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 3),
+                            Row(
+                              children: [
+                                if (product.hasRating || product.rating > 0) ...[
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF10B981),
+                                      borderRadius: BorderRadius.circular(3),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.star_rounded, size: 8.5, color: Colors.white),
+                                        const SizedBox(width: 1.5),
+                                        Text(
+                                          product.rating > 0 ? product.rating.toStringAsFixed(1) : '5.0',
+                                          style: const TextStyle(
+                                            fontSize: 8.5,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                ],
+                                if (product.totalSold > 0)
+                                  Flexible(
+                                    child: Text(
+                                      '${product.totalSold} terjual',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 9.5,
+                                        color: context.textSecondary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 5),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -1298,14 +1414,57 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
                     height: 1.25,
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  'Rp $formattedPrice',
-                  style: GoogleFonts.inter(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF10B981),
-                  ),
+                const SizedBox(height: 5),
+                Row(
+                  children: [
+                    Text(
+                      'Rp $formattedPrice',
+                      style: GoogleFonts.inter(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF10B981),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    if (product.hasRating || product.rating > 0) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.star_rounded, size: 9.5, color: Colors.white),
+                            const SizedBox(width: 2),
+                            Text(
+                              product.rating > 0 ? product.rating.toStringAsFixed(1) : '5.0',
+                              style: const TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                    if (product.totalSold > 0)
+                      Flexible(
+                        child: Text(
+                          '${product.totalSold} terjual',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: context.textSecondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ],
             ),

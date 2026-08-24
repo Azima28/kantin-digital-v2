@@ -917,7 +917,7 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
                           // Rating & Canteen Row
                           Row(
                             children: [
-                              if (product.hasRating) ...[
+                              if (product.hasRating || product.rating > 0) ...[
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                                   decoration: BoxDecoration(
@@ -927,10 +927,10 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(Icons.star, size: 9.5, color: Colors.white),
+                                      const Icon(Icons.star_rounded, size: 9.5, color: Colors.white),
                                       const SizedBox(width: 2),
                                       Text(
-                                        product.rating.toStringAsFixed(1),
+                                        product.rating > 0 ? product.rating.toStringAsFixed(1) : '5.0',
                                         style: const TextStyle(
                                           fontSize: 9.5,
                                           fontWeight: FontWeight.bold,
@@ -941,6 +941,19 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 5),
+                              ],
+                              if (product.totalSold > 0) ...[
+                                Text(
+                                  '${product.totalSold} terjual',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10,
+                                    color: context.textSecondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Text('•', style: TextStyle(color: Colors.grey, fontSize: 9)),
+                                const SizedBox(width: 4),
                               ],
                               Expanded(
                                 child: Text(
@@ -1455,6 +1468,49 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
                               ],
                             ),
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          if (product.hasRating || product.rating > 0) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.star_rounded, size: 9.5, color: Colors.white),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    product.rating > 0 ? product.rating.toStringAsFixed(1) : '5.0',
+                                    style: const TextStyle(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                          ],
+                          if (product.totalSold > 0) ...[
+                            Text(
+                              '${product.totalSold} terjual',
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                color: context.textSecondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            const Text('•', style: TextStyle(color: Colors.grey, fontSize: 10)),
+                            const SizedBox(width: 6),
+                          ],
                         ],
                       ),
                       const SizedBox(height: 3),

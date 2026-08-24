@@ -68,6 +68,9 @@ func (h *UploadHandler) UploadProductImage(c *fiber.Ctx) error {
 
 	// Generate absolute URL
 	baseURL := c.BaseURL()
+	if c.Get("X-Forwarded-Proto") == "https" || strings.Contains(c.Hostname(), "zitech.web.id") {
+		baseURL = strings.Replace(baseURL, "http://", "https://", 1)
+	}
 	if baseURL == "" || strings.Contains(baseURL, "localhost:655") || strings.Contains(baseURL, "localhost:591") {
 		baseURL = "http://127.0.0.1:8000"
 	}
@@ -124,6 +127,9 @@ func (h *UploadHandler) UploadAvatar(c *fiber.Ctx) error {
 	}
 
 	baseURL := c.BaseURL()
+	if c.Get("X-Forwarded-Proto") == "https" || strings.Contains(c.Hostname(), "zitech.web.id") {
+		baseURL = strings.Replace(baseURL, "http://", "https://", 1)
+	}
 	if baseURL == "" || strings.Contains(baseURL, "localhost:655") || strings.Contains(baseURL, "localhost:591") {
 		baseURL = "http://127.0.0.1:8000"
 	}
