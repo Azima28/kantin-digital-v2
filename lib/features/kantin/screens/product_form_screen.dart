@@ -219,73 +219,81 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w700, color: ctx.textPrimary),
                   ),
                   const SizedBox(height: 10),
-                  InkWell(
-                    onTap: () => setDialogState(() => isSingleSelect = true),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isSingleSelect ? Nebula.teal.withValues(alpha: 0.08) : ctx.surfaceBg,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSingleSelect ? Nebula.teal : ctx.dividerCol,
-                          width: isSingleSelect ? 1.5 : 0.8,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            isSingleSelect ? Icons.radio_button_checked : Icons.radio_button_off,
-                            color: isSingleSelect ? Nebula.teal : ctx.textSecondary,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Pilih 1', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: ctx.textPrimary)),
-                                Text('Pelanggan hanya memilih 1 opsi (misal: Level Asin / Pedas)', style: GoogleFonts.inter(fontSize: 11, color: ctx.textSecondary)),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                  // Slide Selector in Add Group Dialog
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: ctx.surfaceBg,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: ctx.dividerCol, width: 0.8),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  InkWell(
-                    onTap: () => setDialogState(() => isSingleSelect = false),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: !isSingleSelect ? Nebula.teal.withValues(alpha: 0.08) : ctx.surfaceBg,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: !isSingleSelect ? Nebula.teal : ctx.dividerCol,
-                          width: !isSingleSelect ? 1.5 : 0.8,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            !isSingleSelect ? Icons.check_box : Icons.check_box_outline_blank,
-                            color: !isSingleSelect ? Nebula.teal : ctx.textSecondary,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Pilih Banyak', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: ctx.textPrimary)),
-                                Text('Pelanggan bisa memilih lebih dari 1 opsi (misal: Ekstra Topping)', style: GoogleFonts.inter(fontSize: 11, color: ctx.textSecondary)),
-                              ],
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => setDialogState(() => isSingleSelect = true),
+                            borderRadius: BorderRadius.circular(10),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 180),
+                              padding: const EdgeInsets.symmetric(vertical: 9),
+                              decoration: BoxDecoration(
+                                color: isSingleSelect ? Nebula.teal : Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: isSingleSelect
+                                    ? [
+                                        BoxShadow(
+                                          color: Nebula.teal.withValues(alpha: 0.25),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                              alignment: Alignment.center,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.radio_button_checked, size: 14, color: isSingleSelect ? Colors.white : ctx.textSecondary),
+                                  const SizedBox(width: 6),
+                                  Text('Pilih 1', style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w800, color: isSingleSelect ? Colors.white : ctx.textSecondary)),
+                                ],
+                              ),
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => setDialogState(() => isSingleSelect = false),
+                            borderRadius: BorderRadius.circular(10),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 180),
+                              padding: const EdgeInsets.symmetric(vertical: 9),
+                              decoration: BoxDecoration(
+                                color: !isSingleSelect ? Nebula.teal : Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: !isSingleSelect
+                                    ? [
+                                        BoxShadow(
+                                          color: Nebula.teal.withValues(alpha: 0.25),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                              alignment: Alignment.center,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.check_box_outlined, size: 14, color: !isSingleSelect ? Colors.white : ctx.textSecondary),
+                                  const SizedBox(width: 6),
+                                  Text('Pilih Banyak', style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w800, color: !isSingleSelect ? Colors.white : ctx.textSecondary)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -600,34 +608,25 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Category Selector
+                    // Category Selector (Modern Rounded Slide Selector)
                     Text(
                       AppStrings.labelProductCategory,
                       style: GoogleFonts.inter(fontSize: 13.5, fontWeight: FontWeight.w700, color: context.textPrimary),
                     ),
                     const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: CupertinoSegmentedControl<String>(
-                        groupValue: _selectedCategory,
-                        selectedColor: Nebula.teal,
-                        unselectedColor: context.surfaceBg,
-                        borderColor: context.borderLight,
-                        children: const <String, Widget>{
-                          'makanan': Padding(
-                            padding: EdgeInsets.symmetric(vertical: 10),
-                            child: Text(AppStrings.categoryFood, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                          ),
-                          'minuman': Padding(
-                            padding: EdgeInsets.symmetric(vertical: 10),
-                            child: Text(AppStrings.categoryDrink, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                          ),
-                          'camilan': Padding(
-                            padding: EdgeInsets.symmetric(vertical: 10),
-                            child: Text('Camilan', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                          ),
-                        },
-                        onValueChanged: (val) => setState(() => _selectedCategory = val),
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: context.surfaceBg,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: context.dividerCol, width: 0.8),
+                      ),
+                      child: Row(
+                        children: [
+                          _buildCategorySlideTab('makanan', AppStrings.categoryFood, Icons.lunch_dining_rounded),
+                          _buildCategorySlideTab('minuman', AppStrings.categoryDrink, Icons.local_cafe_rounded),
+                          _buildCategorySlideTab('camilan', 'Camilan', Icons.cookie_rounded),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -1278,6 +1277,53 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 )
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategorySlideTab(String key, String label, IconData icon) {
+    final isSelected = _selectedCategory == key;
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _selectedCategory = key),
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? Nebula.teal : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Nebula.teal.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 15,
+                color: isSelected ? Colors.white : context.textSecondary,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 12.5,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  color: isSelected ? Colors.white : context.textSecondary,
+                ),
+              ),
+            ],
           ),
         ),
       ),
