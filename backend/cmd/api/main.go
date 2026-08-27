@@ -298,7 +298,7 @@ func main() {
 			parentGroup.Get("/dashboard/:studentId", parentH.Dashboard)
 		}
 		authRequired.Patch("/student/settings", middleware.RequireRoles(domain.RoleParent, domain.RoleSuperAdmin, domain.RoleAdmin, domain.RolePetugasKeuangan), parentH.UpdateStudentSettings)
-		authRequired.Patch("/student/card-status", middleware.RequireRoles(domain.RolePetugasKeuangan, domain.RoleSuperAdmin, domain.RoleAdmin), studentH.UpdateCardStatus)
+		authRequired.Patch("/student/card-status", middleware.RequireRoles(domain.RoleStudent, domain.RoleParent, domain.RolePetugasKeuangan, domain.RoleSuperAdmin, domain.RoleAdmin), studentH.UpdateCardStatus)
 		authRequired.Patch("/users/:id/status", middleware.RequireRoles(domain.RolePetugasKeuangan, domain.RoleSuperAdmin, domain.RoleAdmin), adminH.UpdateStatus)
 
 		// Super Admin & Admin / Finance Management

@@ -279,6 +279,74 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
 
     final bool isSearchActive = _isSearchFocused || _searchQuery.trim().isNotEmpty;
 
+    if (isSearchActive) {
+      // ── SEARCH MODE ──
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1000),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── SEARCH MODE TOP BAR ──
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          onTap: _closeSearch,
+                          child: Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: context.cardBg,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: context.borderLight, width: 0.8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: context.isDark ? 0.2 : 0.05),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(CupertinoIcons.left_chevron, size: 17),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _buildSearchInputField(),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // ── SEARCH RESULTS OR POPULAR SUGGESTIONS ──
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
+                      child: _buildSearchResultsView(
+                        context,
+                        ref,
+                        allProductsAsync,
+                        canteensAsync,
+                        isDesktop,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // ── DISCOVERY / NORMAL MENU MODE (Hero banner scrolls naturally, search bar floats overlapping) ──
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Stack(
@@ -288,41 +356,65 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 1000),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── UNIFIED ANIMATED TOP HEADER (Hero / Sticky Search) ──
-                    _buildAnimatedHeader(context, isSearchActive, allProductsAsync, activeStall),
-
-                    // ── BODY CONTENT (Smooth Transition between Discovery & Search Results) ──
-                    Expanded(
-                      child: RefreshIndicator(
-                        onRefresh: () async {
-                          setState(() {
-                            _shuffledRecommendations.clear();
-                            _randomPromoBanners.clear();
-                          });
-                          ref.invalidate(publicMenuProvider(null));
-                          ref.invalidate(publicCanteensProvider);
-                        },
-                        child: SingleChildScrollView(
-                          controller: _scrollController,
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: EdgeInsets.zero,
-                          child: AnimatedCrossFade(
-                            duration: const Duration(milliseconds: 280),
-                            firstCurve: Curves.easeInOutCubic,
-                            secondCurve: Curves.easeInOutCubic,
-                            crossFadeState: isSearchActive
-                                ? CrossFadeState.showSecond
-                                : CrossFadeState.showFirst,
-                            firstChild: _buildDiscoveryView(context, ref, allProductsAsync, activeStall, isDesktop),
-                            secondChild: _buildSearchResultsView(context, ref, allProductsAsync, canteensAsync, isDesktop),
-                          ),
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    setState(() {
+                      _shuffledRecommendations.clear();
+                      _randomPromoBanners.clear();
+                    });
+                    ref.invalidate(publicMenuProvider(null));
+                    ref.invalidate(publicCanteensProvider);
+                  },
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 1. Full-Bleed Hero Promo Banner with Overlapping Top Nav and Floating Search Bar (Nyatu di tengah antara banner dan konten bawah)
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            _buildPromoBannerCarousel(allProductsAsync, activeStall),
+                            Positioned(
+                              top: 14,
+                              left: 16,
+                              right: 16,
+                              child: _buildTopHeroNav(context),
+                            ),
+                            Positioned(
+                              bottom: -22,
+                              left: 16,
+                              right: 16,
+                              child: _buildSearchInputField(),
+                            ),
+                          ],
                         ),
-                      ),
+                        const SizedBox(height: 38),
+
+                        // 2. Section 1: "Rekomendasi untukmu" (Horizontal Slider)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: _buildPopularSliderSection(allProductsAsync, activeStall),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // 3. Section 2: "Kuliner sesuai seleramu" (Categories)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: _buildKulinerSesuaiSeleramuSection(),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // 4. Section 3: Product List in Card Panjang (1x1 List View)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
+                          child: _buildProductsListArea(context, ref, allProductsAsync, activeStall, isDesktop),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -336,126 +428,6 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildAnimatedHeader(
-    BuildContext context,
-    bool isSearchActive,
-    AsyncValue<List<ProductWithCanteen>> allProductsAsync,
-    _CanteenStallInfo activeStall,
-  ) {
-    return Container(
-      color: context.surfaceBg,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // 1. Hero Promo Carousel & Top Nav (Smoothly collapses to height 0 when search is active)
-          AnimatedSize(
-            duration: const Duration(milliseconds: 320),
-            curve: Curves.easeInOutCubic,
-            alignment: Alignment.topCenter,
-            child: isSearchActive
-                ? const SizedBox(width: double.infinity, height: 0)
-                : Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      _buildPromoBannerCarousel(allProductsAsync, activeStall),
-                      Positioned(
-                        top: 14,
-                        left: 16,
-                        right: 16,
-                        child: _buildTopHeroNav(context),
-                      ),
-                    ],
-                  ),
-          ),
-
-          // 2. Persistent Single Search Bar Row (Preserves focus & key)
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              16,
-              isSearchActive ? 12 : 12,
-              16,
-              isSearchActive ? 10 : 14,
-            ),
-            child: Row(
-              children: [
-                // Slide-in Back Button
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOutCubic,
-                  child: isSearchActive
-                      ? Padding(
-                          padding: const EdgeInsets.only(right: 10),
-                          child: GestureDetector(
-                            onTap: _closeSearch,
-                            child: Container(
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color: context.cardBg,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: context.borderLight, width: 0.8),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: context.isDark ? 0.2 : 0.05),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(CupertinoIcons.left_chevron, size: 17),
-                            ),
-                          ),
-                        )
-                      : const SizedBox.shrink(),
-                ),
-
-                // The Persistent Search Input Field
-                Expanded(
-                  child: _buildSearchInputField(),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDiscoveryView(
-    BuildContext context,
-    WidgetRef ref,
-    AsyncValue<List<ProductWithCanteen>> allProductsAsync,
-    _CanteenStallInfo activeStall,
-    bool isDesktop,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 12),
-
-        // 1. Section 1: "Rekomendasi untukmu" (Horizontal Slider)
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _buildPopularSliderSection(allProductsAsync, activeStall),
-        ),
-        const SizedBox(height: 24),
-
-        // 2. Section 2: "Kuliner sesuai seleramu" (Categories)
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _buildKulinerSesuaiSeleramuSection(),
-        ),
-        const SizedBox(height: 24),
-
-        // 3. Section 3: Product List in Card Panjang (1x1 List View)
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
-          child: _buildProductsListArea(context, ref, allProductsAsync, activeStall, isDesktop),
-        ),
-      ],
     );
   }
 

@@ -251,12 +251,44 @@ type UpdateCardStatusRequest struct {
 }
 
 func (h *StudentHandler) UpdateCardStatus(c *fiber.Ctx) error {
+	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
 	var req UpdateCardStatusRequest
 	if err := c.BodyParser(&req); err != nil {
 		return response.Error(c, fiber.StatusBadRequest, "Payload tidak valid", err.Error())
 	}
 	if req.StudentID == "" {
 		return response.Error(c, fiber.StatusBadRequest, "Student ID wajib diisi", nil)
+	}
+
+	// Authorization & IDOR protection:
+	switch claims.Role {
+	case domain.RoleStudent:
+		if claims.UserID != req.StudentID {
+			return response.Error(c, fiber.StatusForbidden, "Akses ditolak: Siswa hanya dapat mengelola kartu miliknya sendiri", nil)
+		}
+		// Siswa tidak diizinkan mengubah RFID UID fisik, hanya membekukan/mengaktifkan
+		req.RfidUID = nil
+	case domain.RoleParent:
+		children, err := h.paymentService.GetParentChildren(c.Context(), claims.UserID)
+		if err != nil {
+			return response.Error(c, fiber.StatusInternalServerError, "Gagal memverifikasi relasi anak", err.Error())
+		}
+		isLinked := false
+		for _, child := range children {
+			if child.ID == req.StudentID {
+				isLinked = true
+				break
+			}
+		}
+		if !isLinked {
+			return response.Error(c, fiber.StatusForbidden, "Akses ditolak: Anda tidak memiliki akses ke kartu siswa ini", nil)
+		}
+		// Orang tua tidak diizinkan mengubah RFID UID fisik, hanya membekukan/mengaktifkan
+		req.RfidUID = nil
+	case domain.RolePetugasKeuangan, domain.RoleSuperAdmin, domain.RoleAdmin:
+		// Petugas berwenang penuh
+	default:
+		return response.Error(c, fiber.StatusForbidden, "Akses ditolak", nil)
 	}
 
 	if err := h.paymentService.UpdateStudentCardStatus(c.Context(), req.StudentID, req.RfidUID, req.IsActive); err != nil {
