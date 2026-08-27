@@ -336,11 +336,12 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
                             16,
                             isSearchActive ? 12 : 0,
                             16,
-                            isSearchActive ? 6 : 14,
+                            isSearchActive ? 8 : 14,
                           ),
                           child: Transform.translate(
                             offset: Offset(0, isSearchActive ? 0 : -22),
                             child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 // Slide-in Back Button
                                 AnimatedSize(
@@ -352,8 +353,8 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
                                           child: GestureDetector(
                                             onTap: _closeSearch,
                                             child: Container(
-                                              width: 38,
-                                              height: 38,
+                                              width: 44,
+                                              height: 44,
                                               decoration: BoxDecoration(
                                                 color: context.cardBg,
                                                 shape: BoxShape.circle,
@@ -366,7 +367,7 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
                                                   ),
                                                 ],
                                               ),
-                                              child: const Icon(CupertinoIcons.left_chevron, size: 17),
+                                              child: const Icon(CupertinoIcons.left_chevron, size: 18),
                                             ),
                                           ),
                                         )
@@ -557,6 +558,7 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
     final bool hasText = _searchController.text.isNotEmpty;
 
     return Container(
+      height: 48,
       decoration: BoxDecoration(
         color: context.cardBg,
         borderRadius: BorderRadius.circular(24),
@@ -572,36 +574,39 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
           ),
         ],
       ),
-      child: TextField(
-        controller: _searchController,
-        focusNode: _searchFocusNode,
-        onChanged: _onSearchChanged,
-        style: GoogleFonts.inter(fontSize: 13.5, color: context.textPrimary),
-        decoration: InputDecoration(
-          hintText: 'Lagi mau jajan apa hari ini?',
-          hintStyle: GoogleFonts.inter(fontSize: 13, color: context.textSecondary),
-          prefixIcon: const Icon(CupertinoIcons.search, color: Nebula.teal, size: 19),
-          suffixIcon: hasText
-              ? GestureDetector(
-                  onTap: () {
-                    _searchController.clear();
-                    _onSearchChanged('');
-                  },
-                  child: const Icon(CupertinoIcons.clear_circled_solid, color: Starlight.dim, size: 17),
-                )
-              : const Padding(
-                  padding: EdgeInsets.only(right: 14),
-                  child: Icon(Icons.restaurant, color: Nebula.teal, size: 19),
-                ),
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          disabledBorder: InputBorder.none,
-          errorBorder: InputBorder.none,
-          focusedErrorBorder: InputBorder.none,
-          filled: false,
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Center(
+        child: TextField(
+          controller: _searchController,
+          focusNode: _searchFocusNode,
+          onChanged: _onSearchChanged,
+          style: GoogleFonts.inter(fontSize: 13.5, color: context.textPrimary),
+          textAlignVertical: TextAlignVertical.center,
+          decoration: InputDecoration(
+            hintText: 'Lagi mau jajan apa hari ini?',
+            hintStyle: GoogleFonts.inter(fontSize: 13, color: context.textSecondary),
+            prefixIcon: const Icon(CupertinoIcons.search, color: Nebula.teal, size: 19),
+            suffixIcon: hasText
+                ? GestureDetector(
+                    onTap: () {
+                      _searchController.clear();
+                      _onSearchChanged('');
+                    },
+                    child: const Icon(CupertinoIcons.clear_circled_solid, color: Starlight.dim, size: 17),
+                  )
+                : const Padding(
+                    padding: EdgeInsets.only(right: 14),
+                    child: Icon(Icons.restaurant, color: Nebula.teal, size: 19),
+                  ),
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            disabledBorder: InputBorder.none,
+            errorBorder: InputBorder.none,
+            focusedErrorBorder: InputBorder.none,
+            filled: false,
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
+          ),
         ),
       ),
     );
