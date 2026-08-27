@@ -125,6 +125,7 @@ class StudentCartNotifier extends StateNotifier<StudentCartState> {
     String? imageUrl,
     int quantity = 1,
     List<String> selectedOptions = const <String>[],
+    String? notes,
   }) {
     List<StudentCartItem> items;
 
@@ -136,7 +137,9 @@ class StudentCartNotifier extends StateNotifier<StudentCartState> {
     }
 
     final int index = items.indexWhere((StudentCartItem item) =>
-        item.productId == productId && _listsEqual(item.selectedOptions, selectedOptions));
+        item.productId == productId &&
+        _listsEqual(item.selectedOptions, selectedOptions) &&
+        (item.notes ?? '') == (notes ?? ''));
 
     if (index != -1) {
       items[index] = items[index].copyWith(
@@ -151,6 +154,7 @@ class StudentCartNotifier extends StateNotifier<StudentCartState> {
         imageUrl: imageUrl,
         quantity: quantity,
         selectedOptions: selectedOptions,
+        notes: notes,
       ));
     }
 
@@ -169,10 +173,13 @@ class StudentCartNotifier extends StateNotifier<StudentCartState> {
     String? imageUrl,
     int quantity = 1,
     List<String> selectedOptions = const <String>[],
+    String? notes,
   }) {
     final List<StudentCartItem> items = List<StudentCartItem>.from(state.items);
     final int index = items.indexWhere((StudentCartItem item) =>
-        item.productId == id && _listsEqual(item.selectedOptions, selectedOptions));
+        item.productId == id &&
+        _listsEqual(item.selectedOptions, selectedOptions) &&
+        (item.notes ?? '') == (notes ?? ''));
 
     if (index != -1) {
       items[index] = items[index].copyWith(
@@ -187,14 +194,17 @@ class StudentCartNotifier extends StateNotifier<StudentCartState> {
         imageUrl: imageUrl,
         quantity: quantity,
         selectedOptions: selectedOptions,
+        notes: notes,
       ));
     }
     state = state.copyWith(items: items);
   }
 
-  void removeProduct(String id, {List<String> selectedOptions = const <String>[]}) {
+  void removeProduct(String id, {List<String> selectedOptions = const <String>[], String? notes}) {
     final List<StudentCartItem> items = List<StudentCartItem>.from(state.items)
-        .where((StudentCartItem item) => !(item.productId == id && _listsEqual(item.selectedOptions, selectedOptions)))
+        .where((StudentCartItem item) => !(item.productId == id &&
+            _listsEqual(item.selectedOptions, selectedOptions) &&
+            (item.notes ?? '') == (notes ?? '')))
         .toList();
 
     state = state.copyWith(
@@ -204,10 +214,12 @@ class StudentCartNotifier extends StateNotifier<StudentCartState> {
     );
   }
 
-  void decreaseQuantity(String id, {List<String> selectedOptions = const <String>[]}) {
+  void decreaseQuantity(String id, {List<String> selectedOptions = const <String>[], String? notes}) {
     final List<StudentCartItem> items = List<StudentCartItem>.from(state.items);
     final int index = items.indexWhere((StudentCartItem item) =>
-        item.productId == id && _listsEqual(item.selectedOptions, selectedOptions));
+        item.productId == id &&
+        _listsEqual(item.selectedOptions, selectedOptions) &&
+        (item.notes ?? '') == (notes ?? ''));
 
     if (index != -1) {
       if (items[index].quantity > 1) {
@@ -223,10 +235,12 @@ class StudentCartNotifier extends StateNotifier<StudentCartState> {
     }
   }
 
-  void increaseQuantity(String id, {List<String> selectedOptions = const <String>[]}) {
+  void increaseQuantity(String id, {List<String> selectedOptions = const <String>[], String? notes}) {
     final List<StudentCartItem> items = List<StudentCartItem>.from(state.items);
     final int index = items.indexWhere((StudentCartItem item) =>
-        item.productId == id && _listsEqual(item.selectedOptions, selectedOptions));
+        item.productId == id &&
+        _listsEqual(item.selectedOptions, selectedOptions) &&
+        (item.notes ?? '') == (notes ?? ''));
 
     if (index != -1) {
       items[index] = items[index].copyWith(quantity: items[index].quantity + 1);

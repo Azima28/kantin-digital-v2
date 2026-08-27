@@ -588,6 +588,29 @@ class OrderDetailSheet extends ConsumerWidget {
                                     color: context.textPrimary,
                                   ),
                                 ),
+                                if (item.selectedOptions.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '• ${item.selectedOptions.join(', ')}',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      color: Nebula.teal,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                                if (item.notes != null && item.notes!.trim().isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Catatan: ${item.notes!}',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontStyle: FontStyle.italic,
+                                      color: Nebula.amber,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                                 const SizedBox(height: 2),
                                 Text(
                                   '@ ${CurrencyFormatter.format(item.price)}',

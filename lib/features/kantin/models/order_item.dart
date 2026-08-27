@@ -3,12 +3,16 @@ class OrderSubItem {
   final int qty;
   final int price; // fixed: changed from double to int
   final String? imageUrl;
+  final List<String> selectedOptions;
+  final String? notes;
 
   const OrderSubItem({
     required this.name,
     required this.qty,
     required this.price,
     this.imageUrl,
+    this.selectedOptions = const <String>[],
+    this.notes,
   });
 }
 

@@ -93,9 +93,7 @@ class _ProductDetailBottomSheetState
     final hasConflict = cartNotifier.checkCanteenConflict(operatorId);
 
     final List<String> optionsList = _selectedOptions.toList();
-    if (_notesController.text.trim().isNotEmpty) {
-      optionsList.add('Catatan: ${_notesController.text.trim()}');
-    }
+    final String noteText = _notesController.text.trim();
 
     if (hasConflict) {
       final currentCanteenName =
@@ -121,6 +119,7 @@ class _ProductDetailBottomSheetState
           imageUrl: product.imageUrl,
           quantity: _quantity,
           selectedOptions: optionsList,
+          notes: noteText.isNotEmpty ? noteText : null,
         );
         Navigator.pop(context);
         _showSuccessSnackbar(product.name);
@@ -136,6 +135,7 @@ class _ProductDetailBottomSheetState
         imageUrl: product.imageUrl,
         quantity: _quantity,
         selectedOptions: optionsList,
+        notes: noteText.isNotEmpty ? noteText : null,
       );
       Navigator.pop(context);
       _showSuccessSnackbar(product.name);
@@ -581,30 +581,40 @@ class _ProductDetailBottomSheetState
                       backgroundColor: isAvailable
                           ? const Color(0xFF10B981)
                           : Colors.grey.withValues(alpha: 0.4),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                     onPressed: isAvailable ? _addToCart : null,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.add_shopping_cart_rounded,
-                            size: 18, color: Colors.white),
-                        const SizedBox(width: 8),
-                        Text(
-                          isAvailable
-                              ? '+ Tambah • ${CurrencyFormatter.format(_calculatedTotalPrice)}'
-                              : 'Stok Habis',
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.center,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isAvailable ? Icons.add_shopping_cart_rounded : Icons.block_rounded,
+                            size: 17,
                             color: Colors.white,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 6),
+                          Text(
+                            isAvailable
+                                ? 'Tambah • ${CurrencyFormatter.format(_calculatedTotalPrice)}'
+                                : 'Stok Habis',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.inter(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 0.1,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

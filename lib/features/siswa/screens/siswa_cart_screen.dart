@@ -202,6 +202,20 @@ class _SiswaCartScreenState extends ConsumerState<SiswaCartScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
+                if (item.notes != null && item.notes!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    'Catatan: ${item.notes!}',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                      color: Nebula.amber,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
                 const SizedBox(height: 4),
                 Text(
                   CurrencyFormatter.format(item.price),
@@ -226,6 +240,7 @@ class _SiswaCartScreenState extends ConsumerState<SiswaCartScreen> {
                   ref.read(studentCartProvider.notifier).decreaseQuantity(
                         item.productId,
                         selectedOptions: item.selectedOptions,
+                        notes: item.notes,
                       );
                 },
                 icon: Icon(CupertinoIcons.minus_circle, color: context.textSecondary, size: 22),
@@ -249,6 +264,7 @@ class _SiswaCartScreenState extends ConsumerState<SiswaCartScreen> {
                   ref.read(studentCartProvider.notifier).increaseQuantity(
                         item.productId,
                         selectedOptions: item.selectedOptions,
+                        notes: item.notes,
                       );
                 },
                 icon: const Icon(CupertinoIcons.plus_circle, color: Nebula.teal, size: 22),

@@ -372,31 +372,52 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                                     children: [
                                       ...previewItems.map(
                                         (item) => Padding(
-                                          padding: const EdgeInsets.only(bottom: 5.0),
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          padding: const EdgeInsets.only(bottom: 6.0),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Expanded(
-                                                child: Text(
-                                                  '${item.qty}x ${item.name}',
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      '${item.qty}x ${item.name}',
+                                                      style: GoogleFonts.inter(
+                                                        fontSize: 13.5,
+                                                        color: context.textPrimary,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Text(
+                                                    CurrencyFormatter.format(item.price * item.qty),
+                                                    style: GoogleFonts.inter(
+                                                      fontSize: 13.5,
+                                                      color: context.textPrimary,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              if (item.selectedOptions.isNotEmpty || (item.notes != null && item.notes!.trim().isNotEmpty)) ...[
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  [
+                                                    if (item.selectedOptions.isNotEmpty) item.selectedOptions.join(', '),
+                                                    if (item.notes != null && item.notes!.trim().isNotEmpty) 'Catatan: ${item.notes!}',
+                                                  ].join(' • '),
                                                   style: GoogleFonts.inter(
-                                                    fontSize: 13.5,
-                                                    color: context.textPrimary,
-                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 11,
+                                                    color: Nebula.amber,
+                                                    fontWeight: FontWeight.w500,
                                                   ),
                                                   maxLines: 1,
                                                   overflow: TextOverflow.ellipsis,
                                                 ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Text(
-                                                CurrencyFormatter.format(item.price * item.qty),
-                                                style: GoogleFonts.inter(
-                                                  fontSize: 13.5,
-                                                  color: context.textPrimary,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
+                                              ],
                                             ],
                                           ),
                                         ),

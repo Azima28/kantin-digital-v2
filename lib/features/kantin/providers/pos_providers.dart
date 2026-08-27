@@ -150,11 +150,15 @@ final canteenOrdersProvider = FutureProvider.autoDispose<List<OrderItem>>((Ref r
         final List<OrderSubItem> subItems = rawItems.map((item) {
           final itemMap = item as Map<String, dynamic>;
           final name = itemMap['product_name'] ?? itemMap['name'] ?? '';
+          final List<dynamic> rawOptions = itemMap['selected_options'] ?? [];
+          final List<String> options = rawOptions.map((o) => o.toString()).toList();
           return OrderSubItem(
             name: name,
             qty: (itemMap['quantity'] as num?)?.toInt() ?? 1,
             price: (itemMap['price'] as num?)?.toInt() ?? (itemMap['unit_price'] as num?)?.toInt() ?? 0,
             imageUrl: itemMap['image_url'],
+            selectedOptions: options,
+            notes: itemMap['notes']?.toString(),
           );
         }).toList();
 
