@@ -270,7 +270,7 @@ func (r *OrderRepo) GetOrderByID(ctx context.Context, orderID string) (*domain.O
 	itemsQuery := `
 		SELECT oi.id, oi.order_id, oi.product_id, oi.product_name, oi.quantity, oi.price, oi.selected_options, COALESCE(oi.notes, ''), p.image_url
 		FROM public.order_items oi
-		LEFT JOIN public.products p ON p.id = oi.product_id OR (oi.product_id IS NULL AND LOWER(p.name) = LOWER(oi.product_name))
+		LEFT JOIN public.products p ON p.id = oi.product_id OR (oi.product_id IS NULL AND LOWER(TRIM(p.name)) = LOWER(TRIM(oi.product_name)))
 		WHERE oi.order_id = $1`
 
 	itemRows, err := r.db.Pool.Query(ctx, itemsQuery, orderID)
@@ -331,7 +331,7 @@ func (r *OrderRepo) ListOrdersByStudent(ctx context.Context, studentID string) (
 		itemsQuery := `
 			SELECT oi.id, oi.order_id, oi.product_id, oi.product_name, oi.quantity, oi.price, oi.selected_options, COALESCE(oi.notes, ''), p.image_url
 			FROM public.order_items oi
-			LEFT JOIN public.products p ON p.id = oi.product_id OR (oi.product_id IS NULL AND LOWER(p.name) = LOWER(oi.product_name))
+			LEFT JOIN public.products p ON p.id = oi.product_id OR (oi.product_id IS NULL AND LOWER(TRIM(p.name)) = LOWER(TRIM(oi.product_name)))
 			WHERE oi.order_id = $1`
 		itemRows, err := r.db.Pool.Query(ctx, itemsQuery, orders[i].ID)
 		if err == nil {
@@ -382,7 +382,7 @@ func (r *OrderRepo) ListOrdersByOperator(ctx context.Context, operatorID string,
 		itemsQuery := `
 			SELECT oi.id, oi.order_id, oi.product_id, oi.product_name, oi.quantity, oi.price, oi.selected_options, COALESCE(oi.notes, ''), p.image_url
 			FROM public.order_items oi
-			LEFT JOIN public.products p ON p.id = oi.product_id OR (oi.product_id IS NULL AND LOWER(p.name) = LOWER(oi.product_name))
+			LEFT JOIN public.products p ON p.id = oi.product_id OR (oi.product_id IS NULL AND LOWER(TRIM(p.name)) = LOWER(TRIM(oi.product_name)))
 			WHERE oi.order_id = $1`
 		itemRows, err := r.db.Pool.Query(ctx, itemsQuery, orders[i].ID)
 		if err == nil {

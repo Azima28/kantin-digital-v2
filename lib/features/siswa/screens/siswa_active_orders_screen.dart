@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/theme/hallmark_color_scheme.dart';
@@ -41,6 +41,28 @@ class SiswaActiveOrdersScreen extends ConsumerStatefulWidget {
 class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScreen> {
   StudentOrderFilter _selectedFilter = StudentOrderFilter.menunggu;
   AppDateFilterParam? _dateFilter;
+
+  String? _resolveFoodImage(String productName, String? currentImgUrl) {
+    if (currentImgUrl != null && currentImgUrl.trim().isNotEmpty) {
+      return currentImgUrl.trim();
+    }
+    final lower = productName.toLowerCase().trim();
+    if (lower.contains('dimsum')) return 'https://kantin.zitech.web.id/uploads/products/product_dimsum_goreng.jpg';
+    if (lower.contains('nasi goreng') || lower.contains('nasgor')) return 'https://kantin.zitech.web.id/uploads/products/product_nasi_goreng.jpg';
+    if (lower.contains('mie ayam') || lower.contains('mie bakso')) return 'https://kantin.zitech.web.id/uploads/products/product_mie_ayam.jpg';
+    if (lower.contains('ayam geprek') || lower.contains('geprek')) return 'https://kantin.zitech.web.id/uploads/products/product_ayam_geprek.jpg';
+    if (lower.contains('bakso')) return 'https://kantin.zitech.web.id/uploads/products/product_bakso_mercon.jpg';
+    if (lower.contains('soto')) return 'https://kantin.zitech.web.id/uploads/products/product_soto_ayam.jpg';
+    if (lower.contains('nasi rames') || lower.contains('rames')) return 'https://kantin.zitech.web.id/uploads/products/product_nasi_rames.jpg';
+    if (lower.contains('es jeruk') || lower.contains('jeruk')) return 'https://kantin.zitech.web.id/uploads/products/product_es_jeruk.jpg';
+    if (lower.contains('es teh') || lower.contains('teh')) return 'https://kantin.zitech.web.id/uploads/products/product_es_teh.jpg';
+    if (lower.contains('jus') || lower.contains('alpukat')) return 'https://kantin.zitech.web.id/uploads/products/product_jus_alpukat.jpg';
+    if (lower.contains('air') || lower.contains('mineral') || lower.contains('aqua')) return 'https://kantin.zitech.web.id/uploads/products/product_air_mineral.jpg';
+    if (lower.contains('pisang')) return 'https://kantin.zitech.web.id/uploads/products/product_pisang_keju.jpg';
+    if (lower.contains('risol')) return 'https://kantin.zitech.web.id/uploads/products/product_risoles_mayo.jpg';
+    if (lower.contains('tango') || lower.contains('wafer')) return 'https://kantin.zitech.web.id/uploads/products/product_tango_wafer.jpg';
+    return null;
+  }
 
   bool _isOrderMenunggu(String status) {
     final s = status.trim().toLowerCase();
@@ -664,6 +686,7 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
                   final sortedItems = List<OrderSubItem>.from(order.items)
                     ..sort((a, b) => (b.price * b.qty).compareTo(a.price * a.qty));
                   return sortedItems.map((item) {
+                    final resolvedImg = _resolveFoodImage(item.name, item.imageUrl);
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12.0),
                       child: Row(
@@ -679,14 +702,18 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(8),
-                              child: (item.imageUrl != null && item.imageUrl!.isNotEmpty)
-                                  ? Image.network(
-                                      item.imageUrl!,
+                              child: (resolvedImg != null && resolvedImg.isNotEmpty)
+                                  ? CachedNetworkImage(
+                                      imageUrl: resolvedImg,
                                       width: 40,
                                       height: 40,
-                                      cacheWidth: 200,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => Icon(
+                                      placeholder: (_, __) => const ShimmerRect(
+                                        width: 40,
+                                        height: 40,
+                                        borderRadius: 8,
+                                      ),
+                                      errorWidget: (_, __, ___) => Icon(
                                         Icons.restaurant_menu_rounded,
                                         color: colors.brandPrimary,
                                         size: 18,
@@ -1481,7 +1508,8 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
                         Builder(
                           builder: (context) {
                             final topItem = order.mostExpensiveItem;
-                            final String? imgUrl = topItem?.imageUrl;
+                            final String? rawImg = topItem?.imageUrl;
+                            final String? resolvedImg = topItem != null ? _resolveFoodImage(topItem.name, rawImg) : null;
                             final bool isDelivery = order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty;
 
                             final fallbackChild = Container(
@@ -1505,13 +1533,18 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(11),
-                                child: (imgUrl != null && imgUrl.isNotEmpty)
-                                    ? Image.network(
-                                        imgUrl,
+                                child: (resolvedImg != null && resolvedImg.isNotEmpty)
+                                    ? CachedNetworkImage(
+                                        imageUrl: resolvedImg,
                                         width: 56,
                                         height: 56,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) => fallbackChild,
+                                        placeholder: (_, __) => const ShimmerRect(
+                                          width: 56,
+                                          height: 56,
+                                          borderRadius: 11,
+                                        ),
+                                        errorWidget: (_, __, ___) => fallbackChild,
                                       )
                                     : fallbackChild,
                               ),
@@ -1632,7 +1665,7 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
                           ),
                         ),
                         Text(
-                          'Rp ${NumberFormat('#,###', 'id_ID').format(order.totalAmount)}',
+                          CurrencyFormatter.format(order.totalAmount),
                           style: HallmarkTypography.financialNumeral(
                             color: colors.brandPrimary,
                             fontSize: 16,

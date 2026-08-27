@@ -66,6 +66,18 @@ class AppDateFormatter {
     return '$day $month $year';
   }
 
+  /// Formats date to 'dd MMM yyyy, HH:mm' (e.g. 16 Agu 2026, 11:36)
+  static String formatDateWithTime(DateTime? dt) {
+    if (dt == null) return '';
+    final local = dt.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month >= 1 && local.month <= 12 ? shortMonths[local.month] : '';
+    final year = local.year;
+    final h = local.hour.toString().padLeft(2, '0');
+    final m = local.minute.toString().padLeft(2, '0');
+    return '$day $month $year, $h:$m';
+  }
+
   /// Formats date to 'dd MMM, HH:mm' (e.g. 16 Agu, 11:36)
   static String formatShortDateWithTime(DateTime? dt) {
     if (dt == null) return '';

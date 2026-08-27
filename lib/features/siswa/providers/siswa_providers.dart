@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/services/api_client.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 import 'package:kantin_digital/core/utils/riverpod_cache_extensions.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/models/models.dart';
@@ -284,9 +284,8 @@ final siswaActiveOrdersProvider =
         );
       }).toList();
 
-      final createdAtStr = map['created_at'] != null
-          ? '${DateFormat('HH:mm').format(DateTime.parse(map['created_at']).toLocal())} WIB'
-          : '';
+      final createdAtDt = map['created_at'] != null ? DateTime.tryParse(map['created_at'].toString())?.toLocal() : null;
+      final createdAtStr = AppDateFormatter.formatTimeWib(createdAtDt);
 
       return OrderItem(
         id: map['id']?.toString() ?? '',
@@ -298,7 +297,7 @@ final siswaActiveOrdersProvider =
         items: subItems,
         totalAmount: (map['total_amount'] as num?)?.toInt() ?? 0,
         cancelRequestReason: map['cancel_request_reason']?.toString(),
-        createdAt: map['created_at'] != null ? DateTime.tryParse(map['created_at'].toString())?.toLocal() : null,
+        createdAt: createdAtDt,
       );
     }).toList();
   }

@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
@@ -338,8 +338,7 @@ class _StanReviewsBottomSheetState
       itemBuilder: (context, index) {
         final review = reviews[index];
         final String formattedDate = review.createdAt != null
-            ? DateFormat('dd MMM yyyy, HH:mm', 'id_ID')
-                .format(review.createdAt!.toLocal())
+            ? AppDateFormatter.formatDateWithTime(review.createdAt)
             : 'Baru saja';
 
         return Column(
