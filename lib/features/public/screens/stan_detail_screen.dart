@@ -1152,34 +1152,6 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
                                   : const Icon(Icons.restaurant, color: Nebula.teal),
                             ),
 
-                            // Top Left "👑 Paling Laku" Badge
-                            Positioned(
-                              top: 6,
-                              left: 6,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF0284C7),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: const [
-                                    Text('👑', style: TextStyle(fontSize: 9)),
-                                    SizedBox(width: 3),
-                                    Text(
-                                      'Paling laku',
-                                      style: TextStyle(
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-
                             // Bottom Left "⚡ 20 min" Badge
                             Positioned(
                               bottom: 6,
