@@ -27,8 +27,8 @@ class _CanteenStallInfo {
   const _CanteenStallInfo({
     required this.id,
     required this.name,
-    this.rating = 5.0,
-    this.reviewsCount = 120,
+    this.rating = 0.0,
+    this.reviewsCount = 0,
     this.isOpen = true,
     this.emoji = '🏬',
   });
@@ -55,15 +55,6 @@ final List<List<Color>> _promoGradients = const [
   [Color(0xFF4F46E5), Color(0xFF818CF8)],
   [Color(0xFFC2410C), Color(0xFFFB923C)],
   [Color(0xFF059669), Color(0xFF34D399)],
-];
-
-final List<_CanteenStallInfo> _presetStallsInfo = const [
-  _CanteenStallInfo(id: 'semua', name: 'Semua Stan', rating: 5.0, reviewsCount: 450, isOpen: true, emoji: '🍽️'),
-  _CanteenStallInfo(id: 'stan-utama', name: 'Stan Utama', rating: 5.0, reviewsCount: 120, isOpen: true, emoji: '🏬'),
-  _CanteenStallInfo(id: 'bude-ani', name: 'Bude Ani', rating: 4.8, reviewsCount: 85, isOpen: true, emoji: '🍔'),
-  _CanteenStallInfo(id: 'stan-bakso-enak', name: 'Stan Bakso Enak', rating: 4.7, reviewsCount: 60, isOpen: false, emoji: '🍲'),
-  _CanteenStallInfo(id: 'stan-nasgor', name: 'Stan Nasgor', rating: 4.6, reviewsCount: 45, emoji: '🍟'),
-  _CanteenStallInfo(id: 'stan-jus-segar', name: 'Stan Jus Segar', rating: 4.9, reviewsCount: 100, emoji: '🍹'),
 ];
 
 class PublicMenuScreen extends ConsumerStatefulWidget {
@@ -258,8 +249,8 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
     final _CanteenStallInfo semuaStall = const _CanteenStallInfo(
       id: 'semua',
       name: 'Semua Stan',
-      rating: 5.0,
-      reviewsCount: 450,
+      rating: 0.0,
+      reviewsCount: 0,
       isOpen: true,
       emoji: '🍽️',
     );
@@ -267,26 +258,19 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
     List<_CanteenStallInfo> stalls = [semuaStall];
     canteensAsync.whenData((dbStalls) {
       if (dbStalls.isNotEmpty) {
-        final mapped = dbStalls.asMap().entries.map((entry) {
-          final idx = entry.key;
-          final op = entry.value;
-          final p = _presetStallsInfo[(idx + 1) % _presetStallsInfo.length];
+        final mapped = dbStalls.map((op) {
           return _CanteenStallInfo(
             id: op.id,
             name: op.canteenName,
-            rating: p.rating,
-            reviewsCount: p.reviewsCount,
-            isOpen: p.isOpen,
-            emoji: p.emoji,
+            rating: op.rating,
+            reviewsCount: op.totalReviews,
+            isOpen: true,
+            emoji: '🏬',
           );
         }).toList();
         stalls = [semuaStall, ...mapped];
       }
     });
-
-    if (stalls.length == 1) {
-      stalls = _presetStallsInfo;
-    }
 
     final activeStall = stalls.firstWhere(
       (s) => s.id == (_selectedCanteenId ?? 'semua'),
@@ -620,8 +604,15 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
                   padding: EdgeInsets.only(right: 14),
                   child: Icon(Icons.restaurant, color: Nebula.teal, size: 19),
                 ),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
-          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          disabledBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          focusedErrorBorder: InputBorder.none,
+          filled: false,
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         ),
       ),
     );
@@ -1554,29 +1545,31 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
                           const SizedBox(height: 3),
                           Row(
                             children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF10B981),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.star_rounded, size: 10, color: Colors.white),
-                                    const SizedBox(width: 2),
-                                    Text(
-                                      canteen.rating > 0 ? canteen.rating.toStringAsFixed(1) : '4.8',
-                                      style: const TextStyle(
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
+                              if (canteen.rating > 0) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF10B981),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.star_rounded, size: 10, color: Colors.white),
+                                      const SizedBox(width: 2),
+                                      Text(
+                                        canteen.rating.toStringAsFixed(1),
+                                        style: const TextStyle(
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 6),
+                                const SizedBox(width: 6),
+                              ],
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                                 decoration: BoxDecoration(
