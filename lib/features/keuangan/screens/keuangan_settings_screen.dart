@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,11 +7,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
-import 'package:kantin_digital/core/services/api_client.dart';
 import 'package:kantin_digital/core/services/storage_service.dart';
 import 'package:kantin_digital/core/widgets/app_image_picker_sheet.dart';
 import 'package:kantin_digital/core/widgets/change_password_panel.dart';
 import 'package:kantin_digital/core/widgets/theme_toggle_tile.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
@@ -88,9 +87,10 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
     }
   }
 
-  void _showEditProfileDialog(String currentName, String currentPhone) {
+  void _showEditProfileDialog(String currentName, String currentPhone, String? currentGender, String? avatarUrl, String role) {
     final nameController = TextEditingController(text: currentName);
     final phoneController = TextEditingController(text: currentPhone == '-' ? '' : currentPhone);
+    String selectedGender = currentGender ?? (AppAvatar.isFemale(name: currentName) ? 'P' : 'L');
     final formKey = GlobalKey<FormState>();
     bool isSaving = false;
 
@@ -118,136 +118,272 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
               padding: const EdgeInsets.all(24),
               child: Form(
                 key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Nebula.teal.withValues(alpha: 0.12),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(CupertinoIcons.pencil_ellipsis_rectangle, color: Nebula.teal, size: 22),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Text(
-                            'Edit Detail Profil',
-                            style: GoogleFonts.inter(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                              color: ctx.textPrimary,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: Nebula.teal.withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
                             ),
+                            child: const Icon(CupertinoIcons.pencil_ellipsis_rectangle, color: Nebula.teal, size: 22),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    Text(
-                      'Nama Lengkap',
-                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: ctx.textSecondary),
-                    ),
-                    const SizedBox(height: 6),
-                    TextFormField(
-                      controller: nameController,
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama lengkap wajib diisi' : null,
-                      style: GoogleFonts.inter(fontSize: 14, color: ctx.textPrimary),
-                      decoration: InputDecoration(
-                        hintText: 'Nama lengkap Anda',
-                        hintStyle: GoogleFonts.inter(color: ctx.textSecondary, fontSize: 13),
-                        filled: true,
-                        fillColor: ctx.surfaceBg,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Nebula.teal, width: 1.5)),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      'No. Telepon / WhatsApp',
-                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: ctx.textSecondary),
-                    ),
-                    const SizedBox(height: 6),
-                    TextFormField(
-                      controller: phoneController,
-                      keyboardType: TextInputType.phone,
-                      style: GoogleFonts.inter(fontSize: 14, color: ctx.textPrimary),
-                      decoration: InputDecoration(
-                        hintText: 'Contoh: 081234567890',
-                        hintStyle: GoogleFonts.inter(color: ctx.textSecondary, fontSize: 13),
-                        filled: true,
-                        fillColor: ctx.surfaceBg,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Nebula.teal, width: 1.5)),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: isSaving ? null : () => Navigator.pop(ctx),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 13),
-                              side: BorderSide(color: ctx.dividerCol),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            ),
+                          const SizedBox(width: 14),
+                          Expanded(
                             child: Text(
-                              AppStrings.buttonCancel,
-                              style: GoogleFonts.inter(color: ctx.textSecondary, fontWeight: FontWeight.w600, fontSize: 13),
+                              'Edit Detail Profil',
+                              style: GoogleFonts.inter(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                color: ctx.textPrimary,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: isSaving
-                                ? null
-                                : () async {
-                                    if (!formKey.currentState!.validate()) return;
-                                    setModalState(() => isSaving = true);
-                                    final ok = await ref.read(authNotifierProvider.notifier).updateProfileDetails(
-                                          fullName: nameController.text.trim(),
-                                          phoneNumber: phoneController.text.trim().isEmpty ? null : phoneController.text.trim(),
-                                        );
-                                    if (ctx.mounted) {
-                                      Navigator.pop(ctx);
-                                    }
-                                    if (mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(ok ? 'Profil berhasil diperbarui!' : 'Gagal memperbarui profil'),
-                                          backgroundColor: ok ? Nebula.teal : Nebula.rose,
-                                          behavior: SnackBarBehavior.floating,
-                                        ),
-                                      );
-                                    }
-                                  },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Nebula.teal,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(vertical: 13),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Avatar Preview
+                      Center(
+                        child: Column(
+                          children: [
+                            AppAvatar(
+                              radius: 36,
+                              photoUrl: avatarUrl,
+                              role: role,
+                              name: nameController.text.isNotEmpty ? nameController.text : currentName,
+                              gender: selectedGender,
                             ),
-                            child: isSaving
-                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                : Text(
-                                    AppStrings.buttonSave,
-                                    style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Preview Avatar Karakter',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                color: ctx.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      Text(
+                        'Nama Lengkap',
+                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: ctx.textSecondary),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: nameController,
+                        onChanged: (_) => setModalState(() {}),
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama lengkap wajib diisi' : null,
+                        style: GoogleFonts.inter(fontSize: 14, color: ctx.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: 'Nama lengkap Anda',
+                          hintStyle: GoogleFonts.inter(color: ctx.textSecondary, fontSize: 13),
+                          filled: true,
+                          fillColor: ctx.surfaceBg,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Nebula.teal, width: 1.5)),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Gender Selector Row
+                      Text(
+                        'Jenis Kelamin',
+                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: ctx.textSecondary),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              onTap: () => setModalState(() => selectedGender = 'L'),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: selectedGender == 'L'
+                                      ? Nebula.teal.withValues(alpha: 0.12)
+                                      : ctx.surfaceBg,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: selectedGender == 'L'
+                                        ? Nebula.teal
+                                        : ctx.dividerCol,
+                                    width: selectedGender == 'L' ? 1.5 : 1,
                                   ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.male_rounded,
+                                      size: 18,
+                                      color: selectedGender == 'L'
+                                          ? Nebula.teal
+                                          : ctx.textSecondary,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Laki-laki',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 13,
+                                        fontWeight: selectedGender == 'L'
+                                            ? FontWeight.bold
+                                            : FontWeight.w500,
+                                        color: selectedGender == 'L'
+                                            ? Nebula.teal
+                                            : ctx.textPrimary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () => setModalState(() => selectedGender = 'P'),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: selectedGender == 'P'
+                                      ? Nebula.teal.withValues(alpha: 0.12)
+                                      : ctx.surfaceBg,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: selectedGender == 'P'
+                                        ? Nebula.teal
+                                        : ctx.dividerCol,
+                                    width: selectedGender == 'P' ? 1.5 : 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.female_rounded,
+                                      size: 18,
+                                      color: selectedGender == 'P'
+                                          ? Nebula.teal
+                                          : ctx.textSecondary,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Perempuan',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 13,
+                                        fontWeight: selectedGender == 'P'
+                                            ? FontWeight.bold
+                                            : FontWeight.w500,
+                                        color: selectedGender == 'P'
+                                            ? Nebula.teal
+                                            : ctx.textPrimary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+
+                      Text(
+                        'No. Telepon / WhatsApp',
+                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: ctx.textSecondary),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: phoneController,
+                        keyboardType: TextInputType.phone,
+                        style: GoogleFonts.inter(fontSize: 14, color: ctx.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: 'Contoh: 081234567890',
+                          hintStyle: GoogleFonts.inter(color: ctx.textSecondary, fontSize: 13),
+                          filled: true,
+                          fillColor: ctx.surfaceBg,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Nebula.teal, width: 1.5)),
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: isSaving ? null : () => Navigator.pop(ctx),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 13),
+                                side: BorderSide(color: ctx.dividerCol),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              ),
+                              child: Text(
+                                AppStrings.buttonCancel,
+                                style: GoogleFonts.inter(color: ctx.textSecondary, fontWeight: FontWeight.w600, fontSize: 13),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: isSaving
+                                  ? null
+                                  : () async {
+                                      if (!formKey.currentState!.validate()) return;
+                                      setModalState(() => isSaving = true);
+                                      final ok = await ref.read(authNotifierProvider.notifier).updateProfileDetails(
+                                            fullName: nameController.text.trim(),
+                                            phoneNumber: phoneController.text.trim().isEmpty ? null : phoneController.text.trim(),
+                                            gender: selectedGender,
+                                          );
+                                      if (ctx.mounted) {
+                                        Navigator.pop(ctx);
+                                      }
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(ok ? 'Profil berhasil diperbarui!' : 'Gagal memperbarui profil'),
+                                            backgroundColor: ok ? Nebula.teal : Nebula.rose,
+                                            behavior: SnackBarBehavior.floating,
+                                          ),
+                                        );
+                                      }
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Nebula.teal,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(vertical: 13),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              ),
+                              child: isSaving
+                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                  : Text(
+                                      AppStrings.buttonSave,
+                                      style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -387,44 +523,14 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
                       child: Stack(
                         clipBehavior: Clip.none,
                         children: [
-                          Container(
-                            width: 84,
-                            height: 84,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white.withValues(alpha: 0.2),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 2),
-                            ),
-                            child: ClipOval(
-                              child: (avatarUrl != null && avatarUrl.isNotEmpty)
-                                  ? CachedNetworkImage(
-                                      imageUrl: ApiClient.resolveImageUrl(avatarUrl),
-                                      fit: BoxFit.cover,
-                                      placeholder: (_, __) => const Center(
-                                        child: CupertinoActivityIndicator(color: Colors.white),
-                                      ),
-                                      errorWidget: (_, __, ___) => Center(
-                                        child: Text(
-                                          fullName.isNotEmpty ? fullName[0].toUpperCase() : 'A',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 34,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                  : Center(
-                                      child: Text(
-                                        fullName.isNotEmpty ? fullName[0].toUpperCase() : 'A',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 34,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                            ),
+                          AppAvatar(
+                            radius: 42,
+                            photoUrl: avatarUrl,
+                            role: 'petugas_keuangan',
+                            name: fullName,
+                            gender: profile?['gender'] as String?,
+                            borderColor: Colors.white.withValues(alpha: 0.5),
+                            borderWidth: 2,
                           ),
                           Positioned(
                             bottom: -2,
@@ -498,10 +604,18 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
                     'Edit',
                     style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Nebula.teal),
                   ),
-                  onPressed: () => _showEditProfileDialog(fullName, phone),
+                  onPressed: () => _showEditProfileDialog(
+                    fullName,
+                    phone,
+                    profile?['gender'] as String?,
+                    avatarUrl,
+                    role,
+                  ),
                 ),
                 children: [
                   _buildInfoRow(AppStrings.labelFullName, fullName),
+                  Divider(height: 16, thickness: 0.5, color: context.dividerCol),
+                  _buildInfoRow('Jenis Kelamin', (profile?['gender'] == 'P') ? 'Perempuan' : 'Laki-laki'),
                   Divider(height: 16, thickness: 0.5, color: context.dividerCol),
                   _buildInfoRow('Email', email),
                   Divider(height: 16, thickness: 0.5, color: context.dividerCol),

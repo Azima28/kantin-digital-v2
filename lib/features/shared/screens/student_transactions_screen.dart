@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
@@ -371,15 +370,14 @@ class _StudentTransactionsScreenState
             icon: CupertinoIcons.calendar,
             label: _selectedDate == null
                 ? 'Tanggal'
-                : DateFormat('dd MMM yyyy', 'id_ID').format(_selectedDate!),
+                : AppDateFormatter.formatDate(_selectedDate!),
             onTap: _pickDate,
           ),
           _filterDropdown<int>(
             value: _selectedMonth,
             hint: 'Bulan',
             items: List.generate(12, (i) => i + 1),
-            labelBuilder: (month) =>
-                DateFormat.MMMM('id_ID').format(DateTime(2024, month)),
+            labelBuilder: (month) => AppDateFormatter.fullMonths[month],
             onChanged: (value) {
               setState(() {
                 _selectedMonth = value;
@@ -599,7 +597,7 @@ class _StudentTransactionsScreenState
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        '${DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(date)} WIB • ${isTopup ? "Koperasi" : (tx['purchase_method'] == 'app' || tx['purchase_method'] == 'app_order' ? "Aplikasi" : "Tap Kartu")}',
+                        '${AppDateFormatter.formatDateWithTime(date)} WIB • ${isTopup ? "Koperasi" : (tx['purchase_method'] == 'app' || tx['purchase_method'] == 'app_order' ? "Aplikasi" : "Tap Kartu")}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(fontSize: 11, color: context.textSecondary),

@@ -7,7 +7,6 @@ import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
-import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
@@ -16,7 +15,7 @@ import 'package:kantin_digital/features/siswa/widgets/qris_checkout_content.dart
 import 'package:kantin_digital/features/siswa/widgets/siswa_quick_amount_item.dart';
 import 'package:kantin_digital/features/siswa/widgets/topup_payment_info_card.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 
 class SiswaTopUpScreen extends ConsumerStatefulWidget {
   const SiswaTopUpScreen({super.key});
@@ -35,6 +34,12 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
   static const int maxTopup = 2000000;
 
   @override
+  void initState() {
+    super.initState();
+    _customAmountController.text = CurrencyFormatter.formatWithoutPrefix(20000);
+  }
+
+  @override
   void dispose() {
     _customAmountController.dispose();
     super.dispose();
@@ -43,7 +48,7 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
   void _onQuickAmountSelected(int amount) {
     setState(() {
       _selectedQuickAmount = amount;
-      _customAmountController.clear();
+      _customAmountController.text = CurrencyFormatter.formatWithoutPrefix(amount);
       _errorMessage = null;
     });
   }
@@ -52,6 +57,7 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
     final cleanDigits = val.replaceAll(RegExp(r'[^0-9]'), '');
     if (cleanDigits.isEmpty) {
       setState(() {
+        _selectedQuickAmount = null;
         _errorMessage = null;
       });
       return;
@@ -66,16 +72,24 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
     }
 
     setState(() {
-      _selectedQuickAmount = null;
+      if ([10000, 20000, 50000, 100000].contains(parsed)) {
+        _selectedQuickAmount = parsed;
+      } else {
+        _selectedQuickAmount = null;
+      }
       _errorMessage = error;
     });
   }
 
   double _getFinalAmount() {
+    final clean = CurrencyFormatter.parseClean(_customAmountController.text);
+    if (clean > 0) {
+      return clean.toDouble();
+    }
     if (_selectedQuickAmount != null) {
       return _selectedQuickAmount!.toDouble();
     }
-    return CurrencyFormatter.parseClean(_customAmountController.text).toDouble();
+    return 0;
   }
 
   Future<void> _handlePaymentSimulation(double amount) async {
@@ -92,7 +106,7 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
         throw Exception('Identitas siswa tidak ditemukan.');
       }
 
-      final response = await apiClient.post('/finance/topup', body: {
+      final response = await apiClient.post('/student/topup', body: {
         'student_id': studentId,
         'amount': amount.toInt(),
       });
@@ -141,18 +155,15 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
         return child;
       },
       pageBuilder: (context, animation, secondaryAnimation) {
-        return Align(
-          alignment: Alignment.bottomCenter,
-          child: Material(
-            color: Colors.transparent,
-            child: AnimatedSuccessSheet(
-              amount: amount,
-              entranceAnimation: animation,
-              onClose: () {
-                Navigator.pop(context); // Close dialog
-                Navigator.pop(context); // Go back to dashboard
-              },
-            ),
+        return Material(
+          color: Colors.transparent,
+          child: AnimatedSuccessSheet(
+            amount: amount,
+            entranceAnimation: animation,
+            onClose: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Go back to dashboard
+            },
           ),
         );
       },
@@ -288,14 +299,14 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
                   },
                 ),
 
-                SizedBox(height: 24),
+                const SizedBox(height: 20),
 
                 // Or divider
                 Row(
                   children: [
                     Expanded(child: Divider(color: context.borderLight)),
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
                         'ATAU',
                         style: TextStyle(
@@ -309,9 +320,7 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 24),
-
-                const GradientLine(),
+                const SizedBox(height: 16),
 
                 // Custom amount title
                 Text(
@@ -567,7 +576,7 @@ class _AnimatedSuccessSheetState extends State<AnimatedSuccessSheet> with Ticker
   Widget build(BuildContext context) {
     final formattedAmount = CurrencyFormatter.format(widget.amount);
     final now = DateTime.now();
-    final formattedDate = DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(now);
+    final formattedDate = AppDateFormatter.formatDateWithTime(now);
 
     return AnimatedBuilder(
       animation: Listenable.merge([widget.entranceAnimation, _waveController]),
@@ -582,179 +591,209 @@ class _AnimatedSuccessSheetState extends State<AnimatedSuccessSheet> with Ticker
       },
       child: Container(
         color: context.cardBg,
-        padding: const EdgeInsets.fromLTRB(24, 36, 24, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-          
-          // Large animated liquid checkmark circle
-          ScaleTransition(
-            scale: _scaleAnimation,
-            child: Container(
-              width: 110,
-              height: 110,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Nebula.teal.withValues(alpha: 0.3),
-                  width: 4,
-                ),
-                color: Nebula.teal.withValues(alpha: 0.05),
-              ),
-              child: ClipOval(
-                child: Stack(
-                  children: [
-                    // Rising wave inside circle
-                    AnimatedBuilder(
-                      animation: Listenable.merge([widget.entranceAnimation, _waveController]),
-                      builder: (context, child) {
-                        return CustomPaint(
-                          size: const Size(110, 110),
-                          painter: WavePainter(
-                            riseValue: _internalRiseAnimation.value,
-                            wavePhase: _waveController.value * 2 * math.pi,
-                            waveColor: Nebula.teal,
-                          ),
-                        );
-                      },
-                    ),
-                    // Drawing checkmark
-                    Center(
-                      child: AnimatedBuilder(
-                        animation: _checkmarkAnimation,
-                        builder: (context, child) {
-                          return CustomPaint(
-                            size: const Size(60, 60),
-                            painter: CheckmarkPainter(
-                              progress: _checkmarkAnimation.value,
-                              color: context.cardBg,
-                              strokeWidth: 5.0,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // Success Title & Details (sliding up slightly)
-          AnimatedBuilder(
-            animation: widget.entranceAnimation,
-            builder: (context, child) {
-              return Transform.translate(
-                offset: Offset(0, _slideAnimation.value),
-                child: Opacity(
-                  opacity: _opacityAnimation.value,
-                  child: child,
-                ),
-              );
-            },
-            child: Column(
-              children: [
-                Text(
-                  'Top-Up Berhasil!',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
+        width: double.infinity,
+        height: double.infinity,
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Top Bar with Back Button on Top Left
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8.0, top: 4.0),
+                  child: IconButton(
+                    icon: const Icon(CupertinoIcons.arrow_left),
                     color: context.textPrimary,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Saldo saku Anda telah berhasil bertambah.',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: context.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                
-                // Detail card with premium styling (glassmorphism/flat blend)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: context.cardBg,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: context.borderLight, width: 0.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        'NOMINAL TOP-UP',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: context.textSecondary,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        formattedAmount,
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Nebula.teal,
-                        ),
-                      ),
-                      Divider(height: 24, color: context.borderLight),
-                      _buildDetailRow('Metode Pembayaran', 'Simulasi Instan (QRIS)'),
-                      const SizedBox(height: 8),
-                      _buildDetailRow('Waktu Transaksi', formattedDate),
-                      const SizedBox(height: 8),
-                      _buildDetailRow('Status', 'Sukses', isStatus: true),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          const SizedBox(height: 32),
-          
-          // Done button
-          PressScale(
-            onTap: widget.onClose,
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Nebula.teal,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  elevation: 0,
-                ),
-                onPressed: widget.onClose,
-                child: Text(
-                  'Selesai',
-                  style: TextStyle(
-                    color: context.cardBg,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    iconSize: 22,
+                    onPressed: widget.onClose,
                   ),
                 ),
               ),
-            ),
+              Expanded(
+                child: Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 480),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Large animated liquid checkmark circle
+                          ScaleTransition(
+                            scale: _scaleAnimation,
+                            child: Container(
+                              width: 100,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Nebula.teal.withValues(alpha: 0.3),
+                                  width: 4,
+                                ),
+                                color: Nebula.teal.withValues(alpha: 0.05),
+                              ),
+                              child: ClipOval(
+                                child: Stack(
+                                  children: [
+                                    // Rising wave inside circle
+                                    AnimatedBuilder(
+                                      animation: Listenable.merge([widget.entranceAnimation, _waveController]),
+                                      builder: (context, child) {
+                                        return CustomPaint(
+                                          size: const Size(100, 100),
+                                          painter: WavePainter(
+                                            riseValue: _internalRiseAnimation.value,
+                                            wavePhase: _waveController.value * 2 * math.pi,
+                                            waveColor: Nebula.teal,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    // Drawing checkmark
+                                    Center(
+                                      child: AnimatedBuilder(
+                                        animation: _checkmarkAnimation,
+                                        builder: (context, child) {
+                                          return CustomPaint(
+                                            size: const Size(54, 54),
+                                            painter: CheckmarkPainter(
+                                              progress: _checkmarkAnimation.value,
+                                              color: context.cardBg,
+                                              strokeWidth: 4.5,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          // Success Title & Details (sliding up slightly)
+                          AnimatedBuilder(
+                            animation: widget.entranceAnimation,
+                            builder: (context, child) {
+                              return Transform.translate(
+                                offset: Offset(0, _slideAnimation.value),
+                                child: Opacity(
+                                  opacity: _opacityAnimation.value,
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: Column(
+                              children: [
+                                Text(
+                                  'Top-Up Berhasil!',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: context.textPrimary,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Saldo saku Anda telah berhasil bertambah.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: context.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+
+                                // Detail card with premium styling
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: context.cardBg,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: context.borderLight, width: 0.5),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.04),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        'NOMINAL TOP-UP',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: context.textSecondary,
+                                          letterSpacing: 1.2,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        formattedAmount,
+                                        style: const TextStyle(
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.bold,
+                                          color: Nebula.teal,
+                                        ),
+                                      ),
+                                      Divider(height: 24, color: context.borderLight),
+                                      _buildDetailRow('Metode Pembayaran', 'Simulasi Instan (QRIS)'),
+                                      const SizedBox(height: 8),
+                                      _buildDetailRow('Waktu Transaksi', formattedDate),
+                                      const SizedBox(height: 8),
+                                      _buildDetailRow('Status', 'Sukses', isStatus: true),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // Done button
+                          PressScale(
+                            onTap: widget.onClose,
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Nebula.teal,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  elevation: 0,
+                                ),
+                                onPressed: widget.onClose,
+                                child: Text(
+                                  'Selesai',
+                                  style: TextStyle(
+                                    color: context.cardBg,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildDetailRow(String label, String value, {bool isStatus = false}) {
     return Row(
@@ -925,35 +964,31 @@ class WaveTopClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-    const double waveHeight = 20.0; // Slightly more height space for pronounced wave
-    const double waveAmplitude = 14.0; // Highly visible wave depth
-    
-    // Tsunami entry delay (left side rises first, right follows)
-    const double d = 0.25; 
-    
+
+    // When progress reaches 1.0 (settled), clip nothing (full rectangle) so top is 100% full & flat
+    if (progress >= 1.0) {
+      path.addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+      return path;
+    }
+
+    // Dynamic wave amplitude that gently tapers to 0 as progress approaches 1.0
+    final double waveAmplitude = 18.0 * (1.0 - progress);
+    const double d = 0.25;
+
     path.moveTo(0, size.height);
 
-    // Generate path points with localized delay
+    // Generate path points with localized rising delay
     for (double x = 0; x <= size.width; x++) {
-      // Delay is proportional to x position (left to right)
       final double txProgress = (x / size.width) * d;
       final double tx = ((progress - txProgress) / (1.0 - d)).clamp(0.0, 1.0);
-      
-      // Calculate the rising baseline for this point
-      final double baselineY = size.height - (size.height - waveHeight) * tx;
-      
-      // Add the active wave oscillation directly (always active)
+
+      final double baselineY = size.height * (1.0 - tx);
       final double waveOscillation = waveAmplitude * math.sin((2 * math.pi * x / (size.width * 0.8)) - wavePhase);
-      
-      // Clamp to size.height to avoid drawing below the sheet's canvas bounds
-      double y = baselineY + waveOscillation;
-      if (y > size.height) {
-        y = size.height;
-      }
-      
+
+      double y = (baselineY + waveOscillation).clamp(0.0, size.height);
       path.lineTo(x, y);
     }
-    
+
     path.lineTo(size.width, size.height);
     path.close();
     return path;

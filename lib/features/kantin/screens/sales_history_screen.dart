@@ -14,7 +14,6 @@ import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
 import 'package:kantin_digital/features/kantin/widgets/refund_confirmation_dialog.dart';
 import 'package:kantin_digital/features/kantin/widgets/transaction_details_sheet.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
-import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
 class SalesHistoryScreen extends ConsumerStatefulWidget {
@@ -538,206 +537,228 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
               ),
             ),
 
-            // Compact Transaction Cards
-            Column(
-              children: sectionItems.map((tx) {
-                final String id = tx.id;
-                final int amount = tx.totalAmount;
-                final String studentName = tx.studentName ?? 'Siswa';
-                final String status = tx.status ?? 'success';
-                final bool isCancelled = _isDibatalkan(status);
-                final bool isProcessing = _isDiproses(status);
+            // Compact Transaction Cards inside Unified Single Card Container
+            Container(
+              margin: const EdgeInsets.only(bottom: 14),
+              decoration: BoxDecoration(
+                color: context.cardBg,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: context.borderLight, width: 0.8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: context.isDark ? 0.2 : 0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: sectionItems.length,
+                separatorBuilder: (_, __) => Divider(
+                  height: 1,
+                  thickness: 1.0,
+                  color: context.dividerCol,
+                  indent: 14,
+                  endIndent: 14,
+                ),
+                itemBuilder: (context, idx) {
+                  final tx = sectionItems[idx];
+                  final bool isFirst = idx == 0;
+                  final bool isLast = idx == sectionItems.length - 1;
 
-                final DateTime createdAt =
-                    tx.createdAt?.toLocal() ?? DateTime.now();
-                final String timeStr = AppDateFormatter.formatTime(createdAt);
+                  final String id = tx.id;
+                  final int amount = tx.totalAmount;
+                  final String studentName = tx.studentName ?? 'Siswa';
+                  final String status = tx.status ?? 'success';
+                  final bool isCancelled = _isDibatalkan(status);
+                  final bool isProcessing = _isDiproses(status);
 
-                final bool isWithinRefundWindow =
-                    DateTime.now().difference(createdAt).inMinutes < 10;
-                final bool canRefund = _isBerhasil(status) &&
-                    (tx.type == null || tx.type == 'purchase') &&
-                    isWithinRefundWindow;
+                  final DateTime createdAt =
+                      tx.createdAt?.toLocal() ?? DateTime.now();
+                  final String timeStr = AppDateFormatter.formatTime(createdAt);
 
-                final String primaryTitle = _derivePrimaryTitle(tx);
+                  final bool isWithinRefundWindow =
+                      DateTime.now().difference(createdAt).inMinutes < 10;
+                  final bool canRefund = _isBerhasil(status) &&
+                      (tx.type == null || tx.type == 'purchase') &&
+                      isWithinRefundWindow;
 
-                return PressScale(
-                  onTap: () => showTransactionDetailsSheet(context, tx),
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: context.cardBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border:
-                          Border.all(color: context.borderLight, width: 0.8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: context.shadowColor,
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Leading Product Image / Fallback Icon (44x44, radius 10)
-                        _buildLeadingThumbnail(context, tx, isCancelled, isProcessing),
-                        const SizedBox(width: 10),
+                  final String primaryTitle = _derivePrimaryTitle(tx);
 
-                        // Center: Title, Subtitle, ID
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                primaryTitle,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.inter(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: isCancelled
-                                      ? context.textSecondary
-                                      : context.textPrimary,
-                                  decoration: isCancelled
-                                      ? TextDecoration.lineThrough
-                                      : null,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '${tx.purchaseMethodDisplay} • $studentName • $timeStr WIB',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.inter(
-                                  fontSize: 11,
-                                  color: context.textSecondary,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '#${id.length >= 8 ? id.substring(0, 8).toUpperCase() : id.toUpperCase()}',
-                                style: GoogleFonts.inter(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w500,
-                                  color: context.textSecondary
-                                      .withValues(alpha: 0.6),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-
-                        // Trailing: Amount & Status Badge / Action
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          mainAxisSize: MainAxisSize.min,
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => showTransactionDetailsSheet(context, tx),
+                      borderRadius: BorderRadius.vertical(
+                        top: isFirst ? const Radius.circular(16) : Radius.zero,
+                        bottom: isLast ? const Radius.circular(16) : Radius.zero,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Text(
-                              '${isCancelled ? "" : "+ "}${CurrencyFormatter.format(amount)}',
-                              style: GoogleFonts.inter(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.bold,
-                                color: isCancelled
-                                    ? context.textSecondary
-                                    : (isProcessing ? Nebula.amber : Nebula.teal),
-                                decoration: isCancelled
-                                    ? TextDecoration.lineThrough
-                                    : null,
+                            // Leading Product Image / Fallback Icon (44x44, radius 10)
+                            _buildLeadingThumbnail(context, tx, isCancelled, isProcessing),
+                            const SizedBox(width: 10),
+
+                            // Center: Title, Subtitle, ID
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    primaryTitle,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: isCancelled
+                                          ? context.textSecondary
+                                          : context.textPrimary,
+                                      decoration: isCancelled
+                                          ? TextDecoration.lineThrough
+                                          : null,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${tx.purchaseMethodDisplay} • $studentName • $timeStr WIB',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      color: context.textSecondary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '#${id.length >= 8 ? id.substring(0, 8).toUpperCase() : id.toUpperCase()}',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w500,
+                                      color: context.textSecondary
+                                          .withValues(alpha: 0.6),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            if (isCancelled)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Nebula.rose.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  'Dikembalikan',
+                            const SizedBox(width: 10),
+
+                            // Trailing: Amount & Status Badge / Action
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '${isCancelled ? "" : "+ "}${CurrencyFormatter.format(amount)}',
                                   style: GoogleFonts.inter(
-                                    color: Nebula.rose,
-                                    fontSize: 9,
+                                    fontSize: 13.5,
                                     fontWeight: FontWeight.bold,
+                                    color: isCancelled
+                                        ? context.textSecondary
+                                        : (isProcessing ? Nebula.amber : Nebula.teal),
+                                    decoration: isCancelled
+                                        ? TextDecoration.lineThrough
+                                        : null,
                                   ),
                                 ),
-                              )
-                            else if (isProcessing)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Nebula.amber.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  'Diproses',
-                                  style: GoogleFonts.inter(
-                                    color: Nebula.amber,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              )
-                            else if (canRefund)
-                              GestureDetector(
-                                onTap: () => showRefundConfirmationDialog(
-                                  context,
-                                  ref,
-                                  id,
-                                  amount,
-                                  studentName,
-                                ),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 7, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: Nebula.rose.withValues(alpha: 0.08),
-                                    borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(
-                                      color: Nebula.rose.withValues(alpha: 0.4),
-                                      width: 0.6,
+                                const SizedBox(height: 4),
+                                if (isCancelled)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Nebula.rose.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      'Dikembalikan',
+                                      style: GoogleFonts.inter(
+                                        color: Nebula.rose,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  )
+                                else if (isProcessing)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Nebula.amber.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      'Diproses',
+                                      style: GoogleFonts.inter(
+                                        color: Nebula.amber,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  )
+                                else if (canRefund)
+                                  GestureDetector(
+                                    onTap: () => showRefundConfirmationDialog(
+                                      context,
+                                      ref,
+                                      id,
+                                      amount,
+                                      studentName,
+                                    ),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 7, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: Nebula.rose.withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: Nebula.rose.withValues(alpha: 0.4),
+                                          width: 0.6,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'Kembalikan',
+                                        style: GoogleFonts.inter(
+                                          color: Nebula.rose,
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Nebula.teal.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      'Berhasil',
+                                      style: GoogleFonts.inter(
+                                        color: Nebula.teal,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
-                                  child: Text(
-                                    'Kembalikan',
-                                    style: GoogleFonts.inter(
-                                      color: Nebula.rose,
-                                      fontSize: 9.5,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              )
-                            else
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Nebula.teal.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  'Berhasil',
-                                  style: GoogleFonts.inter(
-                                    color: Nebula.teal,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
+                              ],
+                            ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                );
-              }).toList(),
+                  );
+                },
+              ),
             ),
           ],
         );

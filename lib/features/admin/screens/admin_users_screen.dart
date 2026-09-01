@@ -230,27 +230,50 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                         );
                       }
 
-                      return ListView.builder(
+                      return ListView(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 20,
-                          vertical: 8,
+                          vertical: 12,
                         ),
-                        itemCount: filtered.length,
-                        itemBuilder: (context, index) {
-                          final user = filtered[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: AdminUserListTile(
-                              user: user,
-                              getRoleLabel: _getRoleLabel,
-                              onToggleStatus: (id, role, isActive) =>
-                                  _toggleUserStatus(id, role, isActive),
-                              onNavigateToDetail: (id, role) =>
-                                  _navigateToDetail(id, role),
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: context.cardBg,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: context.dividerCol,
+                                width: 0.8,
+                              ),
                             ),
-                          );
-                          },
-                        );
+                            child: ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: filtered.length,
+                              separatorBuilder: (context, index) => Divider(
+                                height: 1,
+                                thickness: 1.0,
+                                color: context.dividerCol,
+                                indent: 14,
+                                endIndent: 14,
+                              ),
+                              itemBuilder: (context, index) {
+                                final user = filtered[index];
+                                return AdminUserListTile(
+                                  user: user,
+                                  getRoleLabel: _getRoleLabel,
+                                  onToggleStatus: (id, role, isActive) =>
+                                      _toggleUserStatus(id, role, isActive),
+                                  onNavigateToDetail: (id, role) =>
+                                      _navigateToDetail(id, role),
+                                  isEmbedded: true,
+                                  isFirst: index == 0,
+                                  isLast: index == filtered.length - 1,
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      );
                       },
                     ),
                   );

@@ -1,16 +1,16 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 
 /// Step 3 of the keuangan top-up flow — confirmation.
 ///
 /// Displays a summary card with student details, old balance, top-up amount,
 /// and new balance, plus a "Proses Top-Up" button.
 class KeuanganTopupStepConfirm extends StatelessWidget {
-  final NumberFormat fmt;
+  final AppNumberFormat fmt;
   final String studentName;
   final String studentNisn;
   final String studentClass;

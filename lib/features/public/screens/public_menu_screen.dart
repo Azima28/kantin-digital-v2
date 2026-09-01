@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,6 +16,8 @@ import 'package:kantin_digital/features/siswa/providers/student_cart_provider.da
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
+import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/features/public/widgets/product_detail_bottom_sheet.dart';
 
 class _CanteenStallInfo {
   final String id;
@@ -75,8 +78,9 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
+  static const int _virtualPromoOffset = 12000;
   late final PageController _promoPageController = PageController(
-    initialPage: 0,
+    initialPage: _virtualPromoOffset,
     viewportFraction: 1.0,
   );
   Timer? _promoTimer;
@@ -89,6 +93,36 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
   String? _selectedCanteenId = 'semua';
   Timer? _debounce;
   bool _isSearchFocused = false;
+
+  static const int _initialCategoryLimit = 3;
+  static const int _categoryBatchSize = 3;
+  final Map<String, int> _categoryDisplayLimits = {};
+  final Set<String> _categoryLoadingState = {};
+
+  Future<void> _expandCategory(String categoryName, int totalItems) async {
+    if (_categoryLoadingState.contains(categoryName)) return;
+    HapticFeedback.selectionClick();
+    setState(() {
+      _categoryLoadingState.add(categoryName);
+    });
+
+    await Future.delayed(const Duration(milliseconds: 320));
+
+    if (!mounted) return;
+    setState(() {
+      _categoryLoadingState.remove(categoryName);
+      final int current = _categoryDisplayLimits[categoryName] ?? _initialCategoryLimit;
+      final int next = current + _categoryBatchSize;
+      _categoryDisplayLimits[categoryName] = next > totalItems ? totalItems : next;
+    });
+  }
+
+  void _collapseCategory(String categoryName) {
+    HapticFeedback.lightImpact();
+    setState(() {
+      _categoryDisplayLimits[categoryName] = _initialCategoryLimit;
+    });
+  }
 
   @override
   void initState() {
@@ -124,11 +158,11 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
     _promoTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
       if (!mounted || _randomPromoBanners.isEmpty) return;
       if (_randomPromoBanners.length > 1 && _promoPageController.hasClients && _promoPageController.page != null) {
-        final nextPage = (_promoPageController.page!.round() + 1) % _randomPromoBanners.length;
+        final currentVirtualPage = _promoPageController.page!.round();
         _promoPageController.animateToPage(
-          nextPage,
+          currentVirtualPage + 1,
           duration: const Duration(milliseconds: 550),
-          curve: Curves.easeInOut,
+          curve: Curves.easeInOutCubic,
         );
       }
     });
@@ -405,11 +439,14 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
             ),
           ),
 
-          // Floating Cart Banner
+          // Floating Cart Banner (Centered Horizontally)
           Positioned(
+            left: 0,
+            right: 0,
             bottom: 24,
-            right: 24,
-            child: _buildCartFab(ref),
+            child: Center(
+              child: _buildCartFab(ref),
+            ),
           ),
         ],
       ),
@@ -640,12 +677,15 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
                 onPointerCancel: (_) => _startPromoTimer(),
                 child: PageView.builder(
                   controller: _promoPageController,
-                  itemCount: _randomPromoBanners.length,
                   onPageChanged: (index) {
-                    setState(() => _promoIndex = index);
+                    if (_randomPromoBanners.isNotEmpty) {
+                      setState(() => _promoIndex = index % _randomPromoBanners.length);
+                    }
                   },
                   itemBuilder: (context, index) {
-                    final banner = _randomPromoBanners[index];
+                    if (_randomPromoBanners.isEmpty) return const SizedBox.shrink();
+                    final actualIndex = index % _randomPromoBanners.length;
+                    final banner = _randomPromoBanners[actualIndex];
                     return _buildPromoBannerItem(banner);
                   },
                 ),
@@ -1381,14 +1421,39 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
               ],
             ),
             const SizedBox(height: 10),
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: matchingProducts.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                return _buildSingleColumnProductCard(context, matchingProducts[index]);
-              },
+            Container(
+              decoration: BoxDecoration(
+                color: context.cardBg,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: context.borderLight, width: 0.8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: context.isDark ? 0.2 : 0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: matchingProducts.length,
+                separatorBuilder: (_, __) => Divider(
+                  height: 1,
+                  thickness: 1.0,
+                  color: context.dividerCol,
+                  indent: 14,
+                  endIndent: 14,
+                ),
+                itemBuilder: (context, index) {
+                  return _buildSingleColumnProductCard(
+                    context,
+                    matchingProducts[index],
+                    isFirst: index == 0,
+                    isLast: index == matchingProducts.length - 1,
+                  );
+                },
+              ),
             ),
           ],
         ],
@@ -1728,16 +1793,41 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
           );
         }
 
-        // If searching or single category filtered, display flat 1-column list
+        // If searching or single category filtered, display flat 1-column list in a single unified card
         if (_searchQuery.isNotEmpty || (_selectedCategory != null && _selectedCategory!.isNotEmpty)) {
-          return ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: filtered.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              return _buildSingleColumnProductCard(context, filtered[index]);
-            },
+          return Container(
+            decoration: BoxDecoration(
+              color: context.cardBg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: context.borderLight, width: 0.8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: context.isDark ? 0.2 : 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: filtered.length,
+              separatorBuilder: (_, __) => Divider(
+                height: 1,
+                thickness: 1.0,
+                color: context.dividerCol,
+                indent: 14,
+                endIndent: 14,
+              ),
+              itemBuilder: (context, index) {
+                return _buildSingleColumnProductCard(
+                  context,
+                  filtered[index],
+                  isFirst: index == 0,
+                  isLast: index == filtered.length - 1,
+                );
+              },
+            ),
           );
         }
 
@@ -1778,12 +1868,37 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
     ];
 
     if (categorySections.isEmpty) {
-      return ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: allItems.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (context, index) => _buildSingleColumnProductCard(context, allItems[index]),
+      return Container(
+        decoration: BoxDecoration(
+          color: context.cardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: context.borderLight, width: 0.8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: context.isDark ? 0.2 : 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: allItems.length,
+          separatorBuilder: (_, __) => Divider(
+            height: 1,
+            thickness: 1.0,
+            color: context.dividerCol,
+            indent: 14,
+            endIndent: 14,
+          ),
+          itemBuilder: (context, index) => _buildSingleColumnProductCard(
+            context,
+            allItems[index],
+            isFirst: index == 0,
+            isLast: index == allItems.length - 1,
+          ),
+        ),
       );
     }
 
@@ -1792,16 +1907,19 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
       children: categorySections.map((section) {
         final String categoryName = section['name'] as String;
         final List<ProductWithCanteen> items = section['items'] as List<ProductWithCanteen>;
-        const int previewLimit = 6;
-        final previewItems = items.take(previewLimit).toList();
-        final bool hasMore = items.length > previewLimit;
+        final int currentLimit = _categoryDisplayLimits[categoryName] ?? _initialCategoryLimit;
+        final previewItems = items.take(currentLimit).toList();
+        final bool hasMore = items.length > currentLimit;
+        final bool isExpanded = currentLimit > _initialCategoryLimit;
+        final bool isLoading = _categoryLoadingState.contains(categoryName);
+        final int remaining = items.length - currentLimit;
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 28.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Category Header Row (Title + Count Badge + Lihat Lainnya Action)
+              // Category Header Row (Title + Count Badge + Expand/Collapse Action)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -1833,67 +1951,225 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
                       ),
                     ],
                   ),
-                  if (hasMore)
-                    GestureDetector(
-                      onTap: () => _openCategoryCatalogModal(categoryName, items),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          children: [
-                            Text(
-                              'Lihat lainnya',
-                              style: GoogleFonts.inter(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w700,
-                                color: Nebula.teal,
+                  if (items.length > _initialCategoryLimit) ...[
+                    if (isLoading)
+                      const CupertinoActivityIndicator(radius: 7)
+                    else if (hasMore)
+                      GestureDetector(
+                        onTap: () => _expandCategory(categoryName, items.length),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            children: [
+                              Text(
+                                'Lihat lainnya',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Nebula.teal,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 2),
-                            const Icon(CupertinoIcons.chevron_right, size: 12, color: Nebula.teal),
-                          ],
+                              const SizedBox(width: 2),
+                              const Icon(CupertinoIcons.chevron_down, size: 12, color: Nebula.teal),
+                            ],
+                          ),
+                        ),
+                      )
+                    else if (isExpanded)
+                      GestureDetector(
+                        onTap: () => _collapseCategory(categoryName),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            children: [
+                              Text(
+                                'Tutup',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: context.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(width: 2),
+                              Icon(CupertinoIcons.chevron_up, size: 12, color: context.textSecondary),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+                  ],
                 ],
               ),
               const SizedBox(height: 12),
 
-              // 1-Column Product List Cards (Max 6 preview)
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: previewItems.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  return _buildSingleColumnProductCard(context, previewItems[index]);
-                },
+              // 1-Column Product List Cards inside Unified Single Card Container
+              Container(
+                decoration: BoxDecoration(
+                  color: context.cardBg,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: context.borderLight, width: 0.8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: context.isDark ? 0.2 : 0.03),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: previewItems.length,
+                  separatorBuilder: (_, __) => Divider(
+                    height: 1,
+                    thickness: 1.0,
+                    color: context.dividerCol,
+                    indent: 14,
+                    endIndent: 14,
+                  ),
+                  itemBuilder: (context, index) {
+                    return _buildSingleColumnProductCard(
+                      context,
+                      previewItems[index],
+                      isFirst: index == 0,
+                      isLast: index == previewItems.length - 1,
+                    );
+                  },
+                ),
               ),
 
-              // Bottom "Lihat Semua (N) Menu" Button if more than 6
-              if (hasMore) ...[
+              // Bottom Dynamic Expansion & Collapse Button Section
+              if (items.length > _initialCategoryLimit) ...[
                 const SizedBox(height: 10),
-                Center(
-                  child: OutlinedButton(
-                    onPressed: () => _openCategoryCatalogModal(categoryName, items),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Nebula.teal,
-                      side: BorderSide(color: Nebula.teal.withValues(alpha: 0.4), width: 1),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+                if (isLoading)
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Nebula.teal.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Nebula.teal.withValues(alpha: 0.25), width: 1),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Nebula.teal),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Memuat menu $categoryName...',
+                            style: GoogleFonts.inter(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              color: Nebula.teal,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Lihat semua ${items.length} menu $categoryName',
-                          style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.bold),
+                  )
+                else if (hasMore && !isExpanded)
+                  Center(
+                    child: OutlinedButton(
+                      onPressed: () => _expandCategory(categoryName, items.length),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Nebula.teal,
+                        side: BorderSide(color: Nebula.teal.withValues(alpha: 0.4), width: 1),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Lihat lebih banyak ($remaining menu tersisa)',
+                            style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(width: 6),
+                          const Icon(CupertinoIcons.chevron_down, size: 13),
+                        ],
+                      ),
+                    ),
+                  )
+                else if (hasMore && isExpanded)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      OutlinedButton(
+                        onPressed: () => _expandCategory(categoryName, items.length),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Nebula.teal,
+                          side: BorderSide(color: Nebula.teal.withValues(alpha: 0.4), width: 1),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         ),
-                        const SizedBox(width: 6),
-                        const Icon(CupertinoIcons.arrow_right, size: 13),
-                      ],
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Lihat $remaining lagi',
+                              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(CupertinoIcons.chevron_down, size: 12),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      OutlinedButton(
+                        onPressed: () => _collapseCategory(categoryName),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: context.textSecondary,
+                          side: BorderSide(color: context.dividerCol, width: 1),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Tutup',
+                              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(CupertinoIcons.chevron_up, size: 12),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                else if (!hasMore && isExpanded)
+                  Center(
+                    child: OutlinedButton(
+                      onPressed: () => _collapseCategory(categoryName),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: context.textSecondary,
+                        side: BorderSide(color: context.dividerCol, width: 1),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Tutup Menu $categoryName',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: context.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Icon(CupertinoIcons.chevron_up, size: 13),
+                        ],
+                      ),
                     ),
                   ),
-                ),
               ],
             ],
           ),
@@ -1902,7 +2178,12 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
     );
   }
 
-  Widget _buildSingleColumnProductCard(BuildContext context, ProductWithCanteen item) {
+  Widget _buildSingleColumnProductCard(
+    BuildContext context,
+    ProductWithCanteen item, {
+    bool isFirst = false,
+    bool isLast = false,
+  }) {
     final product = item.product;
     final bool isAvailable = product.isAvailable;
     final String formattedPrice = product.price
@@ -1912,24 +2193,13 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
 
     return Opacity(
       opacity: isAvailable ? 1.0 : 0.55,
-      child: PressScale(
-        scale: 0.98,
-        onTap: () => _showProductDetail(context, item),
-        child: Container(
-          decoration: BoxDecoration(
-            color: context.cardBg,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: context.borderLight,
-              width: 0.8,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: context.isDark ? 0.2 : 0.03),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showProductDetail(context, item),
+          borderRadius: BorderRadius.vertical(
+            top: isFirst ? const Radius.circular(16) : Radius.zero,
+            bottom: isLast ? const Radius.circular(16) : Radius.zero,
           ),
           child: Padding(
             padding: const EdgeInsets.all(12),
@@ -2065,17 +2335,19 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
                           ],
                         ],
                       ),
-                      const SizedBox(height: 3),
-                      Text(
-                        desc,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          color: context.textSecondary,
-                          height: 1.25,
+                      if (desc.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          desc,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: context.textSecondary,
+                            height: 1.25,
+                          ),
                         ),
-                      ),
+                      ],
                       const SizedBox(height: 8),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -2127,6 +2399,19 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
     final product = item.product;
     final operatorId = product.operatorId.isNotEmpty ? product.operatorId : 'stan-utama';
     final canteenName = item.canteenName;
+
+    // Jika produk memiliki pilihan (pedas, level es, topping dll), buka full-screen 'Custom pembelian'
+    if (product.customizableOptions.isNotEmpty) {
+      ProductDetailBottomSheet.show(
+        context,
+        product: product,
+        stanId: operatorId,
+        stanName: canteenName,
+        deliveryFee: 2000,
+        description: _getProductDescription(product),
+      );
+      return;
+    }
 
     final cartNotifier = ref.read(studentCartProvider.notifier);
     final hasConflict = cartNotifier.checkCanteenConflict(operatorId);
@@ -2193,25 +2478,6 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
     );
   }
 
-  void _openCategoryCatalogModal(String categoryName, List<ProductWithCanteen> categoryProducts) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return _CategoryCatalogSheet(
-          categoryName: categoryName,
-          allProducts: categoryProducts,
-          onAddToCart: (item) => _handleAddToCart(item),
-          onProductTap: (item) => _showProductDetail(context, item),
-          placeholderBuilder: (cat) => _buildPlaceholderImage(cat),
-          descBuilder: (prod) => _getProductDescription(prod),
-        );
-      },
-    );
-  }
-
   String _getProductDescription(Product product) {
     final lower = product.name.toLowerCase();
     if (lower.contains('nasi goreng')) {
@@ -2229,7 +2495,7 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
     } else if (lower.contains('jus')) {
       return 'Jus buah segar racikan alami tanpa pemanis buatan';
     }
-    return 'Menu sehat dan lezat siap dinikmati langsung dari kantin sekolah';
+    return '';
   }
 
   List<ProductWithCanteen> _getPresetProductsForStall(_CanteenStallInfo stall) {
@@ -2409,9 +2675,10 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
         .replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
 
     return PressScale(
-      onTap: () => context.push('/student/cart'),
+      onTap: () => _showCartSheet(context),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        constraints: const BoxConstraints(maxWidth: 320),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: Nebula.teal,
           borderRadius: BorderRadius.circular(28),
@@ -2426,15 +2693,19 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              '$itemCount Items | Total Rp $formattedPrice',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
+            Flexible(
+              child: Text(
+                '$itemCount Items | Total Rp $formattedPrice',
+                style: GoogleFonts.inter(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Container(
               width: 28,
               height: 28,
@@ -2451,6 +2722,210 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showCartSheet(BuildContext context) {
+    final authState = ref.read(authNotifierProvider);
+    final role = authState.profile?['role']?.toString().toLowerCase();
+    final isStudent = authState.isAuthenticated && (role == 'student' || role == 'siswa');
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Consumer(
+          builder: (context, ref, _) {
+            final cart = ref.watch(studentCartProvider);
+            final formattedItemsTotal = CurrencyFormatter.formatWithoutPrefix(cart.totalAmount);
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.78,
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              decoration: BoxDecoration(
+                color: context.cardBg,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade400,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(CupertinoIcons.cart_fill, color: Color(0xFF10B981), size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Keranjang Pesanan',
+                                style: GoogleFonts.inter(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w800,
+                                  color: context.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (cart.canteenName != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              'Stan: ${cart.canteenName}',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF10B981),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      IconButton(
+                        icon: const Icon(CupertinoIcons.clear_circled_solid, size: 20),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 16),
+
+                  // Cart Items List
+                  Expanded(
+                    child: cart.items.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(CupertinoIcons.cart, size: 48, color: Colors.grey),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Keranjang belanja kosong',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: context.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.separated(
+                            itemCount: cart.items.length,
+                            separatorBuilder: (_, __) => Divider(
+                              height: 12,
+                              thickness: 1.0,
+                              color: context.dividerCol,
+                            ),
+                            itemBuilder: (context, index) {
+                              final item = cart.items[index];
+                              return _QuickCartItemTile(
+                                item: item,
+                                onDecrease: () {
+                                  ref.read(studentCartProvider.notifier).decreaseQuantity(
+                                        item.productId,
+                                        selectedOptions: item.selectedOptions,
+                                        notes: item.notes,
+                                      );
+                                },
+                                onIncrease: () {
+                                  ref.read(studentCartProvider.notifier).increaseQuantity(
+                                        item.productId,
+                                        selectedOptions: item.selectedOptions,
+                                        notes: item.notes,
+                                      );
+                                },
+                              );
+                            },
+                          ),
+                  ),
+
+                  // Bottom Summary & Action
+                  if (cart.items.isNotEmpty) ...[
+                    const Divider(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Subtotal Menu',
+                          style: GoogleFonts.inter(fontSize: 13, color: context.textSecondary),
+                        ),
+                        Text(
+                          'Rp $formattedItemsTotal',
+                          style: GoogleFonts.inter(fontSize: 13.5, fontWeight: FontWeight.w700, color: context.textPrimary),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Total Pembayaran',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: context.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          'Rp $formattedItemsTotal',
+                          style: GoogleFonts.inter(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: const Color(0xFF10B981),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF10B981),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          elevation: 0,
+                        ),
+                        onPressed: () {
+                          if (isStudent) {
+                            context.push('/student/cart');
+                          } else {
+                            context.push('/login?from=/student/cart');
+                          }
+                        },
+                        child: Text(
+                          isStudent ? 'Lanjut ke Pembayaran' : 'Masuk / Login untuk Bayar',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -2501,365 +2976,226 @@ class _PublicMenuScreenState extends ConsumerState<PublicMenuScreen> {
     final operatorId = item.product.operatorId.isNotEmpty ? item.product.operatorId : 'stan-utama';
     context.push('/public/stan/$operatorId?productId=${item.product.id}');
   }
-
 }
 
-/// Full Category Catalog Bottom Sheet Modal (Lihat Lainnya)
-class _CategoryCatalogSheet extends StatefulWidget {
-  final String categoryName;
-  final List<ProductWithCanteen> allProducts;
-  final Function(ProductWithCanteen) onAddToCart;
-  final Function(ProductWithCanteen) onProductTap;
-  final Widget Function(String) placeholderBuilder;
-  final String Function(Product) descBuilder;
+class _QuickCartItemTile extends StatefulWidget {
+  final StudentCartItem item;
+  final VoidCallback onDecrease;
+  final VoidCallback onIncrease;
 
-  const _CategoryCatalogSheet({
-    required this.categoryName,
-    required this.allProducts,
-    required this.onAddToCart,
-    required this.onProductTap,
-    required this.placeholderBuilder,
-    required this.descBuilder,
+  const _QuickCartItemTile({
+    required this.item,
+    required this.onDecrease,
+    required this.onIncrease,
   });
 
   @override
-  State<_CategoryCatalogSheet> createState() => _CategoryCatalogSheetState();
+  State<_QuickCartItemTile> createState() => _QuickCartItemTileState();
 }
 
-class _CategoryCatalogSheetState extends State<_CategoryCatalogSheet> {
-  String _catalogSearch = '';
+class _QuickCartItemTileState extends State<_QuickCartItemTile> {
+  bool _isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
-    final filtered = widget.allProducts.where((p) {
-      if (_catalogSearch.isEmpty) return true;
-      final q = _catalogSearch.toLowerCase();
-      return p.product.name.toLowerCase().contains(q) ||
-          p.canteenName.toLowerCase().contains(q);
-    }).toList();
-
-    final screenHeight = MediaQuery.of(context).size.height;
+    final item = widget.item;
+    final bool hasDetails = item.selectedOptions.isNotEmpty ||
+        (item.notes != null && item.notes!.trim().isNotEmpty);
+    final String itemPrice = item.price
+        .toStringAsFixed(0)
+        .replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+    final bool hasImage = item.imageUrl != null && item.imageUrl!.isNotEmpty;
 
     return Container(
-      height: screenHeight * 0.88,
-      decoration: BoxDecoration(
-        color: context.cardBg,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        border: Border.all(color: context.borderLight, width: 0.5),
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Drag handle & Title Row
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Column(
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: context.dividerCol,
-                    borderRadius: BorderRadius.circular(2),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Product Image thumbnail
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: hasImage
+                      ? CachedNetworkImage(
+                          imageUrl: item.imageUrl!,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => const ShimmerRect(
+                            width: 48,
+                            height: 48,
+                            borderRadius: 10,
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: const Color(0xFF10B981).withValues(alpha: 0.08),
+                            child: const Icon(CupertinoIcons.cube_box, color: Color(0xFF10B981), size: 18),
+                          ),
+                        )
+                      : Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981).withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(CupertinoIcons.cube_box, color: Color(0xFF10B981), size: 20),
+                        ),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Product Info (Clickable to toggle details)
+              Expanded(
+                child: InkWell(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _isExpanded = !_isExpanded);
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                item.name,
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: context.textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (hasDetails) ...[
+                              const SizedBox(width: 4),
+                              Icon(
+                                _isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down,
+                                size: 12,
+                                color: const Color(0xFF10B981),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Rp $itemPrice',
+                          style: GoogleFonts.inter(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF10B981),
+                          ),
+                        ),
+                        if (hasDetails && !_isExpanded) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            item.selectedOptions.isNotEmpty
+                                ? 'Pilihan: ${item.selectedOptions.join(', ')}'
+                                : 'Catatan: ${item.notes}',
+                            style: GoogleFonts.inter(
+                              fontSize: 10.5,
+                              color: context.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            'Katalog ${widget.categoryName}',
+              ),
+              const SizedBox(width: 8),
+
+              // Stepper buttons (- qty +)
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(CupertinoIcons.minus_circle_fill, color: Colors.grey, size: 22),
+                    onPressed: widget.onDecrease,
+                  ),
+                  Text(
+                    '${item.quantity}',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: context.textPrimary,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(CupertinoIcons.plus_circle_fill, color: Color(0xFF10B981), size: 22),
+                    onPressed: widget.onIncrease,
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          // Animated Dropdown Details
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Container(
+              margin: const EdgeInsets.only(top: 8, left: 60),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: context.surfaceBg,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: context.dividerCol, width: 0.8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (item.selectedOptions.isNotEmpty) ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.tune_rounded, size: 12, color: Color(0xFF10B981)),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Pilihan: ${item.selectedOptions.join(', ')}',
                             style: GoogleFonts.inter(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
                               color: context.textPrimary,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Nebula.teal.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              '${widget.allProducts.length}',
-                              style: GoogleFonts.inter(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Nebula.teal,
-                              ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (item.notes != null && item.notes!.trim().isNotEmpty) ...[
+                    if (item.selectedOptions.isNotEmpty) const SizedBox(height: 6),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.chat_bubble_outline_rounded, size: 12, color: Nebula.amber),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Catatan: "${item.notes!}"',
+                            style: GoogleFonts.inter(
+                              fontSize: 11.5,
+                              fontStyle: FontStyle.italic,
+                              fontWeight: FontWeight.w600,
+                              color: Nebula.amber,
                             ),
                           ),
-                        ],
-                      ),
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(CupertinoIcons.multiply_circle_fill, size: 24),
-                        color: context.textSecondary,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Divider(height: 1, color: context.borderLight),
-
-          // Search Bar inside catalog
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: Container(
-              decoration: BoxDecoration(
-                color: context.surfaceBg,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: context.borderLight, width: 0.8),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-              child: Row(
-                children: [
-                  Icon(CupertinoIcons.search, size: 16, color: context.textSecondary),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Cari menu di ${widget.categoryName}...',
-                        hintStyle: TextStyle(
-                          fontSize: 12.5,
-                          color: context.textSecondary.withValues(alpha: 0.7),
                         ),
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                      ),
-                      style: TextStyle(fontSize: 13, color: context.textPrimary),
-                      onChanged: (val) {
-                        setState(() {
-                          _catalogSearch = val.trim();
-                        });
-                      },
+                      ],
                     ),
-                  ),
-                  if (_catalogSearch.isNotEmpty)
-                    GestureDetector(
-                      onTap: () => setState(() => _catalogSearch = ''),
-                      child: Icon(CupertinoIcons.clear_circled_solid, size: 16, color: context.textSecondary),
-                    ),
+                  ],
                 ],
               ),
             ),
-          ),
-
-          // Products List
-          Expanded(
-            child: filtered.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(CupertinoIcons.search, size: 36, color: context.textSecondary),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Tidak ada menu yang sesuai',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: context.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filtered.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final item = filtered[index];
-                      final product = item.product;
-                      final bool isAvailable = product.isAvailable;
-                      final String formattedPrice = product.price
-                          .toStringAsFixed(0)
-                          .replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
-                      final String desc = widget.descBuilder(product);
-
-                      return Opacity(
-                        opacity: isAvailable ? 1.0 : 0.55,
-                        child: PressScale(
-                          scale: 0.98,
-                          onTap: () {
-                            Navigator.pop(context);
-                            widget.onProductTap(item);
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: context.cardBg,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: context.borderLight, width: 0.8),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: context.isDark ? 0.2 : 0.03),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  // Left Rounded Image
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(14),
-                                    child: Container(
-                                      width: 84,
-                                      height: 84,
-                                      color: context.surfaceBg,
-                                      child: product.imageUrl != null && product.imageUrl!.isNotEmpty
-                                          ? CachedNetworkImage(
-                                              imageUrl: product.imageUrl!,
-                                              fit: BoxFit.cover,
-                                              placeholder: (_, __) => const ShimmerRect(
-                                                width: 84,
-                                                height: 84,
-                                                borderRadius: 14,
-                                              ),
-                                              errorWidget: (_, __, ___) => widget.placeholderBuilder(product.category),
-                                            )
-                                          : widget.placeholderBuilder(product.category),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 14),
-
-                                  // Right Content
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          product.name,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: GoogleFonts.inter(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w700,
-                                            color: context.textPrimary,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 3),
-                                        Row(
-                                          children: [
-                                            const Icon(Icons.storefront_rounded, size: 12, color: Nebula.teal),
-                                            const SizedBox(width: 3.5),
-                                            Flexible(
-                                              child: Text(
-                                                item.canteenName,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: GoogleFonts.inter(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Nebula.teal,
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 6),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                                              decoration: BoxDecoration(
-                                                color: item.isDeliveryEnabled
-                                                    ? const Color(0xFF10B981).withValues(alpha: 0.12)
-                                                    : Colors.grey.withValues(alpha: 0.12),
-                                                borderRadius: BorderRadius.circular(4),
-                                              ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Icon(
-                                                    item.isDeliveryEnabled ? Icons.delivery_dining : Icons.shopping_bag_outlined,
-                                                    size: 11,
-                                                    color: item.isDeliveryEnabled ? const Color(0xFF10B981) : Colors.grey,
-                                                  ),
-                                                  const SizedBox(width: 2.5),
-                                                  Text(
-                                                    item.isDeliveryEnabled ? 'Bisa Antar' : 'Ambil di Stan',
-                                                    style: GoogleFonts.inter(
-                                                      fontSize: 9.5,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: item.isDeliveryEnabled ? const Color(0xFF10B981) : Colors.grey,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 3),
-                                        Text(
-                                          desc,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: GoogleFonts.inter(
-                                            fontSize: 11,
-                                            color: context.textSecondary,
-                                            height: 1.25,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          crossAxisAlignment: CrossAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              'Rp $formattedPrice',
-                                              style: GoogleFonts.inter(
-                                                fontSize: 14.5,
-                                                fontWeight: FontWeight.w800,
-                                                color: Nebula.teal,
-                                              ),
-                                            ),
-                                            GestureDetector(
-                                              onTap: isAvailable ? () => widget.onAddToCart(item) : null,
-                                              child: Container(
-                                                width: 32,
-                                                height: 32,
-                                                decoration: BoxDecoration(
-                                                  color: isAvailable ? Nebula.teal : context.textSecondary.withValues(alpha: 0.3),
-                                                  shape: BoxShape.circle,
-                                                  boxShadow: isAvailable
-                                                      ? [
-                                                          BoxShadow(
-                                                            color: Nebula.teal.withValues(alpha: 0.35),
-                                                            blurRadius: 6,
-                                                            offset: const Offset(0, 2),
-                                                          ),
-                                                        ]
-                                                      : [],
-                                                ),
-                                                child: const Icon(Icons.add, color: Colors.white, size: 20),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+            crossFadeState: _isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 220),
           ),
         ],
       ),

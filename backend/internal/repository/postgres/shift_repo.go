@@ -311,16 +311,30 @@ func (r *ShiftRepo) ListShifts(ctx context.Context, officerID string, limit, off
 	return list, total, nil
 }
 
-// VerifyShift allows Super Admin to verify and mark shift as confirmed
+// VerifyShift allows Super Admin to verify and mark shift as confirmed (cannot self-verify)
 func (r *ShiftRepo) VerifyShift(ctx context.Context, shiftID, adminID string) (*domain.CashierShift, error) {
 	if r.db == nil || r.db.Pool == nil {
 		return nil, ErrDatabaseNotReady
 	}
 
+	// First verify shift existence and ensure officer is not self-verifying
+	var officerID string
+	err := r.db.Pool.QueryRow(ctx, `SELECT officer_id FROM public.cashier_shifts WHERE id = $1`, shiftID).Scan(&officerID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, errors.New("sesi shift tidak ditemukan")
+		}
+		return nil, err
+	}
+
+	if officerID == adminID {
+		return nil, errors.New("petugas tidak diizinkan memverifikasi sesi shift kasirnya sendiri")
+	}
+
 	now := time.Now().UTC()
 	var shift domain.CashierShift
 
-	err := r.db.Pool.QueryRow(ctx, `
+	err = r.db.Pool.QueryRow(ctx, `
 		UPDATE public.cashier_shifts
 		SET status = 'verified', verified_by = $1, verified_at = $2
 		WHERE id = $3

@@ -534,23 +534,59 @@ func (r *OrderRepo) MarkMessagesAsRead(ctx context.Context, orderID, readerID st
 }
 
 func (r *OrderRepo) CreateReview(ctx context.Context, rev *domain.OrderReview) (*domain.OrderReview, error) {
+	// Auto-link primary product from order_items if not set
+	if rev.ProductID == nil || *rev.ProductID == "" {
+		var pID, pName string
+		err := r.db.Pool.QueryRow(ctx, `
+			SELECT product_id, product_name
+			FROM public.order_items
+			WHERE order_id = $1 AND product_id IS NOT NULL
+			LIMIT 1`, rev.OrderID,
+		).Scan(&pID, &pName)
+		if err == nil && pID != "" {
+			rev.ProductID = &pID
+			rev.ProductName = &pName
+		}
+	}
+
 	query := `
-		INSERT INTO public.order_reviews (order_id, student_id, operator_id, rating, review_text, tags, is_anonymous)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO public.order_reviews (order_id, student_id, operator_id, product_id, product_name, rating, review_text, tags, is_anonymous)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING id, created_at`
 
 	err := r.db.Pool.QueryRow(ctx, query,
-		rev.OrderID, rev.StudentID, rev.OperatorID, rev.Rating, rev.ReviewText, rev.Tags, rev.IsAnonymous,
+		rev.OrderID, rev.StudentID, rev.OperatorID, rev.ProductID, rev.ProductName, rev.Rating, rev.ReviewText, rev.Tags, rev.IsAnonymous,
 	).Scan(&rev.ID, &rev.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
+
+	// Update product rating and total reviews
+	if rev.ProductID != nil && *rev.ProductID != "" {
+		_, _ = r.db.Pool.Exec(ctx, `
+			UPDATE public.products p
+			SET rating = COALESCE((SELECT ROUND(AVG(r.rating)::numeric, 1) FROM public.order_reviews r WHERE r.product_id = p.id), 0.0),
+			    total_reviews = COALESCE((SELECT COUNT(r.id) FROM public.order_reviews r WHERE r.product_id = p.id), 0)
+			WHERE p.id = $1`, *rev.ProductID,
+		)
+	}
+
+	// Update canteen operator rating and total reviews
+	if rev.OperatorID != nil && *rev.OperatorID != "" {
+		_, _ = r.db.Pool.Exec(ctx, `
+			UPDATE public.canteen_operators co
+			SET rating = COALESCE((SELECT ROUND(AVG(r.rating)::numeric, 1) FROM public.order_reviews r WHERE r.operator_id = co.id), 0.0),
+			    total_reviews = COALESCE((SELECT COUNT(r.id) FROM public.order_reviews r WHERE r.operator_id = co.id), 0)
+			WHERE co.id = $1`, *rev.OperatorID,
+		)
+	}
+
 	return rev, nil
 }
 
 func (r *OrderRepo) GetReviewByOrderID(ctx context.Context, orderID string) (*domain.OrderReview, error) {
 	query := `
-		SELECT r.id, r.order_id, r.student_id, r.operator_id, r.rating, r.review_text, r.tags, r.is_anonymous, r.created_at,
+		SELECT r.id, r.order_id, r.student_id, r.operator_id, r.product_id, r.product_name, r.rating, r.review_text, r.tags, r.is_anonymous, r.created_at,
 		       p.full_name, p.avatar_url
 		FROM public.order_reviews r
 		LEFT JOIN public.profiles p ON p.id = r.student_id
@@ -560,7 +596,7 @@ func (r *OrderRepo) GetReviewByOrderID(ctx context.Context, orderID string) (*do
 	var rev domain.OrderReview
 	var fullName, avatarURL *string
 	err := row.Scan(
-		&rev.ID, &rev.OrderID, &rev.StudentID, &rev.OperatorID, &rev.Rating, &rev.ReviewText, &rev.Tags, &rev.IsAnonymous, &rev.CreatedAt,
+		&rev.ID, &rev.OrderID, &rev.StudentID, &rev.OperatorID, &rev.ProductID, &rev.ProductName, &rev.Rating, &rev.ReviewText, &rev.Tags, &rev.IsAnonymous, &rev.CreatedAt,
 		&fullName, &avatarURL,
 	)
 	if err != nil {
@@ -583,17 +619,18 @@ func (r *OrderRepo) GetReviewByOrderID(ctx context.Context, orderID string) (*do
 	return &rev, nil
 }
 
-func (r *OrderRepo) ListCanteenReviews(ctx context.Context, canteenID string, limit int) ([]domain.OrderReview, error) {
+func (r *OrderRepo) ListCanteenReviews(ctx context.Context, canteenID, productID string, limit int) ([]domain.OrderReview, error) {
 	query := `
-		SELECT r.id, r.order_id, r.student_id, r.operator_id, r.rating, r.review_text, r.tags, r.is_anonymous, r.created_at,
+		SELECT r.id, r.order_id, r.student_id, r.operator_id, r.product_id, r.product_name, r.rating, r.review_text, r.tags, r.is_anonymous, r.created_at,
 		       p.full_name, p.avatar_url
 		FROM public.order_reviews r
 		LEFT JOIN public.profiles p ON p.id = r.student_id
-		WHERE r.operator_id = $1
+		WHERE ($1 = '' OR r.operator_id::text = $1)
+		  AND ($2 = '' OR r.product_id::text = $2)
 		ORDER BY r.created_at DESC
-		LIMIT $2`
+		LIMIT $3`
 
-	rows, err := r.db.Pool.Query(ctx, query, canteenID, limit)
+	rows, err := r.db.Pool.Query(ctx, query, canteenID, productID, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -604,7 +641,7 @@ func (r *OrderRepo) ListCanteenReviews(ctx context.Context, canteenID string, li
 		var rev domain.OrderReview
 		var fullName, avatarURL *string
 		err := rows.Scan(
-			&rev.ID, &rev.OrderID, &rev.StudentID, &rev.OperatorID, &rev.Rating, &rev.ReviewText, &rev.Tags, &rev.IsAnonymous, &rev.CreatedAt,
+			&rev.ID, &rev.OrderID, &rev.StudentID, &rev.OperatorID, &rev.ProductID, &rev.ProductName, &rev.Rating, &rev.ReviewText, &rev.Tags, &rev.IsAnonymous, &rev.CreatedAt,
 			&fullName, &avatarURL,
 		)
 		if err != nil {

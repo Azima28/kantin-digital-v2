@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/services/report_export_service.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
@@ -32,8 +32,7 @@ class _ThousandsSeparatorInputFormatter extends TextInputFormatter {
     final number = int.tryParse(cleanText);
     if (number == null) return oldValue;
 
-    final formatter = NumberFormat('#,###', 'id_ID');
-    final formatted = formatter.format(number);
+    final formatted = CurrencyFormatter.formatWithoutPrefix(number);
 
     return TextEditingValue(
       text: formatted,
@@ -62,7 +61,7 @@ class _KeuanganClosingShiftModalState
   final TextEditingController _notesController = TextEditingController();
   bool _isProcessing = false;
 
-  final _fmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+  final _fmt = const AppNumberFormat(symbol: 'Rp ');
 
   int _getEnteredPhysicalCash() {
     final clean = _physicalCashController.text.replaceAll(RegExp(r'[^0-9]'), '');
@@ -74,9 +73,8 @@ class _KeuanganClosingShiftModalState
   }
 
   void _quickFillExpectedCash(int expected) {
-    final fmt = NumberFormat('#,###', 'id_ID');
     setState(() {
-      _physicalCashController.text = expected > 0 ? fmt.format(expected) : '0';
+      _physicalCashController.text = expected > 0 ? CurrencyFormatter.formatWithoutPrefix(expected) : '0';
     });
   }
 

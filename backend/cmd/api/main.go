@@ -171,13 +171,13 @@ func main() {
 					}
 				} else if strings.HasPrefix(room, "order:") {
 					orderID := strings.TrimPrefix(room, "order:")
-					if claims.Role != domain.RoleAdmin && claims.Role != domain.RoleSuperAdmin && claims.Role != domain.RolePetugasKeuangan {
+					if claims.Role != domain.RoleAdmin && claims.Role != domain.RoleSuperAdmin && claims.Role != domain.RolePetugasKeuangan && claims.Role != domain.RolePetugasKantin {
 						order, err := orderRepo.GetOrderByID(c.Context(), orderID)
 						if err != nil || order == nil {
 							return fiber.NewError(fiber.StatusNotFound, "Pesanan tidak ditemukan")
 						}
-						isStudent := order.StudentID == claims.UserID
-						isOperator := order.OperatorID != nil && *order.OperatorID == claims.UserID
+						isStudent := strings.EqualFold(order.StudentID, claims.UserID)
+						isOperator := order.OperatorID != nil && strings.EqualFold(*order.OperatorID, claims.UserID)
 						if !isStudent && !isOperator {
 							return fiber.NewError(fiber.StatusForbidden, "Akses chat room pesanan ditolak")
 						}
@@ -240,6 +240,7 @@ func main() {
 		{
 			studentGroup.Get("/me", studentH.GetMyProfile)
 			studentGroup.Get("/transactions", studentH.GetTransactions)
+			studentGroup.Post("/topup", studentH.Topup)
 		}
 
 		// Orders
@@ -276,15 +277,20 @@ func main() {
 		{
 			financeGroup.Get("/dashboard", financeH.Dashboard)
 			financeGroup.Get("/students", financeH.ListStudents)
+			financeGroup.Post("/students", adminH.CreateUser)
+			financeGroup.Put("/students/:id", adminH.UpdateStudent)
+			financeGroup.Patch("/students/:id", adminH.UpdateStudent)
 			financeGroup.Get("/history", financeH.History)
 			financeGroup.Get("/audit-logs", adminH.ListAuditLogs)
 			financeGroup.Get("/users", adminH.ListUsers)
+			financeGroup.Post("/users", adminH.CreateUser)
 			financeGroup.Get("/student/:id", adminH.GetStudentDetail)
 			financeGroup.Get("/merchant/:id", adminH.GetMerchantDetail)
 			financeGroup.Get("/parent/:id", adminH.GetParentDetail)
 			financeGroup.Post("/topup", financeH.Topup)
 			financeGroup.Post("/merchant/withdraw", financeH.MerchantWithdraw)
 			financeGroup.Get("/report", financeH.Report)
+			financeGroup.Get("/academic-structure", adminH.GetAcademicStructure)
 
 			// Continuous Shift Ledger Routes
 			financeGroup.Get("/shift/current", financeH.GetCurrentShift)
@@ -296,13 +302,14 @@ func main() {
 		parentGroup := authRequired.Group("/parent", middleware.RequireRoles(domain.RoleParent, domain.RoleSuperAdmin, domain.RoleAdmin))
 		{
 			parentGroup.Get("/dashboard/:studentId", parentH.Dashboard)
+			parentGroup.Post("/topup", studentH.Topup)
 		}
 		authRequired.Patch("/student/settings", middleware.RequireRoles(domain.RoleParent, domain.RoleSuperAdmin, domain.RoleAdmin, domain.RolePetugasKeuangan), parentH.UpdateStudentSettings)
 		authRequired.Patch("/student/card-status", middleware.RequireRoles(domain.RoleStudent, domain.RoleParent, domain.RolePetugasKeuangan, domain.RoleSuperAdmin, domain.RoleAdmin), studentH.UpdateCardStatus)
 		authRequired.Patch("/users/:id/status", middleware.RequireRoles(domain.RolePetugasKeuangan, domain.RoleSuperAdmin, domain.RoleAdmin), adminH.UpdateStatus)
 
-		// Super Admin & Admin / Finance Management
-		adminGroup := authRequired.Group("/admin", middleware.RequireRoles(domain.RoleSuperAdmin, domain.RoleAdmin, domain.RolePetugasKeuangan))
+		// Super Admin & Admin Management ONLY (RolePetugasKeuangan excluded)
+		adminGroup := authRequired.Group("/admin", middleware.RequireRoles(domain.RoleSuperAdmin, domain.RoleAdmin))
 		{
 			adminGroup.Get("/dashboard", adminH.Dashboard)
 			adminGroup.Get("/users", adminH.ListUsers)

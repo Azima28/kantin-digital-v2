@@ -122,6 +122,14 @@ class AuthService {
     _authStateController.add(null);
   }
 
+  // Validate session validity against backend
+  Future<bool> validateSession() async {
+    final token = _apiClient.authToken;
+    if (token == null || token.isEmpty) return false;
+    final response = await _apiClient.get('/auth/me');
+    return response.success && response.statusCode == 200;
+  }
+
   // Get current authenticated user profile
   Future<Map<String, dynamic>?> getCurrentProfile() async {
     if (_currentProfile != null) return _currentProfile;

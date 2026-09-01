@@ -15,6 +15,7 @@ import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_edit_parent_sheet.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 
 
 class AdminParentDetailScreen extends ConsumerStatefulWidget {
@@ -304,10 +305,12 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
-                      CircleAvatar(
+                      AppAvatar(
                         radius: 36,
-                        backgroundColor: Nebula.teal.withValues(alpha: 0.1),
-                        child: Icon(CupertinoIcons.person_2_fill, color: Nebula.teal, size: 36),
+                        photoUrl: profile.avatarUrl,
+                        role: 'parent',
+                        name: fullName,
+                        gender: profile.gender,
                       ),
                       const SizedBox(height: 12),
                       Text(
@@ -387,10 +390,12 @@ class _AdminParentDetailScreenState extends ConsumerState<AdminParentDetailScree
                               children: [
                                 Row(
                                   children: [
-                                    CircleAvatar(
+                                    AppAvatar(
                                       radius: 20,
-                                      backgroundColor: Nebula.teal.withValues(alpha: 0.1),
-                                      child: Icon(CupertinoIcons.person, color: Nebula.teal, size: 20),
+                                      photoUrl: profileInfo['avatar_url'] as String?,
+                                      role: 'student',
+                                      name: childName,
+                                      gender: profileInfo['gender'] as String?,
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(

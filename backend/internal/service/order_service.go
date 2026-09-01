@@ -61,8 +61,8 @@ func (s *OrderService) UpdateOrderStatus(ctx context.Context, orderID, callerUse
 		return err
 	}
 
-	// Verify merchant ownership
-	if callerRole != domain.RoleSuperAdmin && callerRole != domain.RoleAdmin {
+	// Verify merchant ownership (Admins, Finance Officers, and Canteen Operators on duty are authorized)
+	if callerRole != domain.RoleSuperAdmin && callerRole != domain.RoleAdmin && callerRole != domain.RolePetugasKeuangan && callerRole != domain.RolePetugasKantin {
 		if order.OperatorID == nil || *order.OperatorID != callerUserID {
 			return errors.New("akses ditolak: pesanan ini bukan milik stan Anda")
 		}
@@ -74,10 +74,9 @@ func (s *OrderService) UpdateOrderStatus(ctx context.Context, orderID, callerUse
 func (s *OrderService) SendMessage(ctx context.Context, msg *domain.OrderMessage, callerRole domain.Role) (*domain.OrderMessage, error) {
 	order, err := s.orderRepo.GetOrderByID(ctx, msg.OrderID)
 	if err == nil && order != nil {
-		// Verify participant authorization strictly (Admins & Finance Officers are universally authorized)
-		if callerRole != domain.RoleSuperAdmin && callerRole != domain.RoleAdmin && callerRole != domain.RolePetugasKeuangan {
-			isParticipant := (callerRole == domain.RoleStudent && strings.EqualFold(msg.SenderID, order.StudentID)) ||
-				(callerRole == domain.RolePetugasKantin && order.OperatorID != nil && strings.EqualFold(msg.SenderID, *order.OperatorID))
+		// Verify participant authorization strictly (Admins, Finance Officers, & Canteen Staff are universally authorized)
+		if callerRole != domain.RoleSuperAdmin && callerRole != domain.RoleAdmin && callerRole != domain.RolePetugasKeuangan && callerRole != domain.RolePetugasKantin {
+			isParticipant := (callerRole == domain.RoleStudent && strings.EqualFold(msg.SenderID, order.StudentID))
 			if !isParticipant {
 				return nil, errors.New("akses ditolak: Anda bukan partisipan dalam pesanan ini")
 			}
@@ -95,10 +94,9 @@ func (s *OrderService) GetMessages(ctx context.Context, orderID, callerUserID st
 		return s.orderRepo.ListOrderMessages(ctx, orderID)
 	}
 
-	// Verify participant authorization gracefully (Admins & Finance Officers are universally authorized)
-	if callerRole != domain.RoleSuperAdmin && callerRole != domain.RoleAdmin && callerRole != domain.RolePetugasKeuangan {
-		isParticipant := (callerRole == domain.RoleStudent && strings.EqualFold(callerUserID, order.StudentID)) ||
-			(callerRole == domain.RolePetugasKantin && order.OperatorID != nil && strings.EqualFold(callerUserID, *order.OperatorID))
+	// Verify participant authorization gracefully (Admins, Finance Officers, & Canteen Staff are authorized)
+	if callerRole != domain.RoleSuperAdmin && callerRole != domain.RoleAdmin && callerRole != domain.RolePetugasKeuangan && callerRole != domain.RolePetugasKantin {
+		isParticipant := (callerRole == domain.RoleStudent && strings.EqualFold(callerUserID, order.StudentID))
 		if !isParticipant {
 			return []domain.OrderMessage{}, nil
 		}
@@ -154,6 +152,6 @@ func (s *OrderService) GetReviewByOrderID(ctx context.Context, orderID string) (
 	return s.orderRepo.GetReviewByOrderID(ctx, orderID)
 }
 
-func (s *OrderService) ListCanteenReviews(ctx context.Context, canteenID string) ([]domain.OrderReview, error) {
-	return s.orderRepo.ListCanteenReviews(ctx, canteenID, 20)
+func (s *OrderService) ListCanteenReviews(ctx context.Context, canteenID, productID string) ([]domain.OrderReview, error) {
+	return s.orderRepo.ListCanteenReviews(ctx, canteenID, productID, 20)
 }

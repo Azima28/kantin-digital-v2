@@ -2,10 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/widgets/date_filter_modal.dart';
 import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
@@ -28,7 +28,7 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
   AppDateFilterParam? _dateFilter;
 
 
-  String _formatKeterangan(AuditLog log, NumberFormat fmt) {
+  String _formatKeterangan(AuditLog log, AppNumberFormat fmt) {
     final actionType = log.actionType;
     final desc = log.description;
     final oldValue = log.oldValue;
@@ -153,7 +153,7 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
     );
   }
 
-  void _showDetailDialog(AuditLog log, NumberFormat fmt) {
+  void _showDetailDialog(AuditLog log, AppNumberFormat fmt) {
     showDialog(
       context: context,
       builder: (context) {
@@ -171,7 +171,7 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
             actionType.contains('UNFREEZE');
         final created = log.createdAt?.toLocal() ?? DateTime.now();
         final timeStr =
-            DateFormat('dd MMMM yyyy, HH:mm:ss', 'id_ID').format(created);
+            AppDateFormatter.formatFullDateWithTimeSeconds(created);
         final actorName = log.actorName.isNotEmpty ? log.actorName : '-';
         final formattedKeterangan = _formatKeterangan(log, fmt);
 
@@ -420,7 +420,7 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
   }
 
   Widget _buildBeforeAfterCards(
-      AuditLog log, NumberFormat fmt, BuildContext context) {
+      AuditLog log, AppNumberFormat fmt, BuildContext context) {
     final actionType = log.actionType;
     final isBatal = actionType == 'BATAL_PESANAN';
     final oldValue = log.oldValue;
@@ -594,7 +594,7 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final historyAsync = ref.watch(keuanganHistoryProvider);
-    final fmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    const fmt = AppNumberFormat(symbol: 'Rp ');
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -775,197 +775,68 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                         Expanded(
                           child: Builder(
                             builder: (context) {
-                              final List<dynamic> listItems = [];
-                              DateTime? lastDate;
+                              final Map<String, List<AuditLog>> groupedLogs = {};
                               for (final log in filtered) {
-                                final DateTime createdAt = log.createdAt?.toLocal() ?? DateTime.now();
-                                if (lastDate == null ||
-                                    lastDate.year != createdAt.year ||
-                                    lastDate.month != createdAt.month ||
-                                    lastDate.day != createdAt.day) {
-                                  final String dateHeaderStr = AppDateFormatter.formatDayFullDate(createdAt);
-                                  listItems.add(dateHeaderStr);
-                                  lastDate = createdAt;
-                                }
-                                listItems.add(log);
+                                final createdAt = log.createdAt?.toLocal() ?? DateTime.now();
+                                final dateHeaderStr = AppDateFormatter.formatDayFullDate(createdAt);
+                                groupedLogs.putIfAbsent(dateHeaderStr, () => []).add(log);
                               }
+                              final groupKeys = groupedLogs.keys.toList();
 
                               return ListView.builder(
                                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                                itemCount: listItems.length,
-                                itemBuilder: (context, index) {
-                                  final item = listItems[index];
-                                  if (item is String) {
-                                    return _buildDateHeader(item);
-                                  }
+                                itemCount: groupKeys.length,
+                                itemBuilder: (context, groupIndex) {
+                                  final dateKey = groupKeys[groupIndex];
+                                  final logsInGroup = groupedLogs[dateKey]!;
 
-                                  final log = item as AuditLog;
-                                  final actionType = log.actionType;
-                                  final created = log.createdAt?.toLocal() ?? DateTime.now();
-                                  final timeStr = DateFormat('HH:mm', 'id_ID').format(created);
-                                  final dateStr = DateFormat('dd MMM', 'id_ID').format(created);
-
-                              IconData icon = CupertinoIcons.doc_text_fill;
-                              Color iconColor = Nebula.teal;
-
-                              if (actionType == 'BATAL_PESANAN' ||
-                                  actionType.contains('BATAL')) {
-                                icon = CupertinoIcons.xmark_circle_fill;
-                                iconColor = Nebula.rose;
-                              } else if (actionType == 'TOPUP' ||
-                                  actionType == 'TOPUP_TUNAI' ||
-                                  actionType == 'TOPUP_SALDO' ||
-                                  actionType.contains('TOPUP')) {
-                                icon = CupertinoIcons.arrow_up_circle_fill;
-                                iconColor = Nebula.teal;
-                              } else if (actionType == 'KOREKSI_SALDO') {
-                                icon =
-                                    CupertinoIcons.arrow_right_arrow_left_circle_fill;
-                                iconColor = Nebula.rose;
-                              } else if (actionType == 'REGISTRASI_KARTU') {
-                                icon = CupertinoIcons.wifi;
-                                iconColor = Nebula.amber;
-                              } else if (actionType == 'UNLINK_KARTU') {
-                                icon = CupertinoIcons.clear_circled_solid;
-                                iconColor = context.textSecondary;
-                              }
-
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                decoration: BoxDecoration(
-                                  color: context.cardBg,
-                                  borderRadius: BorderRadius.circular(24),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: context.cardBg.withValues(alpha: 0.04),
-                                      blurRadius: 15,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () => _showDetailDialog(log, fmt),
-                        borderRadius: BorderRadius.circular(24),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16),
-                                      child: Row(
-                                        children: [
-                                            CircleAvatar(
-                                              radius: 20,
-                                              backgroundColor: actionType.contains('BLOKIR') || actionType == 'UNLINK_KARTU' || actionType.contains('FREEZE')
-                                                  ? Nebula.rose.withValues(alpha: 0.12)
-                                                  : iconColor.withValues(alpha: 0.08),
-                                              child: (actionType == 'TOPUP' ||
-                                                      actionType == 'TOPUP_TUNAI' ||
-                                                      actionType == 'TOPUP_SALDO' ||
-                                                      actionType.contains('TOPUP'))
-                                                  ? Padding(
-                                                      padding: const EdgeInsets.all(6),
-                                                      child: Image.asset(
-                                                        'assets/icons/ic_topup_wallet.png',
-                                                        fit: BoxFit.contain,
-                                                        errorBuilder: (context, error, stackTrace) {
-                                                          return Icon(
-                                                            Icons.account_balance_wallet_rounded,
-                                                            color: iconColor,
-                                                            size: 20,
-                                                          );
-                                                        },
-                                                      ),
-                                                    )
-                                                  : (actionType.contains('BLOKIR') || actionType == 'UNLINK_KARTU' || actionType.contains('FREEZE'))
-                                                      ? Padding(
-                                                          padding: const EdgeInsets.all(4),
-                                                          child: Image.asset(
-                                                            'assets/icons/ic_card_block.png',
-                                                            fit: BoxFit.contain,
-                                                            errorBuilder: (context, error, stackTrace) {
-                                                              return const Icon(
-                                                                Icons.lock_rounded,
-                                                                color: Nebula.rose,
-                                                                size: 20,
-                                                              );
-                                                            },
-                                                          ),
-                                                        )
-                                                      : (actionType.contains('AKTIFKAN') || actionType == 'REGISTRASI_KARTU' || actionType.contains('UNFREEZE'))
-                                                          ? Padding(
-                                                              padding: const EdgeInsets.all(4),
-                                                              child: Image.asset(
-                                                                'assets/icons/ic_card_activate.png',
-                                                                fit: BoxFit.contain,
-                                                                errorBuilder: (context, error, stackTrace) {
-                                                                  return const Icon(
-                                                                    Icons.lock_open_rounded,
-                                                                    color: Nebula.teal,
-                                                                    size: 20,
-                                                                  );
-                                                                },
-                                                              ),
-                                                            )
-                                                          : Icon(icon, color: iconColor, size: 20),
-                                            ),
-                                          const SizedBox(width: 14),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  actionType.toString().replaceAll('_', ' '),
-                                                  style: GoogleFonts.inter(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 13,
-                                                    color: iconColor,
-                                                    letterSpacing: 0.5,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 2),
-                                                Text(
-                                                  _formatKeterangan(log, fmt),
-                                                  style: GoogleFonts.inter(
-                                                    fontSize: 12,
-                                                    color: context.textPrimary,
-                                                  ),
-                                                  maxLines: 2,
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                              ],
-                                            ),
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      _buildDateHeader(dateKey),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: context.cardBg,
+                                          borderRadius: BorderRadius.circular(16),
+                                          border: Border.all(
+                                            color: context.dividerCol,
+                                            width: 0.8,
                                           ),
-                                          const SizedBox(width: 8),
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.end,
-                                            children: [
-                                              Text(
-                                                timeStr,
-                                                style: GoogleFonts.inter(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: context.textPrimary,
-                                                ),
-                                              ),
-                                              Text(
-                                                dateStr,
-                                                style: GoogleFonts.inter(
-                                                  fontSize: 10,
-                                                  color: context.textSecondary,
-                                                ),
-                                              ),
-                                            ],
+                                        ),
+                                        child: ListView.separated(
+                                          shrinkWrap: true,
+                                          physics: const NeverScrollableScrollPhysics(),
+                                          itemCount: logsInGroup.length,
+                                          separatorBuilder: (context, index) => Divider(
+                                            height: 1,
+                                            thickness: 1.0,
+                                            color: context.dividerCol,
+                                            indent: 14,
+                                            endIndent: 14,
                                           ),
-                                        ],
+                                          itemBuilder: (context, index) {
+                                            final log = logsInGroup[index];
+                                            final isFirst = index == 0;
+                                            final isLast = index == logsInGroup.length - 1;
+
+                                            return _buildAuditLogRow(
+                                              context,
+                                              log,
+                                              fmt,
+                                              isFirst: isFirst,
+                                              isLast: isLast,
+                                            );
+                                          },
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                ),
+                                      const SizedBox(height: 14),
+                                    ],
+                                  );
+                                },
                               );
                             },
-                          );
-                        },
-                      ),
-                    ),
+                          ),
+                        ),
                       ],
                     );
                   },
@@ -996,6 +867,169 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAuditLogRow(
+    BuildContext context,
+    AuditLog log,
+    AppNumberFormat fmt, {
+    bool isFirst = false,
+    bool isLast = false,
+  }) {
+    final actionType = log.actionType;
+    final created = log.createdAt?.toLocal() ?? DateTime.now();
+    final timeStr = AppDateFormatter.formatTime(created);
+    final dateStr = AppDateFormatter.formatDayMonth(created);
+
+    IconData icon = CupertinoIcons.doc_text_fill;
+    Color iconColor = Nebula.teal;
+
+    if (actionType == 'BATAL_PESANAN' || actionType.contains('BATAL')) {
+      icon = CupertinoIcons.xmark_circle_fill;
+      iconColor = Nebula.rose;
+    } else if (actionType == 'TOPUP' ||
+        actionType == 'TOPUP_TUNAI' ||
+        actionType == 'TOPUP_SALDO' ||
+        actionType.contains('TOPUP')) {
+      icon = CupertinoIcons.arrow_up_circle_fill;
+      iconColor = Nebula.teal;
+    } else if (actionType == 'KOREKSI_SALDO') {
+      icon = CupertinoIcons.arrow_right_arrow_left_circle_fill;
+      iconColor = Nebula.rose;
+    } else if (actionType == 'REGISTRASI_KARTU') {
+      icon = CupertinoIcons.wifi;
+      iconColor = Nebula.amber;
+    } else if (actionType == 'UNLINK_KARTU') {
+      icon = CupertinoIcons.clear_circled_solid;
+      iconColor = context.textSecondary;
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _showDetailDialog(log, fmt),
+        borderRadius: BorderRadius.vertical(
+          top: isFirst ? const Radius.circular(16) : Radius.zero,
+          bottom: isLast ? const Radius.circular(16) : Radius.zero,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: actionType.contains('BLOKIR') ||
+                        actionType == 'UNLINK_KARTU' ||
+                        actionType.contains('FREEZE')
+                    ? Nebula.rose.withValues(alpha: 0.12)
+                    : iconColor.withValues(alpha: 0.08),
+                child: (actionType == 'TOPUP' ||
+                        actionType == 'TOPUP_TUNAI' ||
+                        actionType == 'TOPUP_SALDO' ||
+                        actionType.contains('TOPUP'))
+                    ? Padding(
+                        padding: const EdgeInsets.all(6),
+                        child: Image.asset(
+                          'assets/icons/ic_topup_wallet.png',
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(
+                              Icons.account_balance_wallet_rounded,
+                              color: iconColor,
+                              size: 20,
+                            );
+                          },
+                        ),
+                      )
+                    : (actionType.contains('BLOKIR') ||
+                            actionType == 'UNLINK_KARTU' ||
+                            actionType.contains('FREEZE'))
+                        ? Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Image.asset(
+                              'assets/icons/ic_card_block.png',
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(
+                                  Icons.lock_rounded,
+                                  color: Nebula.rose,
+                                  size: 20,
+                                );
+                              },
+                            ),
+                          )
+                        : (actionType.contains('AKTIFKAN') ||
+                                actionType == 'REGISTRASI_KARTU' ||
+                                actionType.contains('UNFREEZE'))
+                            ? Padding(
+                                padding: const EdgeInsets.all(4),
+                                child: Image.asset(
+                                  'assets/icons/ic_card_activate.png',
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Icon(
+                                      Icons.lock_open_rounded,
+                                      color: Nebula.teal,
+                                      size: 20,
+                                    );
+                                  },
+                                ),
+                              )
+                            : Icon(icon, color: iconColor, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      actionType.toString().replaceAll('_', ' '),
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: iconColor,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _formatKeterangan(log, fmt),
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: context.textPrimary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    timeStr,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: context.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    dateStr,
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      color: context.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

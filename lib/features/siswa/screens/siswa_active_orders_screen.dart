@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/theme/hallmark_color_scheme.dart';
@@ -149,7 +150,7 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
       try {
         final apiClient = ref.read(apiClientProvider);
         await apiClient.patch('/orders/${order.id}/status', body: {
-          'status': 'Sedang Dimasak',
+          'status': 'Sedang Disiapkan',
           'cancel_request_reason': '',
         });
 
@@ -222,7 +223,7 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
   void _showOrderDetailSheet(BuildContext context, OrderItem order) {
     final colors = context.colors;
     final isMerchantCancel = order.status == 'Menunggu Persetujuan Murid';
-    final canCancel = (order.status == 'Baru' || order.status == 'Sedang Dimasak') && !isMerchantCancel;
+    final canCancel = (order.status == 'Baru' || order.status == 'Sedang Disiapkan' || order.status == 'Sedang Dimasak') && !isMerchantCancel;
 
     Color statusColor;
     Color statusBgColor;
@@ -233,6 +234,7 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
         statusBgColor = colors.brandPrimary.withValues(alpha: 0.12);
         statusColor = colors.brandPrimary;
         statusIcon = Icons.access_time;
+      case 'Sedang Disiapkan':
       case 'Sedang Dimasak':
         statusBgColor = colors.statusWarning.withValues(alpha: 0.12);
         statusColor = colors.statusWarning;
@@ -249,6 +251,7 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
         statusBgColor = colors.statusSuccess.withValues(alpha: 0.12);
         statusColor = colors.statusSuccess;
         statusIcon = Icons.shopping_bag_outlined;
+      case 'Sedang Diantar':
       case 'Siap Diantar':
         statusBgColor = colors.statusSuccess.withValues(alpha: 0.12);
         statusColor = colors.statusSuccess;
@@ -423,7 +426,7 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
                             if (canCancel)
                               Expanded(
                                 child: HallmarkButton(
-                                  label: order.status == 'Sedang Dimasak' ? 'Minta Batal' : 'Batalkan',
+                                  label: (order.status == 'Sedang Disiapkan' || order.status == 'Sedang Dimasak') ? 'Minta Batal' : 'Batalkan',
                                   isError: true,
                                   onPressed: () {
                                     Navigator.pop(context);
@@ -453,11 +456,12 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
   }
 
   Widget _buildStatusStepper(HallmarkColorScheme colors, OrderItem order) {
-    final List<String> statuses = ['Baru', 'Sedang Dimasak', 'Siap Diambil', 'Selesai'];
+    final List<String> statuses = ['Baru', 'Sedang Disiapkan', 'Siap Diambil', 'Selesai'];
     int currentIndex = statuses.indexOf(order.status);
+    if (order.status == 'Sedang Dimasak') currentIndex = 1;
     final bool isDelivery = order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty;
 
-    if (order.status == 'Siap Diantar') currentIndex = 2;
+    if (order.status == 'Sedang Diantar' || order.status == 'Siap Diantar') currentIndex = 2;
     if (order.status == 'Menunggu Pembatalan') currentIndex = 1;
     if (order.status == 'Dibatalkan') currentIndex = -1;
 
@@ -512,7 +516,7 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
 
           String stepLabel = statuses[index];
           if (index == 2 && isDelivery) {
-            stepLabel = 'Siap Diantar';
+            stepLabel = 'Sedang Diantar';
           }
 
           return Column(
@@ -826,7 +830,7 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
                 Text(
                   CurrencyFormatter.format(order.totalAmount),
                   style: HallmarkTypography.financialNumeral(
-                    color: colors.brandPrimary,
+                    color: colors.textPrimary,
                     fontSize: 18,
                   ),
                 ),
@@ -1056,7 +1060,8 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
         toolbarHeight: 64,
         titleSpacing: 16,
         centerTitle: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: colors.surfaceBase,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         shape: Border(
@@ -1081,21 +1086,15 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
           data: (allOrders) {
             final filteredOrders = _filterOrders(allOrders);
 
-            // Group and flatten orders by date
-            final List<dynamic> listItems = [];
-            DateTime? lastDate;
+            // Group orders by date into map
+            final Map<String, List<OrderItem>> dateGrouped = {};
             for (final order in filteredOrders) {
               final DateTime createdAt = order.createdAt?.toLocal() ?? DateTime.now();
-              if (lastDate == null ||
-                  lastDate.year != createdAt.year ||
-                  lastDate.month != createdAt.month ||
-                  lastDate.day != createdAt.day) {
-                final String dateHeaderStr = AppDateFormatter.formatDayFullDate(createdAt);
-                listItems.add(dateHeaderStr);
-                lastDate = createdAt;
-              }
-              listItems.add(order);
+              final String dateHeaderStr = AppDateFormatter.formatDayFullDate(createdAt);
+              dateGrouped.putIfAbsent(dateHeaderStr, () => []).add(order);
             }
+
+            final dateEntries = dateGrouped.entries.toList();
 
             return Column(
               children: [
@@ -1138,17 +1137,21 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
                           ? _buildEmptyStateForFilter(colors, _selectedFilter)
                           : ListView.builder(
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                              itemCount: listItems.length,
+                              itemCount: dateEntries.length,
                               itemBuilder: (context, index) {
-                                final item = listItems[index];
-                                if (item is String) {
-                                  return _buildDateHeader(colors, item);
-                                }
+                                final entry = dateEntries[index];
+                                final String dateHeader = entry.key;
+                                final List<OrderItem> ordersInDate = entry.value;
 
-                                final order = item as OrderItem;
-                                return KeyedSubtree(
-                                  key: ValueKey<String>('student_order_${order.id}'),
-                                  child: _buildActiveOrderCard(colors, order),
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildDateHeader(colors, dateHeader),
+                                    ...ordersInDate.map(
+                                      (order) => _buildActiveOrderCard(colors, order),
+                                    ),
+                                    const SizedBox(height: 4),
+                                  ],
                                 );
                               },
                             ),
@@ -1191,14 +1194,6 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(18),
                             child: Container(
-                              decoration: BoxDecoration(
-                                border: Border(
-                                  left: BorderSide(
-                                    color: colors.borderTactile,
-                                    width: 6,
-                                  ),
-                                ),
-                              ),
                               padding: const EdgeInsets.all(16.0),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1338,7 +1333,10 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
     );
   }
 
-  Widget _buildActiveOrderCard(HallmarkColorScheme colors, OrderItem order) {
+  Widget _buildActiveOrderCard(
+    HallmarkColorScheme colors,
+    OrderItem order,
+  ) {
     final bool isMerchantCancelRequest = order.status == 'Menunggu Persetujuan Murid';
     Color statusBgColor;
     Color statusTextColor;
@@ -1351,11 +1349,12 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
         statusTextColor = colors.statusWarning;
         statusIcon = Icons.hourglass_empty_rounded;
         statusLabel = 'Menunggu';
+      case 'Sedang Disiapkan':
       case 'Sedang Dimasak':
         statusBgColor = colors.brandPrimary.withValues(alpha: 0.12);
         statusTextColor = colors.brandPrimary;
         statusIcon = Icons.soup_kitchen_rounded;
-        statusLabel = 'Dimasak';
+        statusLabel = 'Disiapkan';
       case 'Menunggu Pembatalan':
         statusBgColor = colors.statusError.withValues(alpha: 0.12);
         statusTextColor = colors.statusError;
@@ -1371,6 +1370,7 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
         statusTextColor = colors.statusSuccess;
         statusIcon = Icons.shopping_bag_outlined;
         statusLabel = 'Siap Diambil';
+      case 'Sedang Diantar':
       case 'Siap Diantar':
         statusBgColor = colors.statusSuccess.withValues(alpha: 0.12);
         statusTextColor = colors.statusSuccess;
@@ -1392,340 +1392,330 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
         statusIcon = Icons.access_time;
     }
 
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: colors.surfaceContainer,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: colors.borderTactile, width: 0.8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => _showOrderDetailSheet(context, order),
-              borderRadius: BorderRadius.circular(18),
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border(left: BorderSide(color: statusTextColor, width: 6)),
-                ),
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Top Header Row: Status Badge Box (Left) + Order ID + Chat Button + Chevron
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Status Badge Box
-                        Flexible(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: statusBgColor,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: statusTextColor.withValues(alpha: 0.3),
-                                width: 0.5,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12.0),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainer,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.borderTactile, width: 0.8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: context.isDark ? 0.2 : 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showOrderDetailSheet(context, order),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(14.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+              // Top Header Row: Status Badge Box (Left) + Order ID + Chat Button + Chevron
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Status Badge Box
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: statusBgColor,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: statusTextColor.withValues(alpha: 0.3),
+                          width: 0.5,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(statusIcon, size: 13, color: statusTextColor),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              statusLabel,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: HallmarkTypography.bodySmall(statusTextColor).copyWith(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 11.5,
                               ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(statusIcon, size: 13, color: statusTextColor),
-                                const SizedBox(width: 4),
-                                Flexible(
-                                  child: Text(
-                                    statusLabel,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: HallmarkTypography.bodySmall(statusTextColor).copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 11.5,
-                                    ),
-                                  ),
-                                ),
-                              ],
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 6),
-
-                        // Right actions: Order ID Code, Chat Button, Chevron
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: colors.surfaceSubtle,
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(color: colors.borderTactile, width: 0.5),
-                              ),
-                              child: Text(
-                                '#${order.id.length > 8 ? order.id.substring(0, 8).toUpperCase() : order.id.toUpperCase()}',
-                                style: HallmarkTypography.bodySmall(colors.textMuted).copyWith(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            OrderChatIconButton(
-                              order: order,
-                              myRole: 'student',
-                              onTap: () => OrderChatSheet.show(context, order: order),
-                            ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              CupertinoIcons.chevron_right,
-                              color: colors.textMuted.withValues(alpha: 0.6),
-                              size: 14,
-                            ),
-                          ],
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 14),
+                  ),
+                  const SizedBox(width: 6),
 
-                    // Main Content Row: Food Image Thumbnail + Itemized List Summary
-                    Row(
+                  // Right actions: Order ID Code, Chat Button, Chevron
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: colors.surfaceSubtle,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: colors.borderTactile, width: 0.5),
+                        ),
+                        child: Text(
+                          '#${order.id.length > 8 ? order.id.substring(0, 8).toUpperCase() : order.id.toUpperCase()}',
+                          style: HallmarkTypography.bodySmall(colors.textMuted).copyWith(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      OrderChatIconButton(
+                        order: order,
+                        myRole: 'student',
+                        onTap: () => OrderChatSheet.show(context, order: order),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        CupertinoIcons.chevron_right,
+                        color: colors.textMuted.withValues(alpha: 0.6),
+                        size: 14,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Main Content Row: Food Image Thumbnail + Itemized List Summary
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Food Image Thumbnail of Most Expensive Item (Produk Termahal)
+                  Builder(
+                    builder: (context) {
+                      final topItem = order.mostExpensiveItem;
+                      final String? rawImg = topItem?.imageUrl;
+                      final String? resolvedImg = topItem != null ? _resolveFoodImage(topItem.name, rawImg) : null;
+                      final bool isDelivery = order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty;
+
+                      final fallbackChild = Container(
+                        color: colors.brandPrimary.withValues(alpha: 0.1),
+                        child: Center(
+                          child: Icon(
+                            isDelivery ? Icons.delivery_dining : Icons.restaurant_menu_rounded,
+                            color: colors.brandPrimary,
+                            size: 24,
+                          ),
+                        ),
+                      );
+
+                      return Container(
+                        width: 54,
+                        height: 54,
+                        decoration: BoxDecoration(
+                          color: colors.surfaceSubtle,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: colors.borderTactile, width: 0.8),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(11),
+                          child: (resolvedImg != null && resolvedImg.isNotEmpty)
+                              ? CachedNetworkImage(
+                                  imageUrl: resolvedImg,
+                                  width: 54,
+                                  height: 54,
+                                  fit: BoxFit.cover,
+                                  placeholder: (_, __) => const ShimmerRect(
+                                    width: 54,
+                                    height: 54,
+                                    borderRadius: 11,
+                                  ),
+                                  errorWidget: (_, __, ___) => fallbackChild,
+                                )
+                              : fallbackChild,
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Items list preview
+                  Expanded(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Food Image Thumbnail of Most Expensive Item (Produk Termahal)
                         Builder(
                           builder: (context) {
-                            final topItem = order.mostExpensiveItem;
-                            final String? rawImg = topItem?.imageUrl;
-                            final String? resolvedImg = topItem != null ? _resolveFoodImage(topItem.name, rawImg) : null;
-                            final bool isDelivery = order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty;
+                            final sortedItems = List<OrderSubItem>.from(order.items)
+                              ..sort((a, b) => (b.price * b.qty).compareTo(a.price * a.qty));
+                            final previewItems = sortedItems.take(2).toList();
+                            final remainingCount = sortedItems.length - previewItems.length;
 
-                            final fallbackChild = Container(
-                              color: colors.brandPrimary.withValues(alpha: 0.1),
-                              child: Center(
-                                child: Icon(
-                                  isDelivery ? Icons.delivery_dining : Icons.restaurant_menu_rounded,
-                                  color: colors.brandPrimary,
-                                  size: 24,
-                                ),
-                              ),
-                            );
+                            String summary;
+                            if (previewItems.isNotEmpty) {
+                              summary = previewItems.map((i) => '${i.qty}x ${i.name}').join(', ');
+                              if (remainingCount > 0) {
+                                summary += ', +$remainingCount lainnya...';
+                              }
+                            } else {
+                              summary = 'Pesanan Kantin';
+                            }
 
-                            return Container(
-                              width: 56,
-                              height: 56,
-                              decoration: BoxDecoration(
-                                color: colors.surfaceSubtle,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: colors.borderTactile, width: 0.8),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(11),
-                                child: (resolvedImg != null && resolvedImg.isNotEmpty)
-                                    ? CachedNetworkImage(
-                                        imageUrl: resolvedImg,
-                                        width: 56,
-                                        height: 56,
-                                        fit: BoxFit.cover,
-                                        placeholder: (_, __) => const ShimmerRect(
-                                          width: 56,
-                                          height: 56,
-                                          borderRadius: 11,
-                                        ),
-                                        errorWidget: (_, __, ___) => fallbackChild,
-                                      )
-                                    : fallbackChild,
+                            return Text(
+                              summary,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: HallmarkTypography.titleSmall(colors.textPrimary).copyWith(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
                               ),
                             );
                           },
                         ),
-                        const SizedBox(width: 12),
-
-                        // Items list preview
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Builder(
-                                builder: (context) {
-                                  final sortedItems = List<OrderSubItem>.from(order.items)
-                                    ..sort((a, b) => (b.price * b.qty).compareTo(a.price * a.qty));
-                                  final previewItems = sortedItems.take(2).toList();
-                                  final remainingCount = sortedItems.length - previewItems.length;
-
-                                  String summary;
-                                  if (previewItems.isNotEmpty) {
-                                    summary = previewItems.map((i) => '${i.qty}x ${i.name}').join(', ');
-                                    if (remainingCount > 0) {
-                                      summary += ', +$remainingCount lainnya...';
-                                    }
-                                  } else {
-                                    summary = 'Pesanan Kantin';
-                                  }
-
-                                  return Text(
-                                    summary,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: HallmarkTypography.titleSmall(colors.textPrimary).copyWith(
-                                      fontSize: 14.5,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(
-                                    CupertinoIcons.time,
-                                    size: 12,
-                                    color: colors.textMuted,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    order.time.isNotEmpty ? order.time : '-',
-                                    style: HallmarkTypography.bodySmall(colors.textMuted).copyWith(
-                                      fontSize: 11.5,
-                                    ),
-                                  ),
-                                  Text(
-                                    ' • ',
-                                    style: HallmarkTypography.bodySmall(colors.textMuted),
-                                  ),
-                                  if (order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty) ...[
-                                    Icon(
-                                      Icons.delivery_dining,
-                                      size: 14,
-                                      color: colors.brandPrimary,
-                                    ),
-                                    const SizedBox(width: 3),
-                                    Flexible(
-                                      child: Text(
-                                        'Diantar: ${order.deliveryLocation!}',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: HallmarkTypography.bodySmall(colors.brandPrimary).copyWith(
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 11.5,
-                                        ),
-                                      ),
-                                    ),
-                                  ] else ...[
-                                    Icon(
-                                      Icons.shopping_bag_outlined,
-                                      size: 13,
-                                      color: colors.textMuted,
-                                    ),
-                                    const SizedBox(width: 3),
-                                    Flexible(
-                                      child: Text(
-                                        'Ambil di Kantin',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: HallmarkTypography.bodySmall(colors.textMuted).copyWith(
-                                          fontSize: 11.5,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Dashed Divider Line
-                    _buildDashedDivider(colors),
-                    const SizedBox(height: 10),
-
-                    // Bottom Total Amount Summary Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Total Harga',
-                          style: HallmarkTypography.bodySmall(colors.textMuted).copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          CurrencyFormatter.format(order.totalAmount),
-                          style: HallmarkTypography.financialNumeral(
-                            color: colors.brandPrimary,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // If Merchant Cancel Request, show action banner & buttons
-                    if (isMerchantCancelRequest) ...[
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: colors.statusWarning.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        const SizedBox(height: 4),
+                        Row(
                           children: [
-                            Text(
-                              'Kantin meminta pembatalan pesanan:',
-                              style: HallmarkTypography.bodySmall(colors.textPrimary),
+                            Icon(
+                              CupertinoIcons.time,
+                              size: 12,
+                              color: colors.textMuted,
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(width: 4),
                             Text(
-                              order.cancelRequestReason ?? 'Tidak ada alasan khusus.',
+                              order.time.isNotEmpty ? order.time : '-',
+                              style: HallmarkTypography.bodySmall(colors.textMuted).copyWith(
+                                fontSize: 11.5,
+                              ),
+                            ),
+                            Text(
+                              ' • ',
                               style: HallmarkTypography.bodySmall(colors.textMuted),
                             ),
+                            if (order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty) ...[
+                              Icon(
+                                Icons.delivery_dining,
+                                size: 14,
+                                color: colors.brandPrimary,
+                              ),
+                              const SizedBox(width: 3),
+                              Flexible(
+                                child: Text(
+                                  'Diantar: ${order.deliveryLocation!}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: HallmarkTypography.bodySmall(colors.brandPrimary).copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 11.5,
+                                  ),
+                                ),
+                              ),
+                            ] else ...[
+                              Icon(
+                                Icons.shopping_bag_outlined,
+                                size: 13,
+                                color: colors.textMuted,
+                              ),
+                              const SizedBox(width: 3),
+                              Flexible(
+                                child: Text(
+                                  'Ambil di Kantin',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: HallmarkTypography.bodySmall(colors.textMuted).copyWith(
+                                    fontSize: 11.5,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // Dashed Divider Line
+              _buildDashedDivider(colors),
+              const SizedBox(height: 8),
+
+              // Bottom Total Amount Summary Row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Total Harga',
+                    style: HallmarkTypography.bodySmall(colors.textMuted).copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    CurrencyFormatter.format(order.totalAmount),
+                    style: HallmarkTypography.financialNumeral(
+                      color: colors.textPrimary,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+
+              // If Merchant Cancel Request, show action banner & buttons
+              if (isMerchantCancelRequest) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: colors.statusWarning.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Kantin meminta pembatalan pesanan:',
+                        style: HallmarkTypography.bodySmall(colors.textPrimary),
                       ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          HallmarkButton(
-                            label: 'Tolak',
-                            isFullWidth: false,
-                            onPressed: () => _handleStudentRejectMerchantCancel(order),
-                          ),
-                          const SizedBox(width: 8),
-                          HallmarkButton(
-                            label: 'Setujui Batal',
-                            isError: true,
-                            isFullWidth: false,
-                            onPressed: () => _handleStudentApproveMerchantCancel(order),
-                          ),
-                        ],
+                      const SizedBox(height: 4),
+                      Text(
+                        order.cancelRequestReason ?? 'Tidak ada alasan khusus.',
+                        style: HallmarkTypography.bodySmall(colors.textMuted),
                       ),
                     ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    HallmarkButton(
+                      label: 'Tolak',
+                      isFullWidth: false,
+                      onPressed: () => _handleStudentRejectMerchantCancel(order),
+                    ),
+                    const SizedBox(width: 8),
+                    HallmarkButton(
+                      label: 'Setujui Batal',
+                      isError: true,
+                      isFullWidth: false,
+                      onPressed: () => _handleStudentApproveMerchantCancel(order),
+                    ),
                   ],
                 ),
-              ),
-            ),
+              ],
+            ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildDashedDivider(HallmarkColorScheme colors) {
     return LayoutBuilder(
@@ -1742,7 +1732,9 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
               width: dashWidth,
               height: dashHeight,
               child: DecoratedBox(
-                decoration: BoxDecoration(color: colors.borderTactile),
+                decoration: BoxDecoration(
+                  color: colors.textMuted.withValues(alpha: 0.28),
+                ),
               ),
             );
           }),

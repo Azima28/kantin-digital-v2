@@ -91,22 +91,43 @@ func (h *Hub) BroadcastToRoom(room, event string, data interface{}) {
 		return
 	}
 
-	if room == "" || room == "all" {
-		for client := range h.clients {
-			select {
-			case client.send <- bytes:
-			default:
+	sent := make(map[*Client]bool)
+
+	// Send to specific room clients
+	if room != "" && room != "all" {
+		if roomClients, ok := h.rooms[room]; ok {
+			for client := range roomClients {
+				select {
+				case client.send <- bytes:
+					sent[client] = true
+				default:
+				}
 			}
 		}
-		return
 	}
 
-	// Send only to specific room clients
-	if roomClients, ok := h.rooms[room]; ok {
-		for client := range roomClients {
-			select {
-			case client.send <- bytes:
-			default:
+	// Always send to clients in "all" room
+	if allClients, ok := h.rooms["all"]; ok {
+		for client := range allClients {
+			if !sent[client] {
+				select {
+				case client.send <- bytes:
+					sent[client] = true
+				default:
+				}
+			}
+		}
+	}
+
+	// If room == "" or "all", broadcast to all registered clients
+	if room == "" || room == "all" {
+		for client := range h.clients {
+			if !sent[client] {
+				select {
+				case client.send <- bytes:
+					sent[client] = true
+				default:
+				}
 			}
 		}
 	}

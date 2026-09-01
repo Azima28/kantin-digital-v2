@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
     student_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     student_name TEXT NOT NULL,
     operator_id UUID REFERENCES public.canteen_operators(id) ON DELETE SET NULL,
-    status TEXT NOT NULL DEFAULT 'Baru' CHECK (status IN ('Baru', 'Sedang Dimasak', 'Siap Diambil', 'Siap Diantar', 'Selesai', 'Dibatalkan', 'Menunggu Pembatalan', 'Menunggu Persetujuan Murid')),
+    status TEXT NOT NULL DEFAULT 'Baru' CHECK (status IN ('Baru', 'Sedang Dimasak', 'Sedang Disiapkan', 'Siap Diambil', 'Siap Diantar', 'Sedang Diantar', 'Selesai', 'Dibatalkan', 'Menunggu Pembatalan', 'Menunggu Persetujuan Murid')),
     delivery_location TEXT,
     total_amount INTEGER NOT NULL CHECK (total_amount >= 0),
     cancel_request_reason TEXT,
@@ -129,7 +129,7 @@ CREATE TABLE IF NOT EXISTS public.order_messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id UUID NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
     sender_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-    sender_role TEXT NOT NULL CHECK (sender_role IN ('student', 'petugas_kantin', 'system')),
+    sender_role TEXT NOT NULL CHECK (sender_role IN ('student', 'petugas_kantin', 'canteen_operator', 'admin', 'super_admin', 'petugas_keuangan', 'system')),
     message TEXT NOT NULL,
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

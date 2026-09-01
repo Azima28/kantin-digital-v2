@@ -88,7 +88,7 @@ func (h *OrderHandler) GetOrderByID(c *fiber.Ctx) error {
 	// Verify participant authorization
 	if claims.Role != domain.RoleSuperAdmin && claims.Role != domain.RoleAdmin && claims.Role != domain.RolePetugasKeuangan {
 		isParticipant := (claims.Role == domain.RoleStudent && strings.EqualFold(claims.UserID, order.StudentID)) ||
-			(claims.Role == domain.RolePetugasKantin && order.OperatorID != nil && strings.EqualFold(claims.UserID, *order.OperatorID))
+			(claims.Role == domain.RolePetugasKantin)
 		if !isParticipant {
 			return response.Error(c, fiber.StatusForbidden, "Akses ditolak: Anda bukan partisipan dalam pesanan ini", nil)
 		}
@@ -151,9 +151,9 @@ func (h *OrderHandler) SendMessage(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusForbidden, err.Error(), nil)
 	}
 
-	// Broadcast chat message to order room
-	room := fmt.Sprintf("order:%s", orderID)
-	h.hub.BroadcastToRoom(room, "order:message", savedMsg)
+	// Broadcast chat message to order room and global realtime room
+	h.hub.BroadcastToRoom("all", "order:message", savedMsg)
+	h.hub.BroadcastToRoom(fmt.Sprintf("order:%s", orderID), "order:message", savedMsg)
 
 	return response.Success(c, fiber.StatusCreated, "Pesan terkirim", savedMsg)
 }
@@ -174,6 +174,10 @@ func (h *OrderHandler) MarkMessagesAsRead(c *fiber.Ctx) error {
 	if err := h.orderService.MarkMessagesAsRead(c.Context(), orderID, claims.UserID); err != nil {
 		return response.Error(c, fiber.StatusInternalServerError, "Gagal memperbarui status pesan", err.Error())
 	}
+	h.hub.BroadcastToRoom("all", "order:messages_read", map[string]interface{}{
+		"order_id":  orderID,
+		"reader_id": claims.UserID,
+	})
 	h.hub.BroadcastToRoom(fmt.Sprintf("order:%s", orderID), "order:messages_read", map[string]interface{}{
 		"order_id":  orderID,
 		"reader_id": claims.UserID,
@@ -196,6 +200,11 @@ func (h *OrderHandler) UpdatePresence(c *fiber.Ctx) error {
 	}
 	orderPresenceMap[orderID][roleStr] = time.Now()
 	presenceLock.Unlock()
+
+	h.hub.BroadcastToRoom("all", "order:presence", map[string]interface{}{
+		"order_id": orderID,
+		"role":     roleStr,
+	})
 
 	return h.GetPresence(c)
 }
@@ -249,7 +258,8 @@ func (h *OrderHandler) GetReview(c *fiber.Ctx) error {
 
 func (h *OrderHandler) ListCanteenReviews(c *fiber.Ctx) error {
 	canteenID := c.Params("id")
-	reviews, err := h.orderService.ListCanteenReviews(c.Context(), canteenID)
+	productID := c.Query("product_id", "")
+	reviews, err := h.orderService.ListCanteenReviews(c.Context(), canteenID, productID)
 	if err != nil {
 		return response.Error(c, fiber.StatusInternalServerError, "Gagal mengambil ulasan stan", err.Error())
 	}

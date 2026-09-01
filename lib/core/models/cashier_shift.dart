@@ -1,4 +1,4 @@
-import 'package:intl/intl.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 
 /// Data model untuk sesi shift kasir / closing shift berkelanjutan.
 class CashierShift {
@@ -85,10 +85,10 @@ class CashierShift {
   bool get isSurplus => difference > 0;
 
   String get formattedStartedAt =>
-      DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(startedAt);
+      AppDateFormatter.formatDateWithTime(startedAt);
 
   String get formattedClosedAt => closedAt != null
-      ? DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(closedAt!)
+      ? AppDateFormatter.formatDateWithTime(closedAt)
       : '-';
 }
 
@@ -138,5 +138,5 @@ class CurrentShiftSummary {
   }
 
   String get formattedStartedAt =>
-      DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(startedAt);
+      AppDateFormatter.formatDateWithTime(startedAt);
 }

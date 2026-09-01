@@ -168,7 +168,7 @@ void _showAddParentSheet(BuildContext context, WidgetRef ref) {
                             final apiClient = ref.read(apiClientProvider);
 
                             final response = await apiClient.post(
-                              '/admin/users',
+                              '/finance/users',
                               body: {
                                 'email': email,
                                 'password': password,
@@ -177,6 +177,7 @@ void _showAddParentSheet(BuildContext context, WidgetRef ref) {
                                 'phone_number': phone,
                                 'relation': relation,
                                 'student_nisn': childNisn,
+                                'gender': relation == 'Ibu' ? 'P' : 'L',
                               },
                             );
 
@@ -350,7 +351,7 @@ void _showAddStaffSheet(BuildContext context, WidgetRef ref) {
                                 : 'staff_${username}_${_randomSuffix()}@kantin.sch.id';
 
                             final response = await apiClient.post(
-                              '/admin/users',
+                              '/finance/users',
                               body: {
                                 'email': email,
                                 'password': password,

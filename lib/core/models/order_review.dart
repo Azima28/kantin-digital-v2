@@ -6,6 +6,8 @@ class OrderReview {
   final String studentName;
   final String? avatarUrl;
   final String? operatorId;
+  final String? productId;
+  final String? productName;
   final int rating;
   final String reviewText;
   final List<String> tags;
@@ -19,6 +21,8 @@ class OrderReview {
     this.studentName = 'Siswa',
     this.avatarUrl,
     this.operatorId,
+    this.productId,
+    this.productName,
     required this.rating,
     this.reviewText = '',
     this.tags = const [],
@@ -34,12 +38,14 @@ class OrderReview {
       studentName: json['student_name']?.toString() ?? 'Siswa',
       avatarUrl: json['avatar_url']?.toString(),
       operatorId: json['operator_id']?.toString(),
+      productId: json['product_id']?.toString(),
+      productName: json['product_name']?.toString(),
       rating: (json['rating'] as num?)?.toInt() ?? 5,
       reviewText: json['review_text']?.toString() ?? '',
       tags: (json['tags'] as List?)?.map((e) => e.toString()).toList() ?? const [],
       isAnonymous: json['is_anonymous'] as bool? ?? false,
       createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'].toString())
+          ? DateTime.tryParse(json['created_at'].toString())?.toLocal()
           : null,
     );
   }
@@ -51,6 +57,8 @@ class OrderReview {
     'student_name': studentName,
     'avatar_url': avatarUrl,
     'operator_id': operatorId,
+    'product_id': productId,
+    'product_name': productName,
     'rating': rating,
     'review_text': reviewText,
     'tags': tags,

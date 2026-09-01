@@ -1,21 +1,21 @@
 import 'dart:io';
 import 'package:excel/excel.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 
 /// Service untuk mengekspor dan mengunduh Laporan Keuangan
 /// dalam format Excel (.xlsx) dan PDF.
 class ReportExportService {
   ReportExportService._();
 
-  static final _currencyFmt =
-      NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+  static const _currencyFmt = AppNumberFormat(symbol: 'Rp ');
 
   /// Download atau Bagikan Laporan Keuangan dalam format Excel (.xlsx)
   static Future<void> downloadExcelReport({
@@ -153,7 +153,7 @@ class ReportExportService {
     // Row 2: Tanggal Export
     summarySheet.appendRow([
       TextCellValue(
-          'Tanggal Export: ${DateFormat('dd MMMM yyyy HH:mm', 'id_ID').format(DateTime.now())}'),
+          'Tanggal Export: ${AppDateFormatter.formatFullDateWithTime(DateTime.now())}'),
     ]);
     summarySheet
         .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 2))
@@ -339,8 +339,7 @@ class ReportExportService {
       for (int i = 0; i < auditLogs.length; i++) {
         final log = auditLogs[i];
         final created = log['created_at'] != null
-            ? DateFormat('dd/MM/yyyy HH:mm')
-                .format(DateTime.tryParse(log['created_at'].toString()) ?? DateTime.now())
+            ? AppDateFormatter.formatDateTimeSlash(DateTime.tryParse(log['created_at'].toString()))
             : '-';
         final rowIdx = 4 + i;
         auditSheet.appendRow([
@@ -490,7 +489,7 @@ class ReportExportService {
     if (fileBytes == null) return;
 
     final Uint8List bytes = Uint8List.fromList(fileBytes);
-    final String filename = 'Laporan_Keuangan_Kantin_Digital_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.xlsx';
+    final String filename = 'Laporan_Keuangan_Kantin_Digital_${AppDateFormatter.formatCompactFileStamp(DateTime.now())}.xlsx';
 
     try {
       // Simpan sementara di temporary directory
@@ -548,7 +547,7 @@ class ReportExportService {
     final titleStyle = pw.TextStyle(font: ttfBold, fontSize: 11, fontWeight: pw.FontWeight.bold, color: darkText);
     final tableHeaderStyle = pw.TextStyle(font: ttfBold, fontSize: 8.5, fontWeight: pw.FontWeight.bold, color: PdfColors.white);
 
-    final dateStr = DateFormat('dd MMMM yyyy HH:mm', 'id_ID').format(DateTime.now());
+    final dateStr = AppDateFormatter.formatFullDateWithTime(DateTime.now());
 
     pdf.addPage(
       pw.MultiPage(
@@ -817,8 +816,7 @@ class ReportExportService {
                   final i = entry.key;
                   final log = entry.value;
                   final date = log['created_at'] != null
-                      ? DateFormat('dd/MM HH:mm')
-                          .format(DateTime.tryParse(log['created_at'].toString()) ?? DateTime.now())
+                      ? AppDateFormatter.formatShortDateTimeSlash(DateTime.tryParse(log['created_at'].toString()))
                       : '-';
                   return [
                     '${i + 1}',
@@ -928,7 +926,7 @@ class ReportExportService {
       ),
     );
 
-    final String filename = 'Laporan_Keuangan_Kantin_Digital_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.pdf';
+    final String filename = 'Laporan_Keuangan_Kantin_Digital_${AppDateFormatter.formatCompactFileStamp(DateTime.now())}.pdf';
 
     await Printing.sharePdf(
       bytes: await pdf.save(),
@@ -1120,7 +1118,7 @@ class ReportExportService {
     summarySheet.appendRow([TextCellValue('Periode Laporan: $period')]);
     summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 2)).cellStyle = metaStyle;
 
-    summarySheet.appendRow([TextCellValue('Tanggal Export: ${DateFormat('dd MMMM yyyy HH:mm', 'id_ID').format(DateTime.now())}')]);
+    summarySheet.appendRow([TextCellValue('Tanggal Export: ${AppDateFormatter.formatFullDateWithTime(DateTime.now())}')]);
     summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 3)).cellStyle = metaStyle;
 
     summarySheet.appendRow([TextCellValue('')]);
@@ -1189,7 +1187,7 @@ class ReportExportService {
     for (int i = 0; i < journals.length; i++) {
       final j = journals[i];
       final dateStr = j.createdAt != null
-          ? DateFormat('dd/MM/yyyy HH:mm').format(j.createdAt!)
+          ? AppDateFormatter.formatDateTimeSlash(j.createdAt)
           : '-';
       final isInflow = j.category == 'INFLOW' || j.type == 'TOPUP';
       final sign = isInflow ? '+' : '-';
@@ -1238,7 +1236,7 @@ class ReportExportService {
 
     final Uint8List bytes = Uint8List.fromList(fileBytes);
     final safeName = officer.fullName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-    final String filename = 'Buku_Kas_${safeName}_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.xlsx';
+    final String filename = 'Buku_Kas_${safeName}_${AppDateFormatter.formatCompactFileStamp(DateTime.now())}.xlsx';
 
     try {
       final tempDir = await getTemporaryDirectory();
@@ -1278,7 +1276,7 @@ class ReportExportService {
     final titleStyle = pw.TextStyle(font: ttfBold, fontSize: 11, fontWeight: pw.FontWeight.bold, color: darkText);
     final tableHeaderStyle = pw.TextStyle(font: ttfBold, fontSize: 8.5, fontWeight: pw.FontWeight.bold, color: PdfColors.white);
 
-    final printDateStr = DateFormat('dd MMMM yyyy HH:mm', 'id_ID').format(DateTime.now());
+    final printDateStr = AppDateFormatter.formatFullDateWithTime(DateTime.now());
 
     pdf.addPage(
       pw.MultiPage(
@@ -1507,7 +1505,7 @@ class ReportExportService {
                       final i = entry.key;
                       final j = entry.value;
                       final date = j.createdAt != null
-                          ? DateFormat('dd/MM HH:mm').format(j.createdAt!)
+                          ? AppDateFormatter.formatShortDateTimeSlash(j.createdAt)
                           : '-';
                       final isInflow = j.category == 'INFLOW' || j.type == 'TOPUP';
                       final sign = isInflow ? '+' : '-';
@@ -1595,7 +1593,7 @@ class ReportExportService {
     );
 
     final safeName = officer.fullName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-    final String filename = 'Buku_Kas_${safeName}_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.pdf';
+    final String filename = 'Buku_Kas_${safeName}_${AppDateFormatter.formatCompactFileStamp(DateTime.now())}.pdf';
 
     await Printing.sharePdf(
       bytes: await pdf.save(),
@@ -1622,7 +1620,7 @@ class ReportExportService {
     buffer.writeln('🏫 *Sekolah:* ${officer.assignedSchool}');
     buffer.writeln('🛡️ *Otoritas:* Level ${officer.authorityLevel}');
     buffer.writeln('📅 *Periode:* $period');
-    buffer.writeln('⏰ *Waktu Cetak:* ${DateFormat('dd MMMM yyyy HH:mm', 'id_ID').format(DateTime.now())}');
+    buffer.writeln('⏰ *Waktu Cetak:* ${AppDateFormatter.formatFullDateWithTime(DateTime.now())}');
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
     buffer.writeln('📈 *Uang Masuk (Top-Up):* ${_currencyFmt.format(totalInflow)}');
     buffer.writeln('📉 *Uang Keluar (Pencairan):* ${_currencyFmt.format(totalOutflow)}');
@@ -1635,7 +1633,7 @@ class ReportExportService {
       final sample = journals.take(5).toList();
       for (int i = 0; i < sample.length; i++) {
         final j = sample[i];
-        final dt = j.createdAt != null ? DateFormat('dd/MM HH:mm').format(j.createdAt!) : '-';
+        final dt = j.createdAt != null ? AppDateFormatter.formatShortDateTimeSlash(j.createdAt) : '-';
         final isInflow = j.category == 'INFLOW' || j.type == 'TOPUP';
         final sign = isInflow ? '(+)' : '(-)';
         buffer.writeln('${i + 1}. [$dt] ${j.type} $sign ${_currencyFmt.format(j.amount)} — ${j.targetName}');
@@ -1718,8 +1716,8 @@ class ReportExportService {
     final boldStyle = pw.TextStyle(font: ttfBold, fontSize: 8.5, fontWeight: pw.FontWeight.bold, color: darkText);
     final titleStyle = pw.TextStyle(font: ttfBold, fontSize: 11, fontWeight: pw.FontWeight.bold, color: darkText);
 
-    final printDateStr = DateFormat('dd MMMM yyyy HH:mm', 'id_ID').format(DateTime.now());
-    final dateTodayStr = DateFormat('dd MMMM yyyy', 'id_ID').format(DateTime.now());
+    final printDateStr = AppDateFormatter.formatFullDateWithTime(DateTime.now());
+    final dateTodayStr = AppDateFormatter.formatFullDate(DateTime.now());
 
     final isMatched = difference == 0;
     final isShort = difference < 0;
@@ -2038,7 +2036,7 @@ class ReportExportService {
     );
 
     final safeName = officerName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-    final String filename = 'Berita_Acara_Tutup_Kas_${safeName}_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.pdf';
+    final String filename = 'Berita_Acara_Tutup_Kas_${safeName}_${AppDateFormatter.formatCompactFileStamp(DateTime.now())}.pdf';
 
     await Printing.sharePdf(
       bytes: await pdf.save(),
@@ -2072,7 +2070,7 @@ class ReportExportService {
     if (startedAtStr != null) {
       buffer.writeln('⏰ *Aktif Sejak:* $startedAtStr');
     }
-    buffer.writeln('📅 *Tanggal Tutup:* ${DateFormat('dd MMMM yyyy, HH:mm', 'id_ID').format(DateTime.now())} WIB');
+    buffer.writeln('📅 *Tanggal Tutup:* ${AppDateFormatter.formatFullDateWithTime(DateTime.now())} WIB');
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
     buffer.writeln('📈 *Uang Masuk (Top-Up Tunai):* ${_currencyFmt.format(totalInflow)} ($topupCount tx)');
     buffer.writeln('📉 *Uang Keluar (Pencairan Stan):* ${_currencyFmt.format(totalOutflow)} ($payoutCount tx)');
@@ -2241,7 +2239,7 @@ class ReportExportService {
     masterSheet.appendRow([TextCellValue('REKAPITULASI BUKU KAS SELURUH PETUGAS KEUANGAN')]);
     masterSheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0)).cellStyle = titleStyle;
 
-    masterSheet.appendRow([TextCellValue('Waktu Ekspor: ${DateFormat('dd MMMM yyyy, HH:mm', 'id_ID').format(DateTime.now())} WIB')]);
+    masterSheet.appendRow([TextCellValue('Waktu Ekspor: ${AppDateFormatter.formatFullDateWithTime(DateTime.now())} WIB')]);
     masterSheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 1)).cellStyle = metaStyle;
 
     masterSheet.appendRow([TextCellValue('Total Petugas Terdaftar: ${officers.length} Petugas')]);
@@ -2355,7 +2353,7 @@ class ReportExportService {
     if (fileBytes == null) return;
 
     final Uint8List bytes = Uint8List.fromList(fileBytes);
-    final String filename = 'Rekap_Pembukuan_Seluruh_Petugas_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.xlsx';
+    final String filename = 'Rekap_Pembukuan_Seluruh_Petugas_${AppDateFormatter.formatCompactFileStamp(DateTime.now())}.xlsx';
 
     await Printing.sharePdf(
       bytes: bytes,
@@ -2371,7 +2369,7 @@ class ReportExportService {
     required int totalNet,
   }) async {
     final pdf = pw.Document();
-    final printDateStr = DateFormat('dd MMMM yyyy, HH:mm', 'id_ID').format(DateTime.now());
+    final printDateStr = AppDateFormatter.formatFullDateWithTime(DateTime.now());
 
     final ttfRegular = pw.Font.helvetica();
     final ttfBold = pw.Font.helveticaBold();
@@ -2670,7 +2668,7 @@ class ReportExportService {
       ),
     );
 
-    final String filename = 'Rekap_Pembukuan_Seluruh_Petugas_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.pdf';
+    final String filename = 'Rekap_Pembukuan_Seluruh_Petugas_${AppDateFormatter.formatCompactFileStamp(DateTime.now())}.pdf';
 
     await Printing.sharePdf(
       bytes: await pdf.save(),

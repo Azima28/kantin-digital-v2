@@ -1,11 +1,12 @@
 ﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/admin/widgets/audit_log_metadata_row.dart';
 
 /// Normalize JSONB values from database (handle String/Map/List, doubles→ints).
@@ -65,7 +66,7 @@ String _formatToPlainText(dynamic value) {
       if (key == 'balance' || key == 'price' || key == 'amount') {
         final double? numVal = double.tryParse(val.toString());
         if (numVal != null) {
-          valStr = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(numVal);
+          valStr = CurrencyFormatter.format(numVal);
         }
       } else if (key == 'is_active') {
         valStr = val == true ? 'Aktif' : 'Nonaktif';
@@ -139,7 +140,7 @@ class AuditLogDetailSheet extends StatelessWidget {
               ),
               AuditLogMetadataRow(
                 label: 'Tanggal & Waktu',
-                value: DateFormat('dd MMM yyyy, HH:mm:ss', 'id_ID').format(date),
+                value: AppDateFormatter.formatDateWithTimeSeconds(date),
               ),
               AuditLogMetadataRow(
                 label: 'IP Address',

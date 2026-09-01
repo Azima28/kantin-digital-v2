@@ -102,19 +102,23 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
           ? Icons.warning_amber_rounded
           : Icons.cancel_outlined;
     } else {
-      // Baru, Sedang Dimasak, Siap Diambil, Siap Diantar, Menunggu Persetujuan Murid -> Orange (Warning)
+      // Baru, Sedang Disiapkan, Siap Diambil, Sedang Diantar, Menunggu Persetujuan Murid -> Orange (Warning)
       indicatorColor = Nebula.amber; // Orange
       badgeBgColor = Nebula.amber.withValues(alpha: 0.08);
       badgeTextColor = Nebula.amber;
-      
-      if (widget.order.status == 'Sedang Dimasak') {
+
+      if (widget.order.status == 'Sedang Disiapkan' || widget.order.status == 'Sedang Dimasak') {
+        badgeLabel = 'Sedang Disiapkan';
         badgeIcon = Icons.soup_kitchen;
       } else if (widget.order.status == 'Siap Diambil') {
+        badgeLabel = 'Siap Diambil';
         badgeIcon = Icons.shopping_bag_outlined;
-      } else if (widget.order.status == 'Siap Diantar') {
+      } else if (widget.order.status == 'Sedang Diantar' || widget.order.status == 'Siap Diantar') {
         badgeIcon = Icons.local_shipping_outlined;
-        if (widget.order.deliveryLocation != null) {
-          badgeLabel = 'Siap Diantar (${widget.order.deliveryLocation})';
+        if (widget.order.deliveryLocation != null && widget.order.deliveryLocation!.isNotEmpty) {
+          badgeLabel = 'Sedang Diantar (${widget.order.deliveryLocation})';
+        } else {
+          badgeLabel = 'Sedang Diantar';
         }
       } else if (widget.order.status == 'Menunggu Persetujuan Murid') {
         badgeIcon = Icons.hourglass_empty_rounded;
@@ -514,7 +518,7 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                                       children: [
                                         // Reject Request
                                         OutlinedButton(
-                                          onPressed: () => _triggerStatusChange('Sedang Dimasak'),
+                                          onPressed: () => _triggerStatusChange('Sedang Disiapkan'),
                                           style: OutlinedButton.styleFrom(
                                             foregroundColor: context.textSecondary,
                                             side: BorderSide(color: context.dividerCol),
@@ -616,7 +620,7 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                                         Expanded(
                                           child: widget.order.status == 'Baru'
                                               ? ElevatedButton(
-                                                  onPressed: () => _triggerStatusChange('Sedang Dimasak'),
+                                                  onPressed: () => _triggerStatusChange('Sedang Disiapkan'),
                                                   style: ElevatedButton.styleFrom(
                                                     backgroundColor: Nebula.teal,
                                                     foregroundColor: Colors.white,
@@ -651,8 +655,8 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                                                   itemBuilder: (BuildContext context) {
                                                     final bool isDelivery = widget.order.deliveryLocation != null && widget.order.deliveryLocation!.isNotEmpty;
                                                     final List<String> statusOptions = [
-                                                      'Sedang Dimasak',
-                                                      if (isDelivery) 'Siap Diantar' else 'Siap Diambil',
+                                                      'Sedang Disiapkan',
+                                                      if (isDelivery) 'Sedang Diantar' else 'Siap Diambil',
                                                       'Selesai',
                                                     ];
                                                     return statusOptions

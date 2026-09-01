@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 import 'package:kantin_digital/features/keuangan/widgets/student_detail_header.dart';
 import 'package:kantin_digital/features/keuangan/widgets/student_detail_password_change.dart';
@@ -111,11 +112,7 @@ class _KeuanganStudentDetailScreenState
     final detailAsync = ref.watch(
       keuanganStudentDetailProvider(widget.studentId),
     );
-    final fmt = NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: 'Rp ',
-      decimalDigits: 0,
-    );
+    const fmt = AppNumberFormat(symbol: 'Rp ');
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -173,9 +170,7 @@ class _KeuanganStudentDetailScreenState
 
             final String lastTapStr =
                 txs.isNotEmpty && txs.first.createdAt != null
-                ? DateFormat(
-                    'dd MMM yyyy, HH:mm', 'id_ID',
-                  ).format(txs.first.createdAt!.toLocal())
+                ? AppDateFormatter.formatDateWithTime(txs.first.createdAt)
                 : '-';
 
             return RefreshIndicator(
@@ -204,6 +199,8 @@ class _KeuanganStudentDetailScreenState
                       rfid: rfid,
                       lastTapStr: lastTapStr,
                       fmt: fmt,
+                      photoUrl: profile.avatarUrl,
+                      gender: profile.gender,
                       onToggleCardFreeze: hasCard ? () => _toggleCardFreeze(isCardActive) : null,
                       onRegisterCard: () => context.push('/finance/students/${widget.studentId}/card'),
                     ),
@@ -378,9 +375,7 @@ class _KeuanganStudentDetailScreenState
                                 final int amount = tx.totalAmount;
                                 final timestamp =
                                     tx.createdAt?.toLocal() ?? DateTime.now();
-                                final timeStr = DateFormat(
-                                  'dd MMM, HH:mm', 'id_ID',
-                                ).format(timestamp);
+                                final timeStr = AppDateFormatter.formatShortDateWithTime(timestamp);
                                 final canteenName = tx.canteenName ?? 'Top-up';
 
                                 return Material(

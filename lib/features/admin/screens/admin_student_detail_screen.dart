@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_edit_student_sheet.dart';
@@ -129,17 +131,12 @@ class _AdminStudentDetailScreenState
                   ),
                   child: Column(
                     children: [
-                      CircleAvatar(
+                      AppAvatar(
                         radius: 36,
-                        backgroundColor: Nebula.teal.withValues(alpha: 0.12),
-                        child: Text(
-                          fullName.isNotEmpty ? fullName[0].toUpperCase() : 'S',
-                          style: GoogleFonts.inter(
-                            fontSize: 30,
-                            fontWeight: FontWeight.bold,
-                            color: Nebula.teal,
-                          ),
-                        ),
+                        photoUrl: profile.avatarUrl,
+                        role: 'student',
+                        name: fullName,
+                        gender: profile.gender,
                       ),
                       const SizedBox(height: 12),
                       Text(
@@ -419,10 +416,7 @@ class _AdminStudentDetailScreenState
                                       ),
                                     ),
                                     Text(
-                                      DateFormat(
-                                        'dd MMM yyyy, HH:mm',
-                                        'id_ID',
-                                      ).format(date),
+                                      AppDateFormatter.formatDateWithTime(date),
                                       style: GoogleFonts.inter(
                                         fontSize: 11,
                                         color: context.textSecondary,
@@ -432,7 +426,7 @@ class _AdminStudentDetailScreenState
                                 ),
                               ),
                               Text(
-                                '${isIncoming ? "+" : "-"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
+                                '${isIncoming ? "+" : "-"}${CurrencyFormatter.format(amount)}',
                                 style: GoogleFonts.inter(
                                   fontSize: 13.5,
                                   fontWeight: FontWeight.bold,

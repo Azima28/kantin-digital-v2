@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
     student_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     student_name TEXT NOT NULL,
     operator_id UUID REFERENCES public.canteen_operators(id) ON DELETE SET NULL,
-    status TEXT NOT NULL DEFAULT 'Baru' CHECK (status IN ('Baru', 'Sedang Dimasak', 'Siap Diambil', 'Siap Diantar', 'Selesai', 'Dibatalkan', 'Menunggu Pembatalan', 'Menunggu Persetujuan Murid')),
+    status TEXT NOT NULL DEFAULT 'Baru' CHECK (status IN ('Baru', 'Sedang Dimasak', 'Sedang Disiapkan', 'Siap Diambil', 'Siap Diantar', 'Sedang Diantar', 'Selesai', 'Dibatalkan', 'Menunggu Pembatalan', 'Menunggu Persetujuan Murid')),
     delivery_location TEXT,
     total_amount INTEGER NOT NULL CHECK (total_amount >= 0),
     cancel_request_reason TEXT,
@@ -124,10 +124,30 @@ CREATE TABLE IF NOT EXISTS public.order_messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id UUID NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
     sender_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-    sender_role TEXT NOT NULL CHECK (sender_role IN ('student', 'petugas_kantin', 'system')),
+    sender_role TEXT NOT NULL CHECK (sender_role IN ('student', 'petugas_kantin', 'canteen_operator', 'admin', 'super_admin', 'petugas_keuangan', 'system')),
     message TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- ---------------------------------------------------------------------
+-- 9b. Table: public.order_reviews
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.order_reviews (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_id UUID NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
+    student_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    operator_id UUID REFERENCES public.canteen_operators(id) ON DELETE SET NULL,
+    product_id UUID REFERENCES public.products(id) ON DELETE SET NULL,
+    product_name TEXT,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    review_text TEXT DEFAULT '',
+    tags JSONB DEFAULT '[]'::jsonb,
+    is_anonymous BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_order_reviews_product ON public.order_reviews(product_id);
+CREATE INDEX IF NOT EXISTS idx_order_reviews_operator ON public.order_reviews(operator_id);
 
 -- ---------------------------------------------------------------------
 -- 10. Table: public.transactions

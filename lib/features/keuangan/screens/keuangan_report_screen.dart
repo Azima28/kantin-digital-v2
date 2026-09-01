@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/services/report_export_service.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 import 'package:kantin_digital/features/keuangan/widgets/daily_trend_chart_dialog.dart';
 
@@ -39,9 +40,8 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
   }
 
   String get _formattedPeriodLabel {
-    final fmt = DateFormat('dd MMM yyyy', 'id_ID');
-    final startStr = fmt.format(_startDate);
-    final endStr = fmt.format(_endDate);
+    final startStr = AppDateFormatter.formatDate(_startDate);
+    final endStr = AppDateFormatter.formatDate(_endDate);
 
     if (_startDate.year == _endDate.year &&
         _startDate.month == _endDate.month &&
@@ -681,7 +681,6 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (dialogContext, setDialogState) {
-            final fmtDate = DateFormat('dd MMM yyyy', 'id_ID');
             final shortMonths = [
               'Jan',
               'Feb',
@@ -873,7 +872,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                       const SizedBox(width: 6),
                                       Expanded(
                                         child: Text(
-                                          fmtDate.format(tempStartDate),
+                                          AppDateFormatter.formatDate(tempStartDate),
                                           style: GoogleFonts.inter(
                                             fontSize: 11.5,
                                             fontWeight: FontWeight.w600,
@@ -942,7 +941,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
                                       const SizedBox(width: 6),
                                       Expanded(
                                         child: Text(
-                                          fmtDate.format(tempEndDate),
+                                          AppDateFormatter.formatDate(tempEndDate),
                                           style: GoogleFonts.inter(
                                             fontSize: 11.5,
                                             fontWeight: FontWeight.w600,
@@ -1258,7 +1257,7 @@ class _KeuanganReportScreenState extends ConsumerState<KeuanganReportScreen> {
   @override
   Widget build(BuildContext context) {
     final reportAsync = ref.watch(keuanganReportProvider(_currentFilterParam));
-    final fmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    const fmt = AppNumberFormat(symbol: 'Rp ');
 
     return Scaffold(
       backgroundColor: Colors.transparent,

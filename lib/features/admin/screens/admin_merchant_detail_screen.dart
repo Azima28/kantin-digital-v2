@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/core/widgets/nebula_components.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
@@ -316,7 +317,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                               style: GoogleFonts.inter(fontSize: 12, color: ctx.textSecondary),
                             ),
                             Text(
-                              'Rp ${NumberFormat('#,###', 'id_ID').format(currentBalance)}',
+                              CurrencyFormatter.format(currentBalance),
                               style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: Nebula.teal),
                             ),
                           ],
@@ -340,7 +341,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                           final val = int.tryParse(v.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
                           if (val <= 0) return 'Nominal harus lebih dari 0';
                           if (val > currentBalance) {
-                            return 'Melebihi saldo tersedia (Maks Rp ${NumberFormat("#,###", "id_ID").format(currentBalance)})';
+                            return 'Melebihi saldo tersedia (Maks ${CurrencyFormatter.format(currentBalance)})';
                           }
                           return null;
                         },
@@ -401,7 +402,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                                   borderRadius: BorderRadius.circular(6),
                                   border: Border.all(color: ctx.dividerCol),
                                 ),
-                                child: Text('Rp ${NumberFormat("#,###", "id_ID").format(amt)}', style: GoogleFonts.inter(fontSize: 11, color: ctx.textPrimary)),
+                                child: Text(CurrencyFormatter.format(amt), style: GoogleFonts.inter(fontSize: 11, color: ctx.textPrimary)),
                               ),
                             );
                           }),
@@ -511,7 +512,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                                         if (mounted) {
                                           ScaffoldMessenger.of(context).showSnackBar(
                                             SnackBar(
-                                              content: Text('Pencairan dana Rp ${NumberFormat("#,###", "id_ID").format(rawAmt)} untuk $canteenName berhasil dicatat.'),
+                                              content: Text('Pencairan dana ${CurrencyFormatter.format(rawAmt)} untuk $canteenName berhasil dicatat.'),
                                               backgroundColor: Nebula.teal,
                                               behavior: SnackBarBehavior.floating,
                                             ),
@@ -623,6 +624,8 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                   fullName: fullName,
                   canteenName: canteenName,
                   username: username,
+                  photoUrl: profile.avatarUrl,
+                  gender: profile.gender,
                 ),
                 const SizedBox(height: 14),
 
@@ -694,7 +697,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        'Rp ${NumberFormat('#,###', 'id_ID').format(balanceEarned)}',
+                        CurrencyFormatter.format(balanceEarned),
                         style: GoogleFonts.inter(
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
@@ -1066,8 +1069,8 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(
-                                  DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(
-                                    tx.createdAt?.toLocal() ?? DateTime.now(),
+                                  AppDateFormatter.formatDateWithTime(
+                                    tx.createdAt ?? DateTime.now(),
                                   ),
                                   style: GoogleFonts.inter(
                                     fontSize: 11,
@@ -1078,7 +1081,7 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
                             ),
                           ),
                           Text(
-                            '${isWithdrawal ? "-" : "+"}Rp ${NumberFormat('#,###', 'id_ID').format(tx.totalAmount)}',
+                            '${isWithdrawal ? "-" : "+"}${CurrencyFormatter.format(tx.totalAmount)}',
                             style: GoogleFonts.inter(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,

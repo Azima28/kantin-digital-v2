@@ -26,14 +26,17 @@ class ModifierItem {
 
   ModifierItem({required this.name, this.price = 0});
 
-  String toFormattedString(String groupTitle) {
+  String toFormattedString(String groupTitle, bool isSingleSelect) {
     final cleanName = name.trim();
-    final cleanGroup = groupTitle.trim();
+    final cleanGroup = groupTitle
+        .replaceAll(RegExp(r'^\[(PILIH 1|PILIH BANYAK|SINGLE|MULTI|\*|1)\]\s*', caseSensitive: false), '')
+        .trim();
     final pricePart = price > 0 ? ' (+Rp ${CurrencyFormatter.format(price).replaceAll('Rp ', '')})' : '';
+    final tag = isSingleSelect ? '[PILIH 1] ' : '[PILIH BANYAK] ';
     if (cleanGroup.isNotEmpty) {
-      return '$cleanGroup: $cleanName$pricePart';
+      return '$tag$cleanGroup: $cleanName$pricePart';
     }
-    return '$cleanName$pricePart';
+    return '$tag$cleanName$pricePart';
   }
 }
 
@@ -95,17 +98,28 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   }
 
   void _parseInitialOptions(List<String> rawOptions) {
-    final Map<String, List<ModifierItem>> grouped = {};
+    final Map<String, ({bool? explicitSingle, List<ModifierItem> items})> grouped = {};
 
     for (final opt in rawOptions) {
       final clean = opt.trim();
       if (clean.isEmpty) continue;
 
-      String groupTitle = 'Pilihan Tambahan';
-      String itemPart = clean;
+      bool? explicitSingle;
+      String optionBody = clean;
 
-      if (clean.contains(': ')) {
-        final parts = clean.split(': ');
+      if (clean.startsWith(RegExp(r'^\[(PILIH 1|SINGLE|1)\]\s*', caseSensitive: false))) {
+        explicitSingle = true;
+        optionBody = clean.replaceFirst(RegExp(r'^\[(PILIH 1|SINGLE|1)\]\s*', caseSensitive: false), '');
+      } else if (clean.startsWith(RegExp(r'^\[(PILIH BANYAK|MULTI|\*)\]\s*', caseSensitive: false))) {
+        explicitSingle = false;
+        optionBody = clean.replaceFirst(RegExp(r'^\[(PILIH BANYAK|MULTI|\*)\]\s*', caseSensitive: false), '');
+      }
+
+      String groupTitle = 'Pilihan Tambahan';
+      String itemPart = optionBody;
+
+      if (optionBody.contains(': ')) {
+        final parts = optionBody.split(': ');
         groupTitle = parts[0].trim();
         itemPart = parts.sublist(1).join(': ').trim();
       }
@@ -119,27 +133,43 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         price = int.tryParse(priceStr) ?? 0;
       }
 
-      grouped.putIfAbsent(groupTitle, () => []).add(ModifierItem(name: name, price: price));
+      final existing = grouped[groupTitle];
+      if (existing == null) {
+        grouped[groupTitle] = (
+          explicitSingle: explicitSingle,
+          items: [ModifierItem(name: name, price: price)],
+        );
+      } else {
+        grouped[groupTitle] = (
+          explicitSingle: existing.explicitSingle ?? explicitSingle,
+          items: [...existing.items, ModifierItem(name: name, price: price)],
+        );
+      }
     }
 
-    grouped.forEach((title, items) {
-      final lower = title.toLowerCase();
-      final isSingle = lower.contains('level') ||
-          lower.contains('pedas') ||
-          lower.contains('asin') ||
-          lower.contains('rasa') ||
-          lower.contains('porsi') ||
-          lower.contains('ukuran') ||
-          lower.contains('suhu') ||
-          lower.contains('es') ||
-          lower.contains('gula') ||
-          lower.contains('pilih 1');
+    grouped.forEach((title, data) {
+      bool isSingle;
+      if (data.explicitSingle != null) {
+        isSingle = data.explicitSingle!;
+      } else {
+        final lower = title.toLowerCase();
+        isSingle = lower.contains('level') ||
+            lower.contains('pedas') ||
+            lower.contains('asin') ||
+            lower.contains('rasa') ||
+            lower.contains('porsi') ||
+            lower.contains('ukuran') ||
+            lower.contains('suhu') ||
+            lower.contains('es') ||
+            lower.contains('gula') ||
+            lower.contains('pilih 1');
+      }
 
       _modifierGroups.add(ModifierGroup(
         id: 'group_${_groupCounter++}',
         title: title,
         isSingleSelect: isSingle,
-        items: items,
+        items: data.items,
       ));
     });
   }
@@ -480,7 +510,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       final List<String> compiledOptions = [];
       for (final group in _modifierGroups) {
         for (final item in group.items) {
-          compiledOptions.add(item.toFormattedString(group.title));
+          compiledOptions.add(item.toFormattedString(group.title, group.isSingleSelect));
         }
       }
 

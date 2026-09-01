@@ -9,8 +9,10 @@ type OrderStatus string
 const (
 	OrderStatusBaru                    OrderStatus = "Baru"
 	OrderStatusSedangDimasak           OrderStatus = "Sedang Dimasak"
+	OrderStatusSedangDisiapkan         OrderStatus = "Sedang Disiapkan"
 	OrderStatusSiapDiambil             OrderStatus = "Siap Diambil"
 	OrderStatusSiapDiantar             OrderStatus = "Siap Diantar"
+	OrderStatusSedangDiantar           OrderStatus = "Sedang Diantar"
 	OrderStatusSelesai                 OrderStatus = "Selesai"
 	OrderStatusDibatalkan              OrderStatus = "Dibatalkan"
 	OrderStatusMenungguPembatalan      OrderStatus = "Menunggu Pembatalan"
@@ -47,6 +49,8 @@ type OrderReview struct {
 	StudentName string    `json:"student_name,omitempty"`
 	AvatarURL   *string   `json:"avatar_url,omitempty"`
 	OperatorID  *string   `json:"operator_id,omitempty"`
+	ProductID   *string   `json:"product_id,omitempty"`
+	ProductName *string   `json:"product_name,omitempty"`
 	Rating      int       `json:"rating"`
 	ReviewText  string    `json:"review_text"`
 	Tags        []string  `json:"tags"`

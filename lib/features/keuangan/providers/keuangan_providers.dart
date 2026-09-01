@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 import 'package:kantin_digital/core/utils/riverpod_cache_extensions.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
@@ -66,7 +66,7 @@ final keuanganHistoryProvider =
   ref.cacheFor(const Duration(minutes: 2));
   final apiClient = ref.watch(apiClientProvider);
   try {
-    final res = await apiClient.get('/admin/audit-logs', queryParams: {'limit': '100'});
+    final res = await apiClient.get('/finance/audit-logs', queryParams: {'limit': '100'});
     if (res.success && res.data != null) {
       final list = res.data as List<dynamic>;
       return list.map((e) => AuditLog.fromJson(e as Map<String, dynamic>)).toList();
@@ -93,9 +93,8 @@ class ReportFilterParam {
   });
 
   String get formattedPeriodLabel {
-    final fmt = DateFormat('dd/MM/yyyy');
     if (periodLabel == 'Kustom' || periodLabel == 'Custom') {
-      return '${fmt.format(startDate)} - ${fmt.format(endDate)}';
+      return '${AppDateFormatter.formatDateSlash(startDate)} - ${AppDateFormatter.formatDateSlash(endDate)}';
     }
     return periodLabel;
   }
@@ -191,7 +190,7 @@ final keuanganStudentDetailProvider = FutureProvider
     .family<AdminStudentDetail, String>((ref, id) async {
   final apiClient = ref.watch(apiClientProvider);
   try {
-    final res = await apiClient.get('/admin/student/$id');
+    final res = await apiClient.get('/finance/student/$id');
     if (res.success && res.data != null) {
       return AdminStudentDetail.fromJson(res.data as Map<String, dynamic>);
     }
@@ -214,7 +213,7 @@ final keuanganParentsProvider =
   ref.cacheFor(const Duration(minutes: 3));
   final apiClient = ref.watch(apiClientProvider);
   try {
-    final res = await apiClient.get('/admin/users', queryParams: {'role': 'parent'});
+    final res = await apiClient.get('/finance/users', queryParams: {'role': 'parent'});
     if (res.success && res.data != null) {
       final list = res.data as List<dynamic>;
       return list.map((e) => e as Map<String, dynamic>).toList();
@@ -230,7 +229,7 @@ final keuanganStaffProvider =
   ref.cacheFor(const Duration(minutes: 3));
   final apiClient = ref.watch(apiClientProvider);
   try {
-    final res = await apiClient.get('/admin/users');
+    final res = await apiClient.get('/finance/users');
     if (res.success && res.data != null) {
       final list = res.data as List<dynamic>;
       return list

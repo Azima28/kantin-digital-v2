@@ -3,12 +3,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/services/pdf_service.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/kantin/models/order_item.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
@@ -21,7 +21,7 @@ void showTransactionDetailSheet(
   final String type = tx.type ?? 'purchase';
   final int amount = tx.totalAmount;
   final String timeStr = tx.createdAt != null
-      ? DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(tx.createdAt!.toLocal())
+      ? AppDateFormatter.formatDateWithTime(tx.createdAt)
       : '-';
   final String canteenName = tx.canteenName ?? 'Kantin';
   final String studentName = tx.studentName ?? 'Siswa';

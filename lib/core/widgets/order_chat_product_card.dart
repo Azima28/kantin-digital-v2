@@ -27,7 +27,7 @@ class OrderChatProductCard extends StatelessWidget {
 
     // Determine status badge color
     Color badgeColor = Nebula.teal;
-    if (order.status == 'Sedang Dimasak' || order.status == 'Baru') {
+    if (order.status == 'Sedang Disiapkan' || order.status == 'Sedang Dimasak' || order.status == 'Baru') {
       badgeColor = Nebula.amber;
     } else if (order.status == 'Dibatalkan' || order.status == 'Menunggu Pembatalan') {
       badgeColor = Nebula.rose;

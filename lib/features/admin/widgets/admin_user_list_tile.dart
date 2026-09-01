@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 
 /// User card for the admin user list screen.
 /// Styled according to the 2-column card design in the user screenshot.
@@ -12,6 +13,9 @@ class AdminUserListTile extends StatelessWidget {
   final String Function(String) getRoleLabel;
   final void Function(String, String, bool) onToggleStatus;
   final void Function(String, String) onNavigateToDetail;
+  final bool isEmbedded;
+  final bool isFirst;
+  final bool isLast;
 
   const AdminUserListTile({
     super.key,
@@ -19,6 +23,9 @@ class AdminUserListTile extends StatelessWidget {
     required this.getRoleLabel,
     required this.onToggleStatus,
     required this.onNavigateToDetail,
+    this.isEmbedded = false,
+    this.isFirst = false,
+    this.isLast = false,
   });
 
   @override
@@ -46,21 +53,25 @@ class AdminUserListTile extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: context.cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: context.dividerCol.withValues(alpha: 0.5),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      padding: EdgeInsets.all(isEmbedded ? 14 : 16),
+      decoration: isEmbedded
+          ? const BoxDecoration(
+              color: Colors.transparent,
+            )
+          : BoxDecoration(
+              color: context.cardBg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: context.dividerCol.withValues(alpha: 0.5),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
@@ -69,15 +80,12 @@ class AdminUserListTile extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Grey Circle Avatar
-              CircleAvatar(
+              AppAvatar(
                 radius: 20,
-                backgroundColor: context.surfaceBg,
-                child: Icon(
-                  Icons.person,
-                  color: context.textSecondary,
-                  size: 22,
-                ),
+                photoUrl: user.avatarUrl,
+                role: role,
+                name: fullName,
+                gender: user.gender,
               ),
               const SizedBox(width: 12),
 

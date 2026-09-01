@@ -134,9 +134,18 @@ class RealtimeService {
             final String orderId = msg.orderId;
 
             if (orderId.isNotEmpty) {
-              // Update in-memory message store & refresh stream for this specific order
+              // Add or seamlessly replace pending optimistic message in-place
               _ref.read(localOrderChatProvider(orderId).notifier).addMessage(msg);
               _ref.invalidate(orderChatStreamProvider(orderId));
+            }
+          }
+          break;
+
+        case 'order:presence':
+          if (payloadMap != null) {
+            final String orderId = (payloadMap['order_id'] ?? payloadMap['id'])?.toString() ?? '';
+            if (orderId.isNotEmpty) {
+              _ref.invalidate(orderPresenceProvider(orderId));
             }
           }
           break;

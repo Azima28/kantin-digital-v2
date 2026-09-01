@@ -101,8 +101,10 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
       if (tab == 'baru') {
         return order.status == 'Baru';
       } else if (tab == 'proses') {
-        return order.status == 'Sedang Dimasak' ||
+        return order.status == 'Sedang Disiapkan' ||
+            order.status == 'Sedang Dimasak' ||
             order.status == 'Siap Diambil' ||
+            order.status == 'Sedang Diantar' ||
             order.status == 'Siap Diantar' ||
             order.status == 'Menunggu Pembatalan' ||
             order.status == 'Menunggu Persetujuan Murid';
@@ -346,8 +348,10 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
           final now = DateTime.now();
           final int countBaru = orders.where((o) => o.status == 'Baru').length;
           final int countProses = orders.where((o) =>
+              o.status == 'Sedang Disiapkan' ||
               o.status == 'Sedang Dimasak' ||
               o.status == 'Siap Diambil' ||
+              o.status == 'Sedang Diantar' ||
               o.status == 'Siap Diantar' ||
               o.status == 'Menunggu Pembatalan' ||
               o.status == 'Menunggu Persetujuan Murid').length;

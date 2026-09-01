@@ -2,9 +2,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
@@ -432,7 +432,7 @@ class _DailySalesVolumeWidgetState extends ConsumerState<DailySalesVolumeWidget>
 
                 _buildFilterOptionTile(
                   title: 'Bulan Ini',
-                  subtitle: DateFormat('MMMM yyyy', 'id_ID').format(now),
+                  subtitle: AppDateFormatter.formatMonthYear(now),
                   isSelected: _activeFilter == null || _activeFilter?.periodLabel == 'Bulan Ini',
                   onTap: () {
                     Navigator.pop(ctx);
@@ -443,7 +443,7 @@ class _DailySalesVolumeWidgetState extends ConsumerState<DailySalesVolumeWidget>
                 ),
                 _buildFilterOptionTile(
                   title: 'Bulan Lalu',
-                  subtitle: DateFormat('MMMM yyyy', 'id_ID').format(DateTime(now.year, now.month - 1, 1)),
+                  subtitle: AppDateFormatter.formatMonthYear(DateTime(now.year, now.month - 1, 1)),
                   isSelected: _activeFilter?.periodLabel == 'Bulan Lalu',
                   onTap: () {
                     Navigator.pop(ctx);
@@ -460,7 +460,7 @@ class _DailySalesVolumeWidgetState extends ConsumerState<DailySalesVolumeWidget>
                 ),
                 _buildFilterOptionTile(
                   title: '7 Hari Terakhir',
-                  subtitle: '${DateFormat('dd MMM', 'id_ID').format(now.subtract(const Duration(days: 6)))} - ${DateFormat('dd MMM yyyy', 'id_ID').format(now)}',
+                  subtitle: '${AppDateFormatter.formatDayMonth(now.subtract(const Duration(days: 6)))} - ${AppDateFormatter.formatDate(now)}',
                   isSelected: _activeFilter?.periodLabel == '7 Hari Terakhir',
                   onTap: () {
                     Navigator.pop(ctx);
@@ -475,7 +475,7 @@ class _DailySalesVolumeWidgetState extends ConsumerState<DailySalesVolumeWidget>
                 ),
                 _buildFilterOptionTile(
                   title: '30 Hari Terakhir',
-                  subtitle: '${DateFormat('dd MMM', 'id_ID').format(now.subtract(const Duration(days: 29)))} - ${DateFormat('dd MMM yyyy', 'id_ID').format(now)}',
+                  subtitle: '${AppDateFormatter.formatDayMonth(now.subtract(const Duration(days: 29)))} - ${AppDateFormatter.formatDate(now)}',
                   isSelected: _activeFilter?.periodLabel == '30 Hari Terakhir',
                   onTap: () {
                     Navigator.pop(ctx);
@@ -569,7 +569,7 @@ class _DailySalesVolumeWidgetState extends ConsumerState<DailySalesVolumeWidget>
 
                     if (picked != null) {
                       final String fmtLabel =
-                          '${DateFormat('dd MMM yy', 'id_ID').format(picked.start)} - ${DateFormat('dd MMM yy', 'id_ID').format(picked.end)}';
+                          '${AppDateFormatter.formatDateShortYear(picked.start)} - ${AppDateFormatter.formatDateShortYear(picked.end)}';
                       setState(() {
                         _activeFilter = CanteenSalesFilterParam(
                           startDate: picked.start,

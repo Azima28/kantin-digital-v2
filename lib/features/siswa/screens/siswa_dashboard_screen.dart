@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:kantin_digital/core/constants/app_strings.dart';
@@ -13,11 +12,14 @@ import 'package:kantin_digital/core/theme/hallmark_color_scheme.dart';
 import 'package:kantin_digital/core/theme/hallmark_typography.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
+import 'package:kantin_digital/core/services/api_client.dart';
 import 'package:kantin_digital/core/widgets/notification_bell.dart';
-import 'package:kantin_digital/core/widgets/hallmark_button.dart';
 import 'package:kantin_digital/core/widgets/hallmark_card.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 import 'package:kantin_digital/features/siswa/providers/student_cart_provider.dart';
@@ -34,8 +36,9 @@ class SiswaDashboardScreen extends ConsumerStatefulWidget {
 
 class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
   int _promoIndex = 0;
+  static const int _virtualPromoOffset = 12000;
   late final PageController _pageController = PageController(
-    initialPage: 0,
+    initialPage: _virtualPromoOffset,
     viewportFraction: 0.85,
   );
   Timer? _promoTimer;
@@ -59,12 +62,11 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
     _promoTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
       if (!mounted) return;
       if (_promoCount > 1 && _pageController.hasClients && _pageController.page != null) {
-        final currentPage = _pageController.page!.round();
-        final nextPage = (currentPage + 1) % _promoCount;
+        final currentVirtualPage = _pageController.page!.round();
         _pageController.animateToPage(
-          nextPage,
+          currentVirtualPage + 1,
           duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
+          curve: Curves.easeInOutCubic,
         );
       }
     });
@@ -203,106 +205,143 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
               ],
             ),
             const SizedBox(height: 10),
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: activeList.length > 3 ? 3 : activeList.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final order = activeList[index];
-                final String itemNames = order.items.isNotEmpty
-                    ? order.items.map((i) => '${i.qty}x ${i.name}').join(', ')
-                    : 'Pesanan #${order.id.length >= 6 ? order.id.substring(0, 6) : order.id}';
+            Container(
+              decoration: BoxDecoration(
+                color: colors.surfaceContainer,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: colors.borderTactile, width: 0.8),
+              ),
+              child: ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: activeList.length > 3 ? 3 : activeList.length,
+                separatorBuilder: (context, index) => Divider(
+                  height: 1,
+                  thickness: 1.0,
+                  color: colors.textMuted.withValues(alpha: 0.28),
+                  indent: 14,
+                  endIndent: 14,
+                ),
+                itemBuilder: (context, index) {
+                  final order = activeList[index];
+                  final String itemNames = order.items.isNotEmpty
+                      ? order.items.map((i) => '${i.qty}x ${i.name}').join(', ')
+                      : 'Pesanan #${order.id.length >= 6 ? order.id.substring(0, 6) : order.id}';
 
-                Color statusColor = Nebula.amber;
-                Color statusBg = Nebula.amber.withValues(alpha: 0.12);
-                if (order.status == 'Sedang Dimasak') {
-                  statusColor = const Color(0xFF0284C7);
-                  statusBg = const Color(0xFF0284C7).withValues(alpha: 0.12);
-                } else if (order.status == 'Siap Diambil' || order.status == 'Siap Diantar') {
-                  statusColor = Nebula.teal;
-                  statusBg = Nebula.teal.withValues(alpha: 0.12);
-                }
+                  Color statusColor = Nebula.amber;
+                  Color statusBg = Nebula.amber.withValues(alpha: 0.12);
+                  if (order.status == 'Sedang Disiapkan' || order.status == 'Sedang Dimasak') {
+                    statusColor = const Color(0xFF0284C7);
+                    statusBg = const Color(0xFF0284C7).withValues(alpha: 0.12);
+                  } else if (order.status == 'Siap Diambil' || order.status == 'Sedang Diantar' || order.status == 'Siap Diantar') {
+                    statusColor = Nebula.teal;
+                    statusBg = Nebula.teal.withValues(alpha: 0.12);
+                  }
 
-                return HallmarkCard(
-                  backgroundColor: colors.surfaceContainer,
-                  padding: const EdgeInsets.all(14),
-                  onTap: () => context.push('/student/active-orders'),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: colors.brandPrimary.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(8),
+                  final bool isFirst = index == 0;
+                  final bool isLast = index == (activeList.length > 3 ? 2 : activeList.length - 1);
+
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => context.push('/student/active-orders'),
+                      borderRadius: BorderRadius.vertical(
+                        top: isFirst ? const Radius.circular(16) : Radius.zero,
+                        bottom: isLast ? const Radius.circular(16) : Radius.zero,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: colors.brandPrimary.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Icon(CupertinoIcons.bag_fill, size: 14, color: colors.brandPrimary),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      order.time.isNotEmpty ? order.time : 'Hari Ini',
+                                      style: HallmarkTypography.bodySmall(colors.textMuted),
+                                    ),
+                                  ],
                                 ),
-                                child: Icon(CupertinoIcons.bag_fill, size: 14, color: colors.brandPrimary),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                order.time.isNotEmpty ? order.time : 'Hari Ini',
-                                style: HallmarkTypography.bodySmall(colors.textMuted),
-                              ),
-                            ],
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: statusBg,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: statusColor.withValues(alpha: 0.3), width: 0.8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: statusBg,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: statusColor.withValues(alpha: 0.3), width: 0.8),
+                                  ),
+                                  child: Text(
+                                    order.status,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: statusColor,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            child: Text(
-                              order.status,
-                              style: GoogleFonts.inter(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.bold,
-                                color: statusColor,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        itemNames,
-                        style: HallmarkTypography.titleSmall(colors.textPrimary),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          if (order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty)
+                            const SizedBox(height: 8),
                             Text(
-                              '📍 ${order.deliveryLocation}',
-                              style: HallmarkTypography.bodySmall(colors.textMuted),
-                            )
-                          else
-                            Text(
-                              'Ambil di Stan',
-                              style: HallmarkTypography.bodySmall(colors.textMuted),
+                              itemNames,
+                              style: HallmarkTypography.titleSmall(colors.textPrimary),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          Text(
-                            'Rp ${NumberFormat('#,###', 'id_ID').format(order.totalAmount)}',
-                            style: HallmarkTypography.financialNumeral(
-                              color: colors.brandPrimary,
-                              fontSize: 14,
+                            const SizedBox(height: 6),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      (order.deliveryLocation != null &&
+                                              (order.deliveryLocation!.toLowerCase().contains('pickup') ||
+                                                  order.deliveryLocation!.toLowerCase().contains('ambil') ||
+                                                  order.deliveryLocation!.toLowerCase().contains('stan') ||
+                                                  order.deliveryLocation!.toLowerCase().contains('dimakan')))
+                                          ? CupertinoIcons.bag
+                                          : CupertinoIcons.location_solid,
+                                      size: 12,
+                                      color: colors.textMuted,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      (order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty)
+                                          ? order.deliveryLocation!
+                                          : 'Ambil di Stan',
+                                      style: HallmarkTypography.bodySmall(colors.textMuted),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  CurrencyFormatter.format(order.totalAmount),
+                                  style: HallmarkTypography.financialNumeral(
+                                    color: colors.textPrimary,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
-                );
-              },
+                    ),
+                  );
+                },
+              ),
             ),
             const SizedBox(height: 20),
           ],
@@ -329,7 +368,8 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
         toolbarHeight: 64,
         titleSpacing: 16,
         centerTitle: false,
-        backgroundColor: Colors.transparent,
+        backgroundColor: colors.surfaceBase,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         shape: Border(
@@ -338,30 +378,33 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircleAvatar(
+            AppAvatar(
               radius: 20,
-              backgroundColor: colors.surfaceSubtle,
-              backgroundImage: profilePhotoUrl != null
-                  ? CachedNetworkImageProvider(profilePhotoUrl)
-                  : null,
-              child: profilePhotoUrl == null
-                  ? Icon(Icons.person, color: colors.brandPrimary)
-                  : null,
+              photoUrl: profilePhotoUrl,
+              role: 'student',
+              name: fullName,
+              borderColor: colors.borderTactile,
             ),
             const SizedBox(width: 12),
             Flexible(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Halo, $fullName!',
+                    fullName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: HallmarkTypography.bodySmall(colors.textMuted),
+                    style: HallmarkTypography.titleL3(colors.textPrimary),
                   ),
+                  const SizedBox(height: 1),
                   Text(
                     'Dashboard Siswa',
-                    style: HallmarkTypography.titleL3(colors.brandPrimary),
+                    style: GoogleFonts.inter(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w500,
+                      color: colors.textPrimary,
+                    ),
                   ),
                 ],
               ),
@@ -444,9 +487,23 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
                       final int balance = student.balance;
                       final bool isActive = student.isActive;
 
-                      return HallmarkCard(
-                        backgroundColor: colors.surfaceContainer,
-                        padding: const EdgeInsets.all(20),
+                      return Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF0D9488), Color(0xFF047857)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF0D9488).withValues(alpha: 0.25),
+                              blurRadius: 16,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -455,18 +512,21 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
                               children: [
                                 Text(
                                   AppStrings.labelBalance,
-                                  style: HallmarkTypography.labelButton(colors.textMuted),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white.withValues(alpha: 0.85),
+                                    letterSpacing: 0.5,
+                                  ),
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                   decoration: BoxDecoration(
-                                    color: (isActive ? colors.statusSuccess : colors.statusError)
-                                        .withValues(alpha: 0.15),
+                                    color: Colors.white.withValues(alpha: 0.18),
                                     borderRadius: BorderRadius.circular(999),
                                     border: Border.all(
-                                      color: (isActive ? colors.statusSuccess : colors.statusError)
-                                          .withValues(alpha: 0.3),
-                                      width: 0.5,
+                                      color: Colors.white.withValues(alpha: 0.35),
+                                      width: 0.6,
                                     ),
                                   ),
                                   child: Row(
@@ -474,8 +534,10 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
                                     children: [
                                       Text(
                                         isActive ? 'Kartu Aktif' : 'Terblokir',
-                                        style: HallmarkTypography.bodySmall(
-                                          isActive ? colors.statusSuccess : colors.statusError,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
                                         ),
                                       ),
                                       const SizedBox(width: 4),
@@ -483,15 +545,15 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
                                         isActive
                                             ? CupertinoIcons.checkmark_seal_fill
                                             : CupertinoIcons.lock_fill,
-                                        size: 13,
-                                        color: isActive ? colors.statusSuccess : colors.statusError,
+                                        size: 12,
+                                        color: Colors.white,
                                       ),
                                     ],
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 6),
                             FittedBox(
                               fit: BoxFit.scaleDown,
                               alignment: Alignment.centerLeft,
@@ -501,49 +563,116 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
                                 children: [
                                   Text(
                                     'Rp ',
-                                    style: HallmarkTypography.titleL3(colors.textMuted),
+                                    style: GoogleFonts.inter(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white.withValues(alpha: 0.85),
+                                    ),
                                   ),
                                   Text(
-                                    NumberFormat('#,###', 'id_ID').format(balance),
-                                    style: HallmarkTypography.financialNumeral(
-                                      color: colors.brandPrimary,
-                                      fontSize: 34,
+                                    CurrencyFormatter.formatWithoutPrefix(balance),
+                                    style: GoogleFonts.inter(
+                                      fontSize: 30,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                      letterSpacing: -0.5,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 12),
                             Builder(
                               builder: (context) {
                                 final bool isSmallScreen = MediaQuery.of(context).size.width <= 360;
                                 return Row(
                                   children: [
                                     Expanded(
-                                      child: HallmarkButton(
-                                        label: isSmallScreen ? 'Top Up' : 'Top-Up Saldo',
-                                        icon: CupertinoIcons.add,
-                                        onPressed: () {
-                                          if (isAccountBlocked) {
-                                            _showAccountBlockedDialog(context);
-                                          } else {
-                                            context.push('/student/topup');
-                                          }
-                                        },
+                                      child: Material(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(10),
+                                        clipBehavior: Clip.antiAlias,
+                                        child: InkWell(
+                                          onTap: () {
+                                            if (isAccountBlocked) {
+                                              _showAccountBlockedDialog(context);
+                                            } else {
+                                              context.push('/student/topup');
+                                            }
+                                          },
+                                          child: Container(
+                                            height: 36,
+                                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                                            alignment: Alignment.center,
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                const Icon(
+                                                  CupertinoIcons.add,
+                                                  size: 15,
+                                                  color: Color(0xFF0F766E),
+                                                ),
+                                                const SizedBox(width: 5),
+                                                Text(
+                                                  isSmallScreen ? 'Top Up' : 'Top-Up Saldo',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: const Color(0xFF0F766E),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                    const SizedBox(width: 10),
+                                    const SizedBox(width: 8),
                                     Expanded(
-                                      child: HallmarkButton(
-                                        label: isSmallScreen ? 'Kartu' : 'Kartu Saya',
-                                        icon: CupertinoIcons.creditcard,
-                                        onPressed: () {
-                                          if (isAccountBlocked) {
-                                            _showAccountBlockedDialog(context);
-                                          } else {
-                                            context.push('/student/cards');
-                                          }
-                                        },
+                                      child: Material(
+                                        color: Colors.white.withValues(alpha: 0.18),
+                                        borderRadius: BorderRadius.circular(10),
+                                        clipBehavior: Clip.antiAlias,
+                                        child: InkWell(
+                                          onTap: () {
+                                            if (isAccountBlocked) {
+                                              _showAccountBlockedDialog(context);
+                                            } else {
+                                              context.push('/student/cards');
+                                            }
+                                          },
+                                          child: Container(
+                                            height: 36,
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(10),
+                                              border: Border.all(
+                                                color: Colors.white.withValues(alpha: 0.35),
+                                                width: 0.8,
+                                              ),
+                                            ),
+                                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                                            alignment: Alignment.center,
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                const Icon(
+                                                  CupertinoIcons.creditcard,
+                                                  size: 15,
+                                                  color: Colors.white,
+                                                ),
+                                                const SizedBox(width: 5),
+                                                Text(
+                                                  isSmallScreen ? 'Kartu' : 'Kartu Saya',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -599,9 +728,6 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // ── Pesanan Aktif / Sedang Diproses Section ──
-                  _buildActiveOrdersSection(context, colors),
-
                   // ── Koleksi Spesial / Panel Iklan Section ──
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -627,6 +753,9 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
                   const SizedBox(height: 12),
                   _buildPromoCarousel(colors),
                   const SizedBox(height: 24),
+
+                  // ── Pesanan Aktif / Sedang Diproses Section ──
+                  _buildActiveOrdersSection(context, colors),
 
                   // Recent Transactions Header
                   Row(
@@ -675,65 +804,76 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
                           ),
                         );
                       }
-                      return ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: transactions.length > 5 ? 5 : transactions.length,
-                        separatorBuilder: (context, index) => const SizedBox(height: 8),
-                        itemBuilder: (context, index) {
-                          final tx = transactions[index];
-                          final isTopup = tx.type == 'topup';
+                      final int count = transactions.length > 5 ? 5 : transactions.length;
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: colors.surfaceContainer,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: colors.borderTactile, width: 0.8),
+                        ),
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: count,
+                          separatorBuilder: (context, index) => Divider(
+                            height: 1,
+                            thickness: 1.0,
+                            color: colors.textMuted.withValues(alpha: 0.28),
+                            indent: 14,
+                            endIndent: 14,
+                          ),
+                          itemBuilder: (context, index) {
+                            final tx = transactions[index];
+                            final isTopup = tx.type == 'topup';
+                            final bool isFirst = index == 0;
+                            final bool isLast = index == count - 1;
 
-                          return HallmarkCard(
-                            backgroundColor: colors.surfaceContainer,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            onTap: () {
-                              showTransactionDetailSheet(context, ref, tx);
-                            },
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: (isTopup ? colors.statusSuccess : colors.brandPrimary)
-                                        .withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Icon(
-                                    isTopup ? CupertinoIcons.add : CupertinoIcons.bag,
-                                    color: isTopup ? colors.statusSuccess : colors.brandPrimary,
-                                    size: 20,
-                                  ),
+                            return Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  showTransactionDetailSheet(context, ref, tx);
+                                },
+                                borderRadius: BorderRadius.vertical(
+                                  top: isFirst ? const Radius.circular(16) : Radius.zero,
+                                  bottom: isLast ? const Radius.circular(16) : Radius.zero,
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  child: Row(
                                     children: [
-                                      Text(
-                                        isTopup ? 'Top-Up Tunai' : (tx.canteenName ?? 'Jajan Kantin'),
-                                        style: HallmarkTypography.titleSmall(colors.textPrimary),
-                                      ),
-                                      if (tx.createdAt != null)
-                                        Text(
-                                          DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(tx.createdAt!),
-                                          style: HallmarkTypography.bodySmall(colors.textMuted),
+                                      _buildTransactionThumbnail(colors, tx, isTopup),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              isTopup ? 'Top-Up Tunai' : (tx.canteenName ?? 'Jajan Kantin'),
+                                              style: HallmarkTypography.titleSmall(colors.textPrimary),
+                                            ),
+                                            if (tx.createdAt != null)
+                                              Text(
+                                                AppDateFormatter.formatDateWithTime(tx.createdAt),
+                                                style: HallmarkTypography.bodySmall(colors.textMuted),
+                                              ),
+                                          ],
                                         ),
+                                      ),
+                                      Text(
+                                        '${isTopup ? '+' : '-'}${CurrencyFormatter.format(tx.totalAmount)}',
+                                        style: HallmarkTypography.financialNumeral(
+                                          color: isTopup ? const Color(0xFF10B981) : colors.textPrimary,
+                                          fontSize: 15,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
-                                Text(
-                                  '${isTopup ? '+' : '-'}Rp ${NumberFormat('#,###', 'id_ID').format(tx.totalAmount)}',
-                                  style: HallmarkTypography.financialNumeral(
-                                    color: isTopup ? colors.statusSuccess : colors.textPrimary,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
+                              ),
+                            );
+                          },
+                        ),
                       );
                     },
                     loading: () => Shimmer(
@@ -783,6 +923,59 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
     );
   }
 
+  Widget _buildTransactionThumbnail(
+    HallmarkColorScheme colors,
+    OperatorTransaction tx,
+    bool isTopup,
+  ) {
+    final hasImage = tx.imageUrl != null && tx.imageUrl!.isNotEmpty && !isTopup;
+
+    if (hasImage) {
+      final String resolvedImg = ApiClient.resolveImageUrl(tx.imageUrl);
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: CachedNetworkImage(
+            imageUrl: resolvedImg,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => const ShimmerRect(
+              width: 40,
+              height: 40,
+              borderRadius: 10,
+            ),
+            errorWidget: (context, url, error) => Container(
+              decoration: BoxDecoration(
+                color: colors.brandPrimary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                CupertinoIcons.bag,
+                color: colors.brandPrimary,
+                size: 20,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: (isTopup ? colors.statusSuccess : colors.brandPrimary).withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Icon(
+        isTopup ? CupertinoIcons.add : CupertinoIcons.bag,
+        color: isTopup ? colors.statusSuccess : colors.brandPrimary,
+        size: 20,
+      ),
+    );
+  }
+
   Widget _buildPromoCarousel(HallmarkColorScheme colors) {
     final productsAsync = ref.watch(publicMenuProvider(null));
 
@@ -803,9 +996,12 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
           return bDate.compareTo(aDate);
         });
 
-        _promoCount = availableProducts.length;
+        // Take top 8 featured promo products for optimal carousel UX
+        final promoItems = availableProducts.take(8).toList();
 
-        if (_promoIndex >= availableProducts.length) {
+        _promoCount = promoItems.length;
+
+        if (_promoIndex >= promoItems.length) {
           _promoIndex = 0;
         }
 
@@ -819,51 +1015,40 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
                 onPointerCancel: (_) => _startPromoTimer(),
                 child: PageView.builder(
                   controller: _pageController,
-                  itemCount: availableProducts.length,
                   onPageChanged: (index) {
-                    setState(() => _promoIndex = index);
+                    if (promoItems.isNotEmpty) {
+                      setState(() => _promoIndex = index % promoItems.length);
+                    }
                     _startPromoTimer();
                   },
                   itemBuilder: (context, index) {
-                    if (index >= availableProducts.length) return const SizedBox.shrink();
-                    final item = availableProducts[index];
+                    if (promoItems.isEmpty) return const SizedBox.shrink();
+                    final actualIndex = index % promoItems.length;
+                    final item = promoItems[actualIndex];
                     return _buildPromoCard(colors, item);
                   },
                 ),
               ),
             ),
             const SizedBox(height: 10),
-            if (availableProducts.length <= 10)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(availableProducts.length, (i) {
-                  final bool isActive = _promoIndex == i;
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    width: isActive ? 24 : 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: isActive ? colors.brandPrimary : colors.borderTactile,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  );
-                }),
-              )
-            else
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(promoItems.length, (i) {
+                final bool isActive = _promoIndex == i;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: isActive ? 18 : 6,
+                  height: 6,
                   decoration: BoxDecoration(
-                    color: colors.brandPrimary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    color: isActive
+                        ? colors.brandPrimary
+                        : colors.textMuted.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(3),
                   ),
-                  child: Text(
-                    '${_promoIndex + 1} dari ${availableProducts.length}',
-                    style: HallmarkTypography.bodySmall(colors.brandPrimary),
-                  ),
-                ),
-              ),
+                );
+              }),
+            ),
           ],
         );
       },
@@ -951,7 +1136,7 @@ class _SiswaDashboardScreenState extends ConsumerState<SiswaDashboardScreen> {
                         ),
                       ),
                       Text(
-                        'Rp ${NumberFormat('#,###', 'id_ID').format(item.product.price)}',
+                        CurrencyFormatter.format(item.product.price),
                         style: HallmarkTypography.financialNumeral(
                           color: const Color(0xFF4ADE80),
                           fontSize: 14,

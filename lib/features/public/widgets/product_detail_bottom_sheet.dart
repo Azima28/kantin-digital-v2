@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
@@ -8,16 +9,22 @@ import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
+import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/features/siswa/providers/student_cart_provider.dart';
 
-/// Modal Bottom Sheet to display complete product details, image, customizable options, and quantity.
+/// Full Screen Modal / View to customize purchase options (Custom Pembelian / Ubah Pilihan)
 class ProductDetailBottomSheet extends ConsumerStatefulWidget {
   final Product product;
   final String stanId;
   final String stanName;
   final int deliveryFee;
   final String description;
+  final List<String>? initialSelectedOptions;
+  final String? initialNotes;
+  final int? initialQuantity;
+  final bool isEditing;
+  final void Function(List<String> newOptions, String? newNotes, int newUnitPrice, int newQuantity)? onSaveEditedItem;
 
   const ProductDetailBottomSheet({
     super.key,
@@ -26,6 +33,11 @@ class ProductDetailBottomSheet extends ConsumerStatefulWidget {
     required this.stanName,
     this.deliveryFee = 2000,
     required this.description,
+    this.initialSelectedOptions,
+    this.initialNotes,
+    this.initialQuantity,
+    this.isEditing = false,
+    this.onSaveEditedItem,
   });
 
   static Future<void> show(
@@ -35,11 +47,16 @@ class ProductDetailBottomSheet extends ConsumerStatefulWidget {
     required String stanName,
     int deliveryFee = 2000,
     required String description,
+    List<String>? initialSelectedOptions,
+    String? initialNotes,
+    int? initialQuantity,
+    bool isEditing = false,
+    void Function(List<String> newOptions, String? newNotes, int newUnitPrice, int newQuantity)? onSaveEditedItem,
   }) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
+      useSafeArea: false,
       backgroundColor: Colors.transparent,
       builder: (context) => ProductDetailBottomSheet(
         product: product,
@@ -47,6 +64,11 @@ class ProductDetailBottomSheet extends ConsumerStatefulWidget {
         stanName: stanName,
         deliveryFee: deliveryFee,
         description: description,
+        initialSelectedOptions: initialSelectedOptions,
+        initialNotes: initialNotes,
+        initialQuantity: initialQuantity,
+        isEditing: isEditing,
+        onSaveEditedItem: onSaveEditedItem,
       ),
     );
   }
@@ -56,11 +78,46 @@ class ProductDetailBottomSheet extends ConsumerStatefulWidget {
       _ProductDetailBottomSheetState();
 }
 
+class _CustomOptionGroup {
+  final String title;
+  final bool isSingleSelect;
+  final List<String> rawOptions;
+
+  _CustomOptionGroup({
+    required this.title,
+    required this.isSingleSelect,
+    required this.rawOptions,
+  });
+}
+
 class _ProductDetailBottomSheetState
     extends ConsumerState<ProductDetailBottomSheet> {
   int _quantity = 1;
   final Set<String> _selectedOptions = {};
   final TextEditingController _notesController = TextEditingController();
+  late List<_CustomOptionGroup> _optionGroups;
+
+  @override
+  void initState() {
+    super.initState();
+    _quantity = widget.initialQuantity ?? 1;
+    if (widget.initialNotes != null) {
+      _notesController.text = widget.initialNotes!;
+    }
+    _optionGroups = _groupOptions(widget.product.customizableOptions);
+
+    if (widget.initialSelectedOptions != null && widget.initialSelectedOptions!.isNotEmpty) {
+      for (final raw in widget.product.customizableOptions) {
+        final cleanRaw = raw.replaceAll(RegExp(r'^\[(PILIH 1|PILIH BANYAK|SINGLE|MULTI|\*|1)\]\s*', caseSensitive: false), '').trim();
+        for (final initOpt in widget.initialSelectedOptions!) {
+          final cleanInit = initOpt.replaceAll(RegExp(r'^\[(PILIH 1|PILIH BANYAK|SINGLE|MULTI|\*|1)\]\s*', caseSensitive: false), '').trim();
+          if (cleanRaw == cleanInit || cleanRaw.endsWith(cleanInit) || cleanInit.endsWith(cleanRaw)) {
+            _selectedOptions.add(raw);
+          }
+        }
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -68,15 +125,126 @@ class _ProductDetailBottomSheetState
     super.dispose();
   }
 
+  List<_CustomOptionGroup> _groupOptions(List<String> rawOptions) {
+    final Map<String, ({bool? explicitSingle, List<String> options})> map = {};
+    for (final opt in rawOptions) {
+      final clean = opt.trim();
+      if (clean.isEmpty) continue;
+
+      bool? explicitSingle;
+      String optionBody = clean;
+
+      if (clean.startsWith(RegExp(r'^\[(PILIH 1|SINGLE|1)\]\s*', caseSensitive: false))) {
+        explicitSingle = true;
+        optionBody = clean.replaceFirst(RegExp(r'^\[(PILIH 1|SINGLE|1)\]\s*', caseSensitive: false), '');
+      } else if (clean.startsWith(RegExp(r'^\[(PILIH BANYAK|MULTI|\*)\]\s*', caseSensitive: false))) {
+        explicitSingle = false;
+        optionBody = clean.replaceFirst(RegExp(r'^\[(PILIH BANYAK|MULTI|\*)\]\s*', caseSensitive: false), '');
+      }
+
+      String groupTitle = 'Pilihan Tambahan';
+      if (optionBody.contains(': ')) {
+        groupTitle = optionBody.split(': ')[0].trim();
+      }
+
+      final existing = map[groupTitle];
+      if (existing == null) {
+        map[groupTitle] = (
+          explicitSingle: explicitSingle,
+          options: [clean],
+        );
+      } else {
+        map[groupTitle] = (
+          explicitSingle: existing.explicitSingle ?? explicitSingle,
+          options: [...existing.options, clean],
+        );
+      }
+    }
+
+    final List<_CustomOptionGroup> groups = [];
+    map.forEach((title, data) {
+      bool isSingle;
+      if (data.explicitSingle != null) {
+        isSingle = data.explicitSingle!;
+      } else {
+        final lower = title.toLowerCase();
+        isSingle = lower.contains('level') ||
+            lower.contains('pedas') ||
+            lower.contains('asin') ||
+            lower.contains('rasa') ||
+            lower.contains('porsi') ||
+            lower.contains('ukuran') ||
+            lower.contains('suhu') ||
+            lower.contains('es') ||
+            lower.contains('gula') ||
+            lower.contains('pilih 1');
+      }
+
+      groups.add(_CustomOptionGroup(
+        title: title,
+        isSingleSelect: isSingle,
+        rawOptions: data.options,
+      ));
+    });
+
+    return groups;
+  }
+
+  void _toggleOption(String opt, bool isSingleSelect, List<String> groupOptions) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      if (isSingleSelect) {
+        if (_selectedOptions.contains(opt)) {
+          _selectedOptions.remove(opt);
+        } else {
+          // Deselect other options in this single-select group
+          for (final o in groupOptions) {
+            _selectedOptions.remove(o);
+          }
+          _selectedOptions.add(opt);
+        }
+      } else {
+        if (_selectedOptions.contains(opt)) {
+          _selectedOptions.remove(opt);
+        } else {
+          _selectedOptions.add(opt);
+        }
+      }
+    });
+  }
+
+  ({String name, String priceLabel, int price}) _parseOption(String opt) {
+    var cleanOpt = opt.replaceAll(RegExp(r'^\[(PILIH 1|PILIH BANYAK|SINGLE|MULTI|\*|1)\]\s*', caseSensitive: false), '').trim();
+    int addon = 0;
+    String priceLabel = 'Gratis';
+
+    final match = RegExp(r'\(\+?Rp?\s*([\d\.]+)\)').firstMatch(cleanOpt);
+    if (match != null) {
+      final cleanNum = match.group(1)!.replaceAll('.', '');
+      addon = int.tryParse(cleanNum) ?? 0;
+      if (addon > 0) {
+        priceLabel = '+${CurrencyFormatter.format(addon)}';
+      }
+      cleanOpt = cleanOpt.replaceAll(RegExp(r'\s*\(\+?Rp?\s*[\d\.]+\)'), '').trim();
+    }
+
+    if (cleanOpt.contains(': ')) {
+      final parts = cleanOpt.split(': ');
+      cleanOpt = parts.sublist(1).join(': ').trim();
+    }
+
+    return (
+      name: cleanOpt,
+      priceLabel: priceLabel,
+      price: addon,
+    );
+  }
+
   int get _calculatedUnitPrice {
     int price = widget.product.price;
     for (final opt in _selectedOptions) {
-      final match = RegExp(r'\(\+?Rp\s*([\d\.]+)\)').firstMatch(opt);
-      if (match != null) {
-        final clean = match.group(1)!.replaceAll('.', '');
-        final addon = int.tryParse(clean) ?? 0;
-        price += addon;
-      }
+      final parsed = _parseOption(opt);
+      price += parsed.price;
     }
     return price;
   }
@@ -92,7 +260,9 @@ class _ProductDetailBottomSheetState
     final cartNotifier = ref.read(studentCartProvider.notifier);
     final hasConflict = cartNotifier.checkCanteenConflict(operatorId);
 
-    final List<String> optionsList = _selectedOptions.toList();
+    final List<String> optionsList = _selectedOptions.map((opt) {
+      return opt.replaceAll(RegExp(r'^\[(PILIH 1|PILIH BANYAK|SINGLE|MULTI|\*|1)\]\s*', caseSensitive: false), '').trim();
+    }).toList();
     final String noteText = _notesController.text.trim();
 
     if (hasConflict) {
@@ -104,7 +274,7 @@ class _ProductDetailBottomSheetState
         message:
             'Keranjangmu saat ini berisi pesanan dari $currentCanteenName. Jika memilih menu dari $canteenName, pesanan sebelumnya akan diganti.',
         confirmLabel: 'Ganti & Tambah',
-        confirmColor: Nebula.teal,
+        confirmColor: const Color(0xFF10B981),
         icon: Icons.storefront_rounded,
       );
 
@@ -142,6 +312,39 @@ class _ProductDetailBottomSheetState
     }
   }
 
+  void _saveChanges() {
+    final List<String> optionsList = _selectedOptions.map((opt) {
+      return opt.replaceAll(RegExp(r'^\[(PILIH 1|PILIH BANYAK|SINGLE|MULTI|\*|1)\]\s*', caseSensitive: false), '').trim();
+    }).toList();
+    final String noteText = _notesController.text.trim();
+
+    if (widget.onSaveEditedItem != null) {
+      widget.onSaveEditedItem!(
+        optionsList,
+        noteText.isNotEmpty ? noteText : null,
+        _calculatedUnitPrice,
+        _quantity,
+      );
+    }
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: const [
+            Icon(Icons.check_circle, color: Colors.white, size: 18),
+            SizedBox(width: 8),
+            Text('Pilihan menu berhasil diperbarui'),
+          ],
+        ),
+        backgroundColor: const Color(0xFF10B981),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
   void _showSuccessSnackbar(String productName) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -167,453 +370,546 @@ class _ProductDetailBottomSheetState
     );
   }
 
+  Widget _buildFallbackImage(String category) {
+    return Container(
+      color: const Color(0xFF10B981).withValues(alpha: 0.1),
+      child: Center(
+        child: Icon(
+          category == 'minuman' ? Icons.local_drink_rounded : Icons.restaurant_rounded,
+          color: const Color(0xFF10B981),
+          size: 44,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final product = widget.product;
-    final screenHeight = MediaQuery.of(context).size.height;
     final isDark = context.isDark;
     final bool isAvailable = product.isAvailable;
+    final topPadding = MediaQuery.of(context).padding.top;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Container(
-      constraints: BoxConstraints(maxHeight: screenHeight * 0.90),
-      decoration: BoxDecoration(
-        color: context.cardBg,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      height: MediaQuery.of(context).size.height,
+      color: context.cardBg,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. Grab Handle
-          Center(
-            child: Container(
-              margin: const EdgeInsets.only(top: 10, bottom: 6),
-              width: 38,
-              height: 4,
-              decoration: BoxDecoration(
-                color: context.dividerCol,
-                borderRadius: BorderRadius.circular(2),
-              ),
+          // ─── 1. TOP APP BAR (Custom pembelian) ───
+          Container(
+            padding: EdgeInsets.only(
+              top: topPadding > 0 ? topPadding + 4 : 12,
+              bottom: 12,
+              left: 6,
+              right: 16,
+            ),
+            decoration: BoxDecoration(
+              color: context.cardBg,
+              border: Border(bottom: BorderSide(color: context.dividerCol, width: 0.8)),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(CupertinoIcons.arrow_left, size: 22),
+                  color: context.textPrimary,
+                  onPressed: () => Navigator.pop(context),
+                  tooltip: 'Kembali',
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  widget.isEditing ? 'Ubah Pilihan Menu' : 'Custom pembelian',
+                  style: GoogleFonts.inter(
+                    fontSize: 17.5,
+                    fontWeight: FontWeight.w800,
+                    color: context.textPrimary,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ],
             ),
           ),
 
-          // 2. Scrollable Body Content
+          // ─── 2. SCROLLABLE CUSTOMIZATION OPTIONS BODY ───
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Product Large Image Banner
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(18),
-                    child: Container(
-                      width: double.infinity,
-                      height: 200,
-                      color: context.surfaceBg,
-                      child: product.imageUrl != null &&
-                              product.imageUrl!.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: product.imageUrl!,
-                              fit: BoxFit.cover,
-                              placeholder: (_, __) => const ShimmerRect(
-                                width: double.infinity,
-                                height: 200,
-                                borderRadius: 18,
-                              ),
-                              errorWidget: (_, __, ___) =>
-                                  _buildFallbackImage(product.category),
-                            )
-                          : _buildFallbackImage(product.category),
+                  // A. GAMBAR PRODUCT BERADA DI ATAS DENGAN HEIGHT RAMPING (130px)
+                  if (product.imageUrl != null && product.imageUrl!.isNotEmpty) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        width: double.infinity,
+                        height: 130, // Compact height as requested
+                        color: context.surfaceBg,
+                        child: CachedNetworkImage(
+                          imageUrl: product.imageUrl!,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => const ShimmerRect(
+                            width: double.infinity,
+                            height: 130,
+                            borderRadius: 16,
+                          ),
+                          errorWidget: (_, __, ___) => _buildFallbackImage(product.category),
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 14),
+                  ],
 
-                  // Canteen Name & Category Badge Row
+                  // B. NAMA PRODUK & HARGA DIBAWAH GAMBAR (Matching Request)
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.storefront_rounded,
-                              size: 14, color: Nebula.teal),
-                          const SizedBox(width: 4),
-                          Text(
-                            widget.stanName,
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Nebula.teal,
-                            ),
+                      Expanded(
+                        child: Text(
+                          product.name,
+                          style: GoogleFonts.inter(
+                            fontSize: 17.5,
+                            fontWeight: FontWeight.w800,
+                            color: context.textPrimary,
+                            letterSpacing: -0.2,
                           ),
-                        ],
+                        ),
                       ),
+                      const SizedBox(width: 12),
+                      Text(
+                        CurrencyFormatter.format(product.price),
+                        style: GoogleFonts.inter(
+                          fontSize: 16.5,
+                          fontWeight: FontWeight.w800,
+                          color: context.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+
+                  // Canteen & Category & Rating Info Row
+                  Row(
+                    children: [
+                      const Icon(Icons.storefront_rounded, size: 13, color: Color(0xFF10B981)),
+                      const SizedBox(width: 4),
+                      Text(
+                        widget.stanName,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF10B981),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text('•', style: TextStyle(color: Colors.grey, fontSize: 10)),
+                      const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: const Color(0xFF10B981).withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           product.category.toUpperCase(),
                           style: GoogleFonts.inter(
-                            fontSize: 10,
+                            fontSize: 9.5,
                             fontWeight: FontWeight.w800,
                             color: const Color(0xFF10B981),
-                            letterSpacing: 0.5,
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Product Title
-                  Text(
-                    product.name,
-                    style: GoogleFonts.inter(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: context.textPrimary,
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-
-                  // Rating, Total Sold & Price
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        CurrencyFormatter.format(_calculatedUnitPrice),
-                        style: GoogleFonts.inter(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          color: const Color(0xFF10B981),
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          if (product.hasRating) ...[
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2.5),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF10B981),
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.star_rounded,
-                                      size: 12, color: Colors.white),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    product.rating.toStringAsFixed(1),
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
+                      if (product.hasRating) ...[
+                        const SizedBox(width: 8),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.star_rounded, size: 13, color: Color(0xFFF59E0B)),
+                            const SizedBox(width: 2),
+                            Text(
+                              product.rating.toStringAsFixed(1),
+                              style: GoogleFonts.inter(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                                color: context.textPrimary,
                               ),
                             ),
-                            const SizedBox(width: 6),
                           ],
-                          if (product.totalSold > 0)
-                            Text(
-                              '${product.totalSold} Terjual',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                color: context.textSecondary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            )
-                          else
-                            Text(
-                              'Menu Baru',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                color: context.textSecondary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Divider(color: context.dividerCol, height: 1),
-                  const SizedBox(height: 12),
 
-                  // Description Text
-                  Text(
-                    'DESKRIPSI MENU',
-                    style: GoogleFonts.inter(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w800,
-                      color: context.textSecondary,
-                      letterSpacing: 0.5,
+                  // Description (only if not empty)
+                  if (widget.description.trim().isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      widget.description.trim(),
+                      style: GoogleFonts.inter(
+                        fontSize: 12.5,
+                        color: context.textSecondary,
+                        height: 1.35,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    widget.description,
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: context.textPrimary,
-                      height: 1.4,
-                    ),
-                  ),
+                  ],
+
+                  const SizedBox(height: 16),
+                  Divider(color: context.dividerCol, height: 1, thickness: 1.0),
                   const SizedBox(height: 16),
 
-                  // Customizable Options (if any)
-                  if (product.customizableOptions.isNotEmpty) ...[
-                    Divider(color: context.dividerCol, height: 1),
-                    const SizedBox(height: 12),
-                    Text(
-                      'PILIHAN VARIAN / TAMBAHAN',
-                      style: GoogleFonts.inter(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w800,
-                        color: context.textSecondary,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: product.customizableOptions.map((opt) {
-                        final isSelected = _selectedOptions.contains(opt);
-                        return InkWell(
-                          onTap: () {
-                            setState(() {
-                              if (isSelected) {
-                                _selectedOptions.remove(opt);
-                              } else {
-                                _selectedOptions.add(opt);
-                              }
-                            });
-                          },
-                          borderRadius: BorderRadius.circular(10),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 180),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? const Color(0xFF10B981)
-                                  : context.surfaceBg,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: isSelected
-                                    ? const Color(0xFF10B981)
-                                    : context.dividerCol,
-                                width: isSelected ? 1.2 : 0.8,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
+                  // ─── C. PILIHAN VARIAN / TAMBAHAN (GROUPED & CLICKABLE CARD ROWS) ───
+                  if (_optionGroups.isNotEmpty) ...[
+                    for (int gIdx = 0; gIdx < _optionGroups.length; gIdx++) ...[
+                      () {
+                        final group = _optionGroups[gIdx];
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Icon(
-                                  isSelected
-                                      ? Icons.check_circle_rounded
-                                      : Icons.add_circle_outline_rounded,
-                                  size: 14,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : context.textSecondary,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        group.title,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w800,
+                                          color: context.textPrimary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        group.isSingleSelect ? 'Pilih 1 pilihan' : 'Bisa pilih lebih dari 1',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w600,
+                                          color: group.isSingleSelect ? const Color(0xFF10B981) : Nebula.amber,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  opt,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    fontWeight: isSelected
-                                        ? FontWeight.w800
-                                        : FontWeight.w600,
-                                    color: isSelected
-                                        ? Colors.white
-                                        : context.textPrimary,
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: group.isSingleSelect
+                                        ? const Color(0xFF10B981).withValues(alpha: 0.12)
+                                        : Nebula.amber.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    group.isSingleSelect ? 'PILIH 1' : 'PILIH BANYAK',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      color: group.isSingleSelect ? const Color(0xFF10B981) : Nebula.amber,
+                                      letterSpacing: 0.3,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
+                            const SizedBox(height: 12),
+
+                            // List of options (Full card row clickable to toggle selection)
+                            Container(
+                              decoration: BoxDecoration(
+                                color: context.surfaceBg,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: context.dividerCol, width: 0.8),
+                              ),
+                              child: ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: group.rawOptions.length,
+                                separatorBuilder: (_, __) => Divider(
+                                  height: 1,
+                                  thickness: 1.0,
+                                  color: context.dividerCol,
+                                  indent: 14,
+                                  endIndent: 14,
+                                ),
+                                itemBuilder: (context, idx) {
+                                  final opt = group.rawOptions[idx];
+                                  final parsed = _parseOption(opt);
+                                  final bool isSelected = _selectedOptions.contains(opt);
+
+                                  return Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () => _toggleOption(opt, group.isSingleSelect, group.rawOptions),
+                                      borderRadius: BorderRadius.vertical(
+                                        top: idx == 0 ? const Radius.circular(16) : Radius.zero,
+                                        bottom: idx == group.rawOptions.length - 1
+                                            ? const Radius.circular(16)
+                                            : Radius.zero,
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                parsed.name,
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 13.5,
+                                                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                                  color: context.textPrimary,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Text(
+                                              parsed.priceLabel,
+                                              style: GoogleFonts.inter(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w700,
+                                                color: parsed.price > 0
+                                                    ? const Color(0xFF10B981)
+                                                    : context.textSecondary,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 14),
+                                            // Checkbox/Radio Circle Indicator
+                                            AnimatedContainer(
+                                              duration: const Duration(milliseconds: 180),
+                                              width: 22,
+                                              height: 22,
+                                              decoration: BoxDecoration(
+                                                shape: group.isSingleSelect ? BoxShape.circle : BoxShape.rectangle,
+                                                borderRadius: group.isSingleSelect ? null : BorderRadius.circular(6),
+                                                color: isSelected ? const Color(0xFF10B981) : Colors.transparent,
+                                                border: Border.all(
+                                                  color: isSelected ? const Color(0xFF10B981) : Colors.grey.shade400,
+                                                  width: isSelected ? 2 : 1.5,
+                                                ),
+                                              ),
+                                              child: isSelected
+                                                  ? Center(
+                                                      child: Icon(
+                                                        group.isSingleSelect ? Icons.circle : Icons.check,
+                                                        size: group.isSingleSelect ? 10 : 14,
+                                                        color: Colors.white,
+                                                      ),
+                                                    )
+                                                  : null,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 18),
+                          ],
                         );
-                      }).toList(),
-                    ),
+                      }(),
+                    ],
+                    Divider(color: context.dividerCol, height: 1, thickness: 1.0),
                     const SizedBox(height: 16),
                   ],
 
-                  // Notes Text Field
-                  Divider(color: context.dividerCol, height: 1),
-                  const SizedBox(height: 12),
-                  Text(
-                    'CATATAN KHUSUS (OPSIONAL)',
-                    style: GoogleFonts.inter(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w800,
-                      color: context.textSecondary,
-                      letterSpacing: 0.5,
-                    ),
+                  // ─── D. CATATAN KHUSUS SECTION ───
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Catatan Khusus',
+                            style: GoogleFonts.inter(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: context.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '(Opsional)',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: context.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _notesController,
+                        maxLines: 2,
+                        style: GoogleFonts.inter(fontSize: 13, color: context.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: 'Contoh: Sambal dipisah ya, jangan pakai seledri...',
+                          hintStyle: GoogleFonts.inter(fontSize: 12.5, color: context.textSecondary),
+                          filled: true,
+                          fillColor: context.surfaceBg,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: context.dividerCol, width: 0.8),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: context.dividerCol, width: 0.8),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.5),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _notesController,
-                    maxLines: 2,
-                    style: GoogleFonts.inter(
-                        fontSize: 13, color: context.textPrimary),
-                    decoration: InputDecoration(
-                      hintText:
-                          'Contoh: Sambal dipisah ya, jangan pakai seledri...',
-                      hintStyle: GoogleFonts.inter(
-                          fontSize: 12.5, color: context.textSecondary),
-                      filled: true,
-                      fillColor: context.surfaceBg,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 10),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            BorderSide(color: context.dividerCol, width: 0.8),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            BorderSide(color: context.dividerCol, width: 0.8),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                            color: Color(0xFF10B981), width: 1.5),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
           ),
 
-          // 3. Bottom Action Bar (Quantity Stepper + Add to Cart Button)
+          // ─── E. STICKY BOTTOM ACTION BAR ───
           Container(
             padding: EdgeInsets.fromLTRB(
-                20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
+              20,
+              14,
+              20,
+              bottomPadding > 0 ? bottomPadding + 10 : 20,
+            ),
             decoration: BoxDecoration(
               color: context.cardBg,
-              border: Border(
-                  top: BorderSide(color: context.dividerCol, width: 0.8)),
+              border: Border(top: BorderSide(color: context.dividerCol, width: 0.8)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -3),
+                  color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.06),
+                  blurRadius: 12,
+                  offset: const Offset(0, -4),
                 ),
               ],
             ),
-            child: Row(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Quantity Stepper
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: context.surfaceBg,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: context.dividerCol, width: 0.8),
-                  ),
-                  child: Row(
-                    children: [
-                      InkWell(
-                        onTap: isAvailable && _quantity > 1
-                            ? () => setState(() => _quantity--)
-                            : null,
-                        borderRadius: BorderRadius.circular(8),
-                        child: Padding(
-                          padding: const EdgeInsets.all(6),
-                          child: Icon(
-                            CupertinoIcons.minus,
-                            size: 16,
-                            color: _quantity > 1
-                                ? context.textPrimary
-                                : Colors.grey.withValues(alpha: 0.5),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Text(
-                          '$_quantity',
-                          style: GoogleFonts.inter(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            color: context.textPrimary,
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        onTap: isAvailable
-                            ? () => setState(() => _quantity++)
-                            : null,
-                        borderRadius: BorderRadius.circular(8),
-                        child: Padding(
-                          padding: const EdgeInsets.all(6),
-                          child: Icon(
-                            CupertinoIcons.plus,
-                            size: 16,
-                            color: context.textPrimary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-
-                // "+ Tambah Pesanan" Big Button
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isAvailable
-                          ? const Color(0xFF10B981)
-                          : Colors.grey.withValues(alpha: 0.4),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                // "Jumlah pembelian" Row with Counter (- 1 +)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Jumlah pembelian',
+                      style: GoogleFonts.inter(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                        color: context.textPrimary,
                       ),
                     ),
-                    onPressed: isAvailable ? _addToCart : null,
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.center,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            isAvailable ? Icons.add_shopping_cart_rounded : Icons.block_rounded,
-                            size: 17,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            isAvailable
-                                ? 'Tambah • ${CurrencyFormatter.format(_calculatedTotalPrice)}'
-                                : 'Stok Habis',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.inter(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                              letterSpacing: 0.1,
+                    Row(
+                      children: [
+                        // Minus Button
+                        PressScale(
+                          scale: 0.90,
+                          onTap: isAvailable && _quantity > 1
+                              ? () => setState(() => _quantity--)
+                              : null,
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: _quantity > 1 ? Colors.grey.shade400 : Colors.grey.shade300,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Icon(
+                              CupertinoIcons.minus,
+                              size: 16,
+                              color: _quantity > 1 ? context.textPrimary : Colors.grey.shade400,
                             ),
                           ),
-                        ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          child: Text(
+                            '$_quantity',
+                            style: GoogleFonts.inter(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: context.textPrimary,
+                            ),
+                          ),
+                        ),
+                        // Plus Button
+                        PressScale(
+                          scale: 0.90,
+                          onTap: isAvailable ? () => setState(() => _quantity++) : null,
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color(0xFF10B981),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: const Icon(
+                              CupertinoIcons.plus,
+                              size: 16,
+                              color: Color(0xFF10B981),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+
+                // Big Green Action Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: PressScale(
+                    scale: 0.98,
+                    onTap: isAvailable
+                        ? (widget.isEditing ? _saveChanges : _addToCart)
+                        : null,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isAvailable
+                            ? const Color(0xFF10B981)
+                            : Colors.grey.withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(26),
+                        boxShadow: isAvailable
+                            ? [
+                                BoxShadow(
+                                  color: const Color(0xFF10B981).withValues(alpha: 0.40),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Center(
+                        child: Text(
+                          isAvailable
+                              ? (widget.isEditing
+                                  ? 'Simpan Perubahan · ${CurrencyFormatter.format(_calculatedTotalPrice)}'
+                                  : 'Tambah pembelian + ${CurrencyFormatter.format(_calculatedTotalPrice)}')
+                              : 'Menu Habis',
+                          style: GoogleFonts.inter(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -622,21 +918,6 @@ class _ProductDetailBottomSheetState
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFallbackImage(String category) {
-    return Container(
-      color: Nebula.teal.withValues(alpha: 0.08),
-      child: Center(
-        child: Icon(
-          category == 'minuman'
-              ? Icons.local_drink_rounded
-              : Icons.restaurant_rounded,
-          color: Nebula.teal,
-          size: 48,
-        ),
       ),
     );
   }

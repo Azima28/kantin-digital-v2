@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 
 class MerchantTransactionListItem extends StatelessWidget {
@@ -34,7 +34,7 @@ class MerchantTransactionListItem extends StatelessWidget {
                 ),
               ),
               Text(
-                DateFormat('HH:mm', 'id_ID').format(date),
+                AppDateFormatter.formatTime(date),
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   color: context.textSecondary,

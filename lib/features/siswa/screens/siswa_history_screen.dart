@@ -3,16 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
-import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/widgets/date_filter_modal.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/router/app_router.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 
 class SiswaHistoryScreen extends ConsumerStatefulWidget {
@@ -32,6 +33,9 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(siswaTransactionsNotifierProvider.notifier).loadInitial();
+    });
   }
 
   @override
@@ -717,20 +721,13 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: context.cardBg,
+                      color: context.surfaceBg,
                       border: Border(
                         bottom: BorderSide(
                           color: context.borderLight,
                           width: 0.5,
                         ),
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.02),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
                     ),
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
                     child: Column(
@@ -943,15 +940,31 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
                 style: TextStyle(fontSize: 12, color: context.textSecondary),
               ),
               const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () => ref.read(siswaTransactionsNotifierProvider.notifier).refresh(),
-                icon: const Icon(Icons.refresh, size: 16),
-                label: const Text('Coba Lagi'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Nebula.teal,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () => context.go(AppRouter.login),
+                    icon: const Icon(Icons.login, size: 16),
+                    label: const Text('Login Ulang'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Nebula.teal,
+                      side: const BorderSide(color: Nebula.teal),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    onPressed: () => ref.read(siswaTransactionsNotifierProvider.notifier).refresh(),
+                    icon: const Icon(Icons.refresh, size: 16),
+                    label: const Text('Coba Lagi'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Nebula.teal,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -1040,136 +1053,159 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
               ),
             ),
 
-            // Transaction Cards in this Date Section
-            Column(
-              children: sectionItems.map((tx) {
-                final String type = tx.type ?? 'purchase';
-                final int amount = tx.totalAmount;
-                final String canteenName = tx.canteenName ?? 'Kantin';
-                final bool isTopup = type == 'topup';
-                final bool isCancelled = tx.status == 'cancelled' || tx.status == 'refunded';
-                final String timeStr = tx.createdAt != null
-                    ? AppDateFormatter.formatTime(tx.createdAt)
-                    : '-';
+            // Transaction Cards in this Date Section inside Single Unified Container
+            Container(
+              margin: const EdgeInsets.only(bottom: 14),
+              decoration: BoxDecoration(
+                color: context.cardBg,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: context.borderLight, width: 0.8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: context.isDark ? 0.2 : 0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: sectionItems.length,
+                separatorBuilder: (_, __) => Divider(
+                  height: 1,
+                  thickness: 1.0,
+                  color: context.dividerCol,
+                  indent: 14,
+                  endIndent: 14,
+                ),
+                itemBuilder: (context, idx) {
+                  final tx = sectionItems[idx];
+                  final bool isFirst = idx == 0;
+                  final bool isLast = idx == sectionItems.length - 1;
 
-                // Indicator & badge colors
-                Color indicatorColor;
-                Color badgeBgColor;
-                Color badgeTextColor;
-                IconData badgeIcon;
-                String badgeLabel;
+                  final String type = tx.type ?? 'purchase';
+                  final int amount = tx.totalAmount;
+                  final String canteenName = tx.canteenName ?? 'Kantin';
+                  final bool isTopup = type == 'topup';
+                  final bool isCancelled = tx.status == 'cancelled' || tx.status == 'refunded';
+                  final String timeStr = tx.createdAt != null
+                      ? AppDateFormatter.formatTime(tx.createdAt)
+                      : '-';
 
-                if (isCancelled) {
-                  indicatorColor = Nebula.rose;
-                  badgeBgColor = Nebula.rose.withValues(alpha: 0.08);
-                  badgeTextColor = Nebula.rose;
-                  badgeIcon = Icons.cancel_outlined;
-                  badgeLabel = tx.status == 'refunded' ? 'Dikembalikan' : AppStrings.labelDibatalkan;
-                } else if (isTopup) {
-                  indicatorColor = Nebula.teal;
-                  badgeBgColor = Nebula.teal.withValues(alpha: 0.08);
-                  badgeTextColor = Nebula.teal;
-                  badgeIcon = CupertinoIcons.square_arrow_down;
-                  badgeLabel = AppStrings.labelTopUp;
-                } else {
-                  indicatorColor = Nebula.teal;
-                  badgeBgColor = Nebula.tealLight;
-                  badgeTextColor = Nebula.tealDark;
-                  badgeIcon = Icons.check_circle_outline;
-                  badgeLabel = AppStrings.labelSuccess;
-                }
+                  // Indicator & badge colors
+                  Color indicatorColor;
+                  Color badgeBgColor;
+                  Color badgeTextColor;
+                  IconData badgeIcon;
+                  String badgeLabel;
 
-                return PressScale(
-                  onTap: () => _showTransactionDetail(context, tx),
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: context.cardBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: context.borderLight, width: 1.0),
-                      boxShadow: [
-                        BoxShadow(
-                          color: context.shadowColor,
-                          blurRadius: 6,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        // Leading Thumbnail / Icon
-                        _buildLeadingThumbnail(context, tx, indicatorColor, badgeIcon, isTopup),
-                        const SizedBox(width: 12),
-                        // Center Column (Title, Time/ID, Method details)
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                isTopup ? AppStrings.labelTopUpSaldo : canteenName,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                  color: context.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '${isTopup ? AppStrings.labelKoperasi : tx.purchaseMethodDisplay} • $timeStr WIB',
-                                style: TextStyle(color: context.textSecondary, fontSize: 11),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '#${tx.id.length >= 8 ? tx.id.substring(0, 8).toUpperCase() : tx.id.toUpperCase()}',
-                                style: TextStyle(
-                                  color: context.textSecondary.withValues(alpha: 0.6),
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        // Trailing Column (Amount & Status Badge)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
+                  if (isCancelled) {
+                    indicatorColor = Nebula.rose;
+                    badgeBgColor = Nebula.rose.withValues(alpha: 0.08);
+                    badgeTextColor = Nebula.rose;
+                    badgeIcon = Icons.cancel_outlined;
+                    badgeLabel = tx.status == 'refunded' ? 'Dikembalikan' : AppStrings.labelDibatalkan;
+                  } else if (isTopup) {
+                    indicatorColor = Nebula.teal;
+                    badgeBgColor = Nebula.teal.withValues(alpha: 0.08);
+                    badgeTextColor = Nebula.teal;
+                    badgeIcon = CupertinoIcons.square_arrow_down;
+                    badgeLabel = AppStrings.labelTopUp;
+                  } else {
+                    indicatorColor = Nebula.teal;
+                    badgeBgColor = Nebula.tealLight;
+                    badgeTextColor = Nebula.tealDark;
+                    badgeIcon = Icons.check_circle_outline;
+                    badgeLabel = AppStrings.labelSuccess;
+                  }
+
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _showTransactionDetail(context, tx),
+                      borderRadius: BorderRadius.vertical(
+                        top: isFirst ? const Radius.circular(16) : Radius.zero,
+                        bottom: isLast ? const Radius.circular(16) : Radius.zero,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
                           children: [
-                            Text(
-                              '${isTopup ? '+' : '-'} ${CurrencyFormatter.format(amount)}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                color: isCancelled
-                                    ? context.textSecondary
-                                    : (isTopup ? Nebula.teal : context.textPrimary),
-                                decoration: isCancelled ? TextDecoration.lineThrough : null,
+                            // Leading Thumbnail / Icon
+                            _buildLeadingThumbnail(context, tx, indicatorColor, badgeIcon, isTopup),
+                            const SizedBox(width: 12),
+                            // Center Column (Title, Time/ID, Method details)
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isTopup ? AppStrings.labelTopUpSaldo : canteenName,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                      color: context.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${isTopup ? AppStrings.labelKoperasi : tx.purchaseMethodDisplay} • $timeStr WIB',
+                                    style: TextStyle(color: context.textSecondary, fontSize: 11),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '#${tx.id.length >= 8 ? tx.id.substring(0, 8).toUpperCase() : tx.id.toUpperCase()}',
+                                    style: TextStyle(
+                                      color: context.textSecondary.withValues(alpha: 0.6),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: badgeBgColor,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                badgeLabel,
-                                style: TextStyle(
-                                  color: badgeTextColor,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
+                            const SizedBox(width: 12),
+                            // Trailing Column (Amount & Status Badge)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  '${isTopup ? '+' : '-'} ${CurrencyFormatter.format(amount)}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: isCancelled
+                                        ? context.textSecondary
+                                        : (isTopup ? Nebula.teal : context.textPrimary),
+                                    decoration: isCancelled ? TextDecoration.lineThrough : null,
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(height: 4),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: badgeBgColor,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    badgeLabel,
+                                    style: TextStyle(
+                                      color: badgeTextColor,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                );
-              }).toList(),
+                  );
+                },
+              ),
             ),
           ],
         );

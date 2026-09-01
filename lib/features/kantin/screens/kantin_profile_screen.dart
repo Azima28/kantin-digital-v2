@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,7 +7,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
-import 'package:kantin_digital/core/services/api_client.dart';
 import 'package:kantin_digital/core/services/storage_service.dart';
 import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 import 'package:kantin_digital/core/widgets/app_image_picker_sheet.dart';
@@ -19,6 +17,7 @@ import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
 import 'package:kantin_digital/features/public/providers/public_providers.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 
 class KantinProfileScreen extends ConsumerStatefulWidget {
   const KantinProfileScreen({super.key});
@@ -269,42 +268,13 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
                       child: Stack(
                         clipBehavior: Clip.none,
                         children: [
-                          Container(
-                            width: 84,
-                            height: 84,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white.withValues(alpha: 0.2),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 2),
-                            ),
-                            child: ClipOval(
-                              child: (avatarUrl != null && avatarUrl.isNotEmpty)
-                                  ? CachedNetworkImage(
-                                      imageUrl: ApiClient.resolveImageUrl(avatarUrl),
-                                      fit: BoxFit.cover,
-                                      placeholder: (_, __) => const Center(child: CupertinoActivityIndicator(color: Colors.white)),
-                                      errorWidget: (_, __, ___) => Center(
-                                        child: Text(
-                                          canteenName.isNotEmpty ? canteenName[0].toUpperCase() : 'K',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 34,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                  : Center(
-                                      child: Text(
-                                        canteenName.isNotEmpty ? canteenName[0].toUpperCase() : 'K',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 34,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                            ),
+                          AppAvatar(
+                            radius: 42,
+                            photoUrl: avatarUrl,
+                            role: 'petugas_kantin',
+                            name: canteenName,
+                            borderColor: Colors.white.withValues(alpha: 0.5),
+                            borderWidth: 2,
                           ),
                           Positioned(
                             bottom: -2,

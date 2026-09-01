@@ -39,7 +39,7 @@ class OrderMessage {
       senderName: json['sender_name']?.toString() ?? '',
       message: json['message']?.toString() ?? '',
       createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'].toString())
+          ? DateTime.tryParse(json['created_at'].toString())?.toLocal()
           : null,
       isRead: json['is_read'] == true,
       isFromCurrentSession: currentUserId != null && currentUserId.isNotEmpty && senderId == currentUserId,

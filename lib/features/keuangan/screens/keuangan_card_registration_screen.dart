@@ -3,8 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
@@ -192,7 +192,7 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
 
       setState(() {
         _savedUid = uid;
-        _successTime = DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(DateTime.now());
+        _successTime = AppDateFormatter.formatDateWithTime(DateTime.now());
         _isSuccess = true;
       });
 

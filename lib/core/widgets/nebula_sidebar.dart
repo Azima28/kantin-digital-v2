@@ -6,11 +6,13 @@ class NebulaSidebarItemData {
   final IconData icon;
   final IconData? activeIcon;
   final String label;
+  final int badgeCount;
 
   const NebulaSidebarItemData({
     required this.icon,
     this.activeIcon,
     required this.label,
+    this.badgeCount = 0,
   });
 }
 
@@ -143,10 +145,38 @@ class NebulaSidebar extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
-                                  isSelected ? (item.activeIcon ?? item.icon) : item.icon,
-                                  size: 24,
-                                  color: isSelected ? Colors.white : const Color(0xFFB2DFDF),
+                                Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    Icon(
+                                      isSelected ? (item.activeIcon ?? item.icon) : item.icon,
+                                      size: 24,
+                                      color: isSelected ? Colors.white : const Color(0xFFB2DFDF),
+                                    ),
+                                    if (item.badgeCount > 0)
+                                      Positioned(
+                                        top: -4,
+                                        right: -8,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFEF4444),
+                                            borderRadius: BorderRadius.circular(10),
+                                            border: Border.all(color: sidebarBg, width: 1.5),
+                                          ),
+                                          constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                          child: Text(
+                                            item.badgeCount > 99 ? '99+' : '${item.badgeCount}',
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                                 const SizedBox(height: 6),
                                 Text(

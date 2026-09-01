@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
@@ -325,6 +326,13 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                 );
               }
 
+              final Map<String, List<AuditLog>> groupedLogs = {};
+              for (final log in filtered) {
+                final currentDay = AppDateFormatter.formatDate(log.createdAt);
+                groupedLogs.putIfAbsent(currentDay, () => []).add(log);
+              }
+              final groupKeys = groupedLogs.keys.toList();
+
               return RefreshIndicator(
                 onRefresh: () async {
                   ref.invalidate(adminAuditLogsProvider);
@@ -332,21 +340,48 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
                 color: Nebula.teal,
                 child: ListView.builder(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    final log = filtered[index];
-                    final currentDay = AppDateFormatter.formatDate(log.createdAt);
-                    final prevDay = index > 0 ? AppDateFormatter.formatDate(filtered[index - 1].createdAt) : null;
-                    final showHeader = prevDay != currentDay;
+                  itemCount: groupKeys.length,
+                  itemBuilder: (context, groupIndex) {
+                    final dateKey = groupKeys[groupIndex];
+                    final logsInGroup = groupedLogs[dateKey]!;
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (showHeader) _buildDateHeader(context, currentDay),
-                        AuditLogTile(
-                          log: log,
-                          onDetailTap: () => AuditLogDetailSheet.show(context, log),
+                        _buildDateHeader(context, dateKey),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: context.cardBg,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: context.borderLight,
+                              width: 0.8,
+                            ),
+                          ),
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: logsInGroup.length,
+                            separatorBuilder: (context, index) => Divider(
+                              height: 1,
+                              thickness: 1.0,
+                              color: context.dividerCol,
+                              indent: 14,
+                              endIndent: 14,
+                            ),
+                            itemBuilder: (context, index) {
+                              final log = logsInGroup[index];
+                              return AuditLogTile(
+                                log: log,
+                                onDetailTap: () => AuditLogDetailSheet.show(context, log),
+                                isEmbedded: true,
+                                isFirst: index == 0,
+                                isLast: index == logsInGroup.length - 1,
+                              );
+                            },
+                          ),
                         ),
+                        const SizedBox(height: 14),
                       ],
                     );
                   },

@@ -59,6 +59,7 @@ type CreateUserRequest struct {
 	CanteenName string      `json:"canteen_name"`
 	RfidUID     *string     `json:"rfid_uid"`
 	Class       *string     `json:"class"`
+	Gender      *string     `json:"gender"`
 }
 
 func (h *AdminHandler) CreateUser(c *fiber.Ctx) error {
@@ -84,6 +85,7 @@ func (h *AdminHandler) CreateUser(c *fiber.Ctx) error {
 		NISN:        req.NISN,
 		PhoneNumber: req.PhoneNumber,
 		Relation:    req.Relation,
+		Gender:      req.Gender,
 		IsActive:    true,
 	}
 
@@ -153,6 +155,7 @@ type UpdateStudentRequest struct {
 	RfidUID     *string `json:"rfid_uid"`
 	Class       *string `json:"class"`
 	IsActive    *bool   `json:"is_active"`
+	Gender      *string `json:"gender"`
 }
 
 func (h *AdminHandler) UpdateStudent(c *fiber.Ctx) error {
@@ -173,6 +176,7 @@ func (h *AdminHandler) UpdateStudent(c *fiber.Ctx) error {
 		RfidUID:     req.RfidUID,
 		Class:       req.Class,
 		IsActive:    req.IsActive,
+		Gender:      req.Gender,
 	}
 
 	if err := h.paymentService.UpdateStudentFull(c.Context(), params); err != nil {

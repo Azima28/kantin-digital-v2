@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 
 /// Period selector for the Analisis tab.
 /// Provides a clean 3-segment slide control ('Hari Ini', 'Minggu', 'Bulan')
@@ -80,7 +80,7 @@ class ParentAnalisisPeriodSelector extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       isCustomActive
-                          ? 'Rentang: ${DateFormat('dd MMM', 'id_ID').format(customDateRange!.start)} - ${DateFormat('dd MMM yyyy', 'id_ID').format(customDateRange!.end)}'
+                          ? 'Rentang: ${AppDateFormatter.formatDayMonth(customDateRange!.start)} - ${AppDateFormatter.formatDate(customDateRange!.end)}'
                           : 'Pilih Rentang Tanggal...',
                       style: GoogleFonts.inter(
                         fontSize: 12.5,

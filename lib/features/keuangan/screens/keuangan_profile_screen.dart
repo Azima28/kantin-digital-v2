@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +15,7 @@ import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/app_image_picker_sheet.dart';
 import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 
 class KeuanganProfileScreen extends ConsumerStatefulWidget {
   const KeuanganProfileScreen({super.key});
@@ -198,42 +198,13 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
                       child: Stack(
                         clipBehavior: Clip.none,
                         children: [
-                          Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Nebula.teal.withValues(alpha: 0.1),
-                              border: Border.all(color: Nebula.teal.withValues(alpha: 0.3), width: 2),
-                            ),
-                            child: ClipOval(
-                              child: (avatarUrl != null && avatarUrl.isNotEmpty)
-                                  ? CachedNetworkImage(
-                                      imageUrl: avatarUrl,
-                                      fit: BoxFit.cover,
-                                      placeholder: (_, __) => const Center(child: CupertinoActivityIndicator()),
-                                      errorWidget: (_, __, ___) => Center(
-                                        child: Text(
-                                          fullName.isNotEmpty ? fullName[0].toUpperCase() : 'A',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 32,
-                                            fontWeight: FontWeight.bold,
-                                            color: Nebula.teal,
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                  : Center(
-                                      child: Text(
-                                        fullName.isNotEmpty ? fullName[0].toUpperCase() : 'A',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 32,
-                                          fontWeight: FontWeight.bold,
-                                          color: Nebula.teal,
-                                        ),
-                                      ),
-                                    ),
-                            ),
+                          AppAvatar(
+                            radius: 40,
+                            photoUrl: avatarUrl,
+                            role: 'petugas_keuangan',
+                            name: fullName,
+                            borderColor: Nebula.teal.withValues(alpha: 0.3),
+                            borderWidth: 2,
                           ),
                           Positioned(
                             bottom: -2,

@@ -54,14 +54,14 @@ class OrderDetailSheet extends ConsumerWidget {
     Color statusColor;
     Color statusBgColor;
     IconData statusIcon;
-    if (order.status == 'Sedang Dimasak') {
+    if (order.status == 'Sedang Disiapkan' || order.status == 'Sedang Dimasak') {
       statusColor = Nebula.amber;
       statusBgColor = Nebula.amber.withValues(alpha: 0.3).withValues(alpha: 0.2);
       statusIcon = Icons.soup_kitchen;
-    } else if (order.status == 'Siap Diambil' || order.status == 'Siap Diantar') {
+    } else if (order.status == 'Siap Diambil' || order.status == 'Sedang Diantar' || order.status == 'Siap Diantar') {
       statusColor = Nebula.teal;
       statusBgColor = Nebula.teal.withValues(alpha: 0.1);
-      statusIcon = order.status == 'Siap Diantar' ? Icons.local_shipping_outlined : Icons.shopping_bag_outlined;
+      statusIcon = (order.status == 'Sedang Diantar' || order.status == 'Siap Diantar') ? Icons.local_shipping_outlined : Icons.shopping_bag_outlined;
     } else if (order.status == 'Selesai') {
       statusColor = context.textSecondary;
       statusBgColor = context.textSecondary.withValues(alpha: 0.12);
@@ -219,12 +219,13 @@ class OrderDetailSheet extends ConsumerWidget {
 
   // Interactive stepper track with specific icons per status
   Widget _buildStatusStepper(BuildContext context) {
-    final List<String> statuses = ['Baru', 'Sedang Dimasak', 'Siap Diambil', 'Selesai'];
+    final List<String> statuses = ['Baru', 'Sedang Disiapkan', 'Siap Diambil', 'Selesai'];
     int currentIndex = statuses.indexOf(order.status);
+    if (order.status == 'Sedang Dimasak') currentIndex = 1;
     final bool isDelivery = order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty;
 
-    // Handle specific cases (like Siap Diantar being group 2)
-    if (order.status == 'Siap Diantar') currentIndex = 2;
+    // Handle specific cases (like Sedang Diantar / Siap Diantar being group 2)
+    if (order.status == 'Sedang Diantar' || order.status == 'Siap Diantar') currentIndex = 2;
     if (order.status == 'Menunggu Pembatalan') currentIndex = 1;
     if (order.status == 'Dibatalkan') currentIndex = -1;
 
@@ -280,7 +281,7 @@ class OrderDetailSheet extends ConsumerWidget {
 
           String stepLabel = statuses[index];
           if (index == 2 && isDelivery) {
-            stepLabel = 'Siap Diantar';
+            stepLabel = 'Sedang Diantar';
           }
 
           return Column(
@@ -850,7 +851,7 @@ class OrderDetailSheet extends ConsumerWidget {
                   child: OutlinedButton(
                     onPressed: () {
                       Navigator.pop(context);
-                      onStatusChanged(order.id, 'Sedang Dimasak', order.studentId);
+                      onStatusChanged(order.id, 'Sedang Disiapkan', order.studentId);
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: context.textSecondary,
@@ -941,12 +942,12 @@ class OrderDetailSheet extends ConsumerWidget {
             child: ElevatedButton.icon(
               onPressed: () {
                 Navigator.pop(context);
-                String nextStatus = 'Sedang Dimasak';
-                if (order.status == 'Sedang Dimasak') {
+                String nextStatus = 'Sedang Disiapkan';
+                if (order.status == 'Sedang Disiapkan' || order.status == 'Sedang Dimasak') {
                   nextStatus = (order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty)
-                      ? 'Siap Diantar'
+                      ? 'Sedang Diantar'
                       : 'Siap Diambil';
-                } else if (order.status == 'Siap Diambil' || order.status == 'Siap Diantar') {
+                } else if (order.status == 'Siap Diambil' || order.status == 'Sedang Diantar' || order.status == 'Siap Diantar') {
                   nextStatus = 'Selesai';
                 }
                 onStatusChanged(order.id, nextStatus, order.studentId);
@@ -1005,7 +1006,7 @@ class OrderDetailSheet extends ConsumerWidget {
   IconData _getNextActionIcon() {
     if (order.status == 'Baru') {
       return Icons.soup_kitchen_rounded;
-    } else if (order.status == 'Sedang Dimasak') {
+    } else if (order.status == 'Sedang Disiapkan' || order.status == 'Sedang Dimasak') {
       return (order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty)
           ? Icons.local_shipping_rounded
           : Icons.shopping_bag_rounded;
@@ -1016,10 +1017,10 @@ class OrderDetailSheet extends ConsumerWidget {
 
   String _getNextActionLabel() {
     if (order.status == 'Baru') {
-      return 'Terima & Masak';
-    } else if (order.status == 'Sedang Dimasak') {
-      return (order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty) ? 'Siap Diantar' : 'Siap Diambil';
-    } else if (order.status == 'Siap Diambil' || order.status == 'Siap Diantar') {
+      return 'Terima';
+    } else if (order.status == 'Sedang Disiapkan' || order.status == 'Sedang Dimasak') {
+      return (order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty) ? 'Sedang Diantar' : 'Siap Diambil';
+    } else if (order.status == 'Siap Diambil' || order.status == 'Sedang Diantar' || order.status == 'Siap Diantar') {
       return 'Selesai';
     }
     return 'Proses';

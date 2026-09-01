@@ -103,6 +103,8 @@ class StudentWithProfile {
   final int balance;
   final String? rfidUid;
   final bool cardIsActive;
+  final String? avatarUrl;
+  final String? gender;
 
   const StudentWithProfile({
     required this.id,
@@ -114,6 +116,8 @@ class StudentWithProfile {
     this.balance = 0,
     this.rfidUid,
     this.cardIsActive = true,
+    this.avatarUrl,
+    this.gender,
   });
 
   @override
@@ -138,6 +142,8 @@ class StudentWithProfile {
     int? balance,
     String? rfidUid,
     bool? cardIsActive,
+    String? avatarUrl,
+    String? gender,
   }) {
     return StudentWithProfile(
       id: id ?? this.id,
@@ -149,6 +155,8 @@ class StudentWithProfile {
       balance: balance ?? this.balance,
       rfidUid: rfidUid ?? this.rfidUid,
       cardIsActive: cardIsActive ?? this.cardIsActive,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      gender: gender ?? this.gender,
     );
   }
 
@@ -172,6 +180,8 @@ class StudentWithProfile {
       balance: Student._parseBalance(json['balance'] ?? profile['balance']),
       rfidUid: (json['rfid_uid'] ?? profile['rfid_uid'])?.toString(),
       cardIsActive: isCardActive,
+      avatarUrl: (profile['avatar_url'] ?? json['avatar_url'])?.toString(),
+      gender: (profile['gender'] ?? json['gender'])?.toString(),
     );
   }
 
@@ -198,6 +208,8 @@ class StudentWithProfile {
           (double.tryParse(studentData?['balance']?.toString() ?? '0') ?? 0.0).toInt(),
       rfidUid: studentData?['rfid_uid']?.toString(),
       cardIsActive: studentData?['is_active'] == true,
+      avatarUrl: json['avatar_url']?.toString(),
+      gender: json['gender']?.toString(),
     );
   }
 

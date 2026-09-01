@@ -208,6 +208,20 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
     required int deliveryFee,
     required Product product,
   }) {
+    // Jika produk memiliki pilihan kustomisasi (seperti pedas, level es, topping dll),
+    // selalu buka layar 'Custom pembelian' (Full Screen)
+    if (product.customizableOptions.isNotEmpty) {
+      ProductDetailBottomSheet.show(
+        context,
+        product: product,
+        stanId: stanId,
+        stanName: stanName,
+        deliveryFee: deliveryFee,
+        description: _getProductDescription(product),
+      );
+      return;
+    }
+
     final cartNotifier = ref.read(studentCartProvider.notifier);
     final currentCart = ref.read(studentCartProvider);
 
@@ -1352,8 +1366,41 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
               ),
               const SizedBox(height: 6),
 
-              // Product Rows
-              ...items.map((item) => _buildProductRowTile(item, stanId, stanName, deliveryFee)),
+              // Product Rows inside Single Unified Card Container
+              Container(
+                decoration: BoxDecoration(
+                  color: context.cardBg,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: context.borderLight, width: 0.8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: context.isDark ? 0.15 : 0.03),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => Divider(
+                    height: 1,
+                    thickness: 1.0,
+                    color: context.dividerCol,
+                    indent: 14,
+                    endIndent: 14,
+                  ),
+                  itemBuilder: (context, idx) => _buildProductRowTile(
+                    items[idx],
+                    stanId,
+                    stanName,
+                    deliveryFee,
+                    isFirst: idx == 0,
+                    isLast: idx == items.length - 1,
+                  ),
+                ),
+              ),
             ],
           ),
         );
@@ -1361,43 +1408,39 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
     );
   }
 
-  Widget _buildProductRowTile(ProductWithCanteen item, String stanId, String stanName, int deliveryFee) {
+  Widget _buildProductRowTile(
+    ProductWithCanteen item,
+    String stanId,
+    String stanName,
+    int deliveryFee, {
+    bool isFirst = false,
+    bool isLast = false,
+  }) {
     final product = item.product;
     final String formattedPrice = product.price
         .toStringAsFixed(0)
         .replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: context.cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.borderLight, width: 0.8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: context.isDark ? 0.15 : 0.03),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => ProductDetailBottomSheet.show(
-            context,
-            product: product,
-            stanId: stanId,
-            stanName: stanName,
-            deliveryFee: deliveryFee,
-            description: _getProductDescription(product),
-          ),
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => ProductDetailBottomSheet.show(
+          context,
+          product: product,
+          stanId: stanId,
+          stanName: stanName,
+          deliveryFee: deliveryFee,
+          description: _getProductDescription(product),
+        ),
+        borderRadius: BorderRadius.vertical(
+          top: isFirst ? const Radius.circular(16) : Radius.zero,
+          bottom: isLast ? const Radius.circular(16) : Radius.zero,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
           // Left: Name, Description, Price
           Expanded(
             child: Column(
@@ -1542,9 +1585,8 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
       ),
     ),
   ),
-),
 );
-}
+  }
 
   // ─── 6. FLOATING CONTROLS: KERANJANG + TOMBOL MENU KATEGORI ───
   Widget _buildFloatingControls(List<String> categories) {
@@ -1765,96 +1807,29 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
                           )
                         : ListView.separated(
                             itemCount: cart.items.length,
-                            separatorBuilder: (_, __) => const Divider(height: 12),
+                            separatorBuilder: (_, __) => Divider(
+                              height: 12,
+                              thickness: 1.0,
+                              color: context.dividerCol,
+                            ),
                             itemBuilder: (context, index) {
                               final item = cart.items[index];
-                              final String itemPrice = item.price
-                                  .toStringAsFixed(0)
-                                  .replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
-                              final bool hasImage = item.imageUrl != null && item.imageUrl!.isNotEmpty;
-
-                              return Row(
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: SizedBox(
-                                      width: 44,
-                                      height: 44,
-                                      child: hasImage
-                                          ? CachedNetworkImage(
-                                              imageUrl: item.imageUrl!,
-                                              fit: BoxFit.cover,
-                                              placeholder: (context, url) => const ShimmerRect(
-                                                width: 44,
-                                                height: 44,
-                                                borderRadius: 10,
-                                              ),
-                                              errorWidget: (context, url, error) => Container(
-                                                color: const Color(0xFF10B981).withValues(alpha: 0.08),
-                                                child: const Icon(CupertinoIcons.cube_box, color: Color(0xFF10B981), size: 18),
-                                              ),
-                                            )
-                                          : Container(
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFF10B981).withValues(alpha: 0.08),
-                                                borderRadius: BorderRadius.circular(10),
-                                              ),
-                                              child: const Icon(CupertinoIcons.cube_box, color: Color(0xFF10B981), size: 20),
-                                            ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          item.name,
-                                          style: GoogleFonts.inter(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w700,
-                                            color: context.textPrimary,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          'Rp $itemPrice',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                            color: const Color(0xFF10B981),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Row(
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(CupertinoIcons.minus_circle_fill, color: Colors.grey, size: 22),
-                                        onPressed: () {
-                                          ref.read(studentCartProvider.notifier).decreaseQuantity(item.productId, selectedOptions: item.selectedOptions);
-                                        },
-                                      ),
-                                      Text(
-                                        '${item.quantity}',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w800,
-                                          color: context.textPrimary,
-                                        ),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(CupertinoIcons.plus_circle_fill, color: Color(0xFF10B981), size: 22),
-                                        onPressed: () {
-                                          ref.read(studentCartProvider.notifier).increaseQuantity(item.productId, selectedOptions: item.selectedOptions);
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                              return _QuickCartItemTile(
+                                item: item,
+                                onDecrease: () {
+                                  ref.read(studentCartProvider.notifier).decreaseQuantity(
+                                        item.productId,
+                                        selectedOptions: item.selectedOptions,
+                                        notes: item.notes,
+                                      );
+                                },
+                                onIncrease: () {
+                                  ref.read(studentCartProvider.notifier).increaseQuantity(
+                                        item.productId,
+                                        selectedOptions: item.selectedOptions,
+                                        notes: item.notes,
+                                      );
+                                },
                               );
                             },
                           ),
@@ -1927,7 +1902,6 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
                           elevation: 0,
                         ),
                         onPressed: () {
-                          Navigator.pop(context);
                           if (isStudent) {
                             context.push('/student/cart');
                           } else {
@@ -2046,7 +2020,7 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
     } else if (lower.contains('jus')) {
       return 'Jus buah asli kaya vitamin tanpa pemanis buatan';
     }
-    return 'Menu lezat dan sehat higienis siap disajikan dari stan kantin sekolah';
+    return '';
   }
 
   List<ProductWithCanteen> _getFallbackProductsForStan(String stanId, String stanName) {
@@ -2146,3 +2120,229 @@ class _StanDetailScreenState extends ConsumerState<StanDetailScreen>
     ];
   }
 }
+
+class _QuickCartItemTile extends StatefulWidget {
+  final StudentCartItem item;
+  final VoidCallback onDecrease;
+  final VoidCallback onIncrease;
+
+  const _QuickCartItemTile({
+    required this.item,
+    required this.onDecrease,
+    required this.onIncrease,
+  });
+
+  @override
+  State<_QuickCartItemTile> createState() => _QuickCartItemTileState();
+}
+
+class _QuickCartItemTileState extends State<_QuickCartItemTile> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final item = widget.item;
+    final bool hasDetails = item.selectedOptions.isNotEmpty ||
+        (item.notes != null && item.notes!.trim().isNotEmpty);
+    final String itemPrice = item.price
+        .toStringAsFixed(0)
+        .replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+    final bool hasImage = item.imageUrl != null && item.imageUrl!.isNotEmpty;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Product Image thumbnail
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: hasImage
+                      ? CachedNetworkImage(
+                          imageUrl: item.imageUrl!,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => const ShimmerRect(
+                            width: 48,
+                            height: 48,
+                            borderRadius: 10,
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: const Color(0xFF10B981).withValues(alpha: 0.08),
+                            child: const Icon(CupertinoIcons.cube_box, color: Color(0xFF10B981), size: 18),
+                          ),
+                        )
+                      : Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981).withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(CupertinoIcons.cube_box, color: Color(0xFF10B981), size: 20),
+                        ),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Product Info (Clickable to toggle details)
+              Expanded(
+                child: InkWell(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _isExpanded = !_isExpanded);
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                item.name,
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: context.textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (hasDetails) ...[
+                              const SizedBox(width: 4),
+                              Icon(
+                                _isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down,
+                                size: 12,
+                                color: const Color(0xFF10B981),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Rp $itemPrice',
+                          style: GoogleFonts.inter(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF10B981),
+                          ),
+                        ),
+                        if (hasDetails && !_isExpanded) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            item.selectedOptions.isNotEmpty
+                                ? 'Pilihan: ${item.selectedOptions.join(', ')}'
+                                : 'Catatan: ${item.notes}',
+                            style: GoogleFonts.inter(
+                              fontSize: 10.5,
+                              color: context.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // Stepper buttons (- qty +)
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(CupertinoIcons.minus_circle_fill, color: Colors.grey, size: 22),
+                    onPressed: widget.onDecrease,
+                  ),
+                  Text(
+                    '${item.quantity}',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: context.textPrimary,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(CupertinoIcons.plus_circle_fill, color: Color(0xFF10B981), size: 22),
+                    onPressed: widget.onIncrease,
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          // Animated Dropdown Details
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Container(
+              margin: const EdgeInsets.only(top: 8, left: 60),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: context.surfaceBg,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: context.dividerCol, width: 0.8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (item.selectedOptions.isNotEmpty) ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.tune_rounded, size: 12, color: Color(0xFF10B981)),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Pilihan: ${item.selectedOptions.join(', ')}',
+                            style: GoogleFonts.inter(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: context.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (item.notes != null && item.notes!.trim().isNotEmpty) ...[
+                    if (item.selectedOptions.isNotEmpty) const SizedBox(height: 6),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.chat_bubble_outline_rounded, size: 12, color: Nebula.amber),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Catatan: "${item.notes!}"',
+                            style: GoogleFonts.inter(
+                              fontSize: 11.5,
+                              fontStyle: FontStyle.italic,
+                              fontWeight: FontWeight.w600,
+                              color: Nebula.amber,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            crossFadeState: _isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 220),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

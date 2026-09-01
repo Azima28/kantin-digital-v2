@@ -60,7 +60,9 @@ class OperatorTransaction {
           .map((e) => TransactionItem.fromJson(e as Map<String, dynamic>))
           .toList();
       if (extractedImage == null || extractedImage.isEmpty) {
-        for (final item in transactionItems) {
+        final sortedItems = List<TransactionItem>.from(transactionItems);
+        sortedItems.sort((a, b) => b.unitPrice.compareTo(a.unitPrice));
+        for (final item in sortedItems) {
           final img = item.imageUrl ?? (item.product != null ? item.product!['image_url'] as String? : null);
           if (img != null && img.isNotEmpty) {
             extractedImage = img;
@@ -126,7 +128,9 @@ class OperatorTransaction {
           .map((e) => TransactionItem.fromJson(e as Map<String, dynamic>))
           .toList();
       if (extractedImage == null || extractedImage.isEmpty) {
-        for (final item in transactionItems) {
+        final sortedItems = List<TransactionItem>.from(transactionItems);
+        sortedItems.sort((a, b) => b.unitPrice.compareTo(a.unitPrice));
+        for (final item in sortedItems) {
           final img = item.imageUrl ?? (item.product != null ? item.product!['image_url'] as String? : null);
           if (img != null && img.isNotEmpty) {
             extractedImage = img;

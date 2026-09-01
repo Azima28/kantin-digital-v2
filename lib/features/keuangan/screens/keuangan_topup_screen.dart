@@ -5,8 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 
@@ -159,8 +160,7 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
   void _onQuickAmountSelected(int amount) {
     setState(() {
       _selectedQuickAmount = amount;
-      final fmt = NumberFormat('#,###', 'id_ID');
-      _amountController.text = fmt.format(amount);
+      _amountController.text = CurrencyFormatter.formatWithoutPrefix(amount);
     });
   }
 
@@ -279,7 +279,7 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
       setState(() {
         _refCode =
             'TXN-${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}-${Random().nextInt(9000) + 1000}';
-        _successTime = DateFormat('dd MMM yyyy, HH:mm:ss', 'id_ID').format(now);
+        _successTime = AppDateFormatter.formatDateWithTimeSeconds(now);
         _currentStep = 4; // success screen
       });
 
@@ -329,11 +329,7 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final fmt = NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: 'Rp ',
-      decimalDigits: 0,
-    );
+    const fmt = AppNumberFormat(symbol: 'Rp ');
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -415,7 +411,7 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
     );
   }
 
-  Widget _buildStepContent(NumberFormat fmt) {
+  Widget _buildStepContent(AppNumberFormat fmt) {
     switch (_currentStep) {
       case 1:
         return _buildStep1Search();
@@ -465,7 +461,7 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
     );
   }
 
-  Widget _buildStep2Amount(NumberFormat fmt) {
+  Widget _buildStep2Amount(AppNumberFormat fmt) {
     return KeuanganTopupStepAmount(
       fmt: fmt,
       student: _selectedStudent,
@@ -490,7 +486,7 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
     );
   }
 
-  Widget _buildStep3Confirm(NumberFormat fmt) {
+  Widget _buildStep3Confirm(AppNumberFormat fmt) {
     final int amount = _getAmount();
     return KeuanganTopupStepConfirm(
       fmt: fmt,
@@ -504,7 +500,7 @@ class _KeuanganTopupScreenState extends ConsumerState<KeuanganTopupScreen> {
     );
   }
 
-  Widget _buildSuccessScreen(NumberFormat fmt) {
+  Widget _buildSuccessScreen(AppNumberFormat fmt) {
     final int amount = _getAmount();
     final int newBalance = _studentBalance + amount;
 

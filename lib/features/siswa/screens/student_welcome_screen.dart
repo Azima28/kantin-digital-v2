@@ -34,8 +34,9 @@ class _StudentWelcomeScreenState extends ConsumerState<StudentWelcomeScreen> {
   int _wizardIndex = 0;
 
   // Slide 2 Promo Banner Auto-sliding Controller & Timer
+  static const int _virtualPromoOffset = 12000;
   late final PageController _promoPageController = PageController(
-    initialPage: 0,
+    initialPage: _virtualPromoOffset,
     viewportFraction: 0.92,
   );
   Timer? _promoTimer;
@@ -53,12 +54,11 @@ class _StudentWelcomeScreenState extends ConsumerState<StudentWelcomeScreen> {
     _promoTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
       if (!mounted) return;
       if (_promoCount > 1 && _promoPageController.hasClients && _promoPageController.page != null) {
-        final currentPage = _promoPageController.page!.round();
-        final nextPage = (currentPage + 1) % _promoCount;
+        final currentVirtualPage = _promoPageController.page!.round();
         _promoPageController.animateToPage(
-          nextPage,
+          currentVirtualPage + 1,
           duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
+          curve: Curves.easeInOutCubic,
         );
       }
     });
@@ -491,14 +491,16 @@ class _StudentWelcomeScreenState extends ConsumerState<StudentWelcomeScreen> {
                   onPointerCancel: (_) => _startPromoTimer(),
                   child: PageView.builder(
                     controller: _promoPageController,
-                    itemCount: displayProducts.length,
                     onPageChanged: (index) {
-                      setState(() => _promoIndex = index);
+                      if (displayProducts.isNotEmpty) {
+                        setState(() => _promoIndex = index % displayProducts.length);
+                      }
                       _startPromoTimer();
                     },
                     itemBuilder: (context, index) {
-                      if (index >= displayProducts.length) return const SizedBox.shrink();
-                      final item = displayProducts[index];
+                      if (displayProducts.isEmpty) return const SizedBox.shrink();
+                      final actualIndex = index % displayProducts.length;
+                      final item = displayProducts[actualIndex];
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 2.0),
                         child: _buildPromoCard(colors, item),

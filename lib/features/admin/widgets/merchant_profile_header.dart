@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
-import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 
 class MerchantProfileHeader extends StatelessWidget {
   final String fullName;
   final String canteenName;
   final String username;
+  final String? photoUrl;
+  final String? gender;
 
   const MerchantProfileHeader({
     super.key,
     required this.fullName,
     required this.canteenName,
     required this.username,
+    this.photoUrl,
+    this.gender,
   });
 
   @override
@@ -32,10 +36,12 @@ class MerchantProfileHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          CircleAvatar(
+          AppAvatar(
             radius: 36,
-            backgroundColor: Nebula.teal.withValues(alpha: 0.1),
-            child: Icon(Icons.shopping_bag, color: Nebula.teal, size: 36),
+            photoUrl: photoUrl,
+            role: 'canteen',
+            name: fullName,
+            gender: gender,
           ),
           const SizedBox(width: 16),
           Expanded(

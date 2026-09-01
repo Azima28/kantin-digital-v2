@@ -27,6 +27,9 @@ func (h *ParentHandler) Dashboard(c *fiber.Ctx) error {
 		if err != nil {
 			return response.Error(c, fiber.StatusInternalServerError, "Gagal memuat relasi anak", err.Error())
 		}
+		if len(children) == 0 {
+			return response.Error(c, fiber.StatusForbidden, "Akses ditolak: Akun orang tua belum terhubung dengan siswa manapun", nil)
+		}
 		isLinked := false
 		for _, child := range children {
 			if child.ID == studentID {
@@ -34,8 +37,8 @@ func (h *ParentHandler) Dashboard(c *fiber.Ctx) error {
 				break
 			}
 		}
-		if !isLinked && len(children) > 0 {
-			studentID = children[0].ID
+		if !isLinked {
+			return response.Error(c, fiber.StatusForbidden, "Akses ditolak: Anda tidak memiliki akses ke data siswa ini", nil)
 		}
 	}
 

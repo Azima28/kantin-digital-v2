@@ -21,7 +21,7 @@ class OrderItem {
   final String studentId;
   final String studentName;
   final String time;
-  final String status; // 'Baru', 'Sedang Dimasak', 'Siap Diambil', 'Siap Diantar'
+  final String status; // 'Baru', 'Sedang Disiapkan', 'Siap Diambil', 'Sedang Diantar', 'Selesai', 'Dibatalkan'
   final String? deliveryLocation;
   final List<OrderSubItem> items;
   final int totalAmount; // fixed: changed from double to int

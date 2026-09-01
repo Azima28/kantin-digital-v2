@@ -222,9 +222,10 @@ class AppStrings {
 
   // Kantin screens
   static const String kantinOrderNew = 'Baru';
-  static const String kantinOrderCooking = 'Sedang Dimasak';
+  static const String kantinOrderCooking = 'Sedang Disiapkan';
+  static const String kantinOrderPreparing = 'Sedang Disiapkan';
   static const String kantinOrderReady = 'Siap Diambil';
-  static const String kantinOrderDelivering = 'Siap Diantar';
+  static const String kantinOrderDelivering = 'Sedang Diantar';
   static const String kantinAllActivity = 'Semua Aktivitas';
   static const String kantinAddMenu = 'Tambah Menu';
   static const String kantinEditMenu = 'Ubah Menu';

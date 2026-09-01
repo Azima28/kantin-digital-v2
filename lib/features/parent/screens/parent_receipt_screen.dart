@@ -2,10 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 
 class ParentReceiptScreen extends StatelessWidget {
@@ -19,8 +19,8 @@ class ParentReceiptScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String orderId = receiptData['orderId'] ?? '-';
-    final String dateStr = receiptData['date'] != null 
-        ? DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(DateTime.parse(receiptData['date']).toLocal())
+    final String dateStr = receiptData['date'] != null
+        ? AppDateFormatter.formatDateWithTime(DateTime.tryParse(receiptData['date'].toString()))
         : '-';
     final String senderName = receiptData['senderName'] ?? '-';
     final String studentName = receiptData['studentName'] ?? '-';

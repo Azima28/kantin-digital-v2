@@ -66,7 +66,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           } else {
             context.go('/student');
           }
-        } else if (role == 'super_admin') {
+        } else if (role == 'super_admin' || role == 'admin') {
           context.go('/admin');
         } else if (role == 'petugas_keuangan') {
           context.go('/finance');

@@ -1,10 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/core/widgets/nfc_pulse_animator.dart';
 import 'package:kantin_digital/features/shared/screens/student_transactions_screen.dart';
@@ -374,7 +374,7 @@ class StudentCardView extends StatelessWidget {
                       final isSuccess = status == 'success';
                       final amount = tx.totalAmount;
                       final timestamp = tx.createdAt?.toLocal() ?? DateTime.now();
-                      final timeStr = DateFormat('dd MMM, HH:mm', 'id_ID').format(timestamp);
+                      final timeStr = AppDateFormatter.formatShortDateWithTime(timestamp);
                       final canteenName = tx.canteenName ?? 'Top-up';
 
                       return Padding(

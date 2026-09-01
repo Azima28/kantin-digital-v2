@@ -45,6 +45,7 @@ class ApiClient {
   String? _authToken;
   void Function(String newToken)? onTokenRenewed;
   void Function()? onAccountBlocked;
+  void Function()? onUnauthorized;
 
   ApiClient({
     String? baseUrl,
@@ -138,6 +139,9 @@ class ApiClient {
 
   Map<String, dynamic> _safeParseJson(http.Response response) {
     _checkRenewedToken(response);
+    if (response.statusCode == 401 && _authToken != null && _authToken!.isNotEmpty) {
+      onUnauthorized?.call();
+    }
     try {
       final decoded = json.decode(response.body);
       if (decoded is Map<String, dynamic>) {

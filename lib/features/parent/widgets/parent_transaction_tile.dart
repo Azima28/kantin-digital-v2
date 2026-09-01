@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
@@ -112,7 +112,7 @@ class ParentTransactionTile extends ConsumerWidget {
 
             // Trailing Amount
             Text(
-              '${isIncoming ? "+" : "-"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
+              '${isIncoming ? "+" : "-"} ${CurrencyFormatter.format(amount)}',
               style: GoogleFonts.inter(
                 fontSize: 13.5,
                 fontWeight: FontWeight.w800,

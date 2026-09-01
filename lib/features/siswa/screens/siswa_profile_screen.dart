@@ -281,6 +281,7 @@ class SiswaProfileScreen extends ConsumerWidget {
                         nis: nis,
                         studentClass: studentClass,
                         avatarUrl: avatarUrl,
+                        gender: authState.profile?['gender'] as String?,
                         onAvatarTap: () => _handleAvatarChange(context, ref),
                       ),
                       const SizedBox(height: 24),

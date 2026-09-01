@@ -77,12 +77,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   void _initAuthListener() async {
-    // 0. Listen for sliding session token renewals and account blocked signals from backend
+    // 0. Listen for sliding session token renewals and account blocked / unauthorized signals from backend
     _apiClient.onTokenRenewed = (String newToken) {
       updateSessionToken(newToken);
     };
     _apiClient.onAccountBlocked = () {
       updateAccountActiveStatus(false);
+    };
+    _apiClient.onUnauthorized = () async {
+      await SecureSessionService.clearSessionData();
+      _apiClient.clearAuthToken();
+      if (mounted) {
+        state = const AuthState(isAuthenticated: false, isInitialized: true, isLoading: false);
+      }
     };
 
     // 1. Check persistent 7-day session storage on launch or page refresh first
@@ -101,6 +108,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
           isInitialized: true,
           isLoading: false,
         );
+
+        // Background session verification against backend
+        _authService.validateSession().then((isValid) {
+          if (!isValid && mounted) {
+            _apiClient.onUnauthorized?.call();
+          }
+        });
       }
     } catch (e) {
       debugPrint('Error reading cached session: $e');
@@ -205,12 +219,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  // Update profile details (Full name, Email, Username, Phone number) to Go Backend & persistent local state
+  // Update profile details (Full name, Email, Username, Phone number, Gender) to Go Backend & persistent local state
   Future<bool> updateProfileDetails({
     required String fullName,
     String? email,
     String? username,
     String? phoneNumber,
+    String? gender,
   }) async {
     try {
       final response = await _apiClient.patch('/auth/profile', body: {
@@ -218,6 +233,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         if (email != null && email.trim().isNotEmpty) 'email': email.trim(),
         if (username != null && username.trim().isNotEmpty) 'username': username.trim(),
         'phone_number': phoneNumber?.trim(),
+        if (gender != null && gender.trim().isNotEmpty) 'gender': gender.trim(),
       });
       if (response.success && response.data != null) {
         final updatedMap = Map<String, dynamic>.from(response.data as Map);
@@ -227,6 +243,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         if (username != null && username.trim().isNotEmpty) currentProfile['username'] = updatedMap['username'] ?? username.trim();
         if (phoneNumber != null) currentProfile['phone_number'] = phoneNumber.trim();
         currentProfile['phone'] = phoneNumber?.trim();
+        if (gender != null) currentProfile['gender'] = gender.trim();
+        if (updatedMap['gender'] != null) currentProfile['gender'] = updatedMap['gender'];
         if (updatedMap['avatar_url'] != null) currentProfile['avatar_url'] = updatedMap['avatar_url'];
 
         await SecureSessionService.saveSessionData(

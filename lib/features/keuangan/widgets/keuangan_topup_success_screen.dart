@@ -2,9 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 
 /// Success screen widget displayed after a successful top-up by keuangan staff.
 class KeuanganTopupSuccessScreen extends StatelessWidget {
@@ -13,7 +13,7 @@ class KeuanganTopupSuccessScreen extends StatelessWidget {
   final int newBalance;
   final String successTime;
   final String refCode;
-  final NumberFormat fmt;
+  final AppNumberFormat fmt;
 
   const KeuanganTopupSuccessScreen({
     super.key,

@@ -3,14 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 
 class SiswaProfileHeader extends StatelessWidget {
   final String fullName;
   final String nis;
   final String studentClass;
   final String? avatarUrl;
+  final String? gender;
   final VoidCallback onAvatarTap;
 
   const SiswaProfileHeader({
@@ -19,6 +20,7 @@ class SiswaProfileHeader extends StatelessWidget {
     required this.nis,
     required this.studentClass,
     this.avatarUrl,
+    this.gender,
     required this.onAvatarTap,
   });
 
@@ -50,31 +52,14 @@ class SiswaProfileHeader extends StatelessWidget {
                   onTap: onAvatarTap,
                   child: Stack(
                     children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: context.borderLight,
-                        ),
-                        child: ClipOval(
-                          child: avatarUrl != null && avatarUrl!.isNotEmpty
-                              ? CachedNetworkImage(
-                                  imageUrl: avatarUrl!,
-                                  fit: BoxFit.cover,
-                                  placeholder: (_, __) => const Center(child: CupertinoActivityIndicator()),
-                                  errorWidget: (_, __, ___) => const Icon(
-                                    CupertinoIcons.person,
-                                    color: Nebula.teal,
-                                    size: 40,
-                                  ),
-                                )
-                              : const Icon(
-                                  CupertinoIcons.person,
-                                  color: Nebula.teal,
-                                  size: 40,
-                                ),
-                        ),
+                      AppAvatar(
+                        radius: 40,
+                        photoUrl: avatarUrl,
+                        role: 'student',
+                        name: fullName,
+                        gender: gender,
+                        borderColor: context.borderLight,
+                        borderWidth: 1.5,
                       ),
                       Positioned(
                         bottom: 0,

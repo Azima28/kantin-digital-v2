@@ -88,6 +88,14 @@ class SiswaTransactionsNotifier extends StateNotifier<SiswaTransactionsState> {
 
   SiswaTransactionsNotifier(this._apiClient, this._ref)
       : super(const SiswaTransactionsState()) {
+    _ref.listen(authNotifierProvider, (prev, next) {
+      if (next.profile != null && next.profile!['is_active'] != false) {
+        if (state.transactions.isEmpty || prev?.profile?['id'] != next.profile?['id']) {
+          loadInitial(forceRefresh: true);
+        }
+      }
+    });
+
     loadInitial();
   }
 
@@ -101,7 +109,7 @@ class SiswaTransactionsNotifier extends StateNotifier<SiswaTransactionsState> {
     if (!forceRefresh &&
         state.transactions.isNotEmpty &&
         state.lastFetched != null &&
-        DateTime.now().difference(state.lastFetched!).inMinutes < 3) {
+        DateTime.now().difference(state.lastFetched!).inMinutes < 1) {
       return;
     }
 
@@ -110,7 +118,7 @@ class SiswaTransactionsNotifier extends StateNotifier<SiswaTransactionsState> {
     try {
       final response = await _apiClient.get('/student/transactions', queryParams: {
         'page': 1,
-        'limit': 15,
+        'limit': 20,
       });
 
       if (response.success && response.data != null) {
@@ -122,11 +130,11 @@ class SiswaTransactionsNotifier extends StateNotifier<SiswaTransactionsState> {
           final dataMap = response.data as Map<String, dynamic>;
           itemsList = dataMap['items'] as List<dynamic>? ?? [];
           total = (dataMap['total'] as num?)?.toInt() ?? itemsList.length;
-          hasMore = dataMap['has_more'] as bool? ?? (itemsList.length >= 15);
+          hasMore = dataMap['has_more'] as bool? ?? (itemsList.length >= 20);
         } else if (response.data is List<dynamic>) {
           itemsList = response.data as List<dynamic>;
           total = itemsList.length;
-          hasMore = itemsList.length >= 15;
+          hasMore = itemsList.length >= 20;
         }
 
         final parsed = itemsList

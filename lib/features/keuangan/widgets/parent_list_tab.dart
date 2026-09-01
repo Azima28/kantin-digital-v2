@@ -12,6 +12,7 @@ import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 
 // ── Parents Tab ─────────────────────────────────────────────────────────────
 
@@ -109,8 +110,35 @@ class _ParentsTabState extends ConsumerState<ParentsTab> {
               if (pending.isNotEmpty && widget.searchQuery.isEmpty) ...[
                 _sectionHeader(context, 'PERLU VERIFIKASI (${pending.length})'),
                 const SizedBox(height: 8),
-                ...pending.map(
-                  (p) => _buildParentCard(context, ref, p, isPending: true),
+                Container(
+                  decoration: BoxDecoration(
+                    color: context.cardBg,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.amber.withValues(alpha: 0.5),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: pending.length,
+                    separatorBuilder: (context, index) => Divider(
+                      height: 1,
+                      thickness: 1.0,
+                      color: context.dividerCol,
+                      indent: 14,
+                      endIndent: 14,
+                    ),
+                    itemBuilder: (context, index) => _buildParentCard(
+                      context,
+                      ref,
+                      pending[index],
+                      isPending: true,
+                      isFirst: index == 0,
+                      isLast: index == pending.length - 1,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 20),
               ],
@@ -122,8 +150,35 @@ class _ParentsTabState extends ConsumerState<ParentsTab> {
                     : 'SEMUA ORANG TUA (${filtered.length})',
               ),
               const SizedBox(height: 8),
-              ...displayed.map(
-                (p) => _buildParentCard(context, ref, p, isPending: false),
+              Container(
+                decoration: BoxDecoration(
+                  color: context.cardBg,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: context.dividerCol,
+                    width: 0.8,
+                  ),
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: displayed.length,
+                  separatorBuilder: (context, index) => Divider(
+                    height: 1,
+                    thickness: 1.0,
+                    color: context.dividerCol,
+                    indent: 14,
+                    endIndent: 14,
+                  ),
+                  itemBuilder: (context, index) => _buildParentCard(
+                    context,
+                    ref,
+                    displayed[index],
+                    isPending: false,
+                    isFirst: index == 0,
+                    isLast: index == displayed.length - 1,
+                  ),
+                ),
               ),
               if (_isLoadingMore) ...[
                 const SizedBox(height: 14),
@@ -223,54 +278,36 @@ class _ParentsTabState extends ConsumerState<ParentsTab> {
     WidgetRef ref,
     UserProfile parent, {
     required bool isPending,
+    bool isFirst = false,
+    bool isLast = false,
   }) {
     final name = parent.fullName ?? 'Orang Tua';
     final email = parent.email ?? '-';
     final isActive = parent.isActive == true;
-    final initials = name.length >= 2
-        ? '${name[0]}${name.split(' ').last[0]}'.toUpperCase()
-        : name[0].toUpperCase();
 
-    return GestureDetector(
-      onTap: () {
-        context.push('/finance/users/parent/${parent.id}');
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        decoration: BoxDecoration(
-          color: context.cardBg,
-          borderRadius: BorderRadius.circular(20),
-          border: isPending
-              ? Border.all(color: Colors.amber.withValues(alpha: 0.4), width: 1)
-              : null,
-          boxShadow: [
-            BoxShadow(
-              color: context.shadowColor,
-              blurRadius: 12,
-              offset: const Offset(0, 3),
-            ),
-          ],
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          context.push('/finance/users/parent/${parent.id}');
+        },
+        borderRadius: BorderRadius.vertical(
+          top: isFirst ? const Radius.circular(16) : Radius.zero,
+          bottom: isLast ? const Radius.circular(16) : Radius.zero,
         ),
         child: Padding(
-          padding: EdgeInsets.all(14),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  CircleAvatar(
+                  AppAvatar(
                     radius: 20,
-                    backgroundColor: isPending
-                        ? Colors.amber.withValues(alpha: 0.1)
-                        : Nebula.teal.withValues(alpha: 0.08),
-                    child: Text(
-                      initials,
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: isPending ? Colors.amber : Nebula.teal,
-                      ),
-                    ),
+                    photoUrl: parent.avatarUrl,
+                    role: 'parent',
+                    name: name,
+                    gender: parent.gender,
                   ),
                   const SizedBox(width: 12),
                   Expanded(

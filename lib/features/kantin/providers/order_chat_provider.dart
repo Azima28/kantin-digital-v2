@@ -40,7 +40,43 @@ class LocalOrderChatNotifier extends StateNotifier<List<OrderMessage>> {
   }
 
   void addMessage(OrderMessage message) {
+    // Prevent adding exact duplicate by id
+    if (state.any((m) => m.id == message.id)) return;
+
+    // If incoming message matches a pending local optimistic message (same text & sender role),
+    // replace the local pending message in-place with the confirmed message to prevent double-bubble flicker!
+    final int localPendingIdx = state.indexWhere((m) =>
+        m.id.startsWith('local_') &&
+        m.senderRole == message.senderRole &&
+        m.message.trim() == message.message.trim());
+
+    if (localPendingIdx != -1) {
+      final updated = List<OrderMessage>.from(state);
+      updated[localPendingIdx] = message;
+      state = updated;
+      return;
+    }
+
     state = [...state, message];
+  }
+
+  void removeMessage(String id) {
+    state = state.where((m) => m.id != id).toList();
+  }
+
+  void removePendingByText(String text, String senderRole) {
+    bool removed = false;
+    state = state.where((m) {
+      if (!removed && m.id.startsWith('local_') && m.message.trim() == text.trim() && m.senderRole == senderRole) {
+        removed = true;
+        return false;
+      }
+      return true;
+    }).toList();
+  }
+
+  void clear() {
+    state = const [];
   }
 }
 
@@ -110,7 +146,8 @@ final sendOrderMessageProvider = Provider<Future<void> Function(
         },
       );
       if (response.success) {
-        // Refresh server stream immediately so clock icon transitions to confirmed checkmark!
+        // Remove optimistic local message and refresh server stream immediately so clock icon transitions to confirmed checkmark!
+        ref.read(localOrderChatProvider(orderId).notifier).removeMessage(localId);
         ref.invalidate(orderChatStreamProvider(orderId));
       }
     } catch (e) {
@@ -121,7 +158,7 @@ final sendOrderMessageProvider = Provider<Future<void> Function(
 
 /// Presence provider that fetches currently online participant roles from Go Backend
 final orderPresenceProvider = FutureProvider.autoDispose.family<Set<String>, String>((ref, orderId) async {
-  ref.cacheFor(const Duration(minutes: 2));
+  ref.cacheFor(const Duration(seconds: 30));
   final apiClient = ref.read(apiClientProvider);
 
   try {
@@ -140,13 +177,10 @@ final trackOrderPresenceProvider = Provider<Future<void> Function(String orderId
 
   return (String orderId, String myRole) async {
     try {
-      final response = await apiClient.post(
+      await apiClient.post(
         '/orders/$orderId/presence',
         body: {'role': myRole},
       );
-      if (response.success) {
-        ref.invalidate(orderPresenceProvider(orderId));
-      }
     } catch (_) {}
   };
 });

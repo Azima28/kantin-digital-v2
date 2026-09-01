@@ -296,3 +296,67 @@ func (h *StudentHandler) UpdateCardStatus(c *fiber.Ctx) error {
 	}
 	return response.Success(c, fiber.StatusOK, "Status kartu berhasil diperbarui", nil)
 }
+
+type StudentTopupRequest struct {
+	StudentID string `json:"student_id"`
+	Amount    int    `json:"amount"`
+}
+
+func (h *StudentHandler) Topup(c *fiber.Ctx) error {
+	claimsVal := c.Locals(middleware.UserClaimsKey)
+	if claimsVal == nil {
+		return response.Error(c, fiber.StatusUnauthorized, "Autentikasi diperlukan", nil)
+	}
+	claims := claimsVal.(*token.JWTClaims)
+
+	var req StudentTopupRequest
+	if err := c.BodyParser(&req); err != nil {
+		return response.Error(c, fiber.StatusBadRequest, "Payload top-up tidak valid", err.Error())
+	}
+
+	targetStudentID := req.StudentID
+	switch claims.Role {
+	case domain.RoleStudent:
+		// Student can only top up their own balance
+		targetStudentID = claims.UserID
+	case domain.RoleParent:
+		// Parent can only top up their linked child
+		if targetStudentID == "" {
+			return response.Error(c, fiber.StatusBadRequest, "Student ID wajib disertakan", nil)
+		}
+		children, err := h.paymentService.GetParentChildren(c.Context(), claims.UserID)
+		if err != nil {
+			return response.Error(c, fiber.StatusInternalServerError, "Gagal memverifikasi relasi anak", err.Error())
+		}
+		isLinked := false
+		for _, child := range children {
+			if child.ID == targetStudentID {
+				isLinked = true
+				break
+			}
+		}
+		if !isLinked {
+			return response.Error(c, fiber.StatusForbidden, "Akses ditolak: Anda tidak memiliki akses ke siswa ini", nil)
+		}
+	case domain.RolePetugasKeuangan, domain.RoleSuperAdmin, domain.RoleAdmin:
+		if targetStudentID == "" {
+			return response.Error(c, fiber.StatusBadRequest, "Student ID wajib disertakan", nil)
+		}
+	default:
+		return response.Error(c, fiber.StatusForbidden, "Akses ditolak: Peran Anda tidak memiliki wewenang melakukan top-up", nil)
+	}
+
+	if req.Amount < 10000 {
+		return response.Error(c, fiber.StatusBadRequest, "Nominal top-up minimal Rp 10.000", nil)
+	}
+	if req.Amount > 2000000 {
+		return response.Error(c, fiber.StatusBadRequest, "Nominal top-up maksimal Rp 2.000.000 per transaksi", nil)
+	}
+
+	tx, err := h.paymentService.ProcessTopup(c.Context(), targetStudentID, claims.UserID, req.Amount)
+	if err != nil {
+		return response.Error(c, fiber.StatusBadRequest, err.Error(), nil)
+	}
+
+	return response.Success(c, fiber.StatusOK, "Top-up saldo berhasil diproses", tx)
+}

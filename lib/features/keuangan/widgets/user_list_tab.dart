@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_users_filter.dart';
@@ -74,11 +74,7 @@ class _StudentsTabState extends ConsumerState<StudentsTab> {
   @override
   Widget build(BuildContext context) {
     final studentsAsync = ref.watch(keuanganStudentsProvider);
-    final fmt = NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: 'Rp ',
-      decimalDigits: 0,
-    );
+    const fmt = AppNumberFormat(symbol: 'Rp ');
 
     return RefreshIndicator(
       onRefresh: () async => ref.invalidate(keuanganStudentsProvider),
@@ -172,10 +168,35 @@ class _StudentsTabState extends ConsumerState<StudentsTab> {
                       : 'SEMUA SISWA (${filtered.length})',
                 ),
                 const SizedBox(height: 8),
-                ...displayed.map(
-                  (student) => KeuanganStudentCard(
-                    student: student,
-                    fmt: fmt,
+                Container(
+                  decoration: BoxDecoration(
+                    color: context.cardBg,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: context.dividerCol,
+                      width: 0.8,
+                    ),
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: displayed.length,
+                    separatorBuilder: (context, index) => Divider(
+                      height: 1,
+                      thickness: 1.0,
+                      color: context.dividerCol,
+                      indent: 14,
+                      endIndent: 14,
+                    ),
+                    itemBuilder: (context, index) {
+                      final student = displayed[index];
+                      return KeuanganStudentCard(
+                        student: student,
+                        fmt: fmt,
+                        isFirst: index == 0,
+                        isLast: index == displayed.length - 1,
+                      );
+                    },
                   ),
                 ),
                 if (_isLoadingMore) ...[

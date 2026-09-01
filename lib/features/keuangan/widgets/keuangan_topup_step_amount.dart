@@ -2,11 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 
 /// Formatter untuk input nominal dengan pemisah ribuan titik (.) khas Indonesia
 class _ThousandsSeparatorInputFormatter extends TextInputFormatter {
@@ -27,8 +27,7 @@ class _ThousandsSeparatorInputFormatter extends TextInputFormatter {
     final number = int.tryParse(cleanText);
     if (number == null) return oldValue;
 
-    final formatter = NumberFormat('#,###', 'id_ID');
-    final formatted = formatter.format(number);
+    final formatted = CurrencyFormatter.formatWithoutPrefix(number);
 
     return TextEditingValue(
       text: formatted,
@@ -42,7 +41,7 @@ class _ThousandsSeparatorInputFormatter extends TextInputFormatter {
 /// Displays student info card, amount input field, quick-select chips,
 /// and a "Lanjut → Konfirmasi" button.
 class KeuanganTopupStepAmount extends StatelessWidget {
-  final NumberFormat fmt;
+  final AppNumberFormat fmt;
   final StudentWithProfile? student;
   final String studentName;
   final String studentNisn;

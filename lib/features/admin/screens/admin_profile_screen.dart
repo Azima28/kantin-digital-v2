@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,13 +7,13 @@ import 'package:image_picker/image_picker.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
-import 'package:kantin_digital/core/services/api_client.dart';
 import 'package:kantin_digital/core/services/storage_service.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/app_image_picker_sheet.dart';
 import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 import 'package:kantin_digital/core/widgets/change_password_panel.dart';
 import 'package:kantin_digital/core/widgets/theme_toggle_tile.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 class AdminProfileScreen extends ConsumerStatefulWidget {
@@ -450,44 +449,13 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
                       child: Stack(
                         clipBehavior: Clip.none,
                         children: [
-                          Container(
-                            width: 84,
-                            height: 84,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white.withValues(alpha: 0.2),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 2),
-                            ),
-                            child: ClipOval(
-                              child: (avatarUrl != null && avatarUrl.isNotEmpty)
-                                  ? CachedNetworkImage(
-                                      imageUrl: ApiClient.resolveImageUrl(avatarUrl),
-                                      fit: BoxFit.cover,
-                                      placeholder: (_, __) => const Center(
-                                        child: CupertinoActivityIndicator(color: Colors.white),
-                                      ),
-                                      errorWidget: (_, __, ___) => Center(
-                                        child: Text(
-                                          fullName.isNotEmpty ? fullName[0].toUpperCase() : 'A',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 34,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                  : Center(
-                                      child: Text(
-                                        fullName.isNotEmpty ? fullName[0].toUpperCase() : 'A',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 34,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                            ),
+                          AppAvatar(
+                            radius: 42,
+                            photoUrl: avatarUrl,
+                            role: role,
+                            name: fullName,
+                            borderColor: Colors.white.withValues(alpha: 0.5),
+                            borderWidth: 2,
                           ),
                           Positioned(
                             bottom: -2,

@@ -1,8 +1,9 @@
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 
 /// Service untuk generate dan share struk transaksi dalam format PDF.
 /// Menggunakan package `pdf` dan `printing`.
@@ -15,8 +16,7 @@ class PdfService {
   static const PdfColor _successGreen = PdfColor.fromInt(0xFF006A35);
   static const PdfColor _white = PdfColors.white;
 
-  static final _currencyFmt =
-      NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+  static const _currencyFmt = AppNumberFormat(symbol: 'Rp ');
 
   /// Generate dan tampilkan preview PDF struk transaksi.
   ///
@@ -112,8 +112,8 @@ class PdfService {
 
     final bool isPurchase = type == 'purchase';
     final String dateStr =
-        DateFormat('dd MMMM yyyy', 'id_ID').format(dateTime.toLocal());
-    final String timeStr = DateFormat('HH:mm', 'id_ID').format(dateTime.toLocal());
+        AppDateFormatter.formatFullDate(dateTime);
+    final String timeStr = AppDateFormatter.formatTime(dateTime);
     final String shortId = transactionId.length >= 10
         ? transactionId.substring(0, 10).toUpperCase()
         : transactionId.toUpperCase();

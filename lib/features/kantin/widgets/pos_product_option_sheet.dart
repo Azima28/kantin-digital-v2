@@ -63,36 +63,64 @@ class _PosProductOptionSheetState extends ConsumerState<PosProductOptionSheet> {
   }
 
   List<OptionCategory> _groupOptions(List<String> rawOptions) {
-    final Map<String, List<String>> map = {};
+    final Map<String, ({bool? explicitSingle, List<String> options})> map = {};
     for (final opt in rawOptions) {
       final clean = opt.trim();
       if (clean.isEmpty) continue;
 
-      String groupTitle = 'Pilihan Varian';
-      if (clean.contains(': ')) {
-        groupTitle = clean.split(': ')[0].trim();
+      bool? explicitSingle;
+      String optionBody = clean;
+
+      if (clean.startsWith(RegExp(r'^\[(PILIH 1|SINGLE|1)\]\s*', caseSensitive: false))) {
+        explicitSingle = true;
+        optionBody = clean.replaceFirst(RegExp(r'^\[(PILIH 1|SINGLE|1)\]\s*', caseSensitive: false), '');
+      } else if (clean.startsWith(RegExp(r'^\[(PILIH BANYAK|MULTI|\*)\]\s*', caseSensitive: false))) {
+        explicitSingle = false;
+        optionBody = clean.replaceFirst(RegExp(r'^\[(PILIH BANYAK|MULTI|\*)\]\s*', caseSensitive: false), '');
       }
-      map.putIfAbsent(groupTitle, () => []).add(clean);
+
+      String groupTitle = 'Pilihan Varian';
+      if (optionBody.contains(': ')) {
+        groupTitle = optionBody.split(': ')[0].trim();
+      }
+
+      final existing = map[groupTitle];
+      if (existing == null) {
+        map[groupTitle] = (
+          explicitSingle: explicitSingle,
+          options: [clean],
+        );
+      } else {
+        map[groupTitle] = (
+          explicitSingle: existing.explicitSingle ?? explicitSingle,
+          options: [...existing.options, clean],
+        );
+      }
     }
 
     final List<OptionCategory> categories = [];
-    map.forEach((title, opts) {
-      final lower = title.toLowerCase();
-      final isSingle = lower.contains('level') ||
-          lower.contains('pedas') ||
-          lower.contains('asin') ||
-          lower.contains('rasa') ||
-          lower.contains('porsi') ||
-          lower.contains('ukuran') ||
-          lower.contains('suhu') ||
-          lower.contains('es') ||
-          lower.contains('gula') ||
-          lower.contains('pilih 1');
+    map.forEach((title, data) {
+      bool isSingle;
+      if (data.explicitSingle != null) {
+        isSingle = data.explicitSingle!;
+      } else {
+        final lower = title.toLowerCase();
+        isSingle = lower.contains('level') ||
+            lower.contains('pedas') ||
+            lower.contains('asin') ||
+            lower.contains('rasa') ||
+            lower.contains('porsi') ||
+            lower.contains('ukuran') ||
+            lower.contains('suhu') ||
+            lower.contains('es') ||
+            lower.contains('gula') ||
+            lower.contains('pilih 1');
+      }
 
       categories.add(OptionCategory(
         title: title,
         isSingleSelect: isSingle,
-        options: opts,
+        options: data.options,
       ));
     });
 
@@ -483,14 +511,15 @@ class _PosProductOptionSheetState extends ConsumerState<PosProductOptionSheet> {
             final isSelected = _selectedOptions.contains(opt);
             final addonPrice = extractOptionAddonPrice(opt);
 
-            // Display name without group prefix
-            String displayName = opt;
+            // Display name without group prefix or tags
+            String displayName = opt.replaceAll(RegExp(r'^\[(PILIH 1|PILIH BANYAK|SINGLE|MULTI|\*|1)\]\s*', caseSensitive: false), '');
             if (displayName.contains(': ')) {
               displayName = displayName.substring(displayName.indexOf(': ') + 2);
             }
             if (displayName.contains(' (+Rp ')) {
               displayName = displayName.split(' (+Rp ')[0];
             }
+            displayName = displayName.trim();
 
             return InkWell(
               onTap: () => _toggleOption(opt, category.isSingleSelect, category.options),

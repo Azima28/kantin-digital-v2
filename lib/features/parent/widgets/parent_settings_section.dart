@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +9,7 @@ import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/providers/theme_provider.dart';
 import 'package:kantin_digital/core/widgets/app_image_picker_sheet.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 /// Settings section for parent dashboard with profile avatar upload, daily limit, card freeze, WA alerts.
@@ -131,42 +131,14 @@ class _ParentSettingsSectionState extends ConsumerState<ParentSettingsSection> {
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    Container(
-                      width: 58,
-                      height: 58,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Nebula.teal.withValues(alpha: 0.1),
-                        border: Border.all(color: Nebula.teal.withValues(alpha: 0.3), width: 2),
-                      ),
-                      child: ClipOval(
-                        child: (avatarUrl != null && avatarUrl.isNotEmpty)
-                            ? CachedNetworkImage(
-                                imageUrl: avatarUrl,
-                                fit: BoxFit.cover,
-                                placeholder: (_, __) => const Center(child: CupertinoActivityIndicator()),
-                                errorWidget: (_, __, ___) => Center(
-                                  child: Text(
-                                    parentName.isNotEmpty ? parentName[0].toUpperCase() : 'W',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.bold,
-                                      color: Nebula.teal,
-                                    ),
-                                  ),
-                                ),
-                              )
-                            : Center(
-                                child: Text(
-                                  parentName.isNotEmpty ? parentName[0].toUpperCase() : 'W',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: Nebula.teal,
-                                  ),
-                                ),
-                              ),
-                      ),
+                    AppAvatar(
+                      radius: 29,
+                      photoUrl: avatarUrl,
+                      role: 'parent',
+                      name: parentName,
+                      gender: authState.profile?['gender'] as String?,
+                      borderColor: Nebula.teal.withValues(alpha: 0.3),
+                      borderWidth: 2,
                     ),
                     Positioned(
                       bottom: -2,

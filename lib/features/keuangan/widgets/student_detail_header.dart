@@ -1,11 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 
 class StudentDetailHeader extends StatelessWidget {
   final String fullName;
@@ -18,7 +19,9 @@ class StudentDetailHeader extends StatelessWidget {
   final int balance;
   final String? rfid;
   final String lastTapStr;
-  final NumberFormat fmt;
+  final AppNumberFormat fmt;
+  final String? photoUrl;
+  final String? gender;
   final VoidCallback? onToggleCardFreeze;
   final VoidCallback? onRegisterCard;
 
@@ -35,6 +38,8 @@ class StudentDetailHeader extends StatelessWidget {
     required this.rfid,
     required this.lastTapStr,
     required this.fmt,
+    this.photoUrl,
+    this.gender,
     this.onToggleCardFreeze,
     this.onRegisterCard,
   });
@@ -69,20 +74,12 @@ class StudentDetailHeader extends StatelessWidget {
       ),
       child: Column(
         children: [
-          CircleAvatar(
-            radius: 32,
-            backgroundColor:
-                Nebula.teal.withValues(alpha: 0.08),
-            child: Text(
-              fullName.isNotEmpty
-                  ? fullName[0].toUpperCase()
-                  : 'S',
-              style: GoogleFonts.inter(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Nebula.teal,
-              ),
-            ),
+          AppAvatar(
+            radius: 36,
+            photoUrl: photoUrl,
+            role: 'student',
+            name: fullName,
+            gender: gender,
           ),
           const SizedBox(height: 12),
           Text(

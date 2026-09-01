@@ -1,12 +1,12 @@
 ﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 
 /// Top-up form widget — step 2 of the top-up flow.
 ///
@@ -15,7 +15,7 @@ import 'package:kantin_digital/core/models/models.dart';
 /// when they tap "LANJUT → KONFIRMASI".
 class TopupForm extends StatefulWidget {
   final StudentWithProfile selectedStudent;
-  final NumberFormat fmt;
+  final AppNumberFormat fmt;
   final void Function(int amount) onSubmit;
 
   const TopupForm({

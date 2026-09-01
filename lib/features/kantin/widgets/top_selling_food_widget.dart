@@ -2,9 +2,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 
@@ -369,7 +369,7 @@ class _TopSellingFoodWidgetState extends ConsumerState<TopSellingFoodWidget> {
 
                 _buildFilterOptionTile(
                   title: 'Hari Ini',
-                  subtitle: DateFormat('dd MMMM yyyy', 'id_ID').format(now),
+                  subtitle: AppDateFormatter.formatFullDate(now),
                   isSelected: _activeFilter == null || _activeFilter?.periodLabel == 'Hari Ini',
                   onTap: () {
                     Navigator.pop(ctx);
@@ -380,7 +380,7 @@ class _TopSellingFoodWidgetState extends ConsumerState<TopSellingFoodWidget> {
                 ),
                 _buildFilterOptionTile(
                   title: 'Kemarin',
-                  subtitle: DateFormat('dd MMMM yyyy', 'id_ID').format(now.subtract(const Duration(days: 1))),
+                  subtitle: AppDateFormatter.formatFullDate(now.subtract(const Duration(days: 1))),
                   isSelected: _activeFilter?.periodLabel == 'Kemarin',
                   onTap: () {
                     Navigator.pop(ctx);
@@ -396,7 +396,7 @@ class _TopSellingFoodWidgetState extends ConsumerState<TopSellingFoodWidget> {
                 ),
                 _buildFilterOptionTile(
                   title: '7 Hari Terakhir',
-                  subtitle: '${DateFormat('dd MMM', 'id_ID').format(now.subtract(const Duration(days: 6)))} - ${DateFormat('dd MMM yyyy', 'id_ID').format(now)}',
+                  subtitle: '${AppDateFormatter.formatDayMonth(now.subtract(const Duration(days: 6)))} - ${AppDateFormatter.formatDate(now)}',
                   isSelected: _activeFilter?.periodLabel == '7 Hari Terakhir',
                   onTap: () {
                     Navigator.pop(ctx);
@@ -411,7 +411,7 @@ class _TopSellingFoodWidgetState extends ConsumerState<TopSellingFoodWidget> {
                 ),
                 _buildFilterOptionTile(
                   title: 'Bulan Ini',
-                  subtitle: DateFormat('MMMM yyyy', 'id_ID').format(now),
+                  subtitle: AppDateFormatter.formatMonthYear(now),
                   isSelected: _activeFilter?.periodLabel == 'Bulan Ini',
                   onTap: () {
                     Navigator.pop(ctx);
@@ -464,7 +464,7 @@ class _TopSellingFoodWidgetState extends ConsumerState<TopSellingFoodWidget> {
                       },
                     );
                     if (pickedDate != null) {
-                      final labelStr = DateFormat('dd MMM yyyy', 'id_ID').format(pickedDate);
+                      final labelStr = AppDateFormatter.formatDate(pickedDate);
                       setState(() {
                         _activeFilter = CanteenSalesFilterParam(
                           startDate: pickedDate,

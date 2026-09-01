@@ -2,9 +2,9 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 
 /// Dialog Modal Grafik Tren Transaksi Realtime Sesuai Periode Yang Dipilih
@@ -22,7 +22,7 @@ class _DailyTrendChartDialogState extends ConsumerState<DailyTrendChartDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    const currencyFmt = AppNumberFormat(symbol: 'Rp ');
     final trendAsync = ref.watch(dailyTrendChartProvider);
 
     final periodTitle = widget.filterParam != null ? widget.filterParam!.formattedPeriodLabel : 'Harian';
@@ -424,8 +424,7 @@ class _DailyTrendChartPainter extends CustomPainter {
     if (selectedIndex >= 0 && selectedIndex < data.length) {
       final pt = points[selectedIndex];
       final item = data[selectedIndex];
-      final currencyFmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
-      final tooltipText = '${item.fullDayName}: ${currencyFmt.format(item.amount.round())}';
+      final tooltipText = '${item.fullDayName}: ${CurrencyFormatter.format(item.amount.round())}';
 
       final tooltipStyle = GoogleFonts.inter(
         fontSize: 11.5,

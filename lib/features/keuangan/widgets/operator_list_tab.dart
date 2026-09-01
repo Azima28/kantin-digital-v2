@@ -3,14 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 
 // ── Staff/Operator Tab ──────────────────────────────────────────────────────
 
@@ -72,11 +73,7 @@ class _StaffTabState extends ConsumerState<StaffTab> {
   @override
   Widget build(BuildContext context) {
     final staffAsync = ref.watch(keuanganStaffProvider);
-    final fmt = NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: 'Rp ',
-      decimalDigits: 0,
-    );
+    const fmt = AppNumberFormat(symbol: 'Rp ');
 
     return RefreshIndicator(
       onRefresh: () async => ref.invalidate(keuanganStaffProvider),
@@ -119,11 +116,41 @@ class _StaffTabState extends ConsumerState<StaffTab> {
                     : 'PETUGAS AKTIF (${filtered.length})',
               ),
               const SizedBox(height: 8),
-              ...displayed.map((s) => _buildStaffCard(
-                context, ref, s, fmt,
-                canteenData: rawItems[s.id]?['canteen_operators']
-                    as Map<String, dynamic>?,
-              )),
+              Container(
+                decoration: BoxDecoration(
+                  color: context.cardBg,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: context.dividerCol,
+                    width: 0.8,
+                  ),
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: displayed.length,
+                  separatorBuilder: (context, index) => Divider(
+                    height: 1,
+                    thickness: 1.0,
+                    color: context.dividerCol,
+                    indent: 14,
+                    endIndent: 14,
+                  ),
+                  itemBuilder: (context, index) {
+                    final s = displayed[index];
+                    return _buildStaffCard(
+                      context,
+                      ref,
+                      s,
+                      fmt,
+                      canteenData: rawItems[s.id]?['canteen_operators']
+                          as Map<String, dynamic>?,
+                      isFirst: index == 0,
+                      isLast: index == displayed.length - 1,
+                    );
+                  },
+                ),
+              ),
               if (_isLoadingMore) ...[
                 const SizedBox(height: 14),
                 Center(
@@ -244,70 +271,38 @@ class _StaffTabState extends ConsumerState<StaffTab> {
     BuildContext context,
     WidgetRef ref,
     UserProfile staff,
-    NumberFormat fmt, {
+    AppNumberFormat fmt, {
     required Map<String, dynamic>? canteenData,
+    bool isFirst = false,
+    bool isLast = false,
   }) {
     final name = staff.fullName ?? 'Petugas';
     final isActive = staff.isActive == true;
-    final initials = name.length >= 2
-        ? '${name[0]}${name.split(' ').last[0]}'.toUpperCase()
-        : name[0].toUpperCase();
 
     final canteenName = canteenData?['canteen_name'] ?? 'Belum Ada Stan';
     final omzet =
         (canteenData?['balance_earned'] as num?)?.toInt() ?? 0;
 
-    return GestureDetector(
-      onTap: () {
-        context.push('/finance/users/merchant/${staff.id}');
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: context.shadowColor,
-              blurRadius: 12,
-              offset: const Offset(0, 3),
-            ),
-          ],
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          context.push('/finance/users/merchant/${staff.id}');
+        },
+        borderRadius: BorderRadius.vertical(
+          top: isFirst ? const Radius.circular(16) : Radius.zero,
+          bottom: isLast ? const Radius.circular(16) : Radius.zero,
         ),
         child: Padding(
-          padding: EdgeInsets.all(14),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
             children: [
-              Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundColor: Nebula.teal.withValues(alpha: 0.08),
-                    child: Text(
-                      initials,
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: Nebula.teal,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: isActive
-                            ? Nebula.teal
-                            : context.dividerCol,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1.5),
-                      ),
-                    ),
-                  ),
-                ],
+              AppAvatar(
+                radius: 22,
+                photoUrl: staff.avatarUrl,
+                role: 'canteen',
+                name: name,
+                gender: staff.gender,
               ),
               const SizedBox(width: 12),
               Expanded(

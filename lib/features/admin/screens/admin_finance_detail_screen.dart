@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
@@ -14,9 +13,11 @@ import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 import 'package:kantin_digital/features/shared/screens/officer_activities_screen.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_edit_finance_sheet.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 
 
 class AdminFinanceDetailScreen extends ConsumerStatefulWidget {
@@ -278,10 +279,12 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                   padding: const EdgeInsets.all(20),
                   child: Row(
                     children: [
-                      CircleAvatar(
+                      AppAvatar(
                         radius: 36,
-                        backgroundColor: Nebula.teal.withValues(alpha: 0.1),
-                        child: Icon(CupertinoIcons.person_solid, color: Nebula.teal, size: 36),
+                        photoUrl: profile.avatarUrl,
+                        role: 'finance',
+                        name: fullName,
+                        gender: profile.gender,
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -496,7 +499,7 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                                         ),
                                       ),
                                       Text(
-                                        DateFormat('HH:mm', 'id_ID').format(date),
+                                        AppDateFormatter.formatTime(date),
                                         style: GoogleFonts.inter(
                                           fontSize: 11,
                                           color: context.textSecondary,

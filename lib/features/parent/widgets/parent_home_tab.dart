@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
@@ -9,6 +8,7 @@ import 'package:kantin_digital/features/parent/widgets/parent_balance_card.dart'
 import 'package:kantin_digital/features/parent/widgets/parent_action_grid.dart';
 import 'package:kantin_digital/features/parent/widgets/parent_transaction_tile.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 
 /// Home tab of the parent dashboard.
 ///
@@ -79,15 +79,12 @@ class ParentHomeTab extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: Color(0x1A006767),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(CupertinoIcons.person_fill,
-                    color: Nebula.teal, size: 28),
+              AppAvatar(
+                radius: 27,
+                role: 'student',
+                name: studentName,
+                borderColor: Nebula.teal.withValues(alpha: 0.2),
+                borderWidth: 1.0,
               ),
               const SizedBox(width: 16),
               Expanded(

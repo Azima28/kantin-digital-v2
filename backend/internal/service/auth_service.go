@@ -46,13 +46,13 @@ func (s *AuthService) Login(ctx context.Context, identifier, password, expectedR
 		if parentErr == nil && parentUser != nil {
 			// Check parent's own password
 			if parentUser.Password != nil && *parentUser.Password != "" &&
-				(hasher.CheckPassword(password, *parentUser.Password) || password == *parentUser.Password) {
+				hasher.CheckPassword(password, *parentUser.Password) {
 				authenticatedUser = parentUser
 			} else {
 				// Fallback: check if password matches student's password (family login)
 				studentUser, studentErr := s.userRepo.FindByIdentifier(ctx, cleanID)
 				if studentErr == nil && studentUser != nil && studentUser.Password != nil && *studentUser.Password != "" {
-					if hasher.CheckPassword(password, *studentUser.Password) || password == *studentUser.Password {
+					if hasher.CheckPassword(password, *studentUser.Password) {
 						authenticatedUser = parentUser
 					}
 				}
@@ -68,7 +68,7 @@ func (s *AuthService) Login(ctx context.Context, identifier, password, expectedR
 				return nil, err
 			}
 		} else if user != nil && user.Password != nil && *user.Password != "" {
-			if hasher.CheckPassword(password, *user.Password) || password == *user.Password {
+			if hasher.CheckPassword(password, *user.Password) {
 				if expectedRole == string(domain.RoleParent) || expectedRole == "parent" {
 					if user.Role == domain.RoleParent {
 						authenticatedUser = user
@@ -89,7 +89,7 @@ func (s *AuthService) Login(ctx context.Context, identifier, password, expectedR
 	if authenticatedUser == nil {
 		parentUser, parentErr := s.userRepo.FindParentByStudentNISN(ctx, cleanID)
 		if parentErr == nil && parentUser != nil && parentUser.Password != nil && *parentUser.Password != "" {
-			if hasher.CheckPassword(password, *parentUser.Password) || password == *parentUser.Password {
+			if hasher.CheckPassword(password, *parentUser.Password) {
 				authenticatedUser = parentUser
 			}
 		}
@@ -137,7 +137,7 @@ func (s *AuthService) ChangePassword(ctx context.Context, userID, oldPassword, n
 	}
 
 	if user.Password != nil && *user.Password != "" {
-		if !hasher.CheckPassword(oldPassword, *user.Password) && oldPassword != *user.Password {
+		if !hasher.CheckPassword(oldPassword, *user.Password) {
 			return errors.New("kata sandi lama tidak cocok")
 		}
 	}
@@ -150,7 +150,7 @@ func (s *AuthService) ChangePassword(ctx context.Context, userID, oldPassword, n
 	return s.userRepo.UpdatePassword(ctx, userID, newHashed)
 }
 
-func (s *AuthService) UpdateProfile(ctx context.Context, userID, fullName string, email, username, phoneNumber, avatarURL *string) (*domain.UserProfile, error) {
+func (s *AuthService) UpdateProfile(ctx context.Context, userID, fullName string, email, username, phoneNumber, avatarURL, gender *string) (*domain.UserProfile, error) {
 	user, err := s.userRepo.FindByID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -172,6 +172,10 @@ func (s *AuthService) UpdateProfile(ctx context.Context, userID, fullName string
 	}
 	if avatarURL != nil && strings.TrimSpace(*avatarURL) != "" {
 		user.AvatarURL = avatarURL
+	}
+	if gender != nil && strings.TrimSpace(*gender) != "" {
+		g := strings.TrimSpace(*gender)
+		user.Gender = &g
 	}
 
 	if err := s.userRepo.UpdateUserProfile(ctx, user); err != nil {

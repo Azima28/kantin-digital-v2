@@ -3,11 +3,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/services/pdf_service.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 
 /// Full-screen view for displaying complete transaction receipt and details.
@@ -137,7 +137,7 @@ class ParentTransactionDetailScreen extends StatelessWidget {
                       const SizedBox(height: 6),
 
                       Text(
-                        '${isIncoming ? "+" : "-"}Rp ${NumberFormat('#,###', 'id_ID').format(amount)}',
+                        '${isIncoming ? "+" : "-"}${CurrencyFormatter.format(amount)}',
                         style: GoogleFonts.inter(
                           fontSize: 26,
                           fontWeight: FontWeight.w900,
@@ -148,7 +148,7 @@ class ParentTransactionDetailScreen extends StatelessWidget {
                       const SizedBox(height: 4),
 
                       Text(
-                        '${DateFormat('EEEE, dd MMMM yyyy • HH:mm', 'id_ID').format(date)} WIB',
+                        '${AppDateFormatter.formatFullDayDateWithTime(date)} WIB',
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,

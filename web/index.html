@@ -117,7 +117,7 @@
     <div class="spinner"></div>
   </div>
   <script>
-    // Clear any stale local service workers or caches on domain migration
+    // Force unregister stale service workers and clear browser cache storage on each release
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(function(registrations) {
         for (var i = 0; i < registrations.length; i++) {
@@ -132,7 +132,13 @@
         }
       });
     }
+
+    // Dynamic cache-busting loader for flutter_bootstrap.js
+    var v = Date.now();
+    var s = document.createElement('script');
+    s.src = 'flutter_bootstrap.js?v=' + v;
+    s.async = true;
+    document.body.appendChild(s);
   </script>
-  <script src="flutter_bootstrap.js?v=20260824_v29" async></script>
 </body>
 </html>

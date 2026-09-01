@@ -33,7 +33,7 @@ extension AppThemeX on BuildContext {
 
   // ─── Borders / Dividers ─────────────────────────────────────────────────
   /// Divider and border color
-  Color get dividerCol => isDark ? AppColors.darkBorder : AppColors.borderGray;
+  Color get dividerCol => isDark ? const Color(0xFF334155) : const Color(0xFF94A3B8).withValues(alpha: 0.38);
 
   /// Light border (cards edges)
   Color get borderLight => isDark ? AppColors.darkBorder : AppColors.borderLight;

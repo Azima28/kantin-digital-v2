@@ -1,11 +1,9 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/models/models.dart';
-import 'package:kantin_digital/core/services/api_client.dart';
 import 'package:kantin_digital/core/widgets/notification_bell.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
@@ -19,6 +17,7 @@ import 'package:kantin_digital/features/admin/widgets/admin_contribution_card.da
 import 'package:kantin_digital/features/admin/widgets/admin_system_health_card.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 
 class AdminDashboardScreen extends ConsumerWidget {
   const AdminDashboardScreen({super.key});
@@ -46,44 +45,14 @@ class AdminDashboardScreen extends ConsumerWidget {
             elevation: 0,
             title: Row(
               children: [
-                GestureDetector(
+                AppAvatar(
+                  radius: 17,
+                  photoUrl: avatarUrl,
+                  role: 'super_admin',
+                  name: fullName,
+                  borderColor: Colors.white.withValues(alpha: 0.3),
+                  borderWidth: 1.5,
                   onTap: () => context.go('/admin/profile'),
-                  child: Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      color: Nebula.teal,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
-                    ),
-                    child: ClipOval(
-                      child: (avatarUrl != null && avatarUrl.isNotEmpty)
-                          ? CachedNetworkImage(
-                              imageUrl: ApiClient.resolveImageUrl(avatarUrl),
-                              fit: BoxFit.cover,
-                              errorWidget: (_, __, ___) => Center(
-                                child: Text(
-                                  fullName.isNotEmpty ? fullName[0].toUpperCase() : 'S',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            )
-                          : Center(
-                              child: Text(
-                                fullName.isNotEmpty ? fullName[0].toUpperCase() : 'S',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                    ),
-                  ),
                 ),
                 const SizedBox(width: 12),
                 Text(

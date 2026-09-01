@@ -14,6 +14,7 @@ class UserProfile {
   final String? role;
   final bool? isActive;
   final DateTime? createdAt;
+  final String? gender;
 
   const UserProfile({
     required this.id,
@@ -28,6 +29,7 @@ class UserProfile {
     this.role,
     this.isActive,
     this.createdAt,
+    this.gender,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -43,6 +45,7 @@ class UserProfile {
       relation: json['relation'] as String?,
       role: json['role'] as String?,
       isActive: json['is_active'] as bool?,
+      gender: json['gender'] as String?,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
@@ -61,6 +64,7 @@ class UserProfile {
         'relation': relation,
         'role': role,
         'is_active': isActive,
+        'gender': gender,
         'created_at': createdAt?.toIso8601String(),
       };
 
@@ -78,6 +82,7 @@ class UserProfile {
     String? role,
     bool? isActive,
     DateTime? createdAt,
+    String? gender,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -92,6 +97,7 @@ class UserProfile {
       role: role ?? this.role,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
+      gender: gender ?? this.gender,
     );
   }
 

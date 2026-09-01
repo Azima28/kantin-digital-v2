@@ -1,16 +1,15 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/models/models.dart';
-import 'package:kantin_digital/core/services/api_client.dart';
 import 'package:kantin_digital/core/services/report_export_service.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 
 class AdminFinanceLedgerScreen extends ConsumerStatefulWidget {
@@ -36,11 +35,7 @@ class _AdminFinanceLedgerScreenState
   @override
   Widget build(BuildContext context) {
     final ledgerAsync = ref.watch(adminFinanceOfficersLedgerProvider);
-    final fmt = NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: 'Rp ',
-      decimalDigits: 0,
-    );
+    const fmt = AppNumberFormat(symbol: 'Rp ');
 
     return Scaffold(
       backgroundColor: context.surfaceBg,
@@ -537,7 +532,7 @@ class _AdminFinanceLedgerScreenState
   Widget _buildOfficerCard(
     BuildContext context,
     FinanceOfficerLedgerItem officer,
-    NumberFormat fmt,
+    AppNumberFormat fmt,
   ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -560,50 +555,11 @@ class _AdminFinanceLedgerScreenState
           // Header: Avatar, Name, Status Badge
           Row(
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: Nebula.teal.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Nebula.teal.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
-                ),
-                child: ClipOval(
-                  child: (officer.avatarUrl != null &&
-                          officer.avatarUrl!.isNotEmpty)
-                      ? CachedNetworkImage(
-                          imageUrl:
-                              ApiClient.resolveImageUrl(officer.avatarUrl),
-                          fit: BoxFit.cover,
-                          errorWidget: (_, __, ___) => Center(
-                            child: Text(
-                              officer.fullName.isNotEmpty
-                                  ? officer.fullName[0].toUpperCase()
-                                  : 'P',
-                              style: GoogleFonts.inter(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Nebula.teal,
-                              ),
-                            ),
-                          ),
-                        )
-                      : Center(
-                          child: Text(
-                            officer.fullName.isNotEmpty
-                                ? officer.fullName[0].toUpperCase()
-                                : 'P',
-                            style: GoogleFonts.inter(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Nebula.teal,
-                            ),
-                          ),
-                        ),
-                ),
+              AppAvatar(
+                radius: 22,
+                photoUrl: officer.avatarUrl,
+                role: 'finance',
+                name: officer.fullName,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -920,11 +876,7 @@ class _MasterLedgerExportModalState extends State<_MasterLedgerExportModal> {
   int _filterIndex = 0; // 0: Semua Petugas, 1: Hanya Petugas Aktif
   bool _isExporting = false;
 
-  final _fmt = NumberFormat.currency(
-    locale: 'id_ID',
-    symbol: 'Rp ',
-    decimalDigits: 0,
-  );
+  final _fmt = const AppNumberFormat(symbol: 'Rp ');
 
   List<FinanceOfficerLedgerItem> _getFilteredOfficers() {
     if (_filterIndex == 1) {

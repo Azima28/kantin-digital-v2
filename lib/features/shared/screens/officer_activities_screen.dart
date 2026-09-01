@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
@@ -11,6 +10,7 @@ import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/core/utils/app_date_formatter.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 
 class OfficerActivitiesScreen extends ConsumerStatefulWidget {
   final String officerId;
@@ -390,14 +390,14 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
             icon: CupertinoIcons.calendar,
             label: _selectedDate == null
                 ? 'Tanggal'
-                : DateFormat('dd MMM yyyy', 'id_ID').format(_selectedDate!),
+                : AppDateFormatter.formatDate(_selectedDate!),
             onTap: _pickDate,
           ),
           _filterDropdown<int>(
             value: _selectedMonth,
             hint: 'Bulan',
             items: List.generate(12, (i) => i + 1),
-            labelBuilder: (month) => DateFormat.MMMM('id_ID').format(DateTime(2024, month)),
+            labelBuilder: (month) => AppDateFormatter.fullMonths[month],
             onChanged: (value) {
               setState(() {
                 _selectedMonth = value;
@@ -542,8 +542,6 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
   }
 
   Widget _buildActivityTile(Map<String, dynamic> log) {
-    final fmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
-
     // Extract type / action_type
     String actionType = log['action_type']?.toString() ?? log['type']?.toString() ?? '';
     if (actionType.isEmpty) {
@@ -662,7 +660,7 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      DateFormat('HH:mm', 'id_ID').format(date),
+                      AppDateFormatter.formatTime(date),
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         color: context.textSecondary,
@@ -690,7 +688,7 @@ class _OfficerActivitiesScreenState extends ConsumerState<OfficerActivitiesScree
                     if (amount > 0) ...[
                       const SizedBox(width: 8),
                       Text(
-                        '$sign${fmt.format(amount)}',
+                        '$sign${CurrencyFormatter.format(amount)}',
                         style: GoogleFonts.inter(
                           fontSize: 12.5,
                           fontWeight: FontWeight.bold,

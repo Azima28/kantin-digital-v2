@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/features/admin/widgets/setting_section_widget.dart';
 import 'package:kantin_digital/features/admin/widgets/setting_tile_widget.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 
 /// Account & Security section used inside [AdminSettingsScreen].
 ///
@@ -11,12 +12,16 @@ import 'package:kantin_digital/core/theme/nebula_colors.dart';
 class AdminSettingsAccountSection extends StatelessWidget {
   final String fullName;
   final String email;
+  final String? avatarUrl;
+  final String? gender;
   final VoidCallback onLogout;
 
   const AdminSettingsAccountSection({
     super.key,
     required this.fullName,
     required this.email,
+    this.avatarUrl,
+    this.gender,
     required this.onLogout,
   });
 
@@ -27,17 +32,12 @@ class AdminSettingsAccountSection extends StatelessWidget {
       title: 'Akun & Keamanan',
       children: [
         SettingTileWidget(
-          leading: CircleAvatar(
+          leading: AppAvatar(
             radius: 20,
-            backgroundColor: Nebula.teal.withValues(alpha: 0.1),
-            child: Text(
-              fullName.isNotEmpty ? fullName[0].toUpperCase() : 'S',
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Nebula.teal,
-              ),
-            ),
+            photoUrl: avatarUrl,
+            role: 'admin',
+            name: fullName,
+            gender: gender,
           ),
           title: fullName,
           subtitle: email,

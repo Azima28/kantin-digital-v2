@@ -608,10 +608,10 @@ class _ManageProductsScreenState extends ConsumerState<ManageProductsScreen> {
                           ),
                           const SizedBox(height: 14),
 
-                          // 6. Reviews List
+                          // 6. Reviews List (Filtered specifically for this product)
                           Consumer(
                             builder: (context, ref, child) {
-                              final reviewsAsync = ref.watch(canteenReviewsProvider(product.operatorId));
+                              final reviewsAsync = ref.watch(productReviewsProvider((operatorId: product.operatorId, productId: product.id)));
 
                               return reviewsAsync.when(
                                 data: (List<OrderReview> allReviews) {

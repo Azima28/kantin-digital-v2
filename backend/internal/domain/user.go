@@ -27,6 +27,7 @@ type UserProfile struct {
 	IsActive    bool       `json:"is_active"`
 	Relation    *string    `json:"relation,omitempty"`
 	AvatarURL   *string    `json:"avatar_url,omitempty"`
+	Gender      *string    `json:"gender,omitempty"`
 	CreatedAt   time.Time  `json:"created_at"`
 }
 

@@ -25,6 +25,7 @@ import 'package:kantin_digital/features/parent/widgets/parent_settings_section.d
 import 'package:kantin_digital/features/parent/widgets/parent_dashboard_header.dart';
 import 'package:kantin_digital/features/parent/widgets/parent_home_tab.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 import 'package:kantin_digital/features/parent/widgets/parent_weekly_trend_chart.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 
@@ -574,10 +575,11 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                CircleAvatar(
+                AppAvatar(
                   radius: 16,
-                  backgroundColor: Nebula.teal.withValues(alpha: 0.08),
-                  child: const Icon(Icons.person_outline_rounded, color: Nebula.teal, size: 16),
+                  photoUrl: authState.profile?['avatar_url'],
+                  role: 'parent',
+                  name: fullName,
                 ),
                 const SizedBox(width: 8),
                 Expanded(

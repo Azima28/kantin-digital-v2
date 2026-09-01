@@ -222,6 +222,23 @@ final canteenReviewsProvider =
   }
 });
 
+// Provider to fetch product-specific reviews (Cache 3 Menit)
+final productReviewsProvider =
+    FutureProvider.autoDispose.family<List<OrderReview>, ({String operatorId, String productId})>((Ref ref, arg) async {
+  ref.cacheFor(const Duration(minutes: 3));
+  try {
+    final apiClient = ref.watch(apiClientProvider);
+    final response = await apiClient.get('/canteens/${arg.operatorId}/reviews?product_id=${arg.productId}');
+    if (response.success && response.data != null) {
+      final list = response.data as List<dynamic>;
+      return list.map((e) => OrderReview.fromJson(e as Map<String, dynamic>)).toList();
+    }
+    return <OrderReview>[];
+  } catch (e) {
+    return <OrderReview>[];
+  }
+});
+
 // ============================================================================
 // DAILY SALES VOLUME CHART PROVIDER (Canteen Operator)
 // ============================================================================

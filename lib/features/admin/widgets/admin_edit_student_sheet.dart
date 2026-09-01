@@ -9,6 +9,7 @@ import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 import 'package:kantin_digital/core/models/models.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 
 /// Bottom sheet for editing an existing student user's profile and data.
 /// Updated with a 2-column grid layout matching the requested design.
@@ -28,6 +29,7 @@ void showEditStudentSheet(
   );
   final rfidCtrl = TextEditingController(text: student.rfidUid);
   String selectedClass = student.class_ ?? '7-A';
+  String selectedGender = profile.gender ?? (AppAvatar.isFemale(name: profile.fullName) ? 'P' : 'L');
   bool isSaving = false;
 
   final academic = ref.read(academicStructureProvider).asData?.value;
@@ -78,12 +80,47 @@ void showEditStudentSheet(
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'Edit Profil Siswa',
-                  style: GoogleFonts.inter(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Nebula.teal,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Edit Profil Siswa',
+                      style: GoogleFonts.inter(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Nebula.teal,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(CupertinoIcons.clear_circled_solid, size: 22),
+                      color: context.textSecondary,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // ── Foto Profil / Karakter Default Siswa ──
+                Center(
+                  child: Column(
+                    children: [
+                      AppAvatar(
+                        radius: 36,
+                        photoUrl: profile.avatarUrl,
+                        role: 'student',
+                        name: nameCtrl.text.isNotEmpty ? nameCtrl.text : profile.fullName,
+                        gender: selectedGender,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        selectedGender == 'P' ? 'Avatar Siswa Perempuan' : 'Avatar Siswa Laki-laki',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: context.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -108,6 +145,105 @@ void showEditStudentSheet(
                         controller: nisnCtrl,
                         inputType: TextInputType.number,
                       ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                // ── Jenis Kelamin Selector (Laki-laki / Perempuan) ──
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Jenis Kelamin *',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: context.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => setLocal(() => selectedGender = 'L'),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              height: 44,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: selectedGender == 'L'
+                                    ? Nebula.teal.withValues(alpha: 0.12)
+                                    : context.surfaceBg,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: selectedGender == 'L' ? Nebula.teal : context.borderLight,
+                                  width: selectedGender == 'L' ? 1.5 : 0.8,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.male_rounded,
+                                    size: 18,
+                                    color: selectedGender == 'L' ? Nebula.teal : context.textSecondary,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Laki-laki',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      fontWeight: selectedGender == 'L' ? FontWeight.bold : FontWeight.w500,
+                                      color: selectedGender == 'L' ? Nebula.teal : context.textPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => setLocal(() => selectedGender = 'P'),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              height: 44,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: selectedGender == 'P'
+                                    ? Nebula.teal.withValues(alpha: 0.12)
+                                    : context.surfaceBg,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: selectedGender == 'P' ? Nebula.teal : context.borderLight,
+                                  width: selectedGender == 'P' ? 1.5 : 0.8,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.female_rounded,
+                                    size: 18,
+                                    color: selectedGender == 'P' ? Nebula.teal : context.textSecondary,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Perempuan',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      fontWeight: selectedGender == 'P' ? FontWeight.bold : FontWeight.w500,
+                                      color: selectedGender == 'P' ? Nebula.teal : context.textPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -233,6 +369,7 @@ void showEditStudentSheet(
                                   'daily_limit': parsedLimit,
                                   'rfid_uid': rfidVal,
                                   'class': selectedClass,
+                                  'gender': selectedGender,
                                 },
                               );
 

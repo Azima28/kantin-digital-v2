@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
@@ -12,6 +11,7 @@ import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/core/widgets/notification_bell.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/kantin/models/order_item.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
@@ -376,15 +376,12 @@ class _PosHomeScreenState extends ConsumerState<PosHomeScreen> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircleAvatar(
+            AppAvatar(
               radius: 20,
-              backgroundColor: Nebula.teal.withValues(alpha: 0.1),
-              backgroundImage: profilePhotoUrl != null
-                  ? CachedNetworkImageProvider(profilePhotoUrl)
-                  : null,
-              child: profilePhotoUrl == null
-                  ? const Icon(Icons.storefront_rounded, color: Nebula.teal, size: 20)
-                  : null,
+              photoUrl: profilePhotoUrl,
+              role: 'petugas_kantin',
+              name: canteenName,
+              borderColor: Nebula.teal.withValues(alpha: 0.3),
             ),
             const SizedBox(width: 12),
             Flexible(
@@ -540,8 +537,10 @@ class _PosHomeScreenState extends ConsumerState<PosHomeScreen> {
                     final int countBaru = orders.where((o) => o.status.trim() == 'Baru').length;
                     final int countProses = orders.where((o) {
                       final s = o.status.trim();
-                      return s == 'Sedang Dimasak' ||
+                      return s == 'Sedang Disiapkan' ||
+                          s == 'Sedang Dimasak' ||
                           s == 'Siap Diambil' ||
+                          s == 'Sedang Diantar' ||
                           s == 'Siap Diantar' ||
                           s == 'Menunggu Pembatalan' ||
                           s == 'Menunggu Persetujuan Murid';
@@ -720,8 +719,10 @@ class _PosHomeScreenState extends ConsumerState<PosHomeScreen> {
                   data: (orders) {
                     final activeOrders = orders.where((o) =>
                         o.status == 'Baru' ||
+                        o.status == 'Sedang Disiapkan' ||
                         o.status == 'Sedang Dimasak' ||
                         o.status == 'Siap Diambil' ||
+                        o.status == 'Sedang Diantar' ||
                         o.status == 'Siap Diantar').take(3).toList();
 
                     return Column(
@@ -1012,7 +1013,7 @@ class _PosHomeScreenState extends ConsumerState<PosHomeScreen> {
     final String? imgUrl = topItem?.imageUrl;
 
     Color badgeColor = Nebula.amber;
-    if (order.status == 'Siap Diantar' || order.status == 'Siap Diambil') {
+    if (order.status == 'Sedang Diantar' || order.status == 'Siap Diantar' || order.status == 'Siap Diambil') {
       badgeColor = const Color(0xFF0284C7);
     }
 

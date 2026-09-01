@@ -1,17 +1,17 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
-import 'package:kantin_digital/core/services/api_client.dart';
 import 'package:kantin_digital/core/services/report_export_service.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 
 class AdminFinanceOfficerLedgerDetailScreen extends ConsumerStatefulWidget {
@@ -61,11 +61,7 @@ class _AdminFinanceOfficerLedgerDetailScreenState
   Widget build(BuildContext context) {
     final detailAsync =
         ref.watch(adminFinanceOfficerLedgerDetailProvider(widget.officerId));
-    final fmt = NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: 'Rp ',
-      decimalDigits: 0,
-    );
+    const fmt = AppNumberFormat(symbol: 'Rp ');
 
     return Scaffold(
       backgroundColor: context.surfaceBg,
@@ -173,52 +169,11 @@ class _AdminFinanceOfficerLedgerDetailScreenState
                       children: [
                         Row(
                           children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: Nebula.teal.withValues(alpha: 0.15),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Nebula.teal.withValues(alpha: 0.3),
-                                  width: 1,
-                                ),
-                              ),
-                              child: ClipOval(
-                                child: (officer.avatarUrl != null &&
-                                        officer.avatarUrl!.isNotEmpty)
-                                    ? CachedNetworkImage(
-                                        imageUrl: ApiClient.resolveImageUrl(
-                                            officer.avatarUrl),
-                                        fit: BoxFit.cover,
-                                        errorWidget: (_, __, ___) => Center(
-                                          child: Text(
-                                            officer.fullName.isNotEmpty
-                                                ? officer.fullName[0]
-                                                    .toUpperCase()
-                                                : 'P',
-                                            style: GoogleFonts.inter(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              color: Nebula.teal,
-                                            ),
-                                          ),
-                                        ),
-                                      )
-                                    : Center(
-                                        child: Text(
-                                          officer.fullName.isNotEmpty
-                                              ? officer.fullName[0]
-                                                  .toUpperCase()
-                                              : 'P',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: Nebula.teal,
-                                          ),
-                                        ),
-                                      ),
-                              ),
+                            AppAvatar(
+                              radius: 24,
+                              photoUrl: officer.avatarUrl,
+                              role: 'finance',
+                              name: officer.fullName,
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -710,7 +665,7 @@ class _AdminFinanceOfficerLedgerDetailScreenState
   Widget _buildJournalCard(
     BuildContext context,
     OfficerJournalEntry j,
-    NumberFormat fmt,
+    AppNumberFormat fmt,
   ) {
     Color itemColor = Nebula.teal;
     IconData itemIcon = CupertinoIcons.arrow_down_circle_fill;
@@ -727,7 +682,7 @@ class _AdminFinanceOfficerLedgerDetailScreenState
     }
 
     final dateStr = j.createdAt != null
-        ? DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(j.createdAt!.toLocal())
+        ? AppDateFormatter.formatDateWithTime(j.createdAt)
         : '-';
 
     String targetDisplay = j.targetName;
@@ -832,7 +787,7 @@ class _AdminFinanceOfficerLedgerDetailScreenState
 
   Widget _buildShiftsSection(
     BuildContext context,
-    NumberFormat fmt,
+    AppNumberFormat fmt,
     FinanceOfficerLedgerItem officer,
   ) {
     final shiftsAsync = ref.watch(adminAllShiftsProvider(widget.officerId));
@@ -1115,8 +1070,7 @@ class _OfficerLedgerExportModalState extends State<_OfficerLedgerExportModal> {
   int _selectedFormat = 0; // 0: PDF, 1: Excel
   bool _isExporting = false;
 
-  final _fmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
-  final _dateFmt = DateFormat('dd MMM yyyy', 'id_ID');
+  final _fmt = const AppNumberFormat(symbol: 'Rp ');
 
   @override
   void initState() {
@@ -1163,15 +1117,15 @@ class _OfficerLedgerExportModalState extends State<_OfficerLedgerExportModal> {
       return 'Semua Waktu';
     }
     if (_startDate != null && _endDate != null) {
-      if (_dateFmt.format(_startDate!) == _dateFmt.format(_endDate!)) {
-        return _dateFmt.format(_startDate!);
+      if (AppDateFormatter.formatDate(_startDate!) == AppDateFormatter.formatDate(_endDate!)) {
+        return AppDateFormatter.formatDate(_startDate!);
       }
-      return '${_dateFmt.format(_startDate!)} - ${_dateFmt.format(_endDate!)}';
+      return '${AppDateFormatter.formatDate(_startDate!)} - ${AppDateFormatter.formatDate(_endDate!)}';
     }
     if (_startDate != null) {
-      return 'Sejak ${_dateFmt.format(_startDate!)}';
+      return 'Sejak ${AppDateFormatter.formatDate(_startDate!)}';
     }
-    return 'Sampai ${_dateFmt.format(_endDate!)}';
+    return 'Sampai ${AppDateFormatter.formatDate(_endDate!)}';
   }
 
   Future<void> _pickStartDate() async {
@@ -1530,7 +1484,7 @@ class _OfficerLedgerExportModalState extends State<_OfficerLedgerExportModal> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    _startDate != null ? _dateFmt.format(_startDate!) : 'Awal',
+                                    _startDate != null ? AppDateFormatter.formatDate(_startDate!) : 'Awal',
                                     style: GoogleFonts.inter(
                                       fontSize: 12.5,
                                       fontWeight: FontWeight.bold,
@@ -1585,7 +1539,7 @@ class _OfficerLedgerExportModalState extends State<_OfficerLedgerExportModal> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    _endDate != null ? _dateFmt.format(_endDate!) : 'Hari Ini',
+                                    _endDate != null ? AppDateFormatter.formatDate(_endDate!) : 'Hari Ini',
                                     style: GoogleFonts.inter(
                                       fontSize: 12.5,
                                       fontWeight: FontWeight.bold,

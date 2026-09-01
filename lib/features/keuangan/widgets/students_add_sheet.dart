@@ -8,6 +8,7 @@ import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 
 /// Shows a modal bottom sheet for adding a new student.
 void showAddStudentSheet(BuildContext context, WidgetRef ref) {
@@ -25,6 +26,7 @@ void showAddStudentSheet(BuildContext context, WidgetRef ref) {
       : ['7-A', '7-B', '7-C', '8-A', '8-B', '8-C', '9-A', '9-B', '9-C'];
 
   String selectedClass = availableClasses.isNotEmpty ? availableClasses.first : '7-A';
+  String selectedGender = 'L';
   bool isSaving = false;
 
   showModalBottomSheet(
@@ -40,7 +42,7 @@ void showAddStudentSheet(BuildContext context, WidgetRef ref) {
             right: 20),
         decoration: BoxDecoration(
           color: context.cardBg,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SingleChildScrollView(
           child: Column(
@@ -66,11 +68,145 @@ void showAddStudentSheet(BuildContext context, WidgetRef ref) {
                   color: context.textPrimary,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
+
+              // Avatar Preview Header
+              Center(
+                child: Column(
+                  children: [
+                    AppAvatar(
+                      radius: 36,
+                      photoUrl: null,
+                      role: 'student',
+                      name: nameCtrl.text.isNotEmpty ? nameCtrl.text : 'Siswa',
+                      gender: selectedGender,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Preview Avatar Karakter',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: context.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
               _sectionLabel(context, 'INFORMASI PRIBADI'),
               const SizedBox(height: 8),
-              _buildFormField(context, nameCtrl, '${AppStrings.labelFullName} *'),
+              _buildFormField(
+                context,
+                nameCtrl,
+                '${AppStrings.labelFullName} *',
+                onChanged: (_) => setLocal(() {}),
+              ),
               const SizedBox(height: 12),
+
+              // Gender Selector Row
+              _sectionLabel(context, 'JENIS KELAMIN *'),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => setLocal(() => selectedGender = 'L'),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                        decoration: BoxDecoration(
+                          color: selectedGender == 'L'
+                              ? Nebula.teal.withValues(alpha: 0.12)
+                              : context.surfaceBg,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: selectedGender == 'L'
+                                ? Nebula.teal
+                                : context.dividerCol,
+                            width: selectedGender == 'L' ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.male_rounded,
+                              size: 18,
+                              color: selectedGender == 'L'
+                                  ? Nebula.teal
+                                  : context.textSecondary,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Laki-laki',
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                fontWeight: selectedGender == 'L'
+                                    ? FontWeight.bold
+                                    : FontWeight.w500,
+                                color: selectedGender == 'L'
+                                    ? Nebula.teal
+                                    : context.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => setLocal(() => selectedGender = 'P'),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                        decoration: BoxDecoration(
+                          color: selectedGender == 'P'
+                              ? Nebula.teal.withValues(alpha: 0.12)
+                              : context.surfaceBg,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: selectedGender == 'P'
+                                ? Nebula.teal
+                                : context.dividerCol,
+                            width: selectedGender == 'P' ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.female_rounded,
+                              size: 18,
+                              color: selectedGender == 'P'
+                                  ? Nebula.teal
+                                  : context.textSecondary,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Perempuan',
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                fontWeight: selectedGender == 'P'
+                                    ? FontWeight.bold
+                                    : FontWeight.w500,
+                                color: selectedGender == 'P'
+                                    ? Nebula.teal
+                                    : context.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
               _buildFormField(context, nisnCtrl, 'NISN *', inputType: TextInputType.number),
               const SizedBox(height: 12),
               _buildDropdownRow(
@@ -135,7 +271,7 @@ void showAddStudentSheet(BuildContext context, WidgetRef ref) {
                                 : null;
                             final rfidVal = rfid.isNotEmpty ? rfid : null;
 
-                            final response = await apiClient.post('/admin/students', body: {
+                            final response = await apiClient.post('/finance/students', body: {
                               'email': email,
                               'password': password,
                               'full_name': name,
@@ -144,6 +280,7 @@ void showAddStudentSheet(BuildContext context, WidgetRef ref) {
                               'nisn': nisn,
                               'class': selectedClass,
                               'rfid_uid': rfidVal,
+                              'gender': selectedGender,
                             });
 
                             if (!response.success) {
@@ -203,10 +340,12 @@ Widget _buildFormField(
   String hint, {
   TextInputType inputType = TextInputType.text,
   Widget? suffix,
+  ValueChanged<String>? onChanged,
 }) =>
     TextField(
       controller: ctrl,
       keyboardType: inputType,
+      onChanged: onChanged,
       style: GoogleFonts.inter(fontSize: 14, color: context.textPrimary),
       decoration: InputDecoration(
         hintText: hint,

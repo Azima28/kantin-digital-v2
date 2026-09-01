@@ -179,31 +179,33 @@ class _KantinMainLayoutState extends ConsumerState<KantinMainLayout> {
   Widget _buildSidebar(BuildContext context, int selectedIndex, double sidebarWidth) {
     final authState = ref.watch(authNotifierProvider);
     final String canteenName = authState.profile?['canteen_name'] ?? 'Stan Kantin';
+    final activeCount = ref.watch(canteenActiveOrdersCountProvider);
 
     return NebulaSidebar(
       headerIcon: Icons.storefront_rounded,
-      items: const [
-        NebulaSidebarItemData(
+      items: [
+        const NebulaSidebarItemData(
           icon: Icons.home_outlined,
           activeIcon: Icons.home_rounded,
           label: 'Beranda',
         ),
         NebulaSidebarItemData(
-          icon: Icons.shopping_cart_outlined,
-          activeIcon: Icons.shopping_cart_rounded,
-          label: 'Kasir POS',
+          icon: Icons.shopping_bag_outlined,
+          activeIcon: Icons.shopping_bag_rounded,
+          label: 'Pesanan',
+          badgeCount: activeCount,
         ),
-        NebulaSidebarItemData(
+        const NebulaSidebarItemData(
           icon: Icons.inventory_2_outlined,
           activeIcon: Icons.inventory_2_rounded,
           label: 'Kelola Produk',
         ),
-        NebulaSidebarItemData(
+        const NebulaSidebarItemData(
           icon: Icons.history_outlined,
           activeIcon: Icons.history_rounded,
           label: 'Riwayat',
         ),
-        NebulaSidebarItemData(
+        const NebulaSidebarItemData(
           icon: Icons.person_outline_rounded,
           activeIcon: Icons.person_rounded,
           label: 'Akun Saya',

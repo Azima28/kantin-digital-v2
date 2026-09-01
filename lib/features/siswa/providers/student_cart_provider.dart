@@ -248,6 +248,31 @@ class StudentCartNotifier extends StateNotifier<StudentCartState> {
     }
   }
 
+  void updateItem({
+    required StudentCartItem oldItem,
+    required List<String> newSelectedOptions,
+    required String? newNotes,
+    required int newPrice,
+    int? newQuantity,
+  }) {
+    final List<StudentCartItem> items = List<StudentCartItem>.from(state.items);
+    final int index = items.indexWhere((StudentCartItem item) =>
+        item.productId == oldItem.productId &&
+        _listsEqual(item.selectedOptions, oldItem.selectedOptions) &&
+        (item.notes ?? '') == (oldItem.notes ?? ''));
+
+    if (index != -1) {
+      final int qty = newQuantity ?? items[index].quantity;
+      items[index] = items[index].copyWith(
+        selectedOptions: newSelectedOptions,
+        notes: newNotes,
+        price: newPrice,
+        quantity: qty,
+      );
+      state = state.copyWith(items: items);
+    }
+  }
+
   void setDeliveryMethod(String method) {
     state = state.copyWith(deliveryMethod: method);
   }

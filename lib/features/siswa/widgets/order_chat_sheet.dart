@@ -43,16 +43,23 @@ class _OrderChatSheetState extends ConsumerState<OrderChatSheet> {
   bool _isMarkingRead = false;
   int _lastMessageCount = 0;
   bool _initialScrollDone = false;
+  Timer? _presenceTimer;
 
   @override
   void initState() {
     super.initState();
     _markRead();
     ref.read(trackOrderPresenceProvider)(widget.order.id, 'student');
+    _presenceTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) {
+        ref.read(trackOrderPresenceProvider)(widget.order.id, 'student');
+      }
+    });
   }
 
   @override
   void dispose() {
+    _presenceTimer?.cancel();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -293,9 +300,6 @@ class _OrderChatSheetState extends ConsumerState<OrderChatSheet> {
     );
     final bool isPedagangOnline = activeRoles.contains('canteen_operator');
 
-    // Register presence active status
-    ref.read(trackOrderPresenceProvider)(widget.order.id, 'student');
-
     // WhatsApp Green colors for student
     final Color whatsappGreenBg = isDark
         ? const Color(0xFF005C4B) // WhatsApp Dark Green
@@ -392,10 +396,7 @@ class _OrderChatSheetState extends ConsumerState<OrderChatSheet> {
                   if (remoteIds.contains(m.id)) return false;
                   final isAlreadySaved = remoteMessages.any((r) =>
                     r.senderRole == m.senderRole &&
-                    r.message == m.message &&
-                    r.createdAt != null &&
-                    m.createdAt != null &&
-                    r.createdAt!.difference(m.createdAt!).inSeconds.abs() < 10
+                    r.message.trim() == m.message.trim()
                   );
                   return !isAlreadySaved;
                 }).toList();

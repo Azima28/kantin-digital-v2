@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+import 'package:kantin_digital/core/utils/app_date_formatter.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
@@ -14,6 +15,7 @@ import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/widgets/notification_bell.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/core/widgets/app_avatar.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_closing_shift_modal.dart';
 
 class KeuanganDashboardScreen extends ConsumerStatefulWidget {
@@ -39,7 +41,6 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
         : ((profile?['assigned_school']?.toString().trim().isNotEmpty == true)
             ? profile!['assigned_school'].toString()
             : 'Sekolah Digital');
-    final fmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
     final hour = DateTime.now().hour;
     final greeting = hour < 11 ? 'Selamat Pagi' : hour < 15 ? 'Selamat Siang' : 'Selamat Sore';
@@ -102,20 +103,13 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
                       children: [
                         const NotificationBell(color: Nebula.teal),
                         const SizedBox(width: 8),
-                        GestureDetector(
+                        AppAvatar(
+                          radius: 20,
+                          photoUrl: profile?['avatar_url'],
+                          role: profile?['role'] ?? 'petugas_keuangan',
+                          name: fullName,
+                          borderColor: Nebula.teal.withValues(alpha: 0.3),
                           onTap: () => context.go('/finance/settings'),
-                          child: CircleAvatar(
-                            radius: 20,
-                            backgroundColor: Nebula.teal.withValues(alpha: 0.1),
-                            child: Text(
-                              fullName.isNotEmpty ? fullName[0].toUpperCase() : 'A',
-                              style: GoogleFonts.inter(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Nebula.teal,
-                              ),
-                            ),
-                          ),
                         ),
                       ],
                     ),
@@ -124,7 +118,7 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
                 const SizedBox(height: 20),
 
                 dashAsync.when(
-                  data: (data) => _buildContent(context, data, fmt),
+                  data: (data) => _buildContent(context, data),
                   loading: () => Shimmer(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -227,7 +221,7 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
     );
   }
 
-  Widget _buildContent(BuildContext context, Map<String, dynamic> data, NumberFormat fmt) {
+  Widget _buildContent(BuildContext context, Map<String, dynamic> data) {
     final totalSaldo = (data['totalSaldo'] as num?)?.toDouble() ?? 0.0;
     final topupToday = (data['topupToday'] as num?)?.toDouble() ?? 0.0;
     final topupCount = (data['topupCount'] as num?)?.toInt() ?? 0;
@@ -287,7 +281,7 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
               ),
               const SizedBox(height: 8),
               Text(
-                fmt.format(totalSaldo),
+                CurrencyFormatter.format(totalSaldo),
                 style: GoogleFonts.inter(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -301,7 +295,7 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
-                      ' +${fmt.format(topupToday)} top-up hari ini',
+                      ' +${CurrencyFormatter.format(topupToday)} top-up hari ini',
                       style: GoogleFonts.inter(fontSize: 12, color: Colors.white70),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -322,7 +316,7 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
                 icon: CupertinoIcons.arrow_down_left_circle_fill,
                 iconColor: Nebula.teal,
                 label: 'Top-Up Hari Ini',
-                value: fmt.format(topupToday),
+                value: CurrencyFormatter.format(topupToday),
                 sub: '$topupCount Transaksi',
               ),
             ),
@@ -333,7 +327,7 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
                 icon: CupertinoIcons.arrow_up_right_circle_fill,
                 iconColor: Nebula.rose,
                 label: 'Pencairan Stan',
-                value: fmt.format(payoutToday),
+                value: CurrencyFormatter.format(payoutToday),
                 sub: '$payoutCount Transaksi',
               ),
             ),
@@ -589,26 +583,26 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
 
                 if (desc.isEmpty) {
                   if (type == 'topup' || type.contains('TOPUP')) {
-                    desc = 'Top-up saldo $student sebesar ${fmt.format(amount)}';
+                    desc = 'Top-up saldo $student sebesar ${CurrencyFormatter.format(amount)}';
                   } else if (type == 'correction' || type.contains('KOREKSI')) {
-                    desc = 'Koreksi saldo $student sebesar ${fmt.format(amount)}';
+                    desc = 'Koreksi saldo $student sebesar ${CurrencyFormatter.format(amount)}';
                   } else if (type == 'withdrawal' || type.contains('WITHDRAWAL') || type.contains('PAYOUT')) {
-                    desc = 'Pencairan kas $canteen sebesar ${fmt.format(amount)}';
+                    desc = 'Pencairan kas $canteen sebesar ${CurrencyFormatter.format(amount)}';
                   } else if (type == 'merchant_adjustment') {
-                    desc = 'Koreksi saldo $canteen sebesar ${fmt.format(amount)}';
+                    desc = 'Koreksi saldo $canteen sebesar ${CurrencyFormatter.format(amount)}';
                   } else if (type == 'purchase') {
-                    desc = 'Penjualan di $canteen dari $student (${fmt.format(amount)})';
+                    desc = 'Penjualan di $canteen dari $student (${CurrencyFormatter.format(amount)})';
                   } else if (type == 'refund' || type.contains('BATAL')) {
-                    desc = 'Refund pesanan $student sebesar ${fmt.format(amount)}';
+                    desc = 'Refund pesanan $student sebesar ${CurrencyFormatter.format(amount)}';
                   } else {
-                    desc = 'Transaksi $student sebesar ${fmt.format(amount)}';
+                    desc = 'Transaksi $student sebesar ${CurrencyFormatter.format(amount)}';
                   }
                 }
 
                 final date = log['created_at'] != null
                     ? (DateTime.tryParse(log['created_at'].toString())?.toLocal() ?? DateTime.now())
                     : DateTime.now();
-                final timeStr = DateFormat('HH:mm', 'id_ID').format(date);
+                final timeStr = AppDateFormatter.formatTime(date);
 
                 Color dotColor = Nebula.teal;
                 IconData dotIcon = CupertinoIcons.doc_text_fill;
