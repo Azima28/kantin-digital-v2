@@ -64,6 +64,7 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
     final String canteenName = tx.canteenName ?? 'Kantin';
     final bool isCancelled = tx.status == 'cancelled' || tx.status == 'refunded';
     final bool isTopup = type == 'topup';
+    final bool isPending = tx.status == 'pending';
 
     // Status config
     Color statusColor;
@@ -75,6 +76,11 @@ class _SiswaHistoryScreenState extends ConsumerState<SiswaHistoryScreen> {
       statusBgColor = Nebula.rose.withValues(alpha: 0.08);
       statusIcon = Icons.cancel_outlined;
       statusLabel = tx.status == 'refunded' ? 'Dana Dikembalikan' : 'Dibatalkan';
+    } else if (isPending) {
+      statusColor = Nebula.amber;
+      statusBgColor = Nebula.amber.withValues(alpha: 0.08);
+      statusIcon = CupertinoIcons.clock;
+      statusLabel = isTopup ? 'Menunggu Konfirmasi Petugas' : 'Menunggu Proses';
     } else if (isTopup) {
       statusColor = Nebula.teal;
       statusBgColor = Nebula.teal.withValues(alpha: 0.08);

@@ -688,7 +688,7 @@ class _AnimatedSuccessSheetState extends State<AnimatedSuccessSheet> with Ticker
                             child: Column(
                               children: [
                                 Text(
-                                  'Top-Up Berhasil!',
+                                  'Permintaan Terkirim',
                                   style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
@@ -698,7 +698,7 @@ class _AnimatedSuccessSheetState extends State<AnimatedSuccessSheet> with Ticker
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'Saldo saku Anda telah berhasil bertambah.',
+                                  'Saldo bertambah setelah petugas keuangan\nmengonfirmasi pembayaran Anda.',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 14,
@@ -744,11 +744,11 @@ class _AnimatedSuccessSheetState extends State<AnimatedSuccessSheet> with Ticker
                                         ),
                                       ),
                                       Divider(height: 24, color: context.borderLight),
-                                      _buildDetailRow('Metode Pembayaran', 'Simulasi Instan (QRIS)'),
+                                      _buildDetailRow('Metode Pembayaran', 'Tunai ke Petugas Keuangan'),
                                       const SizedBox(height: 8),
                                       _buildDetailRow('Waktu Transaksi', formattedDate),
                                       const SizedBox(height: 8),
-                                      _buildDetailRow('Status', 'Sukses', isStatus: true),
+                                      _buildDetailRow('Status', 'Menunggu Konfirmasi', isStatus: true),
                                     ],
                                   ),
                                 ),
@@ -815,9 +815,9 @@ class _AnimatedSuccessSheetState extends State<AnimatedSuccessSheet> with Ticker
               color: Nebula.teal.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: const Text(
-              'Sukses',
-              style: TextStyle(
+            child: Text(
+              value,
+              style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 color: Nebula.teal,

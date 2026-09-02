@@ -32,12 +32,16 @@ class ParentTransactionDetailScreen extends StatelessWidget {
     final DateTime date = transaction.createdAt?.toLocal() ?? DateTime.now();
     final items = transaction.transactionItems ?? [];
 
+    final bool isPending =
+        transaction.status?.toString().toLowerCase() == 'pending';
     final String statusLabel = isRefund
         ? 'Dana Dikembalikan (Refund)'
-        : (isTopup ? 'Top-Up Saldo Berhasil' : 'Transaksi Berhasil');
+        : isPending
+            ? 'Menunggu Konfirmasi Petugas Keuangan'
+            : (isTopup ? 'Top-Up Saldo Berhasil' : 'Transaksi Berhasil');
 
     final Color primaryAccent =
-        isRefund ? Nebula.amber : (isTopup ? Nebula.teal : Nebula.teal);
+        isRefund || isPending ? Nebula.amber : Nebula.teal;
 
     return Scaffold(
       backgroundColor: context.surfaceBg,
@@ -616,6 +620,17 @@ class ParentTransactionDetailScreen extends StatelessWidget {
   }
 
   void _downloadPdf(BuildContext context) {
+    // A pending top-up has not been paid in yet, so there is no receipt to give.
+    if (transaction.status?.toString().toLowerCase() == 'pending') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              'Struk tersedia setelah petugas keuangan mengonfirmasi pembayaran.'),
+        ),
+      );
+      return;
+    }
+
     final int amount = transaction.totalAmount;
     final String type = transaction.type ?? 'purchase';
     final String canteen = transaction.canteenName ?? 'Stan Kantin';

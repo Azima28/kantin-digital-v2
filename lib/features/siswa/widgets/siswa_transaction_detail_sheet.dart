@@ -26,6 +26,11 @@ void showTransactionDetailSheet(
   final String canteenName = tx.canteenName ?? 'Kantin';
   final String studentName = tx.studentName ?? 'Siswa';
   final String status = tx.status?.toString() ?? 'success';
+  // A student-raised top-up stays 'pending' until a finance officer confirms
+  // the cash, so nothing on this sheet may claim the balance already moved.
+  final bool isPending = status == 'pending';
+  final Color headerAccent =
+      isPending ? Nebula.amber : (status == 'refunded' ? Nebula.rose : Nebula.teal);
   final bool isAppOrder = tx.purchaseMethod == 'app' || tx.purchaseMethod == 'app_order';
 
   showModalBottomSheet(
@@ -84,22 +89,24 @@ void showTransactionDetailSheet(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                     decoration: BoxDecoration(
-                      color: (type == 'topup' ? Nebula.teal : (status == 'refunded' ? Nebula.rose : Nebula.teal)).withValues(alpha: 0.08),
+                      color: headerAccent.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: (type == 'topup' ? Nebula.teal : (status == 'refunded' ? Nebula.rose : Nebula.teal)).withValues(alpha: 0.2),
+                        color: headerAccent.withValues(alpha: 0.2),
                       ),
                     ),
                     child: Row(
                       children: [
                         CircleAvatar(
                           radius: 20,
-                          backgroundColor: (type == 'topup' ? Nebula.teal : (status == 'refunded' ? Nebula.rose : Nebula.teal)).withValues(alpha: 0.15),
+                          backgroundColor: headerAccent.withValues(alpha: 0.15),
                           child: Icon(
-                            type == 'topup'
-                                ? CupertinoIcons.arrow_up_circle
-                                : (status == 'refunded' ? CupertinoIcons.arrow_uturn_left_circle : CupertinoIcons.check_mark_circled),
-                            color: type == 'topup' ? Nebula.teal : (status == 'refunded' ? Nebula.rose : Nebula.teal),
+                            isPending
+                                ? CupertinoIcons.clock
+                                : (type == 'topup'
+                                    ? CupertinoIcons.arrow_up_circle
+                                    : (status == 'refunded' ? CupertinoIcons.arrow_uturn_left_circle : CupertinoIcons.check_mark_circled)),
+                            color: headerAccent,
                             size: 24,
                           ),
                         ),
@@ -109,9 +116,11 @@ void showTransactionDetailSheet(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                type == 'topup'
-                                    ? 'Top-Up Saldo Berhasil'
-                                    : (status == 'refunded' ? 'Pembayaran Dikembalikan (Refund)' : 'Pembayaran Berhasil'),
+                                isPending
+                                    ? (type == 'topup' ? 'Menunggu Konfirmasi Petugas' : 'Menunggu Proses')
+                                    : (type == 'topup'
+                                        ? 'Top-Up Saldo Berhasil'
+                                        : (status == 'refunded' ? 'Pembayaran Dikembalikan (Refund)' : 'Pembayaran Berhasil')),
                                 style: GoogleFonts.inter(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
@@ -320,8 +329,11 @@ void showTransactionDetailSheet(
                   ),
                   const SizedBox(height: 24),
 
-                  // Actions: Print / Download Struk PDF (Single Full-Width Button)
-                  SizedBox(
+                  // Actions: Print / Download Struk PDF (Single Full-Width Button).
+                  // Withheld while a top-up is unconfirmed: a receipt would vouch
+                  // for a payment the officer has not acknowledged.
+                  if (!isPending)
+                    SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
