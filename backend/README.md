@@ -22,9 +22,9 @@ docker compose --env-file ../.env up -d
 ```
 
 Server Go dan PostgreSQL 16 akan otomatis berjalan:
-- **API URL**: `http://localhost:8080`
-- **Health Check**: `http://localhost:8080/health`
-- **WebSocket**: `ws://localhost:8080/ws?room=canteen:{id}`
+- **API URL**: `http://127.0.0.1:8081`
+- **Health Check**: `http://127.0.0.1:8081/health`
+- **WebSocket**: `ws://127.0.0.1:8081/ws?room=canteen:{id}`
 - **Database**: `localhost:5432` (Database: `kantin_digital`, User: `postgres`) — kata sandi dibaca dari
   `.env`, tidak dicantumkan di sini. Kata sandi yang dulu tertulis di dokumen ini sudah dicabut pada
   2026-09-02 dan tidak lagi berlaku.

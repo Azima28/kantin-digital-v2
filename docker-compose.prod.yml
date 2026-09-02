@@ -44,8 +44,11 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-*}
       UPLOAD_DIR: "/app/uploads"
       APP_ENV: ${APP_ENV:-production}
-    ports:
-      - "8080:8080"
+    # No host port mapping. Nginx (service `web`) reaches the API as
+    # `http://api:8080` over kantin_network, and the Flutter web bundle calls
+    # the API same-origin through that gateway -- so publishing 8080 on the
+    # host buys nothing. It collided with the process that already owns host
+    # port 8080, and it offered a route that bypasses nginx entirely.
     volumes:
       - uploads_data:/app/uploads
     networks:
@@ -65,6 +68,21 @@ services:
     volumes:
       - ./build/web:/usr/share/nginx/html:ro
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - kantin_network
+
+  # 4. Cloudflare Tunnel (publikasi https://kantin.zitech.web.id)
+  cloudflared:
+    image: cloudflare/cloudflared:2026.8.3
+    container_name: kantin_tunnel
+    restart: unless-stopped
+    depends_on:
+      - web
+    command: tunnel --no-autoupdate --config /etc/cloudflared/config.yml run ${CLOUDFLARE_TUNNEL_ID:?set CLOUDFLARE_TUNNEL_ID in .env}
+    volumes:
+      - ./cloudflared/config.yml:/etc/cloudflared/config.yml:ro
+      # Berisi TunnelSecret -- disimpan di luar repo, dipasang read-only.
+      - ${CLOUDFLARE_TUNNEL_CREDENTIALS:?set CLOUDFLARE_TUNNEL_CREDENTIALS in .env}:/etc/cloudflared/creds.json:ro
     networks:
       - kantin_network
 

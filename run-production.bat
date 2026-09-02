@@ -16,8 +16,14 @@ if %errorlevel% neq 0 (
 echo [2/3] Memeriksa status container...
 docker compose -f docker-compose.prod.yml ps
 
-echo [3/3] Menjalankan Cloudflare Tunnel (zitech.web.id)...
-echo Tunnel ID: 7576e167-9a46-4928-8dc6-a3281abef804
-cloudflared tunnel --config cloudflared.config.yml run
+echo [3/3] Memeriksa Cloudflare Tunnel...
+docker compose -f docker-compose.prod.yml ps cloudflared
+echo.
+echo Tunnel jalan sebagai container kantin_tunnel dengan restart otomatis,
+echo jadi jendela ini TIDAK perlu dibiarkan terbuka lagi.
+echo Situs publik: https://kantin.zitech.web.id
+echo.
+echo Cadangan, kalau perlu tunnel dari host tanpa Docker:
+echo    cloudflared tunnel --config cloudflared.config.yml run
 
 pause

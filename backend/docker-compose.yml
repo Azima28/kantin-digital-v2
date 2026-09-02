@@ -53,7 +53,10 @@ services:
       UPLOAD_DIR: "./uploads"
       APP_ENV: ${APP_ENV:-production}
     ports:
-      - "8080:8080"
+      # Host 8080 is already taken on this machine, and this backend-only
+      # stack has no nginx in front of it, so publish on loopback 8081:
+      #   http://127.0.0.1:8081/health
+      - "127.0.0.1:8081:8080"
     volumes:
       - ./uploads:/app/uploads
 

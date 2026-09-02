@@ -1,3 +1,11 @@
+# Jalur CADANGAN: config untuk menjalankan tunnel langsung di host
+#   cloudflared tunnel --config cloudflared.config.yml run
+# Jalur normal sekarang container `cloudflared` di docker-compose.yml /
+# docker-compose.prod.yml (kantin_tunnel, restart otomatis) yang memakai
+# cloudflared/config.yml. Isi ingress kedua file HARUS sama; kalau tidak,
+# permintaan bisa dilayani connector dengan aturan berbeda secara acak.
+# Proses host di sini berjalan di foreground -- ia mati begitu jendela
+# ditutup, itulah sebab situs sempat 1033.
 tunnel: 7576e167-9a46-4928-8dc6-a3281abef804
 credentials-file: C:\Users\agust\.cloudflared\7576e167-9a46-4928-8dc6-a3281abef804.json
 protocol: http2

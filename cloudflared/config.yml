@@ -1,0 +1,41 @@
+# Cloudflare Tunnel -- menerbitkan gateway nginx (service `web`) ke hostname
+# publik tanpa membuka port apa pun di router. Cloudflare menjawab Error 1033
+# ketika DNS sebuah hostname mengarah ke tunnel tetapi tidak ada satu pun
+# connector yang aktif, jadi container ini harus ikut hidup bersama stack.
+#
+# UUID tunnel dan lokasi file kredensial dibaca dari .env (lihat .env.example);
+# file kredensial berisi TunnelSecret, jadi ia TIDAK PERNAH masuk repo -- hanya
+# di-bind-mount read-only dari luar.
+#
+# Alamat origin sengaja `http://web:80`, bukan localhost: cloudflared berjalan
+# di jaringan kantin_network yang sama, jadi ia menghubungi nginx langsung
+# lewat nama service. Plain HTTP di sini aman karena trafiknya tidak pernah
+# meninggalkan jaringan bridge Docker; TLS ke pengunjung diterminasi Cloudflare.
+credentials-file: /etc/cloudflared/creds.json
+no-autoupdate: true
+loglevel: info
+
+# Sama seperti cloudflared.config.yml. Bawaan cloudflared adalah QUIC (UDP),
+# dan di koneksi ini QUIC terbukti tidak stabil -- 3 dari 4 connector sempat
+# putus dengan "timeout: no recent network activity" lalu mendaftar ulang.
+# http2 memakai TCP 443 yang jauh lebih tahan di jaringan ini.
+protocol: http2
+
+ingress:
+  # Dua hostname ini menyamai cloudflared.config.yml (jalur host) supaya
+  # kedua connector -- container maupun host -- punya aturan identik.
+  # zitech.web.id belum punya record DNS, jadi entri itu tidur untuk saat ini.
+  - hostname: zitech.web.id
+    service: http://web:80
+
+  - hostname: kantin.zitech.web.id
+    service: http://web:80
+    originRequest:
+      # nginx menerima unggahan sampai 20 MB (foto produk & avatar) dan menahan
+      # koneksi WebSocket /ws lama; jangan biarkan tunnel memutusnya lebih dulu.
+      connectTimeout: 30s
+      noHappyEyeballs: true
+
+  # Hostname apa pun yang belum didaftarkan di atas tidak dilayani. Tambahkan
+  # entri hostname baru di atas baris ini kalau nanti ada subdomain lain.
+  - service: http_status:404
