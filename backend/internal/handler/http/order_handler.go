@@ -87,9 +87,9 @@ func (h *OrderHandler) GetOrderByID(c *fiber.Ctx) error {
 
 	// Verify participant authorization
 	if claims.Role != domain.RoleSuperAdmin && claims.Role != domain.RoleAdmin && claims.Role != domain.RolePetugasKeuangan {
-		isParticipant := (claims.Role == domain.RoleStudent && strings.EqualFold(claims.UserID, order.StudentID)) ||
-			(claims.Role == domain.RolePetugasKantin)
-		if !isParticipant {
+		isStudent := claims.Role == domain.RoleStudent && strings.EqualFold(claims.UserID, order.StudentID)
+		isOperator := claims.Role == domain.RolePetugasKantin && order.OperatorID != nil && strings.EqualFold(*order.OperatorID, claims.UserID)
+		if !isStudent && !isOperator {
 			return response.Error(c, fiber.StatusForbidden, "Akses ditolak: Anda bukan partisipan dalam pesanan ini", nil)
 		}
 	}
@@ -113,11 +113,20 @@ func (h *OrderHandler) UpdateStatus(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusBadRequest, "Gagal memperbarui status pesanan: "+err.Error(), err.Error())
 	}
 
-	// Broadcast status update event
-	h.hub.BroadcastToRoom("all", "order:status_updated", map[string]interface{}{
+	// Broadcast status update event strictly to order and participant rooms
+	statusPayload := map[string]interface{}{
 		"order_id": orderID,
 		"status":   req.Status,
-	})
+	}
+	h.hub.BroadcastToRoom(fmt.Sprintf("order:%s", orderID), "order:status_updated", statusPayload)
+
+	order, _ := h.orderService.GetOrderByID(c.Context(), orderID)
+	if order != nil {
+		h.hub.BroadcastToRoom(fmt.Sprintf("student:%s", order.StudentID), "order:status_updated", statusPayload)
+		if order.OperatorID != nil {
+			h.hub.BroadcastToRoom(fmt.Sprintf("canteen:%s", *order.OperatorID), "order:status_updated", statusPayload)
+		}
+	}
 
 	return response.Success(c, fiber.StatusOK, "Status pesanan berhasil diperbarui", nil)
 }
@@ -151,9 +160,15 @@ func (h *OrderHandler) SendMessage(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusForbidden, err.Error(), nil)
 	}
 
-	// Broadcast chat message to order room and global realtime room
-	h.hub.BroadcastToRoom("all", "order:message", savedMsg)
+	// Broadcast chat message strictly to the order room and participant rooms
 	h.hub.BroadcastToRoom(fmt.Sprintf("order:%s", orderID), "order:message", savedMsg)
+	order, _ := h.orderService.GetOrderByID(c.Context(), orderID)
+	if order != nil {
+		h.hub.BroadcastToRoom(fmt.Sprintf("student:%s", order.StudentID), "order:message", savedMsg)
+		if order.OperatorID != nil {
+			h.hub.BroadcastToRoom(fmt.Sprintf("canteen:%s", *order.OperatorID), "order:message", savedMsg)
+		}
+	}
 
 	return response.Success(c, fiber.StatusCreated, "Pesan terkirim", savedMsg)
 }
@@ -171,23 +186,40 @@ func (h *OrderHandler) GetMessages(c *fiber.Ctx) error {
 func (h *OrderHandler) MarkMessagesAsRead(c *fiber.Ctx) error {
 	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
 	orderID := c.Params("id")
-	if err := h.orderService.MarkMessagesAsRead(c.Context(), orderID, claims.UserID); err != nil {
-		return response.Error(c, fiber.StatusInternalServerError, "Gagal memperbarui status pesan", err.Error())
+	if err := h.orderService.MarkMessagesAsRead(c.Context(), orderID, claims.UserID, claims.Role); err != nil {
+		return response.Error(c, fiber.StatusForbidden, err.Error(), nil)
 	}
-	h.hub.BroadcastToRoom("all", "order:messages_read", map[string]interface{}{
+	readPayload := map[string]interface{}{
 		"order_id":  orderID,
 		"reader_id": claims.UserID,
-	})
-	h.hub.BroadcastToRoom(fmt.Sprintf("order:%s", orderID), "order:messages_read", map[string]interface{}{
-		"order_id":  orderID,
-		"reader_id": claims.UserID,
-	})
+	}
+	h.hub.BroadcastToRoom(fmt.Sprintf("order:%s", orderID), "order:messages_read", readPayload)
+	order, _ := h.orderService.GetOrderByID(c.Context(), orderID)
+	if order != nil {
+		h.hub.BroadcastToRoom(fmt.Sprintf("student:%s", order.StudentID), "order:messages_read", readPayload)
+		if order.OperatorID != nil {
+			h.hub.BroadcastToRoom(fmt.Sprintf("canteen:%s", *order.OperatorID), "order:messages_read", readPayload)
+		}
+	}
 	return response.Success(c, fiber.StatusOK, "Pesan ditandai telah dibaca", nil)
 }
 
 func (h *OrderHandler) UpdatePresence(c *fiber.Ctx) error {
 	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
 	orderID := c.Params("id")
+
+	order, err := h.orderService.GetOrderByID(c.Context(), orderID)
+	if err != nil || order == nil {
+		return response.Error(c, fiber.StatusNotFound, "Pesanan tidak ditemukan", nil)
+	}
+
+	if claims.Role != domain.RoleSuperAdmin && claims.Role != domain.RoleAdmin && claims.Role != domain.RolePetugasKeuangan {
+		isStudent := claims.Role == domain.RoleStudent && strings.EqualFold(claims.UserID, order.StudentID)
+		isOperator := claims.Role == domain.RolePetugasKantin && order.OperatorID != nil && strings.EqualFold(*order.OperatorID, claims.UserID)
+		if !isStudent && !isOperator {
+			return response.Error(c, fiber.StatusForbidden, "Akses ditolak: Anda bukan partisipan dalam pesanan ini", nil)
+		}
+	}
 
 	roleStr := "student"
 	if claims.Role == domain.RolePetugasKantin {
@@ -201,10 +233,11 @@ func (h *OrderHandler) UpdatePresence(c *fiber.Ctx) error {
 	orderPresenceMap[orderID][roleStr] = time.Now()
 	presenceLock.Unlock()
 
-	h.hub.BroadcastToRoom("all", "order:presence", map[string]interface{}{
+	presencePayload := map[string]interface{}{
 		"order_id": orderID,
 		"role":     roleStr,
-	})
+	}
+	h.hub.BroadcastToRoom(fmt.Sprintf("order:%s", orderID), "order:presence", presencePayload)
 
 	return h.GetPresence(c)
 }
@@ -228,6 +261,28 @@ func (h *OrderHandler) GetPresence(c *fiber.Ctx) error {
 	return response.Success(c, fiber.StatusOK, "Active presence roles", activeRoles)
 }
 
+// sanitizeReviewForBroadcast returns a copy of a review that is safe to push over
+// the WebSocket. SubmitReview builds the review from the caller's own JWT, so the
+// object it returns always carries the reviewer's real student_id and full name --
+// correct for the HTTP response that goes straight back to that student, but the
+// very same object is also broadcast to the order room and to the stall's operator
+// room. When the student asked to stay anonymous, every handle that leads back to
+// them is dropped here, so the realtime event cannot undo the anonymity that the
+// public reviews endpoint already enforces. order_id goes too: for the order room
+// it is redundant (the room name carries it) and for the stall room it is exactly
+// the correlation handle that would name the buyer.
+func sanitizeReviewForBroadcast(rev *domain.OrderReview) *domain.OrderReview {
+	if rev == nil || !rev.IsAnonymous {
+		return rev
+	}
+	safe := *rev
+	safe.StudentName = "Siswa (Anonim)"
+	safe.AvatarURL = nil
+	safe.StudentID = ""
+	safe.OrderID = ""
+	return &safe
+}
+
 func (h *OrderHandler) SubmitReview(c *fiber.Ctx) error {
 	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
 	orderID := c.Params("id")
@@ -242,8 +297,13 @@ func (h *OrderHandler) SubmitReview(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusBadRequest, err.Error(), nil)
 	}
 
-	// Broadcast review event
-	h.hub.BroadcastToRoom("all", "order:reviewed", review)
+	// Broadcast review event strictly to the order room and the canteen stall room,
+	// with the reviewer's identity stripped when the review is anonymous.
+	broadcast := sanitizeReviewForBroadcast(review)
+	h.hub.BroadcastToRoom(fmt.Sprintf("order:%s", orderID), "order:reviewed", broadcast)
+	if review.OperatorID != nil {
+		h.hub.BroadcastToRoom(fmt.Sprintf("canteen:%s", *review.OperatorID), "order:reviewed", broadcast)
+	}
 	return response.Success(c, fiber.StatusOK, "Ulasan berhasil dikirim. Terima kasih!", review)
 }
 

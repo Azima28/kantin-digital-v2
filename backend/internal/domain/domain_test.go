@@ -90,3 +90,76 @@ func TestStudentBlockedAccountWithActiveCard(t *testing.T) {
 		t.Errorf("Parsed student profile should remain inactive/blocked")
 	}
 }
+
+// TestTerminalOrderStatusIsImmutable is the money-replay regression guard.
+// Settling an order moves money once and nothing debits it back, so if Selesai
+// or Dibatalkan could be left and re-entered, the same order would pay out on
+// every lap.
+func TestTerminalOrderStatusIsImmutable(t *testing.T) {
+	terminals := []OrderStatus{OrderStatusSelesai, OrderStatusDibatalkan}
+	for _, from := range terminals {
+		if !IsTerminalOrderStatus(from) {
+			t.Fatalf("%s harus dianggap status terminal", from)
+		}
+		for to := range orderStatusTransitions {
+			if to == from {
+				continue // same-status writes are a no-op, handled before any money moves
+			}
+			if CanTransitionOrderStatus(from, to) {
+				t.Errorf("transisi terlarang %s -> %s diizinkan", from, to)
+			}
+		}
+	}
+}
+
+func TestOrderStatusTransitionsCoverOperatorFlow(t *testing.T) {
+	allowed := [][2]OrderStatus{
+		{OrderStatusBaru, OrderStatusSedangDimasak},
+		{OrderStatusBaru, OrderStatusDibatalkan},
+		{OrderStatusSedangDimasak, OrderStatusSiapDiambil},
+		{OrderStatusSiapDiambil, OrderStatusSelesai},
+		{OrderStatusSiapDiantar, OrderStatusSedangDiantar},
+		{OrderStatusSedangDiantar, OrderStatusSelesai},
+		{OrderStatusMenungguPembatalan, OrderStatusDibatalkan},
+		{OrderStatusMenungguPembatalan, OrderStatusSedangDimasak}, // request rejected, order resumes
+	}
+	for _, tc := range allowed {
+		if !CanTransitionOrderStatus(tc[0], tc[1]) {
+			t.Errorf("transisi sah %s -> %s ditolak", tc[0], tc[1])
+		}
+	}
+
+	denied := [][2]OrderStatus{
+		{OrderStatusBaru, OrderStatusSelesai},        // cannot settle without preparing
+		{OrderStatusBaru, OrderStatusSedangDiantar},  // cannot dispatch what is not ready
+		{OrderStatusSiapDiambil, OrderStatusBaru},    // no rewind to the start
+		{OrderStatusSelesai, OrderStatusSiapDiambil}, // terminal
+		{OrderStatusDibatalkan, OrderStatusSelesai},  // cancelled then paid
+	}
+	for _, tc := range denied {
+		if CanTransitionOrderStatus(tc[0], tc[1]) {
+			t.Errorf("transisi tidak sah %s -> %s diizinkan", tc[0], tc[1])
+		}
+	}
+}
+
+func TestCanTransitionOrderStatusRejectsUnknownStatus(t *testing.T) {
+	bogus := OrderStatus("Gratis")
+	if IsValidOrderStatus(bogus) {
+		t.Fatal("status karangan tidak boleh dianggap valid")
+	}
+	if CanTransitionOrderStatus(OrderStatusBaru, bogus) {
+		t.Error("status karangan tidak boleh menjadi tujuan transisi")
+	}
+	if CanTransitionOrderStatus(bogus, OrderStatusSelesai) {
+		t.Error("status karangan tidak boleh menjadi asal transisi")
+	}
+}
+
+func TestSameStatusIsAlwaysANoOp(t *testing.T) {
+	for status := range orderStatusTransitions {
+		if !CanTransitionOrderStatus(status, status) {
+			t.Errorf("penulisan status yang sama (%s) harus lolos sebagai no-op", status)
+		}
+	}
+}

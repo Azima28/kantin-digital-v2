@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -27,6 +28,40 @@ func NewUploadHandler(uploadDir string, db *postgres.DB) *UploadHandler {
 	return &UploadHandler{uploadDir: uploadDir, db: db}
 }
 
+// validateImageBytes strictly validates file magic bytes and MIME types without allowing octet-stream bypass
+func validateImageBytes(buf []byte, ext string) error {
+	if len(buf) < 12 {
+		return errors.New("file terlalu kecil untuk diverifikasi sebagai gambar yang valid")
+	}
+
+	mimeType := http.DetectContentType(buf)
+
+	switch ext {
+	case ".jpg", ".jpeg":
+		if mimeType != "image/jpeg" {
+			return fmt.Errorf("MIME type tidak sesuai (%s), wajib image/jpeg", mimeType)
+		}
+		if buf[0] != 0xFF || buf[1] != 0xD8 || buf[2] != 0xFF {
+			return errors.New("header magic bytes JPEG tidak valid")
+		}
+	case ".png":
+		if mimeType != "image/png" {
+			return fmt.Errorf("MIME type tidak sesuai (%s), wajib image/png", mimeType)
+		}
+		if buf[0] != 0x89 || buf[1] != 0x50 || buf[2] != 0x4E || buf[3] != 0x47 {
+			return errors.New("header magic bytes PNG tidak valid")
+		}
+	case ".webp":
+		if buf[0] != 'R' || buf[1] != 'I' || buf[2] != 'F' || buf[3] != 'F' || buf[8] != 'W' || buf[9] != 'E' || buf[10] != 'B' || buf[11] != 'P' {
+			return errors.New("header magic bytes WebP (RIFF/WEBP) tidak valid")
+		}
+	default:
+		return errors.New("format file tidak didukung")
+	}
+
+	return nil
+}
+
 func (h *UploadHandler) UploadProductImage(c *fiber.Ctx) error {
 	file, err := c.FormFile("image")
 	if err != nil {
@@ -42,7 +77,7 @@ func (h *UploadHandler) UploadProductImage(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusBadRequest, "Format file harus berupa JPG, PNG, atau WebP", nil)
 	}
 
-	// Validate MIME type via magic bytes
+	// Validate MIME type & magic bytes strictly
 	f, err := file.Open()
 	if err != nil {
 		return response.Error(c, fiber.StatusInternalServerError, "Gagal membaca header file gambar", err.Error())
@@ -51,9 +86,8 @@ func (h *UploadHandler) UploadProductImage(c *fiber.Ctx) error {
 	n, _ := f.Read(buf)
 	f.Close()
 
-	mimeType := http.DetectContentType(buf[:n])
-	if !strings.HasPrefix(mimeType, "image/") && mimeType != "application/octet-stream" {
-		return response.Error(c, fiber.StatusBadRequest, "File yang diunggah bukan format gambar yang valid", nil)
+	if err := validateImageBytes(buf[:n], ext); err != nil {
+		return response.Error(c, fiber.StatusBadRequest, "Verifikasi integritas gambar gagal: "+err.Error(), nil)
 	}
 
 	targetDir := filepath.Join(h.uploadDir, "products")
@@ -102,7 +136,7 @@ func (h *UploadHandler) UploadAvatar(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusBadRequest, "Format file harus berupa JPG, PNG, atau WebP", nil)
 	}
 
-	// Validate MIME type via magic bytes
+	// Validate MIME type & magic bytes strictly
 	f, err := file.Open()
 	if err != nil {
 		return response.Error(c, fiber.StatusInternalServerError, "Gagal membaca header file avatar", err.Error())
@@ -111,9 +145,8 @@ func (h *UploadHandler) UploadAvatar(c *fiber.Ctx) error {
 	n, _ := f.Read(buf)
 	f.Close()
 
-	mimeType := http.DetectContentType(buf[:n])
-	if !strings.HasPrefix(mimeType, "image/") && mimeType != "application/octet-stream" {
-		return response.Error(c, fiber.StatusBadRequest, "File yang diunggah bukan format gambar yang valid", nil)
+	if err := validateImageBytes(buf[:n], ext); err != nil {
+		return response.Error(c, fiber.StatusBadRequest, "Verifikasi integritas avatar gagal: "+err.Error(), nil)
 	}
 
 	targetDir := filepath.Join(h.uploadDir, "avatars")

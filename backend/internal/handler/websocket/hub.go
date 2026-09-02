@@ -75,7 +75,7 @@ func (h *Hub) Run() {
 	}
 }
 
-// BroadcastToRoom sends a message to clients in a specific room and to the global "all" room
+// BroadcastToRoom sends a message strictly to clients in the specified room without leaking to other rooms
 func (h *Hub) BroadcastToRoom(room, event string, data interface{}) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -91,36 +91,33 @@ func (h *Hub) BroadcastToRoom(room, event string, data interface{}) {
 		return
 	}
 
-	sent := make(map[*Client]bool)
-
-	// Send to specific room clients
+	// 1. If a specific private or scoped room is targeted (not "all" and not empty),
+	// send ONLY to authorized clients registered in that exact room.
 	if room != "" && room != "all" {
 		if roomClients, ok := h.rooms[room]; ok {
 			for client := range roomClients {
 				select {
 				case client.send <- bytes:
-					sent[client] = true
 				default:
 				}
 			}
 		}
+		return
 	}
 
-	// Always send to clients in "all" room
+	// 2. If room == "all" or room == "", broadcast only to clients in "all" or general pool
+	sent := make(map[*Client]bool)
 	if allClients, ok := h.rooms["all"]; ok {
 		for client := range allClients {
-			if !sent[client] {
-				select {
-				case client.send <- bytes:
-					sent[client] = true
-				default:
-				}
+			select {
+			case client.send <- bytes:
+				sent[client] = true
+			default:
 			}
 		}
 	}
 
-	// If room == "" or "all", broadcast to all registered clients
-	if room == "" || room == "all" {
+	if room == "" {
 		for client := range h.clients {
 			if !sent[client] {
 				select {

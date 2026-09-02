@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"kantin-backend/internal/domain"
@@ -61,6 +62,19 @@ func (s *PaymentService) ProcessTopup(ctx context.Context, studentID, officerID 
 	return s.txRepo.ProcessTopup(ctx, studentID, officerID, amount)
 }
 
+// RequestTopup queues a student's own top-up request without crediting anything.
+// Use this for self-service top-up; ProcessTopup is reserved for a finance
+// officer who has actually collected the money.
+func (s *PaymentService) RequestTopup(ctx context.Context, studentID string, amount int) (*domain.Transaction, error) {
+	if amount < 10000 {
+		return nil, errors.New("nominal top-up minimal Rp 10.000")
+	}
+	if amount > 2000000 {
+		return nil, errors.New("nominal top-up maksimal Rp 2.000.000 per transaksi")
+	}
+	return s.txRepo.CreateTopupRequest(ctx, studentID, amount)
+}
+
 
 func (s *PaymentService) ProcessMerchantWithdrawal(ctx context.Context, operatorID, actorID string, amount int, notes, method string) (*domain.Transaction, error) {
 	if amount <= 0 {
@@ -86,19 +100,81 @@ func (s *PaymentService) ListAllStudents(ctx context.Context) ([]domain.Student,
 	return s.userRepo.ListAllStudents(ctx)
 }
 
+// GetUserByID loads a profile so callers can check who they are about to touch
+// before touching it (target role, current field values) instead of trusting the
+// request body.
+func (s *PaymentService) GetUserByID(ctx context.Context, id string) (*domain.UserProfile, error) {
+	if id == "" {
+		return nil, errors.New("user ID wajib disertakan")
+	}
+	user, err := s.userRepo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, errors.New("pengguna tidak ditemukan")
+	}
+	return user, nil
+}
+
+// LogAudit writes one entry to the audit trail. Empty strings become NULL so the
+// caller does not have to juggle pointers at every call site.
+func (s *PaymentService) LogAudit(ctx context.Context, actorID, actionType, description, targetID, oldValue, newValue, ipAddress string) error {
+	if s.auditRepo == nil {
+		return errors.New("audit repository not initialized")
+	}
+	optional := func(v string) *string {
+		if v == "" {
+			return nil
+		}
+		return &v
+	}
+	entry := &domain.AuditLog{
+		ActorID:    optional(actorID),
+		ActionType: actionType,
+		// The repo maps Description -> audit_logs.entity_name, which is NOT NULL.
+		Description: description,
+		TargetID:    optional(targetID),
+		OldValue:    optional(oldValue),
+		NewValue:    optional(newValue),
+		IPAddress:   optional(ipAddress),
+	}
+	return s.auditRepo.LogAction(ctx, entry)
+}
+
 func (s *PaymentService) ListAllUsers(ctx context.Context, roleFilter string) ([]postgres.EnrichedUserProfile, error) {
 	return s.userRepo.ListAllUsers(ctx, roleFilter)
 }
 
-func (s *PaymentService) CreateUser(ctx context.Context, user *domain.UserProfile, rawPassword string, canteenName string, rfidUID *string, studentNISN *string, studentClass *string) error {
+// CreateUser creates an account and returns the temporary password it generated,
+// or an empty string when the caller supplied one.
+//
+// It used to fall back to the literal "password123" whenever no password was
+// given, which meant every account created that way -- including staff accounts
+// -- shared one password that is published in the app's own demo panel. A random
+// password is generated instead and handed back exactly once, to be relayed to
+// the account holder; it is never written to the audit trail.
+func (s *PaymentService) CreateUser(ctx context.Context, user *domain.UserProfile, rawPassword string, canteenName string, rfidUID *string, studentNISN *string, studentClass *string) (string, error) {
+	tempPassword := ""
 	if rawPassword == "" {
-		rawPassword = "password123"
+		generated, err := hasher.GenerateTempPassword()
+		if err != nil {
+			return "", err
+		}
+		rawPassword = generated
+		tempPassword = generated
+	} else if len([]rune(rawPassword)) < 6 {
+		return "", errors.New("kata sandi minimal 6 karakter")
 	}
+
 	hash, err := hasher.HashPassword(rawPassword)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return s.userRepo.CreateUserProfile(ctx, user, hash, canteenName, rfidUID, studentNISN, studentClass)
+	if err := s.userRepo.CreateUserProfile(ctx, user, hash, canteenName, rfidUID, studentNISN, studentClass); err != nil {
+		return "", err
+	}
+	return tempPassword, nil
 }
 
 func (s *PaymentService) UpdateUserStatus(ctx context.Context, id string, isActive bool) error {
@@ -119,6 +195,22 @@ func (s *PaymentService) UpdateStudentCardStatus(ctx context.Context, studentID 
 
 func (s *PaymentService) UpdateUser(ctx context.Context, user *domain.UserProfile) error {
 	return s.userRepo.UpdateUserProfile(ctx, user)
+}
+
+// Role-scoped fields live in their own tables and are updated separately from the
+// profile. There is no cross-table transaction here on purpose: the handler needs
+// to be able to tell the admin that the profile saved but the role data did not,
+// which is more useful than rolling both back and reporting nothing at all.
+func (s *PaymentService) UpdateCanteenOperatorProfile(ctx context.Context, operatorID, canteenName string) error {
+	return s.userRepo.UpdateCanteenOperatorProfile(ctx, operatorID, canteenName)
+}
+
+func (s *PaymentService) UpdateFinanceOfficerProfile(ctx context.Context, officerID string, assignedSchool, authorityLevel *string) error {
+	return s.userRepo.UpdateFinanceOfficerProfile(ctx, officerID, assignedSchool, authorityLevel)
+}
+
+func (s *PaymentService) SetParentLinkedStudents(ctx context.Context, parentID string, nisns []string) (int, []string, error) {
+	return s.userRepo.SetParentLinkedStudents(ctx, parentID, nisns)
 }
 
 func (s *PaymentService) GetCurrentShiftSummary(ctx context.Context, officerID string) (*domain.CurrentShiftSummary, error) {
@@ -157,7 +249,24 @@ func (s *PaymentService) UpdateStudentFull(ctx context.Context, p postgres.Updat
 	return s.userRepo.UpdateStudentFull(ctx, p)
 }
 
+// DeleteUser removes a profile. Because all eleven child tables reference
+// profiles with ON DELETE CASCADE, this is not a "remove the account" operation
+// -- it erases that person's transactions, orders, messages and notifications
+// too, with no way back. A profile that carries any financial or order history
+// is therefore refused here; deactivating it keeps the ledger intact and is what
+// the caller is told to do instead. The check lives in the service so it applies
+// to every call site, not just the admin HTTP handler.
 func (s *PaymentService) DeleteUser(ctx context.Context, id string) error {
+	if id == "" {
+		return errors.New("user ID wajib disertakan")
+	}
+	refs, err := s.userRepo.CountUserLedgerRefs(ctx, id)
+	if err != nil {
+		return err
+	}
+	if refs > 0 {
+		return fmt.Errorf("pengguna tidak dapat dihapus karena masih memiliki %d riwayat transaksi/pesanan; nonaktifkan akun ini agar riwayat keuangan tetap utuh", refs)
+	}
 	return s.userRepo.DeleteUser(ctx, id)
 }
 

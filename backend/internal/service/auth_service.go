@@ -130,6 +130,21 @@ func (s *AuthService) Login(ctx context.Context, identifier, password, expectedR
 	return resp, nil
 }
 
+// IssueFreshToken mints a brand new session token for an already-authenticated
+// user.
+//
+// This is deliberately not TokenMaker.RenewToken: renewal carries the original
+// iat forward so that revocation cannot be escaped by renewing, which means a
+// renewed token is exactly what a just-moved not_before watermark throws away.
+// After a password change the caller needs a token that is genuinely new.
+func (s *AuthService) IssueFreshToken(ctx context.Context, userID string) (string, time.Time, error) {
+	user, err := s.userRepo.FindByID(ctx, userID)
+	if err != nil {
+		return "", time.Time{}, err
+	}
+	return s.tokenMaker.CreateToken(user)
+}
+
 func (s *AuthService) ChangePassword(ctx context.Context, userID, oldPassword, newPassword string) error {
 	user, err := s.userRepo.FindByID(ctx, userID)
 	if err != nil {

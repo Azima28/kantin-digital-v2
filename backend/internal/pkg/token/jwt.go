@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"kantin-backend/internal/domain"
 )
 
@@ -38,15 +39,17 @@ func (m *TokenMaker) CreateToken(user *domain.UserProfile) (string, time.Time, e
 		email = *user.Email
 	}
 
-	expiresAt := time.Now().Add(time.Duration(m.durationHours) * time.Hour)
+	issuedAt := time.Now()
+	expiresAt := issuedAt.Add(time.Duration(m.durationHours) * time.Hour)
 	claims := &JWTClaims{
 		UserID:   user.ID,
 		Email:    email,
 		FullName: user.FullName,
 		Role:     user.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        uuid.NewString(),
 			ExpiresAt: jwt.NewNumericDate(expiresAt),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			IssuedAt:  jwt.NewNumericDate(issuedAt),
 			Subject:   user.ID,
 		},
 	}
@@ -64,16 +67,34 @@ func (m *TokenMaker) DurationHours() int {
 	return m.durationHours
 }
 
+// RenewToken issues a fresh token for an already-authenticated session.
+//
+// The jti is carried over deliberately. Renewal happens automatically inside the
+// auth middleware, so if every renewal minted a new id, a revoked session would
+// simply rename itself on the next request and outlive the logout that killed
+// it. Keeping the id means one logout revokes the whole renewal chain. IssuedAt
+// is likewise preserved: bulk revocation compares it against the user's
+// not_before watermark, and refreshing it would let a renewal slip past a
+// password change that was meant to end the session.
 func (m *TokenMaker) RenewToken(claims *JWTClaims) (string, time.Time, error) {
 	newExpiresAt := time.Now().Add(time.Duration(m.durationHours) * time.Hour)
+	issuedAt := jwt.NewNumericDate(time.Now())
+	if claims.IssuedAt != nil {
+		issuedAt = claims.IssuedAt
+	}
+	sessionID := claims.ID
+	if sessionID == "" {
+		sessionID = uuid.NewString()
+	}
 	newClaims := &JWTClaims{
 		UserID:   claims.UserID,
 		Email:    claims.Email,
 		FullName: claims.FullName,
 		Role:     claims.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        sessionID,
 			ExpiresAt: jwt.NewNumericDate(newExpiresAt),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			IssuedAt:  issuedAt,
 			Subject:   claims.UserID,
 		},
 	}

@@ -13,17 +13,102 @@ import (
 
 type CatalogHandler struct {
 	catalogService *service.CatalogService
+	tokenMaker     *token.TokenMaker
 }
 
-func NewCatalogHandler(catalogService *service.CatalogService) *CatalogHandler {
-	return &CatalogHandler{catalogService: catalogService}
+func NewCatalogHandler(catalogService *service.CatalogService, tokenMaker ...*token.TokenMaker) *CatalogHandler {
+	var tm *token.TokenMaker
+	if len(tokenMaker) > 0 {
+		tm = tokenMaker[0]
+	}
+	return &CatalogHandler{catalogService: catalogService, tokenMaker: tm}
 }
 
+// resolveOptionalClaims performs best-effort authentication on public endpoints.
+// Returns nil when no credential is presented or the token is invalid, instead of
+// rejecting the request, so anonymous visitors still receive the sanitized payload.
+func (h *CatalogHandler) resolveOptionalClaims(c *fiber.Ctx) *token.JWTClaims {
+	if claimsVal := c.Locals(middleware.UserClaimsKey); claimsVal != nil {
+		if claims, ok := claimsVal.(*token.JWTClaims); ok {
+			return claims
+		}
+	}
+	if h.tokenMaker == nil {
+		return nil
+	}
+
+	tokenStr := ""
+	if fields := strings.Fields(c.Get(middleware.AuthorizationHeader)); len(fields) >= 2 && strings.EqualFold(fields[0], middleware.AuthorizationType) {
+		tokenStr = fields[1]
+	}
+	if tokenStr == "" {
+		tokenStr = c.Cookies("access_token")
+	}
+	if tokenStr == "" {
+		return nil
+	}
+
+	claims, err := h.tokenMaker.VerifyToken(tokenStr)
+	if err != nil || claims == nil {
+		return nil
+	}
+	return claims
+}
+
+// sanitizeCanteenList strips operator PII (email, username, phone number,
+// gender, created_at) and merchant revenue (balance_earned) from the stall
+// directory. Only authorized staff see the full records; a canteen operator
+// keeps the full record for their own stall. Anonymous callers (claims == nil)
+// are always sanitized.
+func sanitizeCanteenList(canteens []domain.CanteenOperator, claims *token.JWTClaims) []domain.CanteenOperator {
+	isStaff := false
+	isOperator := false
+	viewerID := ""
+	if claims != nil {
+		viewerID = claims.UserID
+		switch claims.Role {
+		case domain.RoleSuperAdmin, domain.RoleAdmin, domain.RolePetugasKeuangan:
+			isStaff = true
+		case domain.RolePetugasKantin:
+			isOperator = true
+		}
+	}
+
+	if isStaff {
+		return canteens
+	}
+
+	for i := range canteens {
+		// A canteen operator keeps the full record for their own stall only.
+		if isOperator && viewerID != "" && strings.EqualFold(canteens[i].ID, viewerID) {
+			continue
+		}
+		canteens[i].BalanceEarned = 0
+		if p := canteens[i].Profile; p != nil {
+			canteens[i].Profile = &domain.UserProfile{
+				ID:        p.ID,
+				FullName:  p.FullName,
+				Role:      p.Role,
+				IsActive:  p.IsActive,
+				AvatarURL: p.AvatarURL,
+			}
+		}
+	}
+	return canteens
+}
+
+// ListCanteens serves the public stall directory. The underlying query joins
+// public.profiles, so the raw rows carry operator PII (email, username, phone
+// number, gender) and merchant revenue (balance_earned). Those fields are
+// stripped for every requester that is not the stall owner or authorized staff,
+// preventing anonymous enumeration of operator accounts.
 func (h *CatalogHandler) ListCanteens(c *fiber.Ctx) error {
 	canteens, err := h.catalogService.ListCanteens(c.Context())
 	if err != nil {
 		return response.Error(c, fiber.StatusInternalServerError, "Gagal mengambil data stan", err.Error())
 	}
+
+	canteens = sanitizeCanteenList(canteens, h.resolveOptionalClaims(c))
 	return response.Success(c, fiber.StatusOK, "Daftar stan kantin", canteens)
 }
 

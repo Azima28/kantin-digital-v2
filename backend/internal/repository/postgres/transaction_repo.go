@@ -296,7 +296,10 @@ func (r *TransactionRepo) ProcessTopup(ctx context.Context, studentID, officerID
 		SET total_managed_funds = total_managed_funds + $1
 		WHERE id = $2`, amount, officerID)
 
-	// 3. Record transaction
+	// 3. Record transaction. A student-raised request for this same amount is
+	// settled in place rather than duplicated: leaving it pending would keep the
+	// officer's worklist growing, eventually trip the per-student request cap in
+	// CreateTopupRequest, and make reports count one top-up as two rows.
 	var txRecord domain.Transaction
 	txRecord.StudentID = studentID
 	txRecord.OperatorID = officerID
@@ -304,6 +307,100 @@ func (r *TransactionRepo) ProcessTopup(ctx context.Context, studentID, officerID
 	txRecord.Type = domain.TxTypeTopup
 	txRecord.Status = domain.TxStatusSuccess
 	txRecord.PurchaseMethod = "cash"
+
+	err = tx.QueryRow(ctx, `
+		UPDATE public.transactions
+		SET status = $1, operator_id = $2, purchase_method = $3
+		WHERE id = (
+			SELECT id
+			FROM public.transactions
+			WHERE student_id = $4 AND type = 'topup' AND status = 'pending' AND total_amount = $5
+			ORDER BY created_at
+			LIMIT 1
+			FOR UPDATE
+		)
+		RETURNING id, created_at`,
+		txRecord.Status, txRecord.OperatorID, txRecord.PurchaseMethod, studentID, amount,
+	).Scan(&txRecord.ID, &txRecord.CreatedAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		// Walk-in top-up: the student never raised a request, so open a settled row.
+		err = tx.QueryRow(ctx, `
+			INSERT INTO public.transactions (student_id, operator_id, total_amount, type, status, purchase_method)
+			VALUES ($1, $2, $3, $4, $5, $6)
+			RETURNING id, created_at`,
+			txRecord.StudentID, txRecord.OperatorID, txRecord.TotalAmount, txRecord.Type, txRecord.Status, txRecord.PurchaseMethod,
+		).Scan(&txRecord.ID, &txRecord.CreatedAt)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// 4. Notification
+	notifMsg := fmt.Sprintf("Top-up saldo sebesar Rp %d berhasil ditambahkan ke akun Anda.", amount)
+	_, _ = tx.Exec(ctx, `
+		INSERT INTO public.notifications (student_id, title, message, type)
+		VALUES ($1, $2, $3, 'topup')`,
+		studentID, "Top-Up Saldo Berhasil! 💳", notifMsg,
+	)
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+	return &txRecord, nil
+}
+
+// CreateTopupRequest records a top-up a student asked for but that nobody has
+// paid for yet. It deliberately does NOT touch students.balance.
+//
+// ProcessTopup above is the settlement path and belongs to a finance officer who
+// has physically received the cash. When a student calls the same endpoint for
+// themselves there is no counterparty and no payment gateway callback, so
+// crediting the balance there would let anyone mint their own money. This writes
+// a 'pending' row instead: the request is queued for a finance officer, who
+// settles it through the existing top-up flow once the money actually arrives.
+func (r *TransactionRepo) CreateTopupRequest(ctx context.Context, studentID string, amount int) (*domain.Transaction, error) {
+	tx, err := r.db.Pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	var isProfileActive bool
+	err = tx.QueryRow(ctx, `
+		SELECT p.is_active
+		FROM public.students s
+		JOIN public.profiles p ON p.id = s.id
+		WHERE s.id = $1
+		FOR UPDATE`, studentID).Scan(&isProfileActive)
+	if err != nil {
+		return nil, fmt.Errorf("siswa tidak ditemukan: %w", err)
+	}
+	if !isProfileActive {
+		return nil, errors.New("permintaan top-up ditolak: Akun siswa sedang dinonaktifkan / diblokir oleh admin")
+	}
+
+	// Bound the queue so one student cannot flood the finance officer's worklist.
+	var pendingCount int
+	err = tx.QueryRow(ctx, `
+		SELECT COUNT(*)
+		FROM public.transactions
+		WHERE student_id = $1 AND type = 'topup' AND status = 'pending'`, studentID).Scan(&pendingCount)
+	if err != nil {
+		return nil, err
+	}
+	if pendingCount >= 3 {
+		return nil, errors.New("Anda masih memiliki permintaan top-up yang belum diproses. Tunggu konfirmasi petugas terlebih dahulu")
+	}
+
+	// operator_id is NOT NULL and there is no counterparty yet, so the request is
+	// attributed to the student who raised it until a finance officer settles it.
+	var txRecord domain.Transaction
+	txRecord.StudentID = studentID
+	txRecord.OperatorID = studentID
+	txRecord.TotalAmount = amount
+	txRecord.Type = domain.TxTypeTopup
+	txRecord.Status = domain.TxStatusPending
+	txRecord.PurchaseMethod = "pending_confirmation"
 
 	err = tx.QueryRow(ctx, `
 		INSERT INTO public.transactions (student_id, operator_id, total_amount, type, status, purchase_method)
@@ -315,12 +412,11 @@ func (r *TransactionRepo) ProcessTopup(ctx context.Context, studentID, officerID
 		return nil, err
 	}
 
-	// 4. Notification
-	notifMsg := fmt.Sprintf("Top-up saldo sebesar Rp %d berhasil ditambahkan ke akun Anda.", amount)
+	notifMsg := fmt.Sprintf("Permintaan top-up sebesar Rp %d telah kami terima. Saldo akan bertambah setelah petugas keuangan mengonfirmasi pembayaran Anda.", amount)
 	_, _ = tx.Exec(ctx, `
 		INSERT INTO public.notifications (student_id, title, message, type)
 		VALUES ($1, $2, $3, 'topup')`,
-		studentID, "Top-Up Saldo Berhasil! 💳", notifMsg,
+		studentID, "Permintaan Top-Up Menunggu Konfirmasi", notifMsg,
 	)
 
 	if err := tx.Commit(ctx); err != nil {
@@ -765,10 +861,29 @@ func (r *TransactionRepo) ProcessMerchantWithdrawal(ctx context.Context, operato
 	notifMsg := fmt.Sprintf("Pencairan dana stan %s sebesar Rp %d berhasil diproses. Sisa saldo pendapatan: Rp %d.", canteenName, amount, newBalance)
 	_, _ = tx.Exec(ctx, `INSERT INTO public.notifications (student_id, title, message, type) VALUES ($1, 'Pencairan Dana Stan 💵', $2, 'general')`, operatorID, notifMsg)
 
-	_, _ = tx.Exec(ctx, `
+	// The audit row is built with json_build_object and its error is propagated on
+	// purpose. It used to be assembled with fmt.Sprintf, so a quote or a backslash
+	// in `notes` produced malformed JSON; the resulting cast error was assigned to
+	// `_`, which meant the payout still committed with no trace of who authorised
+	// it. For a money-moving operation the audit entry is part of the transaction,
+	// not a best-effort side note: if it cannot be written, the payout rolls back.
+	_, err = tx.Exec(ctx, `
 		INSERT INTO public.audit_logs (user_id, action, entity_name, entity_id, old_data, new_data, created_at)
-		VALUES ($1, 'MERCHANT_PAYOUT', 'canteen_operators', $2, $3, $4, NOW())
-	`, actorID, operatorID, fmt.Sprintf(`{"balance_earned": %d}`, currentEarned), fmt.Sprintf(`{"balance_earned": %d, "amount": %d, "notes": "%s", "method": "%s"}`, newBalance, amount, notes, method))
+		VALUES (
+			$1, 'MERCHANT_PAYOUT', 'canteen_operators', $2,
+			json_build_object('balance_earned', $3::bigint)::jsonb,
+			json_build_object(
+				'balance_earned', $4::bigint,
+				'amount', $5::bigint,
+				'notes', $6::text,
+				'method', $7::text
+			)::jsonb,
+			NOW()
+		)
+	`, actorID, operatorID, currentEarned, newBalance, amount, notes, method)
+	if err != nil {
+		return nil, fmt.Errorf("gagal mencatat log audit pencairan dana: %w", err)
+	}
 
 	if err := tx.Commit(ctx); err != nil {
 		return nil, err
@@ -809,7 +924,7 @@ func (r *TransactionRepo) GetFinanceReport(ctx context.Context, startDate, endDa
 	_ = r.db.Pool.QueryRow(ctx, `
 		SELECT COALESCE(SUM(total_amount), 0), COUNT(*)
 		FROM public.transactions
-		WHERE type = 'topup' AND created_at >= $1 AND created_at <= $2
+		WHERE type = 'topup' AND status = 'success' AND created_at >= $1 AND created_at <= $2
 	`, startDate, endDate).Scan(&rep.TotalTopup, &rep.TopupCount)
 
 	// 2. Total purchase

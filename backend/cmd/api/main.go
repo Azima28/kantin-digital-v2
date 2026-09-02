@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -12,6 +13,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/helmet"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/websocket/v2"
@@ -21,10 +24,49 @@ import (
 	httpHandler "kantin-backend/internal/handler/http"
 	"kantin-backend/internal/handler/http/middleware"
 	wsHandler "kantin-backend/internal/handler/websocket"
+	"kantin-backend/internal/pkg/response"
 	"kantin-backend/internal/pkg/token"
 	"kantin-backend/internal/repository/postgres"
 	"kantin-backend/internal/service"
 )
+
+// loginRateKey buckets credential attempts per identifier instead of per address.
+//
+// A school reaches the internet through one NAT address, so keying a tight limit on
+// c.IP() alone would let a single student fat-fingering their password lock out
+// everyone behind the same gateway. The body is read only to build the key; fasthttp
+// keeps it buffered, so the handler still parses the same request afterwards.
+func loginRateKey(c *fiber.Ctx) string {
+	var body struct {
+		Identifier string `json:"identifier"`
+	}
+	_ = json.Unmarshal(c.Body(), &body)
+
+	identifier := strings.ToLower(strings.TrimSpace(body.Identifier))
+	if identifier == "" {
+		return c.IP() + "|-"
+	}
+	return c.IP() + "|" + identifier
+}
+
+// passwordRateKey follows the account rather than the network, since these routes
+// already ran through authentication by the time the limiter sees them.
+func passwordRateKey(c *fiber.Ctx) string {
+	if claims, ok := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims); ok && claims != nil && claims.UserID != "" {
+		return "pwd:" + claims.UserID
+	}
+	return "pwd:" + c.IP()
+}
+
+// throttled answers a rate-limited request in the same envelope as every other
+// error, so the app surfaces the message instead of a bare status code.
+func throttled(message string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		return response.Error(c, fiber.StatusTooManyRequests, message, fiber.Map{
+			"error_code": "RATE_LIMITED",
+		})
+	}
+}
 
 func main() {
 	cfg := config.LoadConfig()
@@ -62,6 +104,7 @@ func main() {
 	notifRepo := postgres.NewNotificationRepo(db)
 	auditRepo := postgres.NewAuditRepo(db)
 	shiftRepo := postgres.NewShiftRepo(db)
+	sessionRepo := postgres.NewSessionRepo(db)
 
 	// 5. Services
 	authService := service.NewAuthService(userRepo, tokenMaker)
@@ -71,13 +114,13 @@ func main() {
 	notifService := service.NewNotificationService(notifRepo)
 
 	// 6. HTTP Handlers
-	authH := httpHandler.NewAuthHandler(authService)
-	catalogH := httpHandler.NewCatalogHandler(catalogService)
+	authH := httpHandler.NewAuthHandler(authService, sessionRepo)
+	catalogH := httpHandler.NewCatalogHandler(catalogService, tokenMaker)
 	orderH := httpHandler.NewOrderHandler(orderService, hub)
 	posH := httpHandler.NewPOSHandler(paymentService)
 	studentH := httpHandler.NewStudentHandler(paymentService, notifService, tokenMaker)
 	financeH := httpHandler.NewFinanceHandler(paymentService)
-	adminH := httpHandler.NewAdminHandler(paymentService, catalogService, hub)
+	adminH := httpHandler.NewAdminHandler(paymentService, catalogService, sessionRepo, hub)
 	parentH := httpHandler.NewParentHandler(paymentService)
 	uploadH := httpHandler.NewUploadHandler(cfg.UploadDir, db)
 
@@ -90,6 +133,34 @@ func main() {
 
 	// Middleware
 	app.Use(recover.New())
+
+	// Security response headers.
+	//
+	// No Content-Security-Policy on purpose: this process also serves the uploaded
+	// images under /uploads, and a policy tight enough to be worth having here would
+	// have to be loosened for those anyway. Resource policy is cross-origin because
+	// the web build is served from a different host than the API and has to be able
+	// to load those images. HSTS is production-only, and helmet already limits it to
+	// requests that arrived over https, so a local http run is unaffected.
+	hstsMaxAge := 0
+	if cfg.AppEnv == "production" {
+		hstsMaxAge = 31536000
+	}
+	app.Use(helmet.New(helmet.Config{
+		XSSProtection:             "0",
+		ContentTypeNosniff:        "nosniff",
+		XFrameOptions:             "DENY",
+		ReferrerPolicy:            "strict-origin-when-cross-origin",
+		CrossOriginEmbedderPolicy: "unsafe-none",
+		CrossOriginOpenerPolicy:   "same-origin",
+		CrossOriginResourcePolicy: "cross-origin",
+		OriginAgentCluster:        "?1",
+		XDNSPrefetchControl:       "off",
+		XDownloadOptions:          "noopen",
+		XPermittedCrossDomain:     "none",
+		HSTSMaxAge:                hstsMaxAge,
+	}))
+
 	app.Use(logger.New())
 	app.Use(cors.New(cors.Config{
 		AllowOriginsFunc: func(origin string) bool {
@@ -117,7 +188,11 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	// Static Files (Uploaded images)
+	// Static Files (Uploaded images) with anti-MIME sniffing protection
+	app.Use("/uploads", func(c *fiber.Ctx) error {
+		c.Set("X-Content-Type-Options", "nosniff")
+		return c.Next()
+	})
 	app.Static("/uploads", cfg.UploadDir, fiber.Static{
 		Compress:      true,
 		ByteRange:     true,
@@ -146,10 +221,16 @@ func main() {
 			room := c.Query("room", "all")
 			var claims *token.JWTClaims
 			if tokenStr != "" {
-				var err error
-				claims, err = tokenMaker.VerifyToken(tokenStr)
-				if err == nil && claims != nil {
-					c.Locals("user_claims", claims)
+				// A signature that still verifies is not proof the session is alive.
+				// Without the same revocation check the HTTP middleware runs, a token
+				// that had already been logged out would keep opening private realtime
+				// rooms until it expired on its own -- the one door logout left open.
+				// A dead session is treated as no token at all, so public rooms still
+				// connect as a guest while every private room below rejects it.
+				if verified, verifyErr := tokenMaker.VerifyToken(tokenStr); verifyErr == nil && verified != nil &&
+					middleware.SessionAlive(c.Context(), sessionRepo, verified) {
+					claims = verified
+					c.Locals("user_claims", verified)
 				}
 			}
 
@@ -171,13 +252,13 @@ func main() {
 					}
 				} else if strings.HasPrefix(room, "order:") {
 					orderID := strings.TrimPrefix(room, "order:")
-					if claims.Role != domain.RoleAdmin && claims.Role != domain.RoleSuperAdmin && claims.Role != domain.RolePetugasKeuangan && claims.Role != domain.RolePetugasKantin {
+					if claims.Role != domain.RoleAdmin && claims.Role != domain.RoleSuperAdmin && claims.Role != domain.RolePetugasKeuangan {
 						order, err := orderRepo.GetOrderByID(c.Context(), orderID)
 						if err != nil || order == nil {
 							return fiber.NewError(fiber.StatusNotFound, "Pesanan tidak ditemukan")
 						}
 						isStudent := strings.EqualFold(order.StudentID, claims.UserID)
-						isOperator := order.OperatorID != nil && strings.EqualFold(*order.OperatorID, claims.UserID)
+						isOperator := claims.Role == domain.RolePetugasKantin && order.OperatorID != nil && strings.EqualFold(*order.OperatorID, claims.UserID)
 						if !isStudent && !isOperator {
 							return fiber.NewError(fiber.StatusForbidden, "Akses chat room pesanan ditolak")
 						}
@@ -205,8 +286,38 @@ func main() {
 	// API v1 Routing
 	api := app.Group("/api/v1")
 
+	// Brute-force protection on the credential endpoints.
+	//
+	// Two limiters in series, because one key cannot cover both threats. The tight one
+	// counts only failed attempts against a single identifier, which is what stops
+	// password guessing without punishing a user who simply logs in a lot. The loose
+	// one counts every request from an address and is the backstop against spraying
+	// one password across hundreds of accounts -- deliberately generous, because the
+	// whole school shares that address.
+	loginAttemptLimiter := limiter.New(limiter.Config{
+		Max:                    8,
+		Expiration:             5 * time.Minute,
+		SkipSuccessfulRequests: true,
+		KeyGenerator:           loginRateKey,
+		LimitReached:           throttled("Terlalu banyak percobaan login gagal untuk akun ini. Coba lagi dalam beberapa menit."),
+	})
+	loginAddressLimiter := limiter.New(limiter.Config{
+		Max:        90,
+		Expiration: 1 * time.Minute,
+		KeyGenerator: func(c *fiber.Ctx) string {
+			return "login:" + c.IP()
+		},
+		LimitReached: throttled("Permintaan login dari jaringan ini terlalu banyak. Coba lagi sebentar."),
+	})
+	passwordLimiter := limiter.New(limiter.Config{
+		Max:          10,
+		Expiration:   10 * time.Minute,
+		KeyGenerator: passwordRateKey,
+		LimitReached: throttled("Terlalu banyak percobaan ganti kata sandi. Coba lagi nanti."),
+	})
+
 	// Public Routes
-	api.Post("/auth/login", authH.Login)
+	api.Post("/auth/login", loginAddressLimiter, loginAttemptLimiter, authH.Login)
 	api.Get("/canteens", catalogH.ListCanteens)
 	api.Get("/canteens/:id/reviews", orderH.ListCanteenReviews)
 	api.Get("/products", catalogH.ListProducts)
@@ -214,10 +325,11 @@ func main() {
 	api.Get("/academic-structure", catalogH.GetPublicAcademicStructure)
 
 	// Protected Routes
-	authRequired := api.Group("", middleware.AuthMiddleware(tokenMaker, userRepo))
+	authRequired := api.Group("", middleware.AuthMiddleware(tokenMaker, userRepo, sessionRepo))
 	{
 		authRequired.Get("/auth/me", authH.Me)
-		authRequired.Post("/auth/change-password", authH.ChangePassword)
+		authRequired.Post("/auth/logout", authH.Logout)
+		authRequired.Post("/auth/change-password", passwordLimiter, authH.ChangePassword)
 
 		// Uploads (Protected with role verification for products)
 		authRequired.Post("/upload/product-image", middleware.RequireRoles(domain.RolePetugasKantin, domain.RoleAdmin, domain.RoleSuperAdmin), uploadH.UploadProductImage)
@@ -319,7 +431,17 @@ func main() {
 			adminGroup.Patch("/students/:id", adminH.UpdateStudent)
 			adminGroup.Put("/users/:id", adminH.UpdateUser)
 			adminGroup.Patch("/users/:id", adminH.UpdateUser)
-			adminGroup.Post("/users/password", adminH.AdminChangePassword)
+
+			// Role-scoped edits. The admin app has been calling these three paths all
+			// along; they were never registered, so every save from the merchant,
+			// finance and parent edit sheets came back 404.
+			adminGroup.Put("/canteen-operators/:id", adminH.UpdateCanteenOperator)
+			adminGroup.Patch("/canteen-operators/:id", adminH.UpdateCanteenOperator)
+			adminGroup.Put("/finance-officers/:id", adminH.UpdateFinanceOfficer)
+			adminGroup.Patch("/finance-officers/:id", adminH.UpdateFinanceOfficer)
+			adminGroup.Put("/parents/:id", adminH.UpdateParent)
+			adminGroup.Patch("/parents/:id", adminH.UpdateParent)
+			adminGroup.Post("/users/password", passwordLimiter, adminH.AdminChangePassword)
 			adminGroup.Delete("/users/:id", adminH.DeleteUser)
 			adminGroup.Get("/audit-logs", adminH.ListAuditLogs)
 			adminGroup.Get("/student/:id", adminH.GetStudentDetail)

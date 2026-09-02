@@ -425,6 +425,23 @@ func (r *OrderRepo) UpdateOrderStatus(ctx context.Context, orderID string, newSt
 		return nil
 	}
 
+	// Authoritative transition gate. It sits here, after SELECT ... FOR UPDATE,
+	// because prevStatus is only trustworthy while the row is locked: two
+	// concurrent PATCHes that both read "Siap Diambil" outside the lock would
+	// otherwise both credit the stall for the same order. Terminal statuses are
+	// rejected outright -- Selesai has already paid the stall and Dibatalkan has
+	// already refunded the student, and neither credit has an offsetting debit,
+	// so replaying Selesai -> Baru -> Selesai would mint money on every lap.
+	if domain.IsTerminalOrderStatus(prevStatus) {
+		return fmt.Errorf("pesanan sudah %s dan tidak dapat diubah lagi", prevStatus)
+	}
+	if !domain.IsValidOrderStatus(newStatus) {
+		return fmt.Errorf("status pesanan tidak dikenal: %s", newStatus)
+	}
+	if !domain.CanTransitionOrderStatus(prevStatus, newStatus) {
+		return fmt.Errorf("perubahan status dari %s ke %s tidak diizinkan", prevStatus, newStatus)
+	}
+
 	// 1. If transitioning to Selesai: Release escrow funds to canteen operator
 	if newStatus == domain.OrderStatusSelesai && prevStatus != domain.OrderStatusSelesai {
 		if operatorID != nil && *operatorID != "" {
@@ -606,17 +623,32 @@ func (r *OrderRepo) GetReviewByOrderID(ctx context.Context, orderID string) (*do
 		return nil, err
 	}
 
+	// GET /orders/:id/review is reachable by any authenticated caller, so the
+	// same anonymization the public listing uses is applied here too.
+	applyReviewIdentity(&rev, fullName, avatarURL)
+
+	return &rev, nil
+}
+
+// applyReviewIdentity fills in the reviewer identity fields for a public review
+// row. When the student asked to stay anonymous, every handle that leads back to
+// them is dropped -- not just the display name and avatar, but student_id and
+// order_id as well. Those two are direct primary keys into the buyer's account
+// and order history, so leaving them in the payload lets any caller of the
+// public reviews endpoint correlate an "anonymous" review straight back to a
+// named student.
+func applyReviewIdentity(rev *domain.OrderReview, fullName, avatarURL *string) {
 	if rev.IsAnonymous {
 		rev.StudentName = "Siswa (Anonim)"
 		rev.AvatarURL = nil
-	} else {
-		if fullName != nil {
-			rev.StudentName = *fullName
-		}
-		rev.AvatarURL = avatarURL
+		rev.StudentID = ""
+		rev.OrderID = ""
+		return
 	}
-
-	return &rev, nil
+	if fullName != nil {
+		rev.StudentName = *fullName
+	}
+	rev.AvatarURL = avatarURL
 }
 
 func (r *OrderRepo) ListCanteenReviews(ctx context.Context, canteenID, productID string, limit int) ([]domain.OrderReview, error) {
@@ -647,15 +679,7 @@ func (r *OrderRepo) ListCanteenReviews(ctx context.Context, canteenID, productID
 		if err != nil {
 			return nil, err
 		}
-		if rev.IsAnonymous {
-			rev.StudentName = "Siswa (Anonim)"
-			rev.AvatarURL = nil
-		} else {
-			if fullName != nil {
-				rev.StudentName = *fullName
-			}
-			rev.AvatarURL = avatarURL
-		}
+		applyReviewIdentity(&rev, fullName, avatarURL)
 		reviews = append(reviews, rev)
 	}
 	return reviews, nil

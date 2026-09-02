@@ -314,11 +314,18 @@ func (h *StudentHandler) Topup(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusBadRequest, "Payload top-up tidak valid", err.Error())
 	}
 
+	// selfService marks the callers who can only *ask* for a top-up. They have no
+	// money to hand over inside this request -- no gateway callback, no cash drawer
+	// -- so their call must never credit students.balance. Only a finance officer
+	// or admin, who has physically received the payment, settles the request.
+	selfService := false
+
 	targetStudentID := req.StudentID
 	switch claims.Role {
 	case domain.RoleStudent:
-		// Student can only top up their own balance
+		// Student can only request a top-up for their own account
 		targetStudentID = claims.UserID
+		selfService = true
 	case domain.RoleParent:
 		// Parent can only top up their linked child
 		if targetStudentID == "" {
@@ -338,6 +345,7 @@ func (h *StudentHandler) Topup(c *fiber.Ctx) error {
 		if !isLinked {
 			return response.Error(c, fiber.StatusForbidden, "Akses ditolak: Anda tidak memiliki akses ke siswa ini", nil)
 		}
+		selfService = true
 	case domain.RolePetugasKeuangan, domain.RoleSuperAdmin, domain.RoleAdmin:
 		if targetStudentID == "" {
 			return response.Error(c, fiber.StatusBadRequest, "Student ID wajib disertakan", nil)
@@ -353,10 +361,25 @@ func (h *StudentHandler) Topup(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusBadRequest, "Nominal top-up maksimal Rp 2.000.000 per transaksi", nil)
 	}
 
+	if selfService {
+		tx, err := h.paymentService.RequestTopup(c.Context(), targetStudentID, req.Amount)
+		if err != nil {
+			return response.Error(c, fiber.StatusBadRequest, err.Error(), nil)
+		}
+		return response.Success(c, fiber.StatusAccepted, "Permintaan top-up terkirim. Saldo bertambah setelah petugas keuangan mengonfirmasi pembayaran", tx)
+	}
+
 	tx, err := h.paymentService.ProcessTopup(c.Context(), targetStudentID, claims.UserID, req.Amount)
 	if err != nil {
 		return response.Error(c, fiber.StatusBadRequest, err.Error(), nil)
 	}
+
+	_ = h.paymentService.LogAudit(c.Context(), claims.UserID, "STUDENT_TOPUP", "students", targetStudentID, "",
+		auditJSON(map[string]interface{}{
+			"amount":         req.Amount,
+			"transaction_id": tx.ID,
+			"actor_role":     claims.Role,
+		}), c.IP())
 
 	return response.Success(c, fiber.StatusOK, "Top-up saldo berhasil diproses", tx)
 }

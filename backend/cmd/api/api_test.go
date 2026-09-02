@@ -40,7 +40,7 @@ func setupTestApp() *fiber.App {
 	paymentService := service.NewPaymentService(txRepo, userRepo, auditRepo, productRepo, shiftRepo)
 	notifService := service.NewNotificationService(notifRepo)
 
-	authH := httpHandler.NewAuthHandler(authService)
+	authH := httpHandler.NewAuthHandler(authService, nil)
 	catalogH := httpHandler.NewCatalogHandler(catalogService)
 	orderH := httpHandler.NewOrderHandler(orderService, hub)
 	posH := httpHandler.NewPOSHandler(paymentService)
@@ -63,7 +63,7 @@ func setupTestApp() *fiber.App {
 	api.Get("/products", catalogH.ListProducts)
 	api.Get("/student/lookup", studentH.LookupStudent)
 
-	authRequired := api.Group("/", middleware.AuthMiddleware(tokenMaker))
+	authRequired := api.Group("/", middleware.AuthMiddleware(tokenMaker, nil, nil))
 	authRequired.Get("/auth/me", authH.Me)
 	authRequired.Post("/upload/product-image", uploadH.UploadProductImage)
 

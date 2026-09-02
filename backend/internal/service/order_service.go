@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"kantin-backend/internal/domain"
@@ -61,11 +62,29 @@ func (s *OrderService) UpdateOrderStatus(ctx context.Context, orderID, callerUse
 		return err
 	}
 
-	// Verify merchant ownership (Admins, Finance Officers, and Canteen Operators on duty are authorized)
-	if callerRole != domain.RoleSuperAdmin && callerRole != domain.RoleAdmin && callerRole != domain.RolePetugasKeuangan && callerRole != domain.RolePetugasKantin {
-		if order.OperatorID == nil || *order.OperatorID != callerUserID {
+	// Verify merchant ownership strictly for canteen operators
+	if callerRole == domain.RolePetugasKantin {
+		if order.OperatorID == nil || !strings.EqualFold(*order.OperatorID, callerUserID) {
 			return errors.New("akses ditolak: pesanan ini bukan milik stan Anda")
 		}
+	} else if callerRole != domain.RoleSuperAdmin && callerRole != domain.RoleAdmin && callerRole != domain.RolePetugasKeuangan {
+		return errors.New("akses ditolak: Anda tidak memiliki wewenang untuk mengubah status pesanan")
+	}
+
+	// Validate the requested move against the order state machine. Reaching
+	// Selesai releases the escrow to the stall and reaching Dibatalkan refunds
+	// the student, so a settled order must never be re-opened: without this,
+	// PATCHing Selesai -> Baru -> Selesai pays the stall again on every lap.
+	// The repository re-checks this inside its FOR UPDATE transaction; that is
+	// the authoritative layer, this one exists to return a readable error.
+	if !domain.IsValidOrderStatus(newStatus) {
+		return fmt.Errorf("status pesanan tidak dikenal: %s", newStatus)
+	}
+	if domain.IsTerminalOrderStatus(order.Status) && newStatus != order.Status {
+		return fmt.Errorf("pesanan sudah %s dan tidak dapat diubah lagi", order.Status)
+	}
+	if !domain.CanTransitionOrderStatus(order.Status, newStatus) {
+		return fmt.Errorf("perubahan status dari %s ke %s tidak diizinkan", order.Status, newStatus)
 	}
 
 	return s.orderRepo.UpdateOrderStatus(ctx, orderID, newStatus)
@@ -73,13 +92,16 @@ func (s *OrderService) UpdateOrderStatus(ctx context.Context, orderID, callerUse
 
 func (s *OrderService) SendMessage(ctx context.Context, msg *domain.OrderMessage, callerRole domain.Role) (*domain.OrderMessage, error) {
 	order, err := s.orderRepo.GetOrderByID(ctx, msg.OrderID)
-	if err == nil && order != nil {
-		// Verify participant authorization strictly (Admins, Finance Officers, & Canteen Staff are universally authorized)
-		if callerRole != domain.RoleSuperAdmin && callerRole != domain.RoleAdmin && callerRole != domain.RolePetugasKeuangan && callerRole != domain.RolePetugasKantin {
-			isParticipant := (callerRole == domain.RoleStudent && strings.EqualFold(msg.SenderID, order.StudentID))
-			if !isParticipant {
-				return nil, errors.New("akses ditolak: Anda bukan partisipan dalam pesanan ini")
-			}
+	if err != nil || order == nil {
+		return nil, errors.New("pesanan tidak ditemukan")
+	}
+
+	// Verify participant authorization strictly
+	if callerRole != domain.RoleSuperAdmin && callerRole != domain.RoleAdmin && callerRole != domain.RolePetugasKeuangan {
+		isStudent := callerRole == domain.RoleStudent && strings.EqualFold(msg.SenderID, order.StudentID)
+		isOperator := callerRole == domain.RolePetugasKantin && order.OperatorID != nil && strings.EqualFold(*order.OperatorID, msg.SenderID)
+		if !isStudent && !isOperator {
+			return nil, errors.New("akses ditolak: Anda bukan partisipan dalam pesanan ini")
 		}
 	}
 
@@ -89,23 +111,37 @@ func (s *OrderService) SendMessage(ctx context.Context, msg *domain.OrderMessage
 
 func (s *OrderService) GetMessages(ctx context.Context, orderID, callerUserID string, callerRole domain.Role) ([]domain.OrderMessage, error) {
 	order, err := s.orderRepo.GetOrderByID(ctx, orderID)
-	if err != nil {
-		// If order ID is not in orders table (e.g. direct POS transaction ID), list existing messages or return empty
-		return s.orderRepo.ListOrderMessages(ctx, orderID)
+	if err != nil || order == nil {
+		return nil, errors.New("pesanan tidak ditemukan")
 	}
 
-	// Verify participant authorization gracefully (Admins, Finance Officers, & Canteen Staff are authorized)
-	if callerRole != domain.RoleSuperAdmin && callerRole != domain.RoleAdmin && callerRole != domain.RolePetugasKeuangan && callerRole != domain.RolePetugasKantin {
-		isParticipant := (callerRole == domain.RoleStudent && strings.EqualFold(callerUserID, order.StudentID))
-		if !isParticipant {
-			return []domain.OrderMessage{}, nil
+	// Verify participant authorization strictly
+	if callerRole != domain.RoleSuperAdmin && callerRole != domain.RoleAdmin && callerRole != domain.RolePetugasKeuangan {
+		isStudent := callerRole == domain.RoleStudent && strings.EqualFold(callerUserID, order.StudentID)
+		isOperator := callerRole == domain.RolePetugasKantin && order.OperatorID != nil && strings.EqualFold(*order.OperatorID, callerUserID)
+		if !isStudent && !isOperator {
+			return nil, errors.New("akses ditolak: Anda bukan partisipan dalam pesanan ini")
 		}
 	}
 
 	return s.orderRepo.ListOrderMessages(ctx, orderID)
 }
 
-func (s *OrderService) MarkMessagesAsRead(ctx context.Context, orderID, callerUserID string) error {
+func (s *OrderService) MarkMessagesAsRead(ctx context.Context, orderID, callerUserID string, callerRole domain.Role) error {
+	order, err := s.orderRepo.GetOrderByID(ctx, orderID)
+	if err != nil || order == nil {
+		return errors.New("pesanan tidak ditemukan")
+	}
+
+	// Verify participant authorization strictly
+	if callerRole != domain.RoleSuperAdmin && callerRole != domain.RoleAdmin && callerRole != domain.RolePetugasKeuangan {
+		isStudent := callerRole == domain.RoleStudent && strings.EqualFold(callerUserID, order.StudentID)
+		isOperator := callerRole == domain.RolePetugasKantin && order.OperatorID != nil && strings.EqualFold(*order.OperatorID, callerUserID)
+		if !isStudent && !isOperator {
+			return errors.New("akses ditolak: Anda bukan partisipan dalam pesanan ini")
+		}
+	}
+
 	return s.orderRepo.MarkMessagesAsRead(ctx, orderID, callerUserID)
 }
 

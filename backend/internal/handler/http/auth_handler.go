@@ -3,6 +3,7 @@ package http
 import (
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"kantin-backend/internal/handler/http/middleware"
@@ -14,10 +15,41 @@ import (
 
 type AuthHandler struct {
 	authService *service.AuthService
+	sessionRepo *postgres.SessionRepo
 }
 
-func NewAuthHandler(authService *service.AuthService) *AuthHandler {
-	return &AuthHandler{authService: authService}
+func NewAuthHandler(authService *service.AuthService, sessionRepo *postgres.SessionRepo) *AuthHandler {
+	return &AuthHandler{authService: authService, sessionRepo: sessionRepo}
+}
+
+// isSecureRequest reports whether the response travels over TLS, including the
+// reverse-proxied case where Fiber itself only ever sees plain HTTP.
+func isSecureRequest(c *fiber.Ctx) bool {
+	return c.Protocol() == "https" || c.Get("X-Forwarded-Proto") == "https" || strings.Contains(c.Hostname(), "zitech.web.id")
+}
+
+func setAccessTokenCookie(c *fiber.Ctx, value string, expires time.Time) {
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    value,
+		Expires:  expires,
+		HTTPOnly: true,
+		Secure:   isSecureRequest(c),
+		SameSite: "Lax",
+		Path:     "/",
+	})
+}
+
+func clearAccessTokenCookie(c *fiber.Ctx) {
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    "",
+		Expires:  time.Now().Add(-time.Hour),
+		HTTPOnly: true,
+		Secure:   isSecureRequest(c),
+		SameSite: "Lax",
+		Path:     "/",
+	})
 }
 
 type LoginRequest struct {
@@ -50,17 +82,48 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusUnauthorized, err.Error(), nil)
 	}
 
-	// Set HttpOnly Cookie for Web Clients
-	c.Cookie(&fiber.Cookie{
-		Name:     "access_token",
-		Value:    resp.Token,
-		Expires:  resp.ExpiresAt,
-		HTTPOnly: true,
-		Secure:   false, // Set true in HTTPS production
-		SameSite: "Lax",
-	})
+	// Set HttpOnly Cookie for Web Clients with dynamic Secure flag
+	setAccessTokenCookie(c, resp.Token, resp.ExpiresAt)
 
 	return response.Success(c, fiber.StatusOK, "Login berhasil", resp)
+}
+
+// Logout ends the current session for real.
+//
+// Clearing the cookie on its own would not be a logout: the same token is also
+// held in client storage and sent as a bearer header, so it would keep working
+// until it expired on its own. The session id is blacklisted instead, which stops
+// the token whichever transport it arrives on.
+func (h *AuthHandler) Logout(c *fiber.Ctx) error {
+	claims, _ := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
+	if claims == nil {
+		clearAccessTokenCookie(c)
+		return response.Success(c, fiber.StatusOK, "Berhasil keluar", nil)
+	}
+
+	if h.sessionRepo != nil {
+		var err error
+		if claims.ID != "" {
+			expiresAt := time.Now().Add(time.Duration(24) * time.Hour)
+			if claims.ExpiresAt != nil {
+				expiresAt = claims.ExpiresAt.Time
+			}
+			err = h.sessionRepo.RevokeToken(c.Context(), claims.ID, claims.UserID, expiresAt)
+		} else {
+			// Tokens minted before session ids existed have nothing to blacklist, so
+			// the only honest way to log one out is to move the user's watermark and
+			// end every session they hold. This only ever affects tokens issued before
+			// this feature shipped.
+			err = h.sessionRepo.RevokeAllForUser(c.Context(), claims.UserID, time.Now())
+		}
+		if err != nil {
+			// Reporting success while the token still works would be a lie.
+			return response.Error(c, fiber.StatusInternalServerError, "Gagal mengakhiri sesi. Silakan coba lagi.", err.Error())
+		}
+	}
+
+	clearAccessTokenCookie(c)
+	return response.Success(c, fiber.StatusOK, "Berhasil keluar", nil)
 }
 
 func (h *AuthHandler) Me(c *fiber.Ctx) error {
@@ -88,7 +151,32 @@ func (h *AuthHandler) ChangePassword(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusBadRequest, err.Error(), nil)
 	}
 
-	return response.Success(c, fiber.StatusOK, "Kata sandi berhasil diperbarui", nil)
+	// Ending every session is the whole point of changing a password: whoever knew
+	// the old one may still be holding a token that was minted with it. The caller
+	// then gets a freshly issued token, so only the *other* devices stop working --
+	// the client reads it from X-Renewed-Token, which it already handles for the
+	// middleware's sliding renewal.
+	data := fiber.Map{"sessions_revoked": false}
+	if h.sessionRepo != nil {
+		if err := h.sessionRepo.RevokeAllForUser(c.Context(), claims.UserID, time.Now()); err != nil {
+			return response.Error(c, fiber.StatusInternalServerError,
+				"Kata sandi diperbarui, tetapi sesi lama gagal dihentikan. Segera hubungi administrator.", err.Error())
+		}
+		data["sessions_revoked"] = true
+
+		newToken, expiresAt, tokErr := h.authService.IssueFreshToken(c.Context(), claims.UserID)
+		if tokErr == nil && newToken != "" {
+			c.Set("X-Renewed-Token", newToken)
+			c.Set("Access-Control-Expose-Headers", "X-Renewed-Token")
+			if c.Cookies("access_token") != "" {
+				setAccessTokenCookie(c, newToken, expiresAt)
+			}
+			data["token"] = newToken
+			data["expires_at"] = expiresAt
+		}
+	}
+
+	return response.Success(c, fiber.StatusOK, "Kata sandi berhasil diperbarui", data)
 }
 
 type UpdateProfileRequest struct {

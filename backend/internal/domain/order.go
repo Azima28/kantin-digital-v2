@@ -19,6 +19,96 @@ const (
 	OrderStatusMenungguPersetujuanMurid OrderStatus = "Menunggu Persetujuan Murid"
 )
 
+// orderStatusTransitions is the authoritative state machine for an order.
+//
+// Selesai and Dibatalkan are terminal on purpose. Reaching Selesai releases the
+// escrow to canteen_operators.balance_earned, and reaching Dibatalkan refunds
+// students.balance -- both are one-way money movements with no offsetting debit
+// anywhere in the codebase. Without a state machine, "Selesai -> Baru -> Selesai"
+// (or the same loop through Dibatalkan) settles the very same order over and
+// over, so the transition table is what keeps an order from being paid twice.
+//
+// Every other edge here mirrors a transition the operator or student UI can
+// actually trigger, including the two backwards edges used to resume an order
+// after a cancellation request is rejected.
+var orderStatusTransitions = map[OrderStatus][]OrderStatus{
+	OrderStatusBaru: {
+		OrderStatusSedangDimasak, OrderStatusSedangDisiapkan,
+		OrderStatusSiapDiambil, OrderStatusSiapDiantar,
+		OrderStatusMenungguPembatalan, OrderStatusMenungguPersetujuanMurid,
+		OrderStatusDibatalkan,
+	},
+	OrderStatusSedangDimasak: {
+		OrderStatusSedangDisiapkan, OrderStatusSiapDiambil, OrderStatusSiapDiantar,
+		OrderStatusSedangDiantar, OrderStatusMenungguPembatalan,
+		OrderStatusMenungguPersetujuanMurid, OrderStatusDibatalkan,
+	},
+	OrderStatusSedangDisiapkan: {
+		OrderStatusSedangDimasak, OrderStatusSiapDiambil, OrderStatusSiapDiantar,
+		OrderStatusSedangDiantar, OrderStatusMenungguPembatalan,
+		OrderStatusMenungguPersetujuanMurid, OrderStatusDibatalkan,
+	},
+	OrderStatusSiapDiambil: {
+		OrderStatusSedangDiantar, OrderStatusSelesai,
+		OrderStatusMenungguPembatalan, OrderStatusMenungguPersetujuanMurid,
+		OrderStatusDibatalkan,
+	},
+	OrderStatusSiapDiantar: {
+		OrderStatusSedangDiantar, OrderStatusSelesai,
+		OrderStatusMenungguPembatalan, OrderStatusMenungguPersetujuanMurid,
+		OrderStatusDibatalkan,
+	},
+	OrderStatusSedangDiantar: {
+		OrderStatusSiapDiambil, OrderStatusSelesai,
+		OrderStatusMenungguPembatalan, OrderStatusMenungguPersetujuanMurid,
+		OrderStatusDibatalkan,
+	},
+	// Cancellation waiting rooms: either the request is approved (Dibatalkan) or
+	// rejected, in which case the order resumes preparation.
+	OrderStatusMenungguPembatalan: {
+		OrderStatusDibatalkan, OrderStatusSedangDisiapkan, OrderStatusSedangDimasak,
+		OrderStatusSiapDiambil, OrderStatusSiapDiantar, OrderStatusSedangDiantar,
+	},
+	OrderStatusMenungguPersetujuanMurid: {
+		OrderStatusDibatalkan, OrderStatusSedangDisiapkan, OrderStatusSedangDimasak,
+		OrderStatusSiapDiambil, OrderStatusSiapDiantar, OrderStatusSedangDiantar,
+	},
+	// Terminal -- settled, immutable.
+	OrderStatusSelesai:    {},
+	OrderStatusDibatalkan: {},
+}
+
+// IsValidOrderStatus reports whether s is a status this system recognises.
+func IsValidOrderStatus(s OrderStatus) bool {
+	_, ok := orderStatusTransitions[s]
+	return ok
+}
+
+// IsTerminalOrderStatus reports whether an order in status s has already been
+// settled and may no longer change.
+func IsTerminalOrderStatus(s OrderStatus) bool {
+	return s == OrderStatusSelesai || s == OrderStatusDibatalkan
+}
+
+// CanTransitionOrderStatus reports whether an order may move from -> to.
+// A no-op (from == to) is always allowed; callers treat it as "nothing to do"
+// so a double-tapped button does not surface an error.
+func CanTransitionOrderStatus(from, to OrderStatus) bool {
+	if from == to {
+		return true
+	}
+	allowed, ok := orderStatusTransitions[from]
+	if !ok {
+		return false
+	}
+	for _, candidate := range allowed {
+		if candidate == to {
+			return true
+		}
+	}
+	return false
+}
+
 type OrderItem struct {
 	ID              string   `json:"id"`
 	OrderID         string   `json:"order_id"`

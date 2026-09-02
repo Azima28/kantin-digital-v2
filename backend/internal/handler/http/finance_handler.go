@@ -127,6 +127,15 @@ func (h *FinanceHandler) Topup(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusBadRequest, err.Error(), nil)
 	}
 
+	// A cash top-up creates balance out of nothing as far as the database is
+	// concerned, so who did it, for whom, and from where has to be recorded.
+	_ = h.paymentService.LogAudit(c.Context(), claims.UserID, "STUDENT_TOPUP", "students", req.StudentID, "",
+		auditJSON(map[string]interface{}{
+			"amount":         req.Amount,
+			"transaction_id": tx.ID,
+			"method":         "cash",
+		}), c.IP())
+
 	return response.Success(c, fiber.StatusOK, "Top-up saldo berhasil", tx)
 }
 

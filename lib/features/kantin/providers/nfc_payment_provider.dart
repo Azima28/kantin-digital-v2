@@ -184,6 +184,9 @@ class NfcPaymentNotifier extends StateNotifier<NfcPaymentState> {
         '/pos/checkout',
         body: {
           'student_id': state.studentId ?? '',
+          // Proof that this terminal just read the card; the backend matches it
+          // against the scan it recorded and refuses checkout without it.
+          'rfid_uid': state.studentUid ?? '',
           'total_amount': totalAmount,
           'purchase_method': 'nfc_rfid',
           'items': itemsPayload,

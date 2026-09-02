@@ -657,6 +657,26 @@ func (r *UserRepo) DeleteUser(ctx context.Context, id string) error {
 	return err
 }
 
+// CountUserLedgerRefs counts the financial and order history attached to a
+// profile. Every child table points at profiles with ON DELETE CASCADE, so
+// deleting a profile silently takes its transactions, orders, order messages and
+// notifications with it -- an irreversible hole in the ledger from a single
+// request. Callers use this to refuse the delete and offer deactivation instead.
+func (r *UserRepo) CountUserLedgerRefs(ctx context.Context, id string) (int, error) {
+	if r == nil || r.db == nil || r.db.Pool == nil {
+		return 0, ErrDatabaseNotReady
+	}
+	query := `
+		SELECT
+			(SELECT COUNT(*) FROM public.transactions WHERE student_id = $1 OR operator_id = $1) +
+			(SELECT COUNT(*) FROM public.orders WHERE student_id = $1 OR operator_id = $1)`
+	var total int
+	if err := r.db.Pool.QueryRow(ctx, query, id).Scan(&total); err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+
 // ListFinanceOfficersLedger retrieves all finance officers with comprehensive cash flow & transaction aggregates
 func (r *UserRepo) ListFinanceOfficersLedger(ctx context.Context) ([]domain.FinanceOfficerLedgerItem, error) {
 	query := `
@@ -667,7 +687,7 @@ func (r *UserRepo) ListFinanceOfficersLedger(ctx context.Context) ([]domain.Fina
 		       COALESCE((
 		           SELECT SUM(t.total_amount)
 		           FROM public.transactions t
-		           WHERE t.type = 'topup' AND (t.operator_id = p.id OR t.student_id = p.id)
+		           WHERE t.type = 'topup' AND t.status = 'success' AND (t.operator_id = p.id OR t.student_id = p.id)
 		       ), 0) AS total_cash_inflow,
 		       -- Total Cash Outflow (Withdrawal payout to merchant by this officer)
 		       COALESCE((
@@ -685,7 +705,7 @@ func (r *UserRepo) ListFinanceOfficersLedger(ctx context.Context) ([]domain.Fina
 		       COALESCE((
 		           SELECT SUM(t.total_amount)
 		           FROM public.transactions t
-		           WHERE t.type = 'topup' AND (t.operator_id = p.id OR t.student_id = p.id) AND t.created_at >= CURRENT_DATE
+		           WHERE t.type = 'topup' AND t.status = 'success' AND (t.operator_id = p.id OR t.student_id = p.id) AND t.created_at >= CURRENT_DATE
 		       ), 0) AS today_cash_inflow,
 		       -- Today Cash Outflow
 		       COALESCE((
@@ -770,7 +790,7 @@ func (r *UserRepo) GetFinanceOfficerLedgerDetail(ctx context.Context, officerID 
 
 	trendQuery := `
 		SELECT (CURRENT_DATE - created_at::date) as day_diff,
-		       COALESCE(SUM(CASE WHEN type = 'topup' AND (operator_id = $1 OR student_id = $1) THEN total_amount ELSE 0 END), 0) as inflow,
+		       COALESCE(SUM(CASE WHEN type = 'topup' AND status = 'success' AND (operator_id = $1 OR student_id = $1) THEN total_amount ELSE 0 END), 0) as inflow,
 		       COALESCE(SUM(CASE WHEN type = 'withdrawal' AND student_id = $1 THEN total_amount ELSE 0 END), 0) as outflow
 		FROM public.transactions
 		WHERE created_at >= (CURRENT_DATE - INTERVAL '6 days')
@@ -798,7 +818,7 @@ func (r *UserRepo) GetFinanceOfficerLedgerDetail(ctx context.Context, officerID 
 			       t.created_at
 			FROM public.transactions t
 			LEFT JOIN public.profiles p ON p.id = t.student_id
-			WHERE t.type = 'topup' AND (t.operator_id = $1 OR t.student_id = $1)
+			WHERE t.type = 'topup' AND t.status = 'success' AND (t.operator_id = $1 OR t.student_id = $1)
 		)
 		UNION ALL
 		(
