@@ -49,3 +49,15 @@ screenshot*.png
 .claude/
 .agents/
 scratch/
+
+# Secrets / environment
+.env
+.env.*
+!.env.example
+
+# Database dumps containing real accounts, bcrypt password hashes and session
+# tokens. Only the DDL (database_backup/init_postgres_standalone.sql) is tracked.
+database_backup/full_backup_data.sql
+database_backup/json_seed_data.sql
+database_backup/supabase_full_dump.json
+database_backup/json/

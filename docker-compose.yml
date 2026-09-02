@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # 1. Database PostgreSQL Production
   postgres:
@@ -7,21 +5,28 @@ services:
     container_name: kantin_postgres
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: kantindigital_secure_2026
-      POSTGRES_DB: kantin_digital
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
       TZ: Asia/Jakarta
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # Schema only. The row data lives in database_backup/full_backup_data.sql,
+      # which is gitignored because it contains real accounts and password
+      # hashes -- restore it manually after the volume is created:
+      #   docker compose exec -T postgres psql -U postgres -d kantin_digital < database_backup/full_backup_data.sql
       - ./database_backup/init_postgres_standalone.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
-      - ./database_backup/full_backup_data.sql:/docker-entrypoint-initdb.d/02_data.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d kantin_digital"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
     ports:
-      - "5432:5432"
+      # Loopback only: the api container reaches postgres over kantin_network,
+      # so this mapping exists purely for local psql/pgAdmin access. Never bind
+      # it to 0.0.0.0 -- that puts the whole database, password hashes included,
+      # in front of every host on the network.
+      - "127.0.0.1:5432:5432"
     networks:
       - kantin_network
 
@@ -37,12 +42,12 @@ services:
         condition: service_healthy
     environment:
       PORT: 8080
-      DATABASE_URL: postgres://postgres:kantindigital_secure_2026@postgres:5432/kantin_digital?sslmode=disable
-      JWT_SECRET: kantin-digital-v2-super-production-secret-jwt-key-2026
-      JWT_EXPIRY_HOURS: 72
-      CORS_ORIGINS: "*"
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      JWT_EXPIRY_HOURS: ${JWT_EXPIRY_HOURS:-72}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
       UPLOAD_DIR: "/app/uploads"
-      APP_ENV: production
+      APP_ENV: ${APP_ENV:-production}
     ports:
       - "8080:8080"
     volumes:

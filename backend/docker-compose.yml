@@ -1,5 +1,13 @@
-version: '3.8'
-
+# Backend-only stack (api + postgres, no nginx/web). The stack that actually
+# runs in production is ../docker-compose.yml -- this one exists for working on
+# the Go service in isolation, and it initialises the database from
+# ./migrations/000001_init_schema.up.sql instead of the standalone init script.
+#
+# Every secret here is read from the environment. Provide backend/.env, or point
+# compose at the root one:  docker compose --env-file ../.env -f docker-compose.yml up
+#
+# Note: `postgres` reuses the container name of the root stack, so the two
+# cannot run at the same time. Stop one before starting the other.
 services:
   # 1. PostgreSQL Database Service
   postgres:
@@ -7,17 +15,19 @@ services:
     container_name: kantin_postgres
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgrespassword
-      POSTGRES_DB: kantin_digital
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
       TZ: Asia/Jakarta
     ports:
-      - "5432:5432"
+      # Loopback only -- never 0.0.0.0, that publishes the database and every
+      # password hash in it to the whole network.
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./migrations/000001_init_schema.up.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d kantin_digital"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -34,12 +44,14 @@ services:
         condition: service_healthy
     environment:
       PORT: 8080
-      DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/kantin_digital?sslmode=disable
-      JWT_SECRET: kantin-digital-v2-super-secret-key-2026-production-ready
-      JWT_EXPIRY_HOURS: 72
-      CORS_ORIGINS: "*"
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      JWT_EXPIRY_HOURS: ${JWT_EXPIRY_HOURS:-72}
+      # APP_ENV=production rejects "*" at boot: wildcard origin plus cookie auth
+      # lets any site issue credentialed requests, so the list must be explicit.
+      CORS_ORIGINS: ${CORS_ORIGINS:?set CORS_ORIGINS in .env}
       UPLOAD_DIR: "./uploads"
-      APP_ENV: production
+      APP_ENV: ${APP_ENV:-production}
     ports:
       - "8080:8080"
     volumes:
