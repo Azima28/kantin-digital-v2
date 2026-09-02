@@ -109,8 +109,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
           isLoading: false,
         );
 
-        // Background session verification against backend
-        _authService.validateSession().then((isValid) {
+        // Background session verification against backend. It doubles as a profile
+        // re-read: the cached copy restored above can be up to 7 days old and is
+        // never refreshed otherwise, so a photo changed in an earlier session or
+        // on another device would stay invisible on this one.
+        refreshProfileFromServer().then((isValid) {
           if (!isValid && mounted) {
             _apiClient.onUnauthorized?.call();
           }
@@ -217,6 +220,39 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       state = state.copyWith(profile: updatedProfile);
     }
+  }
+
+  // Re-read the stored profile from the backend and fold it into state + cache.
+  // Reports whether the session is still valid, so it can stand in for
+  // validateSession() without spending a second round trip.
+  Future<bool> refreshProfileFromServer() async {
+    final response = await _apiClient.get('/auth/me');
+    final bool isSessionValid = response.success && response.statusCode == 200;
+    if (!isSessionValid || response.data == null) return isSessionValid;
+
+    try {
+      final Map<String, dynamic> server = Map<String, dynamic>.from(response.data as Map);
+      // A backend that cannot read the row answers with the raw JWT claims, which
+      // carry no id. There is nothing to sync from in that case, and merging it
+      // would drop fields the cached profile still holds.
+      if (server['id'] == null) return true;
+
+      final Map<String, dynamic> merged = Map<String, dynamic>.from(state.profile ?? {})..addAll(server);
+      // avatar_url is omitted from the payload when the profile has none, so it is
+      // assigned explicitly: otherwise a photo removed elsewhere would survive in
+      // this cache forever.
+      merged['avatar_url'] = server['avatar_url'];
+
+      if (!mounted) return true;
+      await SecureSessionService.saveSessionData(
+        profile: merged,
+        sessionToken: state.sessionToken,
+      );
+      if (mounted) state = state.copyWith(profile: merged);
+    } catch (e) {
+      debugPrint('[AuthNotifier] Refresh profile error: $e');
+    }
+    return true;
   }
 
   // Update profile details (Full name, Email, Username, Phone number, Gender) to Go Backend & persistent local state

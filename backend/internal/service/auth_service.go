@@ -165,6 +165,13 @@ func (s *AuthService) ChangePassword(ctx context.Context, userID, oldPassword, n
 	return s.userRepo.UpdatePassword(ctx, userID, newHashed)
 }
 
+// Profile reads the stored profile for a user id. The JWT only carries what was
+// signed at login, so anything editable afterwards -- avatar_url above all -- can
+// only be answered from the row itself.
+func (s *AuthService) Profile(ctx context.Context, userID string) (*domain.UserProfile, error) {
+	return s.userRepo.FindByID(ctx, userID)
+}
+
 func (s *AuthService) UpdateProfile(ctx context.Context, userID, fullName string, email, username, phoneNumber, avatarURL, gender *string) (*domain.UserProfile, error) {
 	user, err := s.userRepo.FindByID(ctx, userID)
 	if err != nil {

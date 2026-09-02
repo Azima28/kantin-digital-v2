@@ -128,6 +128,16 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 
 func (h *AuthHandler) Me(c *fiber.Ctx) error {
 	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
+
+	// The claims were signed at login and never change afterwards, so answering
+	// with them leaves out avatar_url entirely -- a client refreshing its cached
+	// profile from this route would keep showing the photo it already had. Read
+	// the stored row instead, and fall back to the claims only if that read fails
+	// so this route stays usable as a plain session check.
+	if user, err := h.authService.Profile(c.Context(), claims.UserID); err == nil && user != nil {
+		return response.Success(c, fiber.StatusOK, "Profil terautentikasi", user)
+	}
+
 	return response.Success(c, fiber.StatusOK, "Profil terautentikasi", claims)
 }
 

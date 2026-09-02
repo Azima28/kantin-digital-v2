@@ -168,13 +168,29 @@ func (h *UploadHandler) UploadAvatar(c *fiber.Ctx) error {
 	}
 	publicURL := fmt.Sprintf("%s/uploads/avatars/%s", baseURL, newFilename)
 
-	// Automatically persist avatar_url to user profile in database
-	if claimsVal := c.Locals(middleware.UserClaimsKey); claimsVal != nil {
-		if claims, ok := claimsVal.(*token.JWTClaims); ok && claims.UserID != "" {
-			if h.db != nil && h.db.Pool != nil {
-				_, _ = h.db.Pool.Exec(c.Context(), `UPDATE public.profiles SET avatar_url = $1 WHERE id = $2`, publicURL, claims.UserID)
-			}
-		}
+	// Persist avatar_url to the profile row. Swallowing a failure here is exactly
+	// what makes a client report success while the old photo stays on screen: the
+	// file lands on disk, the response carries a URL, and no profile ever points at
+	// it. So a profile that was not updated is reported as a failure, and the file
+	// that nothing references is removed instead of being left behind.
+	claims, _ := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
+	if claims == nil || claims.UserID == "" {
+		_ = os.Remove(savePath)
+		return response.Error(c, fiber.StatusUnauthorized, "Sesi tidak valid, foto profil tidak disimpan", nil)
+	}
+	if h.db == nil || h.db.Pool == nil {
+		_ = os.Remove(savePath)
+		return response.Error(c, fiber.StatusServiceUnavailable, "Database tidak terhubung, foto profil gagal disimpan", nil)
+	}
+
+	tag, err := h.db.Pool.Exec(c.Context(), `UPDATE public.profiles SET avatar_url = $1 WHERE id = $2`, publicURL, claims.UserID)
+	if err != nil {
+		_ = os.Remove(savePath)
+		return response.Error(c, fiber.StatusInternalServerError, "Foto profil gagal disimpan ke database", err.Error())
+	}
+	if tag.RowsAffected() == 0 {
+		_ = os.Remove(savePath)
+		return response.Error(c, fiber.StatusNotFound, "Profil pengguna tidak ditemukan, foto profil gagal disimpan", nil)
 	}
 
 	return response.Success(c, fiber.StatusOK, "Avatar berhasil diupload", map[string]string{

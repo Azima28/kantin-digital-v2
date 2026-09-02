@@ -196,9 +196,17 @@ class SiswaProfileScreen extends ConsumerWidget {
     }
 
     try {
-      await storageService.uploadAvatar(userId: userId, imageFile: imageFile);
+      final String avatarUrl = await storageService.uploadAvatar(
+        userId: userId,
+        imageFile: imageFile,
+      );
+      // Every avatar on the student side reads authState.profile['avatar_url'],
+      // so dropping the uploaded URL here left the old photo on screen even
+      // though the upload itself had already succeeded.
+      await ref.read(authNotifierProvider.notifier).updateProfileAvatar(avatarUrl);
       ref.invalidate(siswaStudentProvider);
       if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         AppToast.showSuccess(
           context,
           title: 'Berhasil Disimpan',
