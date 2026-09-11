@@ -11,13 +11,14 @@ import 'package:kantin_digital/core/widgets/app_toast.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 
-/// Modal dialog untuk memproses Koreksi Saldo Siswa (Penambahan atau Pengurangan)
-/// dengan row-level lock dan pencatatan audit forensik di database.
+/// Modal dialog / bottom sheet adaptif untuk memproses Koreksi Saldo Siswa
+/// (Penambahan atau Pengurangan) dengan row-level lock dan audit forensik.
 class BalanceCorrectionDialog extends ConsumerStatefulWidget {
   final String studentId;
   final String studentName;
   final String nisn;
   final int currentBalance;
+  final bool isBottomSheet;
 
   const BalanceCorrectionDialog({
     super.key,
@@ -25,6 +26,7 @@ class BalanceCorrectionDialog extends ConsumerStatefulWidget {
     required this.studentName,
     required this.nisn,
     required this.currentBalance,
+    this.isBottomSheet = false,
   });
 
   static Future<bool?> show(
@@ -34,14 +36,32 @@ class BalanceCorrectionDialog extends ConsumerStatefulWidget {
     required String nisn,
     required int currentBalance,
   }) {
+    final isMobile = MediaQuery.of(context).size.width < 540;
+
+    if (isMobile) {
+      return showModalBottomSheet<bool>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (ctx) => BalanceCorrectionDialog(
+          studentId: studentId,
+          studentName: studentName,
+          nisn: nisn,
+          currentBalance: currentBalance,
+          isBottomSheet: true,
+        ),
+      );
+    }
+
     return showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => BalanceCorrectionDialog(
+      builder: (ctx) => BalanceCorrectionDialog(
         studentId: studentId,
         studentName: studentName,
         nisn: nisn,
         currentBalance: currentBalance,
+        isBottomSheet: false,
       ),
     );
   }
@@ -211,543 +231,604 @@ class _BalanceCorrectionDialogState
   @override
   Widget build(BuildContext context) {
     final themeCol = _direction == 'add' ? Nebula.teal : Nebula.rose;
+    final mediaQuery = MediaQuery.of(context);
+    final isCompact = mediaQuery.size.width < 380;
+    final maxDialogHeight = mediaQuery.size.height * (widget.isBottomSheet ? 0.90 : 0.85);
 
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 460),
-        child: Container(
-          decoration: BoxDecoration(
-            color: context.cardBg,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: context.dividerCol, width: 0.8),
-            boxShadow: [
-              BoxShadow(
-                color: context.shadowColor,
-                blurRadius: 30,
-                offset: const Offset(0, 10),
+    final content = Container(
+      constraints: BoxConstraints(
+        maxWidth: 500,
+        maxHeight: maxDialogHeight,
+      ),
+      padding: EdgeInsets.only(
+        top: widget.isBottomSheet ? 12 : 20,
+        left: 20,
+        right: 20,
+        bottom: widget.isBottomSheet ? (mediaQuery.viewInsets.bottom + 16) : 20,
+      ),
+      decoration: BoxDecoration(
+        color: context.cardBg,
+        borderRadius: widget.isBottomSheet
+            ? const BorderRadius.vertical(top: Radius.circular(24))
+            : BorderRadius.circular(24),
+        border: Border.all(color: context.dividerCol, width: 0.8),
+        boxShadow: [
+          BoxShadow(
+            color: context.shadowColor,
+            blurRadius: 30,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Drag handle for bottom sheet
+          if (widget.isBottomSheet) ...[
+            Center(
+              child: Container(
+                width: 38,
+                height: 4.5,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: context.dividerCol,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+            ),
+          ],
+
+          // 1. PINNED HEADER (Always Visible)
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: themeCol.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: themeCol.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Icon(
+                  Icons.tune_rounded,
+                  color: themeCol,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Koreksi Saldo Siswa',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: context.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.studentName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 12.5,
+                        color: context.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: Icon(
+                  CupertinoIcons.xmark,
+                  size: 18,
+                  color: context.textSecondary,
+                ),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
               ),
             ],
           ),
-          padding: const EdgeInsets.all(22),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: themeCol.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: themeCol.withValues(alpha: 0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Icon(
-                        Icons.tune_rounded,
-                        color: themeCol,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Koreksi Saldo Siswa',
-                            style: GoogleFonts.inter(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                              color: context.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            widget.studentName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              color: context.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        CupertinoIcons.xmark,
-                        size: 20,
-                        color: context.textSecondary,
-                      ),
-                      onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
+          const SizedBox(height: 12),
+          Divider(height: 1, thickness: 0.8, color: context.dividerCol),
 
-                // Info Saldo Saat Ini
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                  decoration: BoxDecoration(
-                    color: context.surfaceBg,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: context.dividerCol, width: 0.8),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Saldo Aktif Saat Ini',
-                        style: GoogleFonts.inter(
-                          fontSize: 12.5,
-                          color: context.textSecondary,
-                        ),
-                      ),
-                      Text(
-                        CurrencyFormatter.format(widget.currentBalance),
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: context.textPrimary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Direction Selector (Penambahan / Pengurangan)
-                Text(
-                  'JENIS KOREKSI',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                    color: context.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: PressScale(
-                        onTap: _isSubmitting
-                            ? null
-                            : () => setState(() => _direction = 'add'),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: _direction == 'add'
-                                ? Nebula.teal.withValues(alpha: 0.15)
-                                : context.surfaceBg,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: _direction == 'add'
-                                  ? Nebula.teal
-                                  : context.dividerCol,
-                              width: _direction == 'add' ? 1.5 : 0.8,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                CupertinoIcons.plus_circle_fill,
-                                size: 16,
-                                color: _direction == 'add'
-                                    ? Nebula.teal
-                                    : context.textSecondary,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Penambahan (+)',
-                                style: GoogleFonts.inter(
-                                  fontSize: 12.5,
-                                  fontWeight: _direction == 'add'
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                  color: _direction == 'add'
-                                      ? Nebula.teal
-                                      : context.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: PressScale(
-                        onTap: _isSubmitting
-                            ? null
-                            : () => setState(() => _direction = 'deduct'),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: _direction == 'deduct'
-                                ? Nebula.rose.withValues(alpha: 0.15)
-                                : context.surfaceBg,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: _direction == 'deduct'
-                                  ? Nebula.rose
-                                  : context.dividerCol,
-                              width: _direction == 'deduct' ? 1.5 : 0.8,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                CupertinoIcons.minus_circle_fill,
-                                size: 16,
-                                color: _direction == 'deduct'
-                                    ? Nebula.rose
-                                    : context.textSecondary,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Pengurangan (-)',
-                                style: GoogleFonts.inter(
-                                  fontSize: 12.5,
-                                  fontWeight: _direction == 'deduct'
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                  color: _direction == 'deduct'
-                                      ? Nebula.rose
-                                      : context.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Nominal Input
-                Text(
-                  'NOMINAL KOREKSI',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                    color: context.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _amountController,
-                  enabled: !_isSubmitting,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: context.textPrimary,
-                  ),
-                  decoration: InputDecoration(
-                    prefixText: 'Rp ',
-                    prefixStyle: GoogleFonts.inter(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: themeCol,
-                    ),
-                    hintText: '0',
-                    hintStyle: GoogleFonts.inter(
-                      fontSize: 18,
-                      color: context.textSecondary.withValues(alpha: 0.4),
-                    ),
-                    filled: true,
-                    fillColor: context.surfaceBg,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: context.dividerCol, width: 0.8),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: context.dividerCol, width: 0.8),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: themeCol, width: 1.5),
-                    ),
-                  ),
-                  onChanged: (val) {
-                    setState(() {});
-                  },
-                ),
-                const SizedBox(height: 8),
-
-                // Quick Amount Chips
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: _quickAmounts.map((amt) {
-                      final isSelected = _parsedAmount == amt;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: ActionChip(
-                          label: Text(CurrencyFormatter.format(amt)),
-                          labelStyle: GoogleFonts.inter(
-                            fontSize: 11.5,
-                            fontWeight:
-                                isSelected ? FontWeight.bold : FontWeight.w500,
-                            color: isSelected ? themeCol : context.textPrimary,
-                          ),
-                          backgroundColor: isSelected
-                              ? themeCol.withValues(alpha: 0.15)
-                              : context.surfaceBg,
-                          side: BorderSide(
-                            color: isSelected ? themeCol : context.dividerCol,
-                            width: 0.8,
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 0,
-                          ),
-                          onPressed: _isSubmitting
-                              ? null
-                              : () {
-                                  setState(() {
-                                    _amountController.text = amt.toString();
-                                  });
-                                },
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // Calculation Result Banner
-                if (_parsedAmount > 0) ...[
+          // 2. SCROLLABLE BODY (Form Inputs)
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Info Saldo Saat Ini
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
-                      color: _isNegativeExceeded
-                          ? Nebula.rose.withValues(alpha: 0.1)
-                          : themeCol.withValues(alpha: 0.08),
+                      color: context.surfaceBg,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _isNegativeExceeded
-                            ? Nebula.rose.withValues(alpha: 0.4)
-                            : themeCol.withValues(alpha: 0.25),
-                        width: 1,
-                      ),
+                      border: Border.all(color: context.dividerCol, width: 0.8),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Estimasi Saldo Baru:',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: _isNegativeExceeded
-                                    ? Nebula.rose
-                                    : context.textPrimary,
-                              ),
-                            ),
-                            Text(
-                              CurrencyFormatter.format(_resultingBalance),
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: _isNegativeExceeded
-                                    ? Nebula.rose
-                                    : themeCol,
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (_isNegativeExceeded) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            'Peringatan: Pengurangan melebihi saldo aktif. Sistem mencegah saldo negatif.',
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              color: Nebula.rose,
-                              fontWeight: FontWeight.w500,
-                            ),
+                        Text(
+                          'Saldo Aktif Saat Ini',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: context.textSecondary,
                           ),
-                        ],
+                        ),
+                        Text(
+                          CurrencyFormatter.format(widget.currentBalance),
+                          style: GoogleFonts.inter(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                            color: context.textPrimary,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 14),
-                ],
 
-                // Alasan Koreksi
-                Text(
-                  'ALASAN KOREKSI (WAJIB)',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                    color: context.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _reasonController,
-                  enabled: !_isSubmitting,
-                  maxLines: 2,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: context.textPrimary,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Tuliskan alasan penyesuaian saldo secara rinci...',
-                    hintStyle: GoogleFonts.inter(
-                      fontSize: 12.5,
-                      color: context.textSecondary.withValues(alpha: 0.5),
-                    ),
-                    filled: true,
-                    fillColor: context.surfaceBg,
-                    contentPadding: const EdgeInsets.all(12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: context.dividerCol, width: 0.8),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: context.dividerCol, width: 0.8),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: themeCol, width: 1.5),
+                  // Direction Selector (Penambahan / Pengurangan)
+                  Text(
+                    'JENIS KOREKSI',
+                    style: GoogleFonts.inter(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                      color: context.textSecondary,
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-
-                // Quick Reason Chips
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: _quickReasons.map((qReason) {
-                    final isChosen = _reasonController.text.trim() == qReason;
-                    return ActionChip(
-                      label: Text(qReason),
-                      labelStyle: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: isChosen ? themeCol : context.textSecondary,
-                        fontWeight: isChosen ? FontWeight.bold : FontWeight.normal,
-                      ),
-                      backgroundColor: isChosen
-                          ? themeCol.withValues(alpha: 0.12)
-                          : context.surfaceBg,
-                      side: BorderSide(
-                        color: isChosen ? themeCol : context.dividerCol,
-                        width: 0.8,
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                      onPressed: _isSubmitting
-                          ? null
-                          : () {
-                              setState(() {
-                                _reasonController.text = qReason;
-                              });
-                            },
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 22),
-
-                // Actions
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 13),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          side: BorderSide(color: context.dividerCol, width: 1),
-                        ),
-                        onPressed: _isSubmitting
-                            ? null
-                            : () => Navigator.of(context).pop(),
-                        child: Text(
-                          'Batal',
-                          style: GoogleFonts.inter(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                            color: context.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 2,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: themeCol,
-                          padding: const EdgeInsets.symmetric(vertical: 13),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          elevation: 0,
-                        ),
-                        onPressed: (_isSubmitting || _isNegativeExceeded)
-                            ? null
-                            : _submitCorrection,
-                        child: _isSubmitting
-                            ? const CupertinoActivityIndicator(color: Colors.white)
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    _direction == 'add'
-                                        ? CupertinoIcons.check_mark_circled_solid
-                                        : CupertinoIcons.arrow_down_circle_fill,
-                                    color: Colors.white,
-                                    size: 17,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    _direction == 'add'
-                                        ? 'Tambah Saldo'
-                                        : 'Kurangi Saldo',
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: PressScale(
+                          onTap: _isSubmitting
+                              ? null
+                              : () => setState(() => _direction = 'add'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 6),
+                            decoration: BoxDecoration(
+                              color: _direction == 'add'
+                                  ? Nebula.teal.withValues(alpha: 0.15)
+                                  : context.surfaceBg,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _direction == 'add'
+                                    ? Nebula.teal
+                                    : context.dividerCol,
+                                width: _direction == 'add' ? 1.5 : 0.8,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  CupertinoIcons.plus_circle_fill,
+                                  size: 15,
+                                  color: _direction == 'add'
+                                      ? Nebula.teal
+                                      : context.textSecondary,
+                                ),
+                                const SizedBox(width: 5),
+                                Flexible(
+                                  child: Text(
+                                    isCompact ? 'Tambah (+)' : 'Penambahan (+)',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: GoogleFonts.inter(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: _direction == 'add'
+                                          ? FontWeight.bold
+                                          : FontWeight.w500,
+                                      color: _direction == 'add'
+                                          ? Nebula.teal
+                                          : context.textSecondary,
                                     ),
                                   ),
-                                ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: PressScale(
+                          onTap: _isSubmitting
+                              ? null
+                              : () => setState(() => _direction = 'deduct'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 6),
+                            decoration: BoxDecoration(
+                              color: _direction == 'deduct'
+                                  ? Nebula.rose.withValues(alpha: 0.15)
+                                  : context.surfaceBg,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _direction == 'deduct'
+                                    ? Nebula.rose
+                                    : context.dividerCol,
+                                width: _direction == 'deduct' ? 1.5 : 0.8,
                               ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  CupertinoIcons.minus_circle_fill,
+                                  size: 15,
+                                  color: _direction == 'deduct'
+                                      ? Nebula.rose
+                                      : context.textSecondary,
+                                ),
+                                const SizedBox(width: 5),
+                                Flexible(
+                                  child: Text(
+                                    isCompact ? 'Kurang (-)' : 'Pengurangan (-)',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      fontWeight: _direction == 'deduct'
+                                          ? FontWeight.bold
+                                          : FontWeight.w500,
+                                      color: _direction == 'deduct'
+                                          ? Nebula.rose
+                                          : context.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Nominal Input
+                  Text(
+                    'NOMINAL KOREKSI',
+                    style: GoogleFonts.inter(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                      color: context.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _amountController,
+                    enabled: !_isSubmitting,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: context.textPrimary,
+                    ),
+                    decoration: InputDecoration(
+                      prefixText: 'Rp ',
+                      prefixStyle: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: themeCol,
+                      ),
+                      hintText: '0',
+                      hintStyle: GoogleFonts.inter(
+                        fontSize: 16,
+                        color: context.textSecondary.withValues(alpha: 0.4),
+                      ),
+                      filled: true,
+                      fillColor: context.surfaceBg,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 11,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: context.dividerCol, width: 0.8),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: context.dividerCol, width: 0.8),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: themeCol, width: 1.5),
                       ),
                     ),
+                    onChanged: (val) {
+                      setState(() {});
+                    },
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Quick Amount Chips
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: _quickAmounts.map((amt) {
+                        final isSelected = _parsedAmount == amt;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: ActionChip(
+                            label: Text(CurrencyFormatter.format(amt)),
+                            labelStyle: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight:
+                                  isSelected ? FontWeight.bold : FontWeight.w500,
+                              color: isSelected ? themeCol : context.textPrimary,
+                            ),
+                            backgroundColor: isSelected
+                                ? themeCol.withValues(alpha: 0.15)
+                                : context.surfaceBg,
+                            side: BorderSide(
+                              color: isSelected ? themeCol : context.dividerCol,
+                              width: 0.8,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 0,
+                            ),
+                            onPressed: _isSubmitting
+                                ? null
+                                : () {
+                                    setState(() {
+                                      _amountController.text = amt.toString();
+                                    });
+                                  },
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Calculation Result Banner
+                  if (_parsedAmount > 0) ...[
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: _isNegativeExceeded
+                            ? Nebula.rose.withValues(alpha: 0.1)
+                            : themeCol.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _isNegativeExceeded
+                              ? Nebula.rose.withValues(alpha: 0.4)
+                              : themeCol.withValues(alpha: 0.25),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Estimasi Saldo Baru:',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: _isNegativeExceeded
+                                      ? Nebula.rose
+                                      : context.textPrimary,
+                                ),
+                              ),
+                              Text(
+                                CurrencyFormatter.format(_resultingBalance),
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: _isNegativeExceeded
+                                      ? Nebula.rose
+                                      : themeCol,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (_isNegativeExceeded) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              'Peringatan: Pengurangan melebihi saldo aktif. Sistem mencegah saldo negatif.',
+                              style: GoogleFonts.inter(
+                                fontSize: 10.5,
+                                color: Nebula.rose,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                   ],
-                ),
-              ],
+
+                  // Alasan Koreksi
+                  Text(
+                    'ALASAN KOREKSI (WAJIB)',
+                    style: GoogleFonts.inter(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                      color: context.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _reasonController,
+                    enabled: !_isSubmitting,
+                    maxLines: 2,
+                    style: GoogleFonts.inter(
+                      fontSize: 12.5,
+                      color: context.textPrimary,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Tuliskan alasan penyesuaian saldo secara rinci...',
+                      hintStyle: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: context.textSecondary.withValues(alpha: 0.5),
+                      ),
+                      filled: true,
+                      fillColor: context.surfaceBg,
+                      contentPadding: const EdgeInsets.all(10),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: context.dividerCol, width: 0.8),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: context.dividerCol, width: 0.8),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: themeCol, width: 1.5),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Quick Reason Chips
+                  Wrap(
+                    spacing: 5,
+                    runSpacing: 5,
+                    children: _quickReasons.map((qReason) {
+                      final isChosen = _reasonController.text.trim() == qReason;
+                      return ActionChip(
+                        label: Text(qReason),
+                        labelStyle: GoogleFonts.inter(
+                          fontSize: 10.5,
+                          color: isChosen ? themeCol : context.textSecondary,
+                          fontWeight: isChosen ? FontWeight.bold : FontWeight.normal,
+                        ),
+                        backgroundColor: isChosen
+                            ? themeCol.withValues(alpha: 0.12)
+                            : context.surfaceBg,
+                        side: BorderSide(
+                          color: isChosen ? themeCol : context.dividerCol,
+                          width: 0.8,
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                        onPressed: _isSubmitting
+                            ? null
+                            : () {
+                                setState(() {
+                                  _reasonController.text = qReason;
+                                });
+                              },
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
+
+          // 3. PINNED FOOTER ACTIONS (Always Visible at Bottom)
+          const SizedBox(height: 10),
+          Divider(height: 1, thickness: 0.8, color: context.dividerCol),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    side: BorderSide(color: context.dividerCol, width: 1),
+                  ),
+                  onPressed: _isSubmitting
+                      ? null
+                      : () => Navigator.of(context).pop(),
+                  child: Text(
+                    'Batal',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12.5,
+                      color: context.textSecondary,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 2,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: themeCol,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  onPressed: (_isSubmitting || _isNegativeExceeded)
+                      ? null
+                      : _submitCorrection,
+                  child: _isSubmitting
+                      ? const CupertinoActivityIndicator(color: Colors.white)
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              _direction == 'add'
+                                  ? CupertinoIcons.check_mark_circled_solid
+                                  : CupertinoIcons.arrow_down_circle_fill,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                _direction == 'add'
+                                    ? 'Tambah Saldo'
+                                    : 'Kurangi Saldo',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12.5,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
+    );
+
+    if (widget.isBottomSheet) {
+      return Align(
+        alignment: Alignment.bottomCenter,
+        child: content,
+      );
+    }
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: content,
     );
   }
 }
