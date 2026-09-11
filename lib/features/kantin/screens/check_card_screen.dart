@@ -80,33 +80,57 @@ class _CheckCardScreenState extends ConsumerState<CheckCardScreen> {
 
       final response = await apiClient.get('/pos/scan-card', queryParams: {'rfid': rfidUid});
 
-      if (!response.success || response.data == null) {
-        setState(() {
-          _errorMessage =
-              'Kartu dengan UID $rfidUid tidak terdaftar di sistem Kantin Digital.';
-          _isLoading = false;
-        });
-        return;
-      }
+      Student student;
+      String studentName = 'Siswa (Kartu Terdeteksi)';
+      String studentEmail = 'siswa@kantin.id';
 
-      final studentJson = response.data as Map<String, dynamic>;
-      final student = Student.fromJson(studentJson);
-      final studentName = studentJson['full_name']?.toString() ?? studentJson['name']?.toString() ?? AppStrings.adminStudents;
-      final studentEmail = studentJson['email']?.toString() ?? '';
+      if (response.success && response.data != null) {
+        final studentJson = response.data as Map<String, dynamic>;
+        student = Student.fromJson(studentJson);
+        final profile = studentJson['profile'] is Map ? studentJson['profile'] as Map<String, dynamic> : null;
+        studentName = profile?['full_name']?.toString() ?? studentJson['full_name']?.toString() ?? studentJson['name']?.toString() ?? 'Siswa';
+        studentEmail = profile?['email']?.toString() ?? studentJson['email']?.toString() ?? '';
 
-      if (mounted) {
-        setState(() {
-          _student = student;
-          _studentName = studentName;
-          _studentEmail = studentEmail;
-          _transactions = [];
-          _isLoading = false;
-        });
+        List<OperatorTransaction> txList = [];
+        try {
+          final txRes = await apiClient.get('/student/transactions', queryParams: {
+            'student_id': student.id,
+            'limit': '10',
+          });
+          if (txRes.success && txRes.data != null) {
+            final rawList = txRes.data is Map && (txRes.data as Map)['items'] is List
+                ? (txRes.data as Map)['items'] as List
+                : (txRes.data is List ? txRes.data as List : []);
+            txList = rawList
+                .map((item) => OperatorTransaction.fromSiswaJson(item as Map<String, dynamic>))
+                .toList();
+          }
+        } catch (_) {}
+
+        if (mounted) {
+          setState(() {
+            _student = student;
+            _studentName = studentName;
+            _studentEmail = studentEmail;
+            _transactions = txList;
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _student = null;
+            _errorMessage = response.message ?? 'Kartu RFID tidak terdaftar pada akun siswa manapun atau sudah tidak berlaku.';
+            _isLoading = false;
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Gagal memproses kartu: ${e.toString()}';
+          _student = null;
+          _errorMessage = 'Gagal memeriksa kartu: $e';
+          _transactions = [];
           _isLoading = false;
         });
       }

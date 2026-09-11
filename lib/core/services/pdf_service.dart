@@ -78,6 +78,37 @@ class PdfService {
     );
   }
 
+  /// Download PDF struk langsung ke penyimpanan lokal / browser downloads.
+  static Future<String> downloadReceipt({
+    required String transactionId,
+    required String type,
+    required int amount,
+    required String studentName,
+    required String canteenOrLocation,
+    required DateTime dateTime,
+    List<Map<String, dynamic>> items = const [],
+  }) async {
+    final pdf = await _buildReceiptPdf(
+      transactionId: transactionId,
+      type: type,
+      amount: amount,
+      studentName: studentName,
+      canteenOrLocation: canteenOrLocation,
+      dateTime: dateTime,
+      items: items,
+    );
+
+    final cleanId = transactionId.replaceAll('TXN-', '').replaceAll('-', '_');
+    final filename = 'Struk_${type.toUpperCase()}_$cleanId.pdf';
+    final bytes = await pdf.save();
+
+    await Printing.sharePdf(
+      bytes: bytes,
+      filename: filename,
+    );
+    return filename;
+  }
+
   static Future<pw.Document> _buildReceiptPdf({
     required String transactionId,
     required String type,

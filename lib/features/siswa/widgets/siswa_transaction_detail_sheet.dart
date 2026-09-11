@@ -129,7 +129,7 @@ void showTransactionDetailSheet(
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                '${isAppOrder ? "Pesanan Aplikasi" : (type == "topup" ? "Setoran Tunai" : "Tap Kartu RFID")} • $timeStr',
+                                '${isAppOrder ? "Pesanan Aplikasi" : (type == "topup" ? (tx.purchaseMethod?.toLowerCase() == "qris" ? "QRIS / Online" : "Setoran Tunai") : "Tap Kartu RFID")} • $timeStr',
                                 style: GoogleFonts.inter(
                                   fontSize: 11.5,
                                   color: context.textSecondary,
@@ -150,7 +150,7 @@ void showTransactionDetailSheet(
                   const Divider(height: 18, thickness: 0.5),
                   _buildDataRow(context, 'Merchant / Stan', type == 'topup' ? 'Koperasi / Petugas Keuangan' : canteenName),
                   const Divider(height: 18, thickness: 0.5),
-                  _buildDataRow(context, 'Metode Pembayaran', type == 'topup' ? 'Kasir Tunai' : tx.purchaseMethodDisplay),
+                  _buildDataRow(context, 'Metode Pembayaran', type == 'topup' ? (tx.purchaseMethod?.toLowerCase() == 'qris' ? 'QRIS (Instan)' : 'Kasir Tunai') : tx.purchaseMethodDisplay),
 
                   if (type == 'purchase') ...[
                     const Divider(height: 20, thickness: 0.5),

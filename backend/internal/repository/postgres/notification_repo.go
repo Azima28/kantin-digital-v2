@@ -53,3 +53,15 @@ func (r *NotificationRepo) MarkAllAsRead(ctx context.Context, studentID string) 
 	_, err := r.db.Pool.Exec(ctx, query, studentID)
 	return err
 }
+
+func (r *NotificationRepo) DeleteByID(ctx context.Context, notifID, studentID string) error {
+	query := `DELETE FROM public.notifications WHERE id = $1 AND student_id = $2`
+	_, err := r.db.Pool.Exec(ctx, query, notifID, studentID)
+	return err
+}
+
+func (r *NotificationRepo) DeleteAll(ctx context.Context, studentID string) error {
+	query := `DELETE FROM public.notifications WHERE student_id = $1`
+	_, err := r.db.Pool.Exec(ctx, query, studentID)
+	return err
+}

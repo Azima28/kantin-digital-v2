@@ -631,37 +631,47 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
 
                 return Column(
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 16,
-                            backgroundColor: dotColor.withValues(alpha: 0.12),
-                            child: Icon(dotIcon, color: dotColor, size: 16),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              desc,
-                              style: GoogleFonts.inter(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w500,
-                                color: context.textPrimary,
+                    InkWell(
+                      onTap: () => _showTransactionDetailDialog(context, log),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 16,
+                              backgroundColor: dotColor.withValues(alpha: 0.12),
+                              child: Icon(dotIcon, color: dotColor, size: 16),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                desc,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w500,
+                                  color: context.textPrimary,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            timeStr,
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              color: context.textSecondary,
+                            const SizedBox(width: 8),
+                            Text(
+                              timeStr,
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                color: context.textSecondary,
+                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 4),
+                            Icon(
+                              CupertinoIcons.chevron_right,
+                              size: 13,
+                              color: context.textSecondary.withValues(alpha: 0.6),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     if (i < activeLogs.length - 1)
@@ -672,6 +682,257 @@ class _KeuanganDashboardScreenState extends ConsumerState<KeuanganDashboardScree
             ),
           ),
         const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  void _showTransactionDetailDialog(BuildContext context, Map<String, dynamic> log) {
+    final String txId = (log['id'] ?? '').toString();
+    final String type = (log['type'] ?? log['action_type'] ?? 'transaksi').toString().toLowerCase();
+    final int amount = (log['total_amount'] as num?)?.toInt() ?? (log['amount'] as num?)?.toInt() ?? 0;
+    final String status = (log['status'] ?? 'success').toString().toLowerCase();
+    final String student = log['student_name']?.toString() ?? '';
+    final String studentNisn = log['student_nisn']?.toString() ?? '';
+    final String canteen = log['canteen_name']?.toString() ?? '';
+    final String opName = log['operator_name']?.toString() ?? '';
+    final String opRole = log['operator_role']?.toString() ?? '';
+    final String method = (log['purchase_method'] ?? 'cashless').toString().toLowerCase();
+
+    final date = log['created_at'] != null
+        ? (DateTime.tryParse(log['created_at'].toString())?.toLocal() ?? DateTime.now())
+        : DateTime.now();
+    final fullDateStr = AppDateFormatter.formatFullDateWithTimeSeconds(date);
+
+    String typeLabel = 'Transaksi';
+    Color themeColor = Nebula.teal;
+    IconData themeIcon = CupertinoIcons.doc_text_fill;
+
+    if (type.contains('topup')) {
+      typeLabel = 'Top-Up Saldo Siswa';
+      themeColor = Nebula.teal;
+      themeIcon = CupertinoIcons.arrow_up_circle_fill;
+    } else if (type.contains('withdrawal') || type.contains('payout')) {
+      typeLabel = 'Pencairan Kas Stan';
+      themeColor = Nebula.rose;
+      themeIcon = CupertinoIcons.arrow_up_right_circle_fill;
+    } else if (type.contains('purchase')) {
+      typeLabel = 'Pembelian Kantin';
+      themeColor = Nebula.amber;
+      themeIcon = CupertinoIcons.bag_fill;
+    } else if (type.contains('correction') || type.contains('koreksi')) {
+      typeLabel = 'Koreksi Saldo';
+      themeColor = Nebula.rose;
+      themeIcon = CupertinoIcons.arrow_right_arrow_left_circle_fill;
+    } else if (type.contains('refund') || type.contains('batal')) {
+      typeLabel = 'Pengembalian Dana (Refund)';
+      themeColor = Nebula.rose;
+      themeIcon = CupertinoIcons.arrow_counterclockwise_circle_fill;
+    }
+
+    String methodDisplay = 'Tap Kartu RFID';
+    if (method == 'qris') {
+      methodDisplay = 'QRIS (Instan)';
+    } else if (method == 'cash') {
+      methodDisplay = 'Tunai ke Petugas Keuangan';
+    } else if (method == 'app' || method == 'app_order') {
+      methodDisplay = 'Aplikasi Mobile';
+    }
+
+    String actorDisplay = opName.isNotEmpty ? opName : 'Petugas Keuangan';
+    if (opRole == 'petugas_keuangan') {
+      actorDisplay = '$opName (Petugas Keuangan)';
+    } else if (opRole == 'student') {
+      actorDisplay = '$opName (Siswa Mandiri)';
+    } else if (opRole == 'parent') {
+      actorDisplay = '$opName (Orang Tua / Wali)';
+    } else if (opRole == 'admin' || opRole == 'super_admin') {
+      actorDisplay = '$opName (Administrator)';
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return Dialog(
+          backgroundColor: context.cardBg,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 440),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Row
+                Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: themeColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(themeIcon, color: themeColor, size: 24),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Detail Aktivitas Keuangan',
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: context.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: themeColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              typeLabel.toUpperCase(),
+                              style: GoogleFonts.inter(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.bold,
+                                color: themeColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                Divider(height: 24, thickness: 0.5, color: context.dividerCol),
+
+                // Amount Highlight Card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: themeColor.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: themeColor.withValues(alpha: 0.2)),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        type.contains('topup')
+                            ? 'TOTAL SALDO MASUK'
+                            : (type.contains('withdrawal') ? 'TOTAL PENCAIRAN' : 'TOTAL TRANSAKSI'),
+                        style: GoogleFonts.inter(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: context.textSecondary,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        CurrencyFormatter.format(amount),
+                        style: GoogleFonts.inter(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: themeColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Information list
+                if (txId.isNotEmpty) ...[
+                  _buildDetailModalRow('ID Transaksi', '#${txId.length > 8 ? txId.substring(0, 8).toUpperCase() : txId}'),
+                  const SizedBox(height: 8),
+                ],
+                _buildDetailModalRow('Waktu Transaksi', fullDateStr),
+                const SizedBox(height: 8),
+                if (student.isNotEmpty) ...[
+                  _buildDetailModalRow('Siswa', studentNisn.isNotEmpty ? '$student ($studentNisn)' : student),
+                  const SizedBox(height: 8),
+                ],
+                if (canteen.isNotEmpty) ...[
+                  _buildDetailModalRow('Stan / Merchant', canteen),
+                  const SizedBox(height: 8),
+                ],
+                _buildDetailModalRow('Metode Pembayaran', methodDisplay),
+                const SizedBox(height: 8),
+                _buildDetailModalRow('Diproses Oleh', actorDisplay),
+                const SizedBox(height: 8),
+                _buildDetailModalRow(
+                  'Status',
+                  status == 'success' ? 'Sukses / Berhasil' : status.toUpperCase(),
+                  isStatus: true,
+                ),
+                const SizedBox(height: 22),
+
+                // Button Close
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Nebula.teal,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(23)),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'TUTUP',
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: 14,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailModalRow(String label, String value, {bool isStatus = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.inter(fontSize: 12.5, color: context.textSecondary),
+        ),
+        const SizedBox(width: 12),
+        if (isStatus)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: Nebula.teal.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              value,
+              style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.bold, color: Nebula.teal),
+            ),
+          )
+        else
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600, color: context.textPrimary),
+            ),
+          ),
       ],
     );
   }

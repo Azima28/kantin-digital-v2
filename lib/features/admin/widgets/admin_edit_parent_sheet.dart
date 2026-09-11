@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
@@ -27,7 +28,16 @@ void showEditParentSheet(
   }).where((n) => n.isNotEmpty).toList();
 
   final nameCtrl = TextEditingController(text: profile.fullName);
-  final phoneCtrl = TextEditingController(text: profile.phoneNumber);
+  String cleanPhone = (profile.phoneNumber ?? '').trim().replaceAll(' ', '').replaceAll('-', '');
+  if (cleanPhone.startsWith('+62')) {
+    cleanPhone = cleanPhone.substring(3);
+  } else if (cleanPhone.startsWith('62')) {
+    cleanPhone = cleanPhone.substring(2);
+  } else if (cleanPhone.startsWith('0')) {
+    cleanPhone = cleanPhone.substring(1);
+  }
+  cleanPhone = cleanPhone.replaceAll(RegExp(r'[^0-9]'), '');
+  final phoneCtrl = TextEditingController(text: cleanPhone);
   final emailCtrl = TextEditingController(text: profile.email);
   final usernameCtrl = TextEditingController(text: profile.username);
   final nisnsCtrl = TextEditingController(text: initialNisns.join(', '));
@@ -81,8 +91,48 @@ void showEditParentSheet(
               const SizedBox(height: 12),
               AdminFormTextField(
                 controller: phoneCtrl,
-                hintText: 'Nomor HP *',
+                hintText: '81234567890 *',
                 inputType: TextInputType.phone,
+                prefix: Container(
+                  padding: const EdgeInsets.only(left: 14, right: 10),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '+62',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Nebula.teal,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 1,
+                        height: 18,
+                        color: context.dividerCol,
+                      ),
+                    ],
+                  ),
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                onChanged: (val) {
+                  if (val.startsWith('0')) {
+                    final stripped = val.replaceFirst(RegExp(r'^0+'), '');
+                    phoneCtrl.value = TextEditingValue(
+                      text: stripped,
+                      selection: TextSelection.collapsed(offset: stripped.length),
+                    );
+                  } else if (val.startsWith('62')) {
+                    final stripped = val.replaceFirst(RegExp(r'^62'), '');
+                    phoneCtrl.value = TextEditingValue(
+                      text: stripped,
+                      selection: TextSelection.collapsed(offset: stripped.length),
+                    );
+                  }
+                },
               ),
               const SizedBox(height: 12),
               AdminFormTextField(
@@ -122,7 +172,8 @@ void showEditParentSheet(
                       ? null
                       : () async {
                           final name = nameCtrl.text.trim();
-                          final phone = phoneCtrl.text.trim();
+                          final cleanDigits = phoneCtrl.text.trim().replaceAll(RegExp(r'[^0-9]'), '');
+                          final phone = cleanDigits.isNotEmpty ? '+62$cleanDigits' : '';
                           final email = emailCtrl.text.trim();
                           final username = usernameCtrl.text.trim();
                           final String rawNisns = nisnsCtrl.text.trim();

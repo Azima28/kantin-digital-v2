@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/services/storage_service.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
@@ -12,17 +14,14 @@ import 'package:kantin_digital/core/widgets/app_image_picker_sheet.dart';
 import 'package:kantin_digital/core/widgets/app_avatar.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
-/// Settings section for parent dashboard with profile avatar upload, daily limit, card freeze, WA alerts.
+/// Settings section for parent dashboard with profile avatar upload, daily limit, and card freeze.
 class ParentSettingsSection extends ConsumerStatefulWidget {
   final bool dailyLimitActive;
   final TextEditingController limitController;
   final bool cardFrozen;
-  final bool waAlertsActive;
-  final TextEditingController phoneController;
   final bool isSaving;
   final ValueChanged<bool> onDailyLimitChanged;
   final ValueChanged<bool> onCardFrozenChanged;
-  final ValueChanged<bool> onWaAlertsChanged;
   final VoidCallback onSave;
 
   const ParentSettingsSection({
@@ -30,12 +29,9 @@ class ParentSettingsSection extends ConsumerStatefulWidget {
     required this.dailyLimitActive,
     required this.limitController,
     required this.cardFrozen,
-    required this.waAlertsActive,
-    required this.phoneController,
     required this.isSaving,
     required this.onDailyLimitChanged,
     required this.onCardFrozenChanged,
-    required this.onWaAlertsChanged,
     required this.onSave,
   });
 
@@ -106,11 +102,288 @@ class _ParentSettingsSectionState extends ConsumerState<ParentSettingsSection> {
     }
   }
 
+  void _showEditProfileDialog({
+    required String currentName,
+    required String currentEmail,
+    required String currentPhone,
+  }) {
+    final nameController = TextEditingController(text: currentName);
+    final emailController = TextEditingController(text: currentEmail);
+
+    String cleanPhone = currentPhone == '-' ? '' : currentPhone;
+    cleanPhone = cleanPhone.trim().replaceAll(' ', '').replaceAll('-', '');
+    if (cleanPhone.startsWith('+62')) {
+      cleanPhone = cleanPhone.substring(3);
+    } else if (cleanPhone.startsWith('62')) {
+      cleanPhone = cleanPhone.substring(2);
+    } else if (cleanPhone.startsWith('0')) {
+      cleanPhone = cleanPhone.substring(1);
+    }
+    cleanPhone = cleanPhone.replaceAll(RegExp(r'[^0-9]'), '');
+    final phoneController = TextEditingController(text: cleanPhone);
+    final formKey = GlobalKey<FormState>();
+    bool isSaving = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 440),
+            child: Container(
+              decoration: BoxDecoration(
+                color: ctx.cardBg,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: ctx.dividerCol, width: 0.8),
+                boxShadow: [
+                  BoxShadow(
+                    color: ctx.shadowColor,
+                    blurRadius: 28,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(22),
+              child: Form(
+                key: formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: Nebula.teal.withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(CupertinoIcons.pencil_ellipsis_rectangle, color: Nebula.teal, size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Edit Profil Wali Murid',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 16.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: ctx.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  'Perbarui data kontak akun orang tua murid',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.5,
+                                    color: ctx.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+
+                      // Nama Lengkap
+                      Text(
+                        'Nama Lengkap',
+                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: ctx.textSecondary),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: nameController,
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama lengkap wajib diisi' : null,
+                        style: GoogleFonts.inter(fontSize: 13.5, color: ctx.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: 'Nama lengkap Anda',
+                          hintStyle: GoogleFonts.inter(color: ctx.textSecondary, fontSize: 13),
+                          filled: true,
+                          fillColor: ctx.surfaceBg,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Nebula.teal, width: 1.5)),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Email
+                      Text(
+                        'Email',
+                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: ctx.textSecondary),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return 'Email wajib diisi';
+                          if (!v.contains('@')) return 'Format email tidak valid';
+                          return null;
+                        },
+                        style: GoogleFonts.inter(fontSize: 13.5, color: ctx.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: 'email@sekolah.sch.id',
+                          hintStyle: GoogleFonts.inter(color: ctx.textSecondary, fontSize: 13),
+                          filled: true,
+                          fillColor: ctx.surfaceBg,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Nebula.teal, width: 1.5)),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // No. Telepon / WhatsApp with uneditable +62 prefix
+                      Text(
+                        'No. Telepon / WhatsApp',
+                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: ctx.textSecondary),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: phoneController,
+                        keyboardType: TextInputType.phone,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        onChanged: (val) {
+                          if (val.startsWith('0')) {
+                            final stripped = val.replaceFirst(RegExp(r'^0+'), '');
+                            phoneController.value = TextEditingValue(
+                              text: stripped,
+                              selection: TextSelection.collapsed(offset: stripped.length),
+                            );
+                          } else if (val.startsWith('62')) {
+                            final stripped = val.replaceFirst(RegExp(r'^62'), '');
+                            phoneController.value = TextEditingValue(
+                              text: stripped,
+                              selection: TextSelection.collapsed(offset: stripped.length),
+                            );
+                          }
+                        },
+                        style: GoogleFonts.inter(fontSize: 13.5, color: ctx.textPrimary),
+                        decoration: InputDecoration(
+                          prefixIcon: Container(
+                            padding: const EdgeInsets.only(left: 14, right: 10),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '+62',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Nebula.teal,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  width: 1,
+                                  height: 18,
+                                  color: ctx.dividerCol,
+                                ),
+                              ],
+                            ),
+                          ),
+                          prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                          hintText: '81234567890',
+                          hintStyle: GoogleFonts.inter(color: ctx.textSecondary.withValues(alpha: 0.5), fontSize: 13),
+                          filled: true,
+                          fillColor: ctx.surfaceBg,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Nebula.teal, width: 1.5)),
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: isSaving ? null : () => Navigator.pop(ctx),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                side: BorderSide(color: ctx.dividerCol),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: Text(
+                                AppStrings.buttonCancel,
+                                style: GoogleFonts.inter(color: ctx.textSecondary, fontWeight: FontWeight.w600, fontSize: 13),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: isSaving
+                                  ? null
+                                  : () async {
+                                      if (!formKey.currentState!.validate()) return;
+                                      setModalState(() => isSaving = true);
+                                      final cleanDigits = phoneController.text.trim().replaceAll(RegExp(r'[^0-9]'), '');
+                                      final fullPhone = cleanDigits.isNotEmpty ? '+62$cleanDigits' : null;
+                                      final ok = await ref.read(authNotifierProvider.notifier).updateProfileDetails(
+                                            fullName: nameController.text.trim(),
+                                            email: emailController.text.trim(),
+                                            phoneNumber: fullPhone,
+                                          );
+                                      if (ctx.mounted) {
+                                        Navigator.pop(ctx);
+                                      }
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(ok ? 'Profil berhasil diperbarui!' : 'Gagal memperbarui profil'),
+                                            backgroundColor: ok ? Nebula.teal : Nebula.rose,
+                                            behavior: SnackBarBehavior.floating,
+                                          ),
+                                        );
+                                      }
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Nebula.teal,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: isSaving
+                                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                  : Text(
+                                      AppStrings.buttonSave,
+                                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authNotifierProvider);
     final String parentName = authState.profile?['full_name'] ?? 'Orang Tua Murid';
     final String parentEmail = authState.profile?['email'] ?? 'wali@sekolah.sch.id';
+    final String parentPhone = authState.profile?['phone_number'] ?? '';
     final String? avatarUrl = authState.profile?['avatar_url'] as String?;
 
     return Column(
@@ -188,21 +461,52 @@ class _ParentSettingsSectionState extends ConsumerState<ParentSettingsSection> {
                         color: context.textSecondary,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1.5),
-                      decoration: BoxDecoration(
-                        color: Nebula.teal.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        'Wali Murid / Orang Tua',
-                        style: GoogleFonts.inter(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.bold,
-                          color: Nebula.teal,
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Nebula.teal.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Wali Murid / Orang Tua',
+                            style: GoogleFonts.inter(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                              color: Nebula.teal,
+                            ),
+                          ),
                         ),
-                      ),
+                        const Spacer(),
+                        InkWell(
+                          onTap: () => _showEditProfileDialog(
+                            currentName: parentName,
+                            currentEmail: parentEmail,
+                            currentPhone: parentPhone,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(CupertinoIcons.pencil, size: 12, color: Nebula.teal),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Edit Profil',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Nebula.teal,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -382,69 +686,6 @@ class _ParentSettingsSectionState extends ConsumerState<ParentSettingsSection> {
                 activeTrackColor: Nebula.rose,
                 onChanged: widget.onCardFrozenChanged,
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // WA notifications toggle
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: context.cardBg,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: context.dividerCol, width: 1),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Notifikasi WhatsApp',
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: context.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Terima info transaksi jajan anak langsung di WhatsApp.',
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            color: context.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  CupertinoSwitch(
-                    value: widget.waAlertsActive,
-                    activeTrackColor: Nebula.teal,
-                    onChanged: widget.onWaAlertsChanged,
-                  ),
-                ],
-              ),
-              if (widget.waAlertsActive) ...[
-                const SizedBox(height: 16),
-                TextField(
-                  controller: widget.phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    labelText: 'Nomor WhatsApp Orang Tua',
-                    hintText: 'Contoh: 08123456789',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
         ),

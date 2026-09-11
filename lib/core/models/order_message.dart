@@ -7,6 +7,7 @@ class OrderMessage {
   final String senderId;
   final String senderRole; // 'student' or 'canteen_operator'
   final String senderName;
+  final String? senderAvatarUrl;
   final String message;
   final DateTime? createdAt;
   final bool isRead;
@@ -18,6 +19,7 @@ class OrderMessage {
     required this.senderId,
     required this.senderRole,
     required this.senderName,
+    this.senderAvatarUrl,
     required this.message,
     this.createdAt,
     this.isRead = false,
@@ -37,6 +39,7 @@ class OrderMessage {
       senderId: senderId,
       senderRole: normalizedRole,
       senderName: json['sender_name']?.toString() ?? '',
+      senderAvatarUrl: json['sender_avatar_url']?.toString(),
       message: json['message']?.toString() ?? '',
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())?.toLocal()
@@ -53,6 +56,7 @@ class OrderMessage {
       'sender_id': senderId,
       'sender_role': senderRole,
       'sender_name': senderName,
+      'sender_avatar_url': senderAvatarUrl,
       'message': message,
       'created_at': createdAt?.toIso8601String(),
       'is_read': isRead,

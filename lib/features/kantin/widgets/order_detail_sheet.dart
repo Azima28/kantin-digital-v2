@@ -5,9 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
+import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
 import 'package:kantin_digital/features/kantin/models/order_item.dart';
 import 'package:kantin_digital/features/kantin/providers/order_chat_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
+import 'package:kantin_digital/features/kantin/widgets/approve_cancellation_dialog.dart';
 import 'package:kantin_digital/features/kantin/widgets/pos_order_chat_sheet.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
@@ -849,9 +851,20 @@ class OrderDetailSheet extends ConsumerWidget {
                 // Reject Cancellation (Tolak)
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      onStatusChanged(order.id, 'Sedang Disiapkan', order.studentId);
+                    onPressed: () async {
+                      final confirmReject = await showAppConfirmationDialog(
+                        context,
+                        title: 'Tolak Permohonan Batal?',
+                        message: 'Pesanan untuk ${order.studentName} akan tetap dilanjutkan ke status Sedang Disiapkan.',
+                        confirmLabel: 'Ya, Tolak Batal',
+                        cancelLabel: 'Kembali',
+                        icon: Icons.close_rounded,
+                        confirmColor: Nebula.amber,
+                      );
+                      if (confirmReject == true && context.mounted) {
+                        Navigator.pop(context);
+                        onStatusChanged(order.id, 'Sedang Disiapkan', order.studentId);
+                      }
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: context.textSecondary,
@@ -869,9 +882,24 @@ class OrderDetailSheet extends ConsumerWidget {
                 // Approve Cancellation (Setujui)
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       Navigator.pop(context);
-                      onStatusChanged(order.id, 'Dibatalkan', order.studentId);
+                      final approved = await ApproveCancellationDialog.show(
+                        context,
+                        order: order,
+                      );
+                      if (approved == true && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Pembatalan pesanan disetujui. Saldo sebesar ${CurrencyFormatter.format(order.totalAmount)} telah dikembalikan ke ${order.studentName}.',
+                            ),
+                            backgroundColor: Nebula.teal,
+                            behavior: SnackBarBehavior.floating,
+                            duration: const Duration(seconds: 3),
+                          ),
+                        );
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Nebula.rose,

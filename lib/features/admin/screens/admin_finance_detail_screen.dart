@@ -236,7 +236,7 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
           onPressed: () => context.pop(),
         ),
         title: Text(
-          'Profile Pegawai',
+          'Profil Pegawai',
           style: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -266,7 +266,6 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
 
           final String fullName = profile.fullName ?? '';
           final String username = profile.username ?? '';
-          final String authorityLevel = officer['authority_level'] ?? 'L1';
           final List<dynamic> features = officer['features'] ?? [];
 
           return SingleChildScrollView(
@@ -366,14 +365,14 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                           Icon(Icons.verified_user, size: 16, color: context.textSecondary),
                           SizedBox(width: 6),
                           Text(
-                            'TINGKAT AKSES',
+                            'PERAN / JABATAN',
                             style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: context.textSecondary),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Officer $authorityLevel',
+                        'Petugas Keuangan Sekolah',
                         style: GoogleFonts.inter(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
@@ -457,7 +456,6 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                   Column(
                     children: logs.take(5).map((log) {
                       final String actionType = log.actionType;
-                      final String desc = log.description;
                       final date = log.createdAt?.toLocal() ?? DateTime.now();
 
                       // Set specific icon & color for action types
@@ -491,7 +489,7 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
-                                        actionType.replaceAll('_', ' '),
+                                        log.displayTitle,
                                         style: GoogleFonts.inter(
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
@@ -509,7 +507,7 @@ class _AdminFinanceDetailScreenState extends ConsumerState<AdminFinanceDetailScr
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    desc,
+                                    log.displaySubtitle,
                                     style: GoogleFonts.inter(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,

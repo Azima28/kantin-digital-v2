@@ -103,6 +103,13 @@ func (s *AuthService) Login(ctx context.Context, identifier, password, expectedR
 		return nil, ErrAccountInactive
 	}
 
+	// Maintenance mode guard: block all non-admin logins
+	if s.userRepo != nil && s.userRepo.IsMaintenanceMode(ctx) {
+		if authenticatedUser.Role != domain.RoleSuperAdmin && authenticatedUser.Role != domain.RoleAdmin {
+			return nil, errors.New("mode pemeliharaan aktif: semua akses login non-admin sedang diblokir sementara")
+		}
+	}
+
 	tokenStr, expiresAt, err := s.tokenMaker.CreateToken(authenticatedUser)
 	if err != nil {
 		return nil, err

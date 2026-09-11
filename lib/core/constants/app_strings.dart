@@ -147,7 +147,7 @@ class AppStrings {
   static const String labelReset = 'Reset';
   static const String labelResetDate = 'Reset Tanggal';
   static const String labelSavePdf = 'Simpan Struk PDF';
-  static const String labelUploadingPhoto = 'Mengupload foto...';
+  static const String labelUploadingPhoto = 'Mengunggah foto...';
   static const String labelTakePhoto = 'Ambil Foto dari Kamera';
   static const String labelPickGallery = 'Pilih dari Galeri';
   static const String labelDeleteImage = 'Hapus Gambar';
@@ -180,7 +180,7 @@ class AppStrings {
   static const String adminFinishLabel = 'Selesai';
   static const String adminLogoutConfirm = 'Apakah Anda yakin ingin keluar dari akun kasir?';
   static const String adminClose = 'Tutup';
-  static const String adminRefund = 'Refund';
+  static const String adminRefund = 'Pengembalian Dana';
   static const String adminReject = 'Tolak';
   static const String adminApprove = 'Setujui';
   static const String adminProcess = 'Proses';
@@ -209,7 +209,7 @@ class AppStrings {
   static const String titleHistorySales = 'Rekap Penjualan Hari Ini';
   static const String labelTotalTransactions = 'Total Penjualan';
   static const String labelActivitySales = 'Aktivitas Penjualan';
-  static const String buttonRefund = 'BATALKAN TRANSAKSI / REFUND';
+  static const String buttonRefund = 'BATALKAN TRANSAKSI / PENGEMBALIAN DANA';
 
   // Admin screens
   static const String adminAllUsers = 'Semua Pengguna';
@@ -229,7 +229,7 @@ class AppStrings {
   static const String kantinAllActivity = 'Semua Aktivitas';
   static const String kantinAddMenu = 'Tambah Menu';
   static const String kantinEditMenu = 'Ubah Menu';
-  static const String kantinRefund = 'Refund Transaksi';
+  static const String kantinRefund = 'Pengembalian Dana Transaksi';
   static const String kantinLogoutConfirm = 'Apakah Anda yakin ingin keluar dari akun kasir?';
   static const String kantinDeleteProductConfirm = 'Apakah Anda yakin ingin menghapus "';
   static const String kantinDeleteProductConfirmSuffix = '" dari katalog stan Anda?';
@@ -265,7 +265,7 @@ class AppStrings {
 
   // Parent screens
   static const String parentTopup = 'Isi Saldo';
-  static const String parentDashboard = 'Dashboard';
+  static const String parentDashboard = 'Dasbor';
   static const String parentReceipt = 'Struk Transaksi';
   static const String parentSettingsSaved = 'Pengaturan berhasil disimpan!';
 
@@ -283,7 +283,7 @@ class AppStrings {
   static const String successPasswordUpdated = 'Kata sandi berhasil diperbarui!';
   static const String successPasswordChanged = 'Kata sandi berhasil diubah!';
   static const String successSettingsSaved = 'Setelan global berhasil disimpan!';
-  static const String successPushSent = 'Notifikasi push broadcast berhasil dikirim!';
+  static const String successPushSent = 'Pesan siaran pengumuman berhasil dikirim!';
   static const String successProductDeleted = 'Jajanan berhasil dihapus';
   static const String successProductSaved = 'Jajanan berhasil ditambahkan!';
   static const String successProductUpdated = 'Jajanan berhasil diubah!';

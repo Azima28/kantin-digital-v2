@@ -66,3 +66,7 @@ func (s *CatalogService) GetGlobalSettings(ctx context.Context) (map[string]inte
 func (s *CatalogService) SaveGlobalSettings(ctx context.Context, settings map[string]interface{}) error {
 	return s.userRepo.SaveGlobalSettings(ctx, settings)
 }
+
+func (s *CatalogService) CreateBroadcastNotifications(ctx context.Context, audience, title, message string) (int, error) {
+	return s.userRepo.CreateBroadcastNotifications(ctx, audience, title, message)
+}

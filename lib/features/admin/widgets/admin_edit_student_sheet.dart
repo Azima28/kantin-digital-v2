@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
@@ -7,6 +8,7 @@ import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
+import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/widgets/app_avatar.dart';
@@ -23,7 +25,16 @@ void showEditStudentSheet(
   final nisnCtrl = TextEditingController(text: profile.nisn);
   final emailCtrl = TextEditingController(text: profile.email);
   final usernameCtrl = TextEditingController(text: profile.username);
-  final parentPhoneCtrl = TextEditingController(text: profile.phoneNumber);
+  String cleanPhone = (profile.phoneNumber ?? '').trim().replaceAll(' ', '').replaceAll('-', '');
+  if (cleanPhone.startsWith('+62')) {
+    cleanPhone = cleanPhone.substring(3);
+  } else if (cleanPhone.startsWith('62')) {
+    cleanPhone = cleanPhone.substring(2);
+  } else if (cleanPhone.startsWith('0')) {
+    cleanPhone = cleanPhone.substring(1);
+  }
+  cleanPhone = cleanPhone.replaceAll(RegExp(r'[^0-9]'), '');
+  final parentPhoneCtrl = TextEditingController(text: cleanPhone);
   final limitCtrl = TextEditingController(
     text: student.dailyLimit?.toStringAsFixed(0) ?? '0',
   );
@@ -266,8 +277,48 @@ void showEditStudentSheet(
                         context,
                         label: 'Nomor HP Orang Tua (WhatsApp)',
                         controller: parentPhoneCtrl,
-                        hint: 'Masukkan nomor...',
+                        hint: '81234567890',
                         inputType: TextInputType.phone,
+                        prefix: Container(
+                          padding: const EdgeInsets.only(left: 14, right: 10),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '+62',
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Nebula.teal,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                width: 1,
+                                height: 18,
+                                color: context.dividerCol,
+                              ),
+                            ],
+                          ),
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        onChanged: (val) {
+                          if (val.startsWith('0')) {
+                            final stripped = val.replaceFirst(RegExp(r'^0+'), '');
+                            parentPhoneCtrl.value = TextEditingValue(
+                              text: stripped,
+                              selection: TextSelection.collapsed(offset: stripped.length),
+                            );
+                          } else if (val.startsWith('62')) {
+                            final stripped = val.replaceFirst(RegExp(r'^62'), '');
+                            parentPhoneCtrl.value = TextEditingValue(
+                              text: stripped,
+                              selection: TextSelection.collapsed(offset: stripped.length),
+                            );
+                          }
+                        },
                       ),
                     ),
                   ],
@@ -335,18 +386,20 @@ void showEditStudentSheet(
                             final nisn = nisnCtrl.text.trim();
                             final email = emailCtrl.text.trim();
                             final username = usernameCtrl.text.trim();
-                            final phone = parentPhoneCtrl.text.trim();
+                            final cleanParentDigits = parentPhoneCtrl.text.trim().replaceAll(RegExp(r'[^0-9]'), '');
+                            final phone = cleanParentDigits.isNotEmpty ? '+62$cleanParentDigits' : '';
                             final limitText = limitCtrl.text.trim();
                             final rfid = rfidCtrl.text.trim();
 
                             if (name.isEmpty ||
                                 nisn.isEmpty ||
                                 email.isEmpty ||
-                                username.isEmpty ||
-                                rfid.isEmpty) {
+                                username.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text(AppStrings.adminFieldRequiredRfid),
+                                  content: Text('Nama, NISN, email, dan username wajib diisi'),
+                                  backgroundColor: Nebula.rose,
+                                  behavior: SnackBarBehavior.floating,
                                 ),
                               );
                               return;
@@ -358,8 +411,12 @@ void showEditStudentSheet(
                               final int parsedLimit = int.tryParse(limitText) ?? 0;
                               final rfidVal = rfid.isNotEmpty ? rfid : null;
 
+                              final authState = ref.read(authNotifierProvider);
+                              final callerRole = authState.profile?['role']?.toString();
+                              final prefix = (callerRole == 'petugas_keuangan') ? '/finance' : '/admin';
+
                               final response = await apiClient.put(
-                                '/admin/students/${profile.id}',
+                                '$prefix/students/${profile.id}',
                                 body: {
                                   'full_name': name,
                                   'email': email,
@@ -458,6 +515,9 @@ Widget _buildLabeledFormField(
   required TextEditingController controller,
   String? hint,
   TextInputType inputType = TextInputType.text,
+  Widget? prefix,
+  List<TextInputFormatter>? inputFormatters,
+  ValueChanged<String>? onChanged,
 }) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -474,6 +534,8 @@ Widget _buildLabeledFormField(
       TextField(
         controller: controller,
         keyboardType: inputType,
+        inputFormatters: inputFormatters,
+        onChanged: onChanged,
         style: GoogleFonts.inter(fontSize: 14, color: context.textPrimary),
         decoration: InputDecoration(
           hintText: hint,
@@ -481,6 +543,8 @@ Widget _buildLabeledFormField(
             color: context.textSecondary.withValues(alpha: 0.6),
             fontSize: 13,
           ),
+          prefixIcon: prefix,
+          prefixIconConstraints: prefix != null ? const BoxConstraints(minWidth: 0, minHeight: 0) : null,
           filled: true,
           fillColor: context.surfaceBg,
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

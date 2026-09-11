@@ -57,7 +57,7 @@ class AdminContributionCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Role Activity',
+                'Aktivitas Peran',
                 style: GoogleFonts.inter(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
@@ -71,7 +71,7 @@ class AdminContributionCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  '$computedTotal User',
+                  '$computedTotal Pengguna',
                   style: GoogleFonts.inter(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,

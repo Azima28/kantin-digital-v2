@@ -9,6 +9,7 @@ import 'package:kantin_digital/core/services/pdf_service.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
+import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
 
 /// Full-screen view for displaying complete transaction receipt and details.
 class ParentTransactionDetailScreen extends StatelessWidget {
@@ -67,14 +68,6 @@ class ParentTransactionDetailScreen extends StatelessWidget {
             color: context.textPrimary,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(CupertinoIcons.arrow_down_to_line,
-                color: Nebula.teal, size: 20),
-            tooltip: 'Unduh Struk PDF',
-            onPressed: () => _downloadPdf(context),
-          ),
-        ],
       ),
       body: Align(
         alignment: Alignment.topCenter,
@@ -520,9 +513,36 @@ class ParentTransactionDetailScreen extends StatelessWidget {
                 ],
 
                 // 4. Action Buttons
+                if (isPending) ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Nebula.amber.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Nebula.amber.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline_rounded, color: Nebula.amber, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Transaksi masih menunggu konfirmasi. Harap konfirmasi ke admin keuangan terlebih dahulu agar transaksi disetujui dan struk dapat diunduh.',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Nebula.amber,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Nebula.teal,
+                    backgroundColor: isPending ? Colors.grey.shade400 : Nebula.teal,
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -530,8 +550,11 @@ class ParentTransactionDetailScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () => _downloadPdf(context),
-                  icon: const Icon(CupertinoIcons.arrow_down_to_line,
-                      color: Colors.white, size: 18),
+                  icon: Icon(
+                    isPending ? CupertinoIcons.lock_fill : CupertinoIcons.arrow_down_to_line,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                   label: Text(
                     'UNDUH STRUK PDF',
                     style: GoogleFonts.inter(
@@ -620,13 +643,16 @@ class ParentTransactionDetailScreen extends StatelessWidget {
   }
 
   void _downloadPdf(BuildContext context) {
-    // A pending top-up has not been paid in yet, so there is no receipt to give.
+    // A pending transaction has not been confirmed yet, so cannot be downloaded until confirmed by finance.
     if (transaction.status?.toString().toLowerCase() == 'pending') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-              'Struk tersedia setelah petugas keuangan mengonfirmasi pembayaran.'),
-        ),
+      showAppAlertDialog(
+        context,
+        title: 'Konfirmasi Keuangan Diperlukan',
+        message:
+            'Struk transaksi belum dapat diunduh karena transaksi masih menunggu konfirmasi. Silakan konfirmasi ke admin keuangan terlebih dahulu baru dapat mendownload.',
+        buttonLabel: 'Mengerti',
+        icon: Icons.info_outline_rounded,
+        buttonColor: Nebula.amber,
       );
       return;
     }

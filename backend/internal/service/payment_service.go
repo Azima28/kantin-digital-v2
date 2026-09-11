@@ -53,13 +53,17 @@ func (s *PaymentService) ProcessPurchase(ctx context.Context, params postgres.Ch
 }
 
 func (s *PaymentService) ProcessTopup(ctx context.Context, studentID, officerID string, amount int) (*domain.Transaction, error) {
+	return s.ProcessTopupWithMethod(ctx, studentID, officerID, amount, "cash")
+}
+
+func (s *PaymentService) ProcessTopupWithMethod(ctx context.Context, studentID, actorID string, amount int, method string) (*domain.Transaction, error) {
 	if amount < 10000 {
 		return nil, errors.New("nominal top-up minimal Rp 10.000")
 	}
 	if amount > 2000000 {
 		return nil, errors.New("nominal top-up maksimal Rp 2.000.000 per transaksi")
 	}
-	return s.txRepo.ProcessTopup(ctx, studentID, officerID, amount)
+	return s.txRepo.ProcessTopupWithMethod(ctx, studentID, actorID, amount, method)
 }
 
 // RequestTopup queues a student's own top-up request without crediting anything.
@@ -187,6 +191,84 @@ func (s *PaymentService) AdminChangePassword(ctx context.Context, userID string,
 		return err
 	}
 	return s.userRepo.UpdatePassword(ctx, userID, hash)
+}
+
+func isValidPin(pin string) bool {
+	if len(pin) != 6 {
+		return false
+	}
+	for _, c := range pin {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+func (s *PaymentService) StudentChangePin(ctx context.Context, studentID, oldPin, newPin string) error {
+	if !isValidPin(newPin) {
+		return errors.New("PIN baru harus terdiri dari 6 digit angka")
+	}
+
+	currentHash, err := s.userRepo.GetStudentPinHash(ctx, studentID)
+	if err != nil {
+		return err
+	}
+
+	// Verify old PIN
+	if currentHash == "" {
+		if oldPin != "123456" {
+			return errors.New("PIN lama salah (PIN bawaan awal adalah 123456)")
+		}
+	} else {
+		if !hasher.CheckPassword(oldPin, currentHash) {
+			return errors.New("PIN lama yang Anda masukkan salah")
+		}
+	}
+
+	newHash, err := hasher.HashPassword(newPin)
+	if err != nil {
+		return err
+	}
+
+	return s.userRepo.UpdateStudentPin(ctx, studentID, newHash)
+}
+
+func (s *PaymentService) AdminChangeStudentPin(ctx context.Context, studentID, newPin string) error {
+	if !isValidPin(newPin) {
+		return errors.New("PIN baru harus terdiri dari 6 digit angka")
+	}
+
+	newHash, err := hasher.HashPassword(newPin)
+	if err != nil {
+		return err
+	}
+
+	return s.userRepo.UpdateStudentPin(ctx, studentID, newHash)
+}
+
+func (s *PaymentService) VerifyStudentPin(ctx context.Context, studentID, pin string) (bool, error) {
+	if pin == "" {
+		return false, errors.New("PIN transaksi wajib diisi")
+	}
+
+	currentHash, err := s.userRepo.GetStudentPinHash(ctx, studentID)
+	if err != nil {
+		return false, err
+	}
+
+	if currentHash == "" {
+		if pin == "123456" {
+			return true, nil
+		}
+		return false, nil
+	}
+
+	if hasher.CheckPassword(pin, currentHash) {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 func (s *PaymentService) UpdateStudentCardStatus(ctx context.Context, studentID string, rfidUID *string, isActive *bool) error {

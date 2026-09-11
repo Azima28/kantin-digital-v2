@@ -351,6 +351,54 @@ func (h *AdminHandler) AdminChangePassword(c *fiber.Ctx) error {
 	return response.Success(c, fiber.StatusOK, "Kata sandi berhasil diperbarui", nil)
 }
 
+type AdminChangePinRequest struct {
+	UserID string `json:"user_id"`
+	Pin    string `json:"pin"`
+}
+
+func (h *AdminHandler) AdminChangeStudentPin(c *fiber.Ctx) error {
+	var req AdminChangePinRequest
+	if err := c.BodyParser(&req); err != nil {
+		return response.Error(c, fiber.StatusBadRequest, "Payload tidak valid", err.Error())
+	}
+	if req.UserID == "" {
+		req.UserID = c.Params("id")
+	}
+	if req.UserID == "" || req.Pin == "" {
+		return response.Error(c, fiber.StatusBadRequest, "User ID dan PIN baru wajib diisi", nil)
+	}
+
+	claims := adminClaims(c)
+	if claims == nil {
+		return response.Error(c, fiber.StatusUnauthorized, "Autentikasi diperlukan", nil)
+	}
+
+	if claims.Role != domain.RoleSuperAdmin && claims.Role != domain.RoleAdmin && claims.Role != domain.RolePetugasKeuangan {
+		return response.Error(c, fiber.StatusForbidden, "Akses ditolak: Hanya Admin dan Petugas Keuangan yang berwenang mereset PIN", nil)
+	}
+
+	target, err := h.paymentService.GetUserByID(c.Context(), req.UserID)
+	if err != nil {
+		return response.Error(c, fiber.StatusNotFound, "Pengguna tidak ditemukan", err.Error())
+	}
+	if target.Role != domain.RoleStudent {
+		return response.Error(c, fiber.StatusBadRequest, "Reset PIN hanya berlaku untuk akun siswa", nil)
+	}
+
+	if err := h.paymentService.AdminChangeStudentPin(c.Context(), req.UserID, req.Pin); err != nil {
+		return response.Error(c, fiber.StatusBadRequest, err.Error(), nil)
+	}
+
+	_ = h.paymentService.LogAudit(c.Context(), claims.UserID, "STUDENT_PIN_RESET", "students", req.UserID, "",
+		auditJSON(map[string]interface{}{
+			"target_name": target.FullName,
+			"target_role": target.Role,
+			"actor_role":  claims.Role,
+		}), c.IP())
+
+	return response.Success(c, fiber.StatusOK, "PIN transaksi siswa berhasil diperbarui", nil)
+}
+
 type UpdateStudentRequest struct {
 	FullName    string  `json:"full_name"`
 	Email       *string `json:"email"`
@@ -371,6 +419,19 @@ func (h *AdminHandler) UpdateStudent(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusBadRequest, "Payload update siswa tidak valid", err.Error())
 	}
 
+	claims := adminClaims(c)
+	if claims == nil {
+		return response.Error(c, fiber.StatusUnauthorized, "Autentikasi diperlukan", nil)
+	}
+
+	target, err := h.paymentService.GetUserByID(c.Context(), id)
+	if err != nil {
+		return response.Error(c, fiber.StatusNotFound, "Data siswa tidak ditemukan", err.Error())
+	}
+	if err := authorizeUserMutation(claims.Role, claims.UserID, target, false); err != nil {
+		return response.Error(c, fiber.StatusForbidden, err.Error(), nil)
+	}
+
 	params := postgres.UpdateStudentFullParams{
 		ID:          id,
 		FullName:    req.FullName,
@@ -388,6 +449,10 @@ func (h *AdminHandler) UpdateStudent(c *fiber.Ctx) error {
 	if err := h.paymentService.UpdateStudentFull(c.Context(), params); err != nil {
 		return response.Error(c, fiber.StatusInternalServerError, "Gagal memperbarui data siswa: "+err.Error(), err.Error())
 	}
+
+	_ = h.paymentService.LogAudit(c.Context(), claims.UserID, "STUDENT_PROFILE_UPDATED", "profiles", id,
+		auditJSON(map[string]interface{}{"full_name": target.FullName}),
+		auditJSON(map[string]interface{}{"full_name": req.FullName}), c.IP())
 
 	if h.hub != nil {
 		h.hub.BroadcastToRoom(fmt.Sprintf("student:%s", id), "student_updated", fiber.Map{"student_id": id})
@@ -612,4 +677,55 @@ func (h *AdminHandler) SaveSettings(c *fiber.Ctx) error {
 	}
 
 	return response.Success(c, fiber.StatusOK, "Setelan sistem berhasil disimpan", req)
+}
+
+type BroadcastRequest struct {
+	Audience string `json:"audience"` // "all", "merchants", "students", "staff"
+	Title    string `json:"title"`
+	Message  string `json:"message"`
+}
+
+func (h *AdminHandler) Broadcast(c *fiber.Ctx) error {
+	var req BroadcastRequest
+	if err := c.BodyParser(&req); err != nil {
+		return response.Error(c, fiber.StatusBadRequest, "Payload siaran tidak valid", err.Error())
+	}
+
+	req.Message = strings.TrimSpace(req.Message)
+	if req.Message == "" {
+		return response.Error(c, fiber.StatusBadRequest, "Isi pesan siaran pengumuman wajib diisi", nil)
+	}
+
+	title := strings.TrimSpace(req.Title)
+	if title == "" {
+		title = "Pengumuman Admin"
+	}
+
+	audience := strings.ToLower(strings.TrimSpace(req.Audience))
+	if audience == "" {
+		audience = "all"
+	}
+
+	count, err := h.catalogService.CreateBroadcastNotifications(c.Context(), audience, title, req.Message)
+	if err != nil {
+		return response.Error(c, fiber.StatusInternalServerError, "Gagal mengirim siaran pengumuman: "+err.Error(), err.Error())
+	}
+
+	if h.hub != nil {
+		notifPayload := fiber.Map{
+			"title":      title,
+			"message":    req.Message,
+			"type":       "announcement",
+			"audience":   audience,
+			"created_at": time.Now(),
+		}
+		h.hub.BroadcastToRoom("all", "notification", notifPayload)
+		h.hub.BroadcastToRoom("all", "notification:new", notifPayload)
+		h.hub.BroadcastToRoom("all", "broadcast", notifPayload)
+	}
+
+	return response.Success(c, fiber.StatusOK, "Pesan siaran pengumuman berhasil dikirim", fiber.Map{
+		"recipients": count,
+		"audience":   audience,
+	})
 }

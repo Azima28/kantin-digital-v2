@@ -67,6 +67,9 @@ import 'package:kantin_digital/core/models/models.dart';
 class AppRouter {
   AppRouter._();
 
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
   static const String splash = '/';
   static const String login = '/login';
   static const String unauthorized = '/unauthorized';
@@ -158,6 +161,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   });
 
   return GoRouter(
+    navigatorKey: AppRouter.navigatorKey,
     refreshListenable: authListenable,
     initialLocation: AppRouter.splash,
     redirect: (context, state) {

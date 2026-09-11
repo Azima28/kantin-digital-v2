@@ -22,8 +22,30 @@ class SiswaNotificationsScreen extends ConsumerWidget {
       final apiClient = ref.read(apiClientProvider);
       await apiClient.patch('/student/notifications/$notifId/read');
       ref.invalidate(siswaNotificationsProvider);
+      ref.invalidate(userNotificationsProvider);
     } catch (e) {
       debugPrint('Notification markAsRead error: $e');
+    }
+  }
+
+  Future<void> _deleteNotification(BuildContext context, WidgetRef ref, String notifId) async {
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final res = await apiClient.delete('/student/notifications/$notifId');
+      if (res.success) {
+        ref.invalidate(siswaNotificationsProvider);
+        ref.invalidate(userNotificationsProvider);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${AppStrings.labelFailed} menghapus notifikasi: $e'),
+            backgroundColor: Nebula.rose,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -35,18 +57,30 @@ class SiswaNotificationsScreen extends ConsumerWidget {
     final confirmed = await showAppConfirmationDialog(
       context,
       title: 'Hapus Semua Notifikasi',
-      message: 'Apakah Anda yakin ingin menandai dan menghapus semua notifikasi dari kotak masuk Anda?',
-      confirmLabel: 'Tandai Dibaca',
+      message: 'Apakah Anda yakin ingin menghapus seluruh riwayat notifikasi Anda? Tindakan ini tidak dapat dibatalkan.',
+      confirmLabel: 'Hapus Semua',
       isDestructive: true,
-      icon: Icons.mark_email_read_rounded,
+      icon: CupertinoIcons.trash,
     );
 
     if (!confirmed) return;
 
     try {
       final apiClient = ref.read(apiClientProvider);
-      await apiClient.patch('/student/notifications/read-all');
-      ref.invalidate(siswaNotificationsProvider);
+      final res = await apiClient.delete('/student/notifications');
+      if (res.success) {
+        ref.invalidate(siswaNotificationsProvider);
+        ref.invalidate(userNotificationsProvider);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Semua notifikasi berhasil dihapus'),
+              backgroundColor: Nebula.teal,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -145,92 +179,140 @@ class SiswaNotificationsScreen extends ConsumerWidget {
                       bgColor = Nebula.amberLight;
                     }
 
-                    return PressScale(
-                      onTap: () {
-                        if (!isRead) {
-                          _markAsRead(context, ref, id);
-                        }
-                      },
-                      child: Container(
+                    return Dismissible(
+                      key: ValueKey('siswa_notif_$id'),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
                         margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        alignment: Alignment.centerRight,
                         decoration: BoxDecoration(
-                          color: isRead ? context.cardBg : context.surfaceBg,
+                          color: Nebula.rose.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: isRead ? context.dividerCol : Nebula.teal.withValues(alpha: 0.3),
-                            width: isRead ? 0.5 : 1.0,
-                          ),
                         ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Type Icon circle badge
-                            Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: bgColor,
-                              ),
-                              child: Icon(
-                                iconData,
-                                color: iconColor,
-                                size: 18,
-                              ),
+                        child: const Icon(CupertinoIcons.trash, color: Colors.white, size: 22),
+                      ),
+                      confirmDismiss: (direction) async {
+                        return await showAppConfirmationDialog(
+                          context,
+                          title: 'Hapus Notifikasi',
+                          message: 'Apakah Anda yakin ingin menghapus notifikasi ini?',
+                          confirmLabel: 'Hapus',
+                          isDestructive: true,
+                          icon: CupertinoIcons.trash,
+                        );
+                      },
+                      onDismissed: (direction) {
+                        _deleteNotification(context, ref, id);
+                      },
+                      child: PressScale(
+                        onTap: () {
+                          if (!isRead) {
+                            _markAsRead(context, ref, id);
+                          }
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: isRead ? context.cardBg : context.surfaceBg,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: isRead ? context.dividerCol : Nebula.teal.withValues(alpha: 0.3),
+                              width: isRead ? 0.5 : 1.0,
                             ),
-                            const SizedBox(width: 12),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Type Icon circle badge
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: bgColor,
+                                ),
+                                child: Icon(
+                                  iconData,
+                                  color: iconColor,
+                                  size: 18,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
 
-                            // Title, text and time stamp
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          title,
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: isRead ? FontWeight.w600 : FontWeight.w800,
-                                            color: context.textPrimary,
+                              // Title, text and time stamp
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            title,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: isRead ? FontWeight.w600 : FontWeight.w800,
+                                              color: context.textPrimary,
+                                            ),
                                           ),
                                         ),
+                                        if (!isRead)
+                                          Container(
+                                            width: 8,
+                                            height: 8,
+                                            margin: const EdgeInsets.only(left: 6),
+                                            decoration: const BoxDecoration(
+                                              color: Nebula.teal,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                        IconButton(
+                                          icon: Icon(CupertinoIcons.trash, size: 16, color: context.textSecondary.withValues(alpha: 0.6)),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                                          splashRadius: 16,
+                                          tooltip: 'Hapus notifikasi',
+                                          onPressed: () async {
+                                            final confirmed = await showAppConfirmationDialog(
+                                              context,
+                                              title: 'Hapus Notifikasi',
+                                              message: 'Apakah Anda yakin ingin menghapus notifikasi ini?',
+                                              confirmLabel: 'Hapus',
+                                              isDestructive: true,
+                                              icon: CupertinoIcons.trash,
+                                            );
+                                            if (confirmed && context.mounted) {
+                                              _deleteNotification(context, ref, id);
+                                            }
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      message,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: isRead ? context.textSecondary : context.textPrimary.withValues(alpha: 0.8),
+                                        height: 1.3,
                                       ),
-                                      if (!isRead)
-                                        Container(
-                                          width: 8,
-                                          height: 8,
-                                          decoration: BoxDecoration(
-                                            color: Nebula.teal,
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    message,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: isRead ? context.textSecondary : context.textPrimary.withValues(alpha: 0.8),
-                                      height: 1.3,
                                     ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    timeStr,
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: context.textSecondary,
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      timeStr,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: context.textSecondary,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     );

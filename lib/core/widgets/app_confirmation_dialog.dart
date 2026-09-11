@@ -134,3 +134,108 @@ Future<bool> showAppConfirmationDialog(
 
   return result ?? false;
 }
+
+/// Standard alert dialog (single action) for Kantin Digital.
+Future<void> showAppAlertDialog(
+  BuildContext context, {
+  required String title,
+  required String message,
+  String buttonLabel = 'Mengerti',
+  IconData icon = Icons.info_outline_rounded,
+  Color? buttonColor,
+  bool isDestructive = false,
+  VoidCallback? onConfirm,
+}) async {
+  final primaryColor = isDestructive
+      ? Nebula.rose
+      : (buttonColor ?? Nebula.teal);
+
+  await showDialog<void>(
+    context: context,
+    builder: (ctx) => Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: Container(
+          decoration: BoxDecoration(
+            color: ctx.cardBg,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: ctx.dividerCol, width: 0.8),
+            boxShadow: [
+              BoxShadow(
+                color: ctx.shadowColor,
+                blurRadius: 28,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: primaryColor.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, color: primaryColor, size: 22),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: GoogleFonts.inter(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: ctx.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Text(
+                message,
+                style: GoogleFonts.inter(
+                  fontSize: 13.5,
+                  color: ctx.textSecondary,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  onConfirm?.call();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: Text(
+                  buttonLabel,
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}

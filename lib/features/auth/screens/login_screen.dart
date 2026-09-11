@@ -96,16 +96,77 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } else {
       if (mounted) {
         final String? error = ref.read(authNotifierProvider).errorMessage;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(error ?? AppStrings.loginError),
-            backgroundColor: Nebula.rose,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+        final isMaintenance = error != null &&
+            (error.toLowerCase().contains('pemeliharaan') ||
+                error.toLowerCase().contains('maintenance'));
+
+        if (isMaintenance) {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              backgroundColor: context.isDark ? const Color(0xFF1E293B) : Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              icon: Container(
+                width: 68,
+                height: 68,
+                decoration: BoxDecoration(
+                  color: Nebula.amber.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.warning_amber_rounded,
+                    color: Nebula.amber,
+                    size: 38,
+                  ),
+                ),
+              ),
+              title: Text(
+                'Mode Pemeliharaan Aktif',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: context.isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+              ),
+              content: Text(
+                error,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: context.isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  height: 1.4,
+                ),
+              ),
+              actions: [
+                Center(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Nebula.teal,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                    ),
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Mengerti', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
             ),
-          ),
-        );
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(error ?? AppStrings.loginError),
+              backgroundColor: Nebula.rose,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+        }
       }
     }
   }
@@ -812,7 +873,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             },
           ),
           LoginPreviewItem(
-            roleName: 'Siswa (Ahmad - NISN)',
+            roleName: 'Siswa (Ahmad Subarjo - NISN)',
             identifier: '20260012',
             password: 'password123',
             onTap: () {
@@ -821,7 +882,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 _emailController.text = '20260012';
                 _passwordController.text = 'password123';
               });
-              _showToast('Akun Siswa berhasil diisi!');
+              _showToast('Akun Siswa Ahmad Subarjo berhasil diisi!');
+            },
+          ),
+          LoginPreviewItem(
+            roleName: 'Siswa (Ahmad Fauzi - NISN)',
+            identifier: '20260001',
+            password: 'password123',
+            onTap: () {
+              FocusScope.of(context).unfocus();
+              setState(() {
+                _emailController.text = '20260001';
+                _passwordController.text = 'password123';
+              });
+              _showToast('Akun Siswa Ahmad Fauzi berhasil diisi!');
             },
           ),
           LoginPreviewItem(
@@ -839,7 +913,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         ] else ...[
           LoginPreviewItem(
-            roleName: 'Orang Tua (Wali Siswa - NISN)',
+            roleName: 'Orang Tua (Wali Ahmad Subarjo)',
             identifier: '20260012',
             password: 'password123',
             onTap: () {
@@ -848,7 +922,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 _emailController.text = '20260012';
                 _passwordController.text = 'password123';
               });
-              _showToast('Akun Orang Tua berhasil diisi!');
+              _showToast('Akun Orang Tua Ahmad Subarjo berhasil diisi!');
+            },
+          ),
+          LoginPreviewItem(
+            roleName: 'Orang Tua (Wali Ahmad Fauzi)',
+            identifier: '20260001',
+            password: 'password123',
+            onTap: () {
+              FocusScope.of(context).unfocus();
+              setState(() {
+                _emailController.text = '20260001';
+                _passwordController.text = 'password123';
+              });
+              _showToast('Akun Orang Tua Ahmad Fauzi berhasil diisi!');
             },
           ),
         ],

@@ -11,7 +11,8 @@ import 'package:kantin_digital/core/utils/riverpod_cache_extensions.dart';
 final parentDashboardProvider =
     FutureProvider.autoDispose.family<ParentDashboardData, String>(
         (ref, studentId) async {
-  ref.cacheFor(const Duration(minutes: 2));
+  // Short cache to prevent thrashing, but keep balance up-to-date
+  ref.cacheFor(const Duration(seconds: 10));
   try {
     final apiClient = ref.watch(apiClientProvider);
     final response = await apiClient.get('/parent/dashboard/$studentId');

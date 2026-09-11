@@ -28,7 +28,7 @@ class CardCheckSimulator extends StatelessWidget {
                   size: 18, color: Nebula.amber),
               SizedBox(width: 8),
               Text(
-                'Simulator Scan Kartu (Dev Only)',
+                'Simulator Pemindaian Kartu (Uji Coba)',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
@@ -55,12 +55,22 @@ class CardCheckSimulator extends StatelessWidget {
                         color: Nebula.teal,
                         fontSize: 11,
                         fontWeight: FontWeight.bold)),
-                onPressed: () => onSimulateScan('04:A3:F8:12'),
+                onPressed: () => onSimulateScan('04:18:7D:CA:C1:21:90'),
+              ),
+              ActionChip(
+                backgroundColor: Nebula.teal.withValues(alpha: 0.08),
+                side: BorderSide.none,
+                label: const Text('Ahmad Fauzi (Aktif)',
+                    style: TextStyle(
+                        color: Nebula.teal,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold)),
+                onPressed: () => onSimulateScan('04:F4:1B:CA:C1:21:90'),
               ),
               ActionChip(
                 backgroundColor: Nebula.rose.withValues(alpha: 0.1),
                 side: BorderSide.none,
-                label: const Text('Kartu Tidak Terdaftar',
+                label: const Text('Kartu Lama / Tidak Terdaftar',
                     style: TextStyle(
                         color: Nebula.rose,
                         fontSize: 11,

@@ -31,8 +31,8 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
   final List<String> _actions = [
     'Semua Aksi',
     'Top-Up Siswa',
-    'Tarik Saldo Stan (Payout)',
-    'Refund Transaksi',
+    'Tarik Saldo Stan',
+    'Pengembalian Dana (Refund)',
     'Registrasi Kartu',
     'Tautan Kartu',
     'Hapus Tautan Kartu',
@@ -41,7 +41,7 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
     'Ubah Kata Sandi',
     'Blokir Akun',
     'Aktifkan Akun',
-    'Import Siswa',
+    'Impor Siswa',
     'Tambah Menu',
     'Ubah Menu',
     'Tambah Pengguna',
@@ -52,9 +52,9 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
     switch (filter) {
       case 'Top-Up Siswa':
         return 'TOPUP_TUNAI';
-      case 'Tarik Saldo Stan (Payout)':
+      case 'Tarik Saldo Stan':
         return 'MERCHANT_PAYOUT';
-      case 'Refund Transaksi':
+      case 'Pengembalian Dana (Refund)':
         return 'REFUND_TRANSAKSI';
       case 'Registrasi Kartu':
       case 'Tautan Kartu':
@@ -71,7 +71,7 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
         return 'BLOKIR_AKUN';
       case 'Aktifkan Akun':
         return 'AKTIFKAN_AKUN';
-      case 'Import Siswa':
+      case 'Impor Siswa':
         return 'IMPORT_SISWA';
       case 'Tambah Menu':
         return 'TAMBAH_PRODUK';
@@ -139,7 +139,7 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
           child: Text(
-            'Audit Log Explorer',
+            'Log Audit Sistem',
             style: GoogleFonts.inter(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -153,7 +153,7 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
             vertical: 4.0,
           ),
           child: Text(
-            'Pemantauan sistem, mutasi keuangan, dan riwayat aktivitas real-time.',
+            'Pemantauan sistem, mutasi keuangan, dan riwayat aktivitas waktu nyata.',
             style: GoogleFonts.inter(
               fontSize: 13,
               color: context.textSecondary,
@@ -264,30 +264,36 @@ class _AdminAuditLogScreenState extends ConsumerState<AdminAuditLogScreen> {
               if (_selectedCategoryIndex == 1) {
                 // Mutasi Finansial: TOPUP, PAYOUT, REFUND
                 filtered = filtered.where((l) {
-                  final a = l.actionType;
-                  return a == 'TOPUP_TUNAI' || a == 'TOPUP' || a == 'MERCHANT_PAYOUT' ||
+                  final a = l.actionType.toUpperCase();
+                  return a.contains('TOPUP') || a == 'MERCHANT_PAYOUT' ||
                       a == 'REFUND_TRANSAKSI' || a == 'BATAL_PESANAN';
                 }).toList();
               } else if (_selectedCategoryIndex == 2) {
                 // Kartu RFID
                 filtered = filtered.where((l) {
-                  final a = l.actionType;
+                  final a = l.actionType.toUpperCase();
                   return a.contains('KARTU') || a == 'REGISTRASI_KARTU' || a == 'UNLINK_KARTU' || a == 'BLOKIR_KARTU' || a == 'AKTIFKAN_KARTU';
                 }).toList();
               } else if (_selectedCategoryIndex == 3) {
                 // Akun & Akses
                 filtered = filtered.where((l) {
-                  final a = l.actionType;
-                  return a == 'BLOKIR_AKUN' || a == 'AKTIFKAN_AKUN' || a == 'UBAH_PASSWORD' || a == 'TAMBAH_PENGGUNA' || a == 'IMPORT_SISWA';
+                  final a = l.actionType.toUpperCase();
+                  return a == 'BLOKIR_AKUN' || a == 'AKTIFKAN_AKUN' || a == 'UBAH_PASSWORD' || a == 'TAMBAH_PENGGUNA' || a == 'IMPORT_SISWA' || a == 'USER_STATUS_CHANGED';
                 }).toList();
               }
 
               // Specific Action Dropdown Filter
               if (_selectedAction != 'Semua Aksi') {
-                final dbActionKey = _mapActionTypeToFilter(_selectedAction);
-                filtered = filtered
-                    .where((l) => l.actionType == dbActionKey)
-                    .toList();
+                if (_selectedAction == 'Top-Up Siswa') {
+                  filtered = filtered
+                      .where((l) => l.actionType.toUpperCase().contains('TOPUP'))
+                      .toList();
+                } else {
+                  final dbActionKey = _mapActionTypeToFilter(_selectedAction);
+                  filtered = filtered
+                      .where((l) => l.actionType == dbActionKey)
+                      .toList();
+                }
               }
 
               // Date Filter

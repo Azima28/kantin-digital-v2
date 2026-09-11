@@ -54,15 +54,12 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
   bool _dailyLimitActive = false;
   final _limitController = TextEditingController();
   bool _cardFrozen = false;
-  bool _waAlertsActive = false;
-  final _phoneController = TextEditingController();
   bool _isSavingSettings = false;
 
   @override
   void dispose() {
     _searchController.dispose();
     _limitController.dispose();
-    _phoneController.dispose();
     super.dispose();
   }
 
@@ -71,14 +68,12 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
 
     final double? dailyLimit = student.dailyLimit;
     final bool isActive = student.isActive;
-    final bool waEnabled = student.waNotificationsEnabled;
-    final String? parentPhone = student.parentPhone;
 
     _dailyLimitActive = dailyLimit != null && dailyLimit > 0;
-    _limitController.text = dailyLimit != null ? dailyLimit.toInt().toString() : '';
+    _limitController.text = (dailyLimit != null && dailyLimit > 0)
+        ? dailyLimit.toInt().toString()
+        : '';
     _cardFrozen = !isActive;
-    _waAlertsActive = waEnabled;
-    _phoneController.text = parentPhone ?? '';
 
     _settingsLoaded = true;
   }
@@ -90,21 +85,27 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
 
     try {
       final apiClient = ref.read(apiClientProvider);
-      final double? newLimit = _dailyLimitActive
-          ? double.tryParse(_limitController.text.trim()) ?? 0.0
-          : null;
+      final int newLimit = _dailyLimitActive
+          ? (int.tryParse(_limitController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0)
+          : 0;
       final bool newIsActive = !_cardFrozen;
-      final bool newWaEnabled = _waAlertsActive;
-      final String newParentPhone = _phoneController.text.trim();
 
-      await apiClient.patch('/student/settings', body: {
+      final payload = {
         'student_id': widget.studentId,
         'daily_limit': newLimit,
         'is_active': newIsActive,
-        'wa_notifications_enabled': newWaEnabled,
-        'parent_phone': newParentPhone.isNotEmpty ? newParentPhone : null,
-      });
+      };
 
+      var res = await apiClient.patch('/parent/student/settings', body: payload);
+      if (!res.success) {
+        res = await apiClient.patch('/student/settings', body: payload);
+      }
+
+      if (!res.success) {
+        throw Exception(res.message ?? 'Gagal menyimpan pengaturan');
+      }
+
+      _settingsLoaded = false;
       ref.invalidate(parentDashboardProvider(widget.studentId));
       ref.invalidate(siswaStudentProvider);
 
@@ -121,7 +122,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppStrings.labelFailed} menyimpan pengaturan'),
+            content: Text('${AppStrings.labelFailed} menyimpan pengaturan: $e'),
             backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
@@ -464,12 +465,9 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
       dailyLimitActive: _dailyLimitActive,
       limitController: _limitController,
       cardFrozen: _cardFrozen,
-      waAlertsActive: _waAlertsActive,
-      phoneController: _phoneController,
       isSaving: _isSavingSettings,
       onDailyLimitChanged: (val) => setState(() => _dailyLimitActive = val),
       onCardFrozenChanged: (val) => setState(() => _cardFrozen = val),
-      onWaAlertsChanged: (val) => setState(() => _waAlertsActive = val),
       onSave: _saveSettings,
     );
   }
@@ -562,7 +560,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                 _buildSidebarItem(
                   icon: Icons.settings_outlined,
                   activeIcon: Icons.settings_rounded,
-                  label: 'Setting',
+                  label: 'Pengaturan',
                   index: 3,
                 ),
               ],
@@ -764,15 +762,23 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                             alignment: Alignment.topCenter,
                             child: ConstrainedBox(
                               constraints: const BoxConstraints(maxWidth: 800),
-                              child: SingleChildScrollView(
-                                padding: const EdgeInsets.all(24.0),
-                                child: _currentIndex == 0
-                                    ? _buildHomeTab(name, classStr, balance, dailyLimit, txs)
-                                    : _currentIndex == 1
-                                        ? _buildAnalisisTab(txs)
-                                        : _currentIndex == 2
-                                            ? _buildRiwayatTab(txs)
-                                            : _buildPengaturanTab(),
+                              child: RefreshIndicator(
+                                onRefresh: () async {
+                                  ref.invalidate(parentDashboardProvider(widget.studentId));
+                                  await ref.read(parentDashboardProvider(widget.studentId).future);
+                                },
+                                color: Nebula.teal,
+                                child: SingleChildScrollView(
+                                  physics: const AlwaysScrollableScrollPhysics(),
+                                  padding: const EdgeInsets.all(24.0),
+                                  child: _currentIndex == 0
+                                      ? _buildHomeTab(name, classStr, balance, dailyLimit, txs)
+                                      : _currentIndex == 1
+                                          ? _buildAnalisisTab(txs)
+                                          : _currentIndex == 2
+                                              ? _buildRiwayatTab(txs)
+                                              : _buildPengaturanTab(),
+                                ),
                               ),
                             ),
                           );
@@ -884,15 +890,23 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                     alignment: Alignment.topCenter,
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 600),
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(20.0),
-                        child: _currentIndex == 0
-                            ? _buildHomeTab(name, classStr, balance, dailyLimit, txs)
-                            : _currentIndex == 1
-                                ? _buildAnalisisTab(txs)
-                                : _currentIndex == 2
-                                    ? _buildRiwayatTab(txs)
-                                    : _buildPengaturanTab(),
+                      child: RefreshIndicator(
+                        onRefresh: () async {
+                          ref.invalidate(parentDashboardProvider(widget.studentId));
+                          await ref.read(parentDashboardProvider(widget.studentId).future);
+                        },
+                        color: Nebula.teal,
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.all(20.0),
+                          child: _currentIndex == 0
+                              ? _buildHomeTab(name, classStr, balance, dailyLimit, txs)
+                              : _currentIndex == 1
+                                  ? _buildAnalisisTab(txs)
+                                  : _currentIndex == 2
+                                      ? _buildRiwayatTab(txs)
+                                      : _buildPengaturanTab(),
+                        ),
                       ),
                     ),
                   );
@@ -955,7 +969,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
           PremiumBottomNavBarItem(
             icon: Icons.settings_outlined,
             activeIcon: Icons.settings_rounded,
-            label: 'Setting',
+            label: 'Pengaturan',
           ),
         ],
       ),

@@ -8,6 +8,7 @@ class Student {
   final int balance;
   final String? rfidUid;
   final double? dailyLimit;
+  final int todaySpent;
   final bool isActive;
   final bool waNotificationsEnabled;
   final String? parentPhone;
@@ -18,10 +19,21 @@ class Student {
     this.balance = 0,
     this.rfidUid,
     this.dailyLimit,
+    this.todaySpent = 0,
     this.isActive = true,
     this.waNotificationsEnabled = true,
     this.parentPhone,
   });
+
+  bool get hasDailyLimit => dailyLimit != null && dailyLimit! > 0;
+
+  int get remainingDailyLimit {
+    if (hasDailyLimit) {
+      final rem = dailyLimit!.toInt() - todaySpent;
+      return rem > 0 ? rem : 0;
+    }
+    return -1;
+  }
 
   factory Student.fromJson(Map<String, dynamic> json) {
     return Student(
@@ -33,6 +45,7 @@ class Student {
       dailyLimit: json['daily_limit'] != null
           ? double.tryParse(json['daily_limit'].toString())
           : null,
+      todaySpent: _parseBalance(json['today_spent']),
       isActive: json['is_active'] == true,
       waNotificationsEnabled: json['wa_notifications_enabled'] == true,
       parentPhone: json['parent_phone']?.toString(),
@@ -51,6 +64,7 @@ class Student {
         'balance': balance,
         'rfid_uid': rfidUid,
         'daily_limit': dailyLimit,
+        'today_spent': todaySpent,
         'is_active': isActive,
         'wa_notifications_enabled': waNotificationsEnabled,
         'parent_phone': parentPhone,
@@ -62,6 +76,7 @@ class Student {
     int? balance,
     String? rfidUid,
     double? dailyLimit,
+    int? todaySpent,
     bool? isActive,
     bool? waNotificationsEnabled,
     String? parentPhone,
@@ -72,6 +87,7 @@ class Student {
       balance: balance ?? this.balance,
       rfidUid: rfidUid ?? this.rfidUid,
       dailyLimit: dailyLimit ?? this.dailyLimit,
+      todaySpent: todaySpent ?? this.todaySpent,
       isActive: isActive ?? this.isActive,
       waNotificationsEnabled: waNotificationsEnabled ?? this.waNotificationsEnabled,
       parentPhone: parentPhone ?? this.parentPhone,

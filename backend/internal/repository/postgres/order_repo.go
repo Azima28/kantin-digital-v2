@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"kantin-backend/internal/domain"
@@ -153,17 +154,18 @@ func (r *OrderRepo) CreateOrder(ctx context.Context, order *domain.Order, items 
 
 	order.TotalAmount = calculatedTotal
 
-	// 3. Lock student balance row & validate account/card status
+	// 3. Lock student balance row & validate account/card status and daily limit
 	var currentBalance int
 	var isCardActive bool
 	var isProfileActive bool
 	var rfidUID *string
+	var dailyLimit int
 	err = tx.QueryRow(ctx, `
-		SELECT s.balance, s.is_active, p.is_active, s.rfid_uid
+		SELECT s.balance, s.is_active, p.is_active, s.rfid_uid, COALESCE(s.daily_limit, 0)
 		FROM public.students s
 		JOIN public.profiles p ON p.id = s.id
 		WHERE s.id = $1
-		FOR UPDATE`, order.StudentID).Scan(&currentBalance, &isCardActive, &isProfileActive, &rfidUID)
+		FOR UPDATE`, order.StudentID).Scan(&currentBalance, &isCardActive, &isProfileActive, &rfidUID, &dailyLimit)
 	if err != nil {
 		return nil, errors.New("data siswa tidak ditemukan")
 	}
@@ -174,7 +176,27 @@ func (r *OrderRepo) CreateOrder(ctx context.Context, order *domain.Order, items 
 		return nil, errors.New("transaksi ditolak: Kartu RFID siswa sedang diblokir / dibekukan")
 	}
 	if currentBalance < order.TotalAmount {
-		return nil, fmt.Errorf("saldo tidak mencukupi (Saldo: Rp %d, Total Tagihan: Rp %d)", currentBalance, order.TotalAmount)
+		return nil, fmt.Errorf("saldo tidak mencukupi (Saldo saat ini: Rp %d, Total Tagihan: Rp %d)", currentBalance, order.TotalAmount)
+	}
+
+	// Validate Daily Limit if configured (> 0)
+	if dailyLimit > 0 {
+		var todaySpent int
+		now := time.Now().UTC()
+		startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+		_ = tx.QueryRow(ctx, `
+			SELECT COALESCE(SUM(total_amount), 0)
+			FROM public.transactions
+			WHERE student_id = $1 AND type = 'purchase' AND status IN ('success', 'pending') AND created_at >= $2`,
+			order.StudentID, startOfDay).Scan(&todaySpent)
+
+		if todaySpent+order.TotalAmount > dailyLimit {
+			remainingLimit := dailyLimit - todaySpent
+			if remainingLimit < 0 {
+				remainingLimit = 0
+			}
+			return nil, fmt.Errorf("transaksi melebihi batas saku harian (Limit harian: Rp %d, Terpakai hari ini: Rp %d, Sisa limit: Rp %d)", dailyLimit, todaySpent, remainingLimit)
+		}
 	}
 
 	// 4. Deduct student balance
@@ -402,7 +424,7 @@ func (r *OrderRepo) ListOrdersByOperator(ctx context.Context, operatorID string,
 	return orders, nil
 }
 
-func (r *OrderRepo) UpdateOrderStatus(ctx context.Context, orderID string, newStatus domain.OrderStatus) error {
+func (r *OrderRepo) UpdateOrderStatus(ctx context.Context, orderID string, newStatus domain.OrderStatus, cancelReason *string) error {
 	tx, err := r.db.Pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -483,15 +505,49 @@ func (r *OrderRepo) UpdateOrderStatus(ctx context.Context, orderID string, newSt
 		)
 
 		// Send notification to student
+		msg := fmt.Sprintf("Pesanan dibatalkan. Dana sebesar Rp %d telah dikembalikan ke saldo kartu Anda.", totalAmount)
+		if prevStatus == domain.OrderStatusMenungguPembatalan {
+			msg = fmt.Sprintf("Permohonan pembatalan pesanan disetujui kantin. Dana sebesar Rp %d telah dikembalikan ke saldo kartu Anda.", totalAmount)
+		}
 		_, _ = tx.Exec(ctx, `
 			INSERT INTO public.notifications (student_id, title, message, type)
 			VALUES ($1, 'Pesanan Dibatalkan ↩️', $2, 'general')`,
-			studentID, fmt.Sprintf("Pesanan dibatalkan. Dana sebesar Rp %d telah dikembalikan ke saldo kartu Anda.", totalAmount),
+			studentID, msg,
 		)
 	}
 
-	// Update order status in orders table
-	_, err = tx.Exec(ctx, `UPDATE public.orders SET status = $1 WHERE id = $2`, newStatus, orderID)
+	// 3. If transitioning to Menunggu Pembatalan (Student requesting cancel): Notify canteen operator
+	if newStatus == domain.OrderStatusMenungguPembatalan && prevStatus != domain.OrderStatusMenungguPembatalan {
+		if operatorID != nil && *operatorID != "" {
+			reasonText := "Siswa mengajukan permohonan pembatalan pesanan."
+			if cancelReason != nil && *cancelReason != "" {
+				reasonText = fmt.Sprintf("Siswa meminta pembatalan: \"%s\"", *cancelReason)
+			}
+			_, _ = tx.Exec(ctx, `
+				INSERT INTO public.notifications (student_id, title, message, type)
+				VALUES ($1, 'Pengajuan Batal Pesanan ⚠️', $2, 'order_cancellation')`,
+				*operatorID, reasonText,
+			)
+		}
+	}
+
+	// 4. If Canteen rejects student cancel request (returning from Menunggu Pembatalan to cooking)
+	if prevStatus == domain.OrderStatusMenungguPembatalan && (newStatus == domain.OrderStatusSedangDimasak || newStatus == domain.OrderStatusSedangDisiapkan) {
+		_, _ = tx.Exec(ctx, `
+			INSERT INTO public.notifications (student_id, title, message, type)
+			VALUES ($1, 'Permohonan Batal Ditolak ⚠️', 'Kantin tidak dapat membatalkan pesanan karena sedang dimasak/disiapkan. Pesanan Anda tetap dilanjutkan.', 'general')`,
+			studentID,
+		)
+	}
+
+	// Update order status and cancel_request_reason in orders table
+	if cancelReason != nil {
+		_, err = tx.Exec(ctx, `UPDATE public.orders SET status = $1, cancel_request_reason = $2 WHERE id = $3`, newStatus, *cancelReason, orderID)
+	} else if newStatus == domain.OrderStatusSedangDimasak || newStatus == domain.OrderStatusSedangDisiapkan || newStatus == domain.OrderStatusSelesai {
+		_, err = tx.Exec(ctx, `UPDATE public.orders SET status = $1, cancel_request_reason = NULL WHERE id = $2`, newStatus, orderID)
+	} else {
+		_, err = tx.Exec(ctx, `UPDATE public.orders SET status = $1 WHERE id = $2`, newStatus, orderID)
+	}
 	if err != nil {
 		return err
 	}
@@ -505,15 +561,34 @@ func (r *OrderRepo) AddOrderMessage(ctx context.Context, msg *domain.OrderMessag
 		VALUES ($1, $2, $3, $4)
 		RETURNING id, created_at`
 
-	return r.db.Pool.QueryRow(ctx, query,
+	err := r.db.Pool.QueryRow(ctx, query,
 		msg.OrderID, msg.SenderID, msg.SenderRole, msg.Message,
 	).Scan(&msg.ID, &msg.CreatedAt)
+	if err != nil {
+		return err
+	}
+
+	// Fetch sender profile details (full_name and avatar_url)
+	var fullName, avatarURL *string
+	_ = r.db.Pool.QueryRow(ctx, `
+		SELECT full_name, avatar_url
+		FROM public.profiles
+		WHERE id = $1`, msg.SenderID,
+	).Scan(&fullName, &avatarURL)
+
+	if fullName != nil && *fullName != "" {
+		msg.SenderName = *fullName
+	}
+	msg.SenderAvatarURL = avatarURL
+
+	return nil
 }
 
 func (r *OrderRepo) ListOrderMessages(ctx context.Context, orderID string) ([]domain.OrderMessage, error) {
 	query := `
 		SELECT m.id, m.order_id, m.sender_id, m.sender_role, m.message, m.is_read, m.created_at,
-		       COALESCE(p.full_name, 'Pengguna') as sender_name
+		       COALESCE(p.full_name, 'Pengguna') as sender_name,
+		       p.avatar_url as sender_avatar_url
 		FROM public.order_messages m
 		LEFT JOIN public.profiles p ON p.id = m.sender_id
 		WHERE m.order_id = $1
@@ -528,13 +603,16 @@ func (r *OrderRepo) ListOrderMessages(ctx context.Context, orderID string) ([]do
 	messages := make([]domain.OrderMessage, 0)
 	for rows.Next() {
 		var m domain.OrderMessage
+		var avatarURL *string
 		err := rows.Scan(
 			&m.ID, &m.OrderID, &m.SenderID, &m.SenderRole, &m.Message, &m.IsRead, &m.CreatedAt,
 			&m.SenderName,
+			&avatarURL,
 		)
 		if err != nil {
 			return make([]domain.OrderMessage, 0), err
 		}
+		m.SenderAvatarURL = avatarURL
 		messages = append(messages, m)
 	}
 	return messages, nil

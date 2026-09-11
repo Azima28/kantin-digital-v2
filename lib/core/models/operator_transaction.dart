@@ -173,8 +173,15 @@ class OperatorTransaction {
   bool get isTopup => type == 'topup';
   bool get isSuccess => status == 'success';
   bool get isApp => purchaseMethod == 'app' || purchaseMethod == 'app_order';
-  bool get isRfid => !isApp;
-  String get purchaseMethodDisplay => isApp ? 'Aplikasi' : 'Tap Kartu';
+  bool get isRfid => !isApp && (purchaseMethod == 'rfid' || purchaseMethod == 'card' || purchaseMethod == 'cashless');
+  String get purchaseMethodDisplay {
+    final m = (purchaseMethod ?? '').toLowerCase();
+    if (m == 'qris') return 'QRIS (Instan)';
+    if (m == 'cash') return 'Tunai';
+    if (m == 'pending_confirmation') return 'Menunggu Konfirmasi';
+    if (isApp) return 'Aplikasi';
+    return 'Tap Kartu';
+  }
 
   OperatorTransaction copyWith({
     String? id,

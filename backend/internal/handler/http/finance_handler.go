@@ -2,6 +2,7 @@ package http
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -10,14 +11,16 @@ import (
 	"kantin-backend/internal/pkg/response"
 	"kantin-backend/internal/pkg/token"
 	"kantin-backend/internal/service"
+	"kantin-backend/internal/handler/websocket"
 )
 
 type FinanceHandler struct {
 	paymentService *service.PaymentService
+	hub            *websocket.Hub
 }
 
-func NewFinanceHandler(paymentService *service.PaymentService) *FinanceHandler {
-	return &FinanceHandler{paymentService: paymentService}
+func NewFinanceHandler(paymentService *service.PaymentService, hub *websocket.Hub) *FinanceHandler {
+	return &FinanceHandler{paymentService: paymentService, hub: hub}
 }
 
 func (h *FinanceHandler) Dashboard(c *fiber.Ctx) error {
@@ -63,6 +66,40 @@ func (h *FinanceHandler) History(c *fiber.Ctx) error {
 	})
 }
 
+func parseReportDate(dateStr string, isEndOfDay bool) (time.Time, bool) {
+	dateStr = strings.TrimSpace(dateStr)
+	if dateStr == "" {
+		return time.Time{}, false
+	}
+
+	formats := []string{
+		time.RFC3339Nano,
+		time.RFC3339,
+		"2006-01-02T15:04:05.999999999",
+		"2006-01-02T15:04:05.999",
+		"2006-01-02T15:04:05",
+		"2006-01-02 15:04:05",
+		"2006-01-02",
+	}
+
+	for _, format := range formats {
+		if t, err := time.ParseInLocation(format, dateStr, time.Local); err == nil {
+			if isEndOfDay {
+				// If date has no time or is midnight, set to very end of that day
+				if format == "2006-01-02" || (t.Hour() == 0 && t.Minute() == 0 && t.Second() == 0) {
+					return time.Date(t.Year(), t.Month(), t.Day(), 23, 59, 59, 999999999, t.Location()), true
+				}
+			} else {
+				if format == "2006-01-02" {
+					return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location()), true
+				}
+			}
+			return t, true
+		}
+	}
+	return time.Time{}, false
+}
+
 func (h *FinanceHandler) Report(c *fiber.Ctx) error {
 	startStr := c.Query("start_date", "")
 	endStr := c.Query("end_date", "")
@@ -70,20 +107,16 @@ func (h *FinanceHandler) Report(c *fiber.Ctx) error {
 	startDate := time.Now().AddDate(0, 0, -30)
 	endDate := time.Now()
 
-	if startStr != "" {
-		if t, err := time.Parse(time.RFC3339, startStr); err == nil {
-			startDate = t
-		} else if t, err := time.Parse("2006-01-02", startStr); err == nil {
-			startDate = t
-		}
+	if t, ok := parseReportDate(startStr, false); ok {
+		startDate = t
 	}
 
-	if endStr != "" {
-		if t, err := time.Parse(time.RFC3339, endStr); err == nil {
-			endDate = t
-		} else if t, err := time.Parse("2006-01-02", endStr); err == nil {
-			endDate = t.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
-		}
+	if t, ok := parseReportDate(endStr, true); ok {
+		endDate = t
+	}
+
+	if startDate.After(endDate) {
+		startDate, endDate = endDate, startDate
 	}
 
 	report, err := h.paymentService.GetFinanceReport(c.Context(), startDate, endDate)
@@ -127,13 +160,43 @@ func (h *FinanceHandler) Topup(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusBadRequest, err.Error(), nil)
 	}
 
+	actorName := claims.Email
+	if claims.FullName != "" {
+		actorName = claims.FullName
+	}
+	studentName := ""
+	if tx.StudentName != nil {
+		studentName = *tx.StudentName
+	}
+	balBefore := 0
+	if tx.BalanceBefore != nil {
+		balBefore = *tx.BalanceBefore
+	}
+	balAfter := balBefore + req.Amount
+	if tx.BalanceAfter != nil {
+		balAfter = *tx.BalanceAfter
+	}
+
 	// A cash top-up creates balance out of nothing as far as the database is
 	// concerned, so who did it, for whom, and from where has to be recorded.
-	_ = h.paymentService.LogAudit(c.Context(), claims.UserID, "STUDENT_TOPUP", "students", req.StudentID, "",
+	_ = h.paymentService.LogAudit(c.Context(), claims.UserID, "STUDENT_TOPUP", "students", req.StudentID,
+		auditJSON(map[string]interface{}{
+			"balance":        balBefore,
+			"balance_before": balBefore,
+			"status":         "Aktif",
+		}),
 		auditJSON(map[string]interface{}{
 			"amount":         req.Amount,
+			"total_amount":   req.Amount,
+			"balance":        balAfter,
+			"balance_before": balBefore,
+			"balance_after":  balAfter,
 			"transaction_id": tx.ID,
+			"actor_role":     claims.Role,
+			"actor_name":     actorName,
+			"student_name":   studentName,
 			"method":         "cash",
+			"status":         "Sukses",
 		}), c.IP())
 
 	return response.Success(c, fiber.StatusOK, "Top-up saldo berhasil", tx)

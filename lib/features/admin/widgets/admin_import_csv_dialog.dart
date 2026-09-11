@@ -65,7 +65,7 @@ void showImportUsersDialog(BuildContext context, WidgetRef ref, String roleFilte
       builder: (ctx, setLocal) {
         return AlertDialog(
           title: Text(
-            'Import $roleFilter Baru (CSV)',
+            'Impor $roleFilter Baru (CSV)',
             style: GoogleFonts.inter(
                 fontWeight: FontWeight.bold, fontSize: 16),
           ),
@@ -102,7 +102,7 @@ void showImportUsersDialog(BuildContext context, WidgetRef ref, String roleFilte
                           : () {
                               csvCtrl.text = templateText;
                             },
-                      child: Text('Gunakan Template',
+                      child: Text('Gunakan Templat',
                           style: GoogleFonts.inter(fontSize: 12)),
                     ),
                   ],
@@ -331,7 +331,7 @@ void showImportUsersDialog(BuildContext context, WidgetRef ref, String roleFilte
                         showDialog(
                           context: context,
                           builder: (dialogCtx) => AlertDialog(
-                            title: Text('Hasil Import',
+                            title: Text('Hasil Impor',
                                 style: GoogleFonts.inter(
                                     fontWeight: FontWeight.bold)),
                             content: SingleChildScrollView(
@@ -353,7 +353,7 @@ void showImportUsersDialog(BuildContext context, WidgetRef ref, String roleFilte
                                   ),
                                   if (errors.isNotEmpty) ...[
                                     const SizedBox(height: 12),
-                                    Text('${AppStrings.titleDetail} Error:',
+                                    Text('Rincian Kendala:',
                                         style: GoogleFonts.inter(
                                             fontWeight: FontWeight.bold)),
                                     const SizedBox(height: 6),

@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
@@ -17,7 +18,16 @@ void showEditMerchantSheet(
   CanteenOperator operatorInfo,
 ) {
   final nameCtrl = TextEditingController(text: profile.fullName);
-  final phoneCtrl = TextEditingController(text: profile.phoneNumber);
+  String cleanPhone = (profile.phoneNumber ?? '').trim().replaceAll(' ', '').replaceAll('-', '');
+  if (cleanPhone.startsWith('+62')) {
+    cleanPhone = cleanPhone.substring(3);
+  } else if (cleanPhone.startsWith('62')) {
+    cleanPhone = cleanPhone.substring(2);
+  } else if (cleanPhone.startsWith('0')) {
+    cleanPhone = cleanPhone.substring(1);
+  }
+  cleanPhone = cleanPhone.replaceAll(RegExp(r'[^0-9]'), '');
+  final phoneCtrl = TextEditingController(text: cleanPhone);
   final emailCtrl = TextEditingController(text: profile.email);
   final usernameCtrl = TextEditingController(text: profile.username);
   final canteenCtrl = TextEditingController(text: operatorInfo.canteenName);
@@ -68,7 +78,52 @@ void showEditMerchantSheet(
               const SizedBox(height: 8),
               _buildFormField(context, nameCtrl, '${AppStrings.labelFullName} *'),
               const SizedBox(height: 12),
-              _buildFormField(context, phoneCtrl, 'Nomor HP *', inputType: TextInputType.phone),
+              _buildFormField(
+                context,
+                phoneCtrl,
+                '81234567890 *',
+                inputType: TextInputType.phone,
+                prefix: Container(
+                  padding: const EdgeInsets.only(left: 14, right: 10),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '+62',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Nebula.teal,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 1,
+                        height: 18,
+                        color: context.dividerCol,
+                      ),
+                    ],
+                  ),
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                onChanged: (val) {
+                  if (val.startsWith('0')) {
+                    final stripped = val.replaceFirst(RegExp(r'^0+'), '');
+                    phoneCtrl.value = TextEditingValue(
+                      text: stripped,
+                      selection: TextSelection.collapsed(offset: stripped.length),
+                    );
+                  } else if (val.startsWith('62')) {
+                    final stripped = val.replaceFirst(RegExp(r'^62'), '');
+                    phoneCtrl.value = TextEditingValue(
+                      text: stripped,
+                      selection: TextSelection.collapsed(offset: stripped.length),
+                    );
+                  }
+                },
+              ),
               const SizedBox(height: 12),
               _buildFormField(context, emailCtrl, 'Email *', inputType: TextInputType.emailAddress),
               const SizedBox(height: 20),
@@ -92,7 +147,8 @@ void showEditMerchantSheet(
                       ? null
                       : () async {
                           final name = nameCtrl.text.trim();
-                          final phone = phoneCtrl.text.trim();
+                          final cleanDigits = phoneCtrl.text.trim().replaceAll(RegExp(r'[^0-9]'), '');
+                          final phone = cleanDigits.isNotEmpty ? '+62$cleanDigits' : '';
                           final email = emailCtrl.text.trim();
                           final username = usernameCtrl.text.trim();
                           final canteen = canteenCtrl.text.trim();
@@ -108,8 +164,8 @@ void showEditMerchantSheet(
                           try {
                             final apiClient = ref.read(apiClientProvider);
 
-                            final response = await apiClient.put(
-                              '/admin/canteen-operators/${profile.id}',
+                            var response = await apiClient.put(
+                              '/finance/canteen-operators/${profile.id}',
                               body: {
                                 'full_name': name,
                                 'email': email,
@@ -118,6 +174,19 @@ void showEditMerchantSheet(
                                 'canteen_name': canteen,
                               },
                             );
+
+                            if (!response.success) {
+                              response = await apiClient.put(
+                                '/admin/canteen-operators/${profile.id}',
+                                body: {
+                                  'full_name': name,
+                                  'email': email,
+                                  'username': username,
+                                  'phone_number': phone,
+                                  'canteen_name': canteen,
+                                },
+                              );
+                            }
 
                             if (!response.success) {
                               throw Exception(response.message ?? 'Gagal memperbarui profil pedagang');
@@ -182,10 +251,15 @@ Widget _buildFormField(
   TextEditingController ctrl,
   String hint, {
   TextInputType inputType = TextInputType.text,
+  Widget? prefix,
+  List<TextInputFormatter>? inputFormatters,
+  ValueChanged<String>? onChanged,
 }) =>
     TextField(
       controller: ctrl,
       keyboardType: inputType,
+      inputFormatters: inputFormatters,
+      onChanged: onChanged,
       style: GoogleFonts.inter(fontSize: 14, color: context.textPrimary),
       decoration: InputDecoration(
         hintText: hint,
@@ -193,6 +267,8 @@ Widget _buildFormField(
           color: context.textSecondary,
           fontSize: 14,
         ),
+        prefixIcon: prefix,
+        prefixIconConstraints: prefix != null ? const BoxConstraints(minWidth: 0, minHeight: 0) : null,
         filled: true,
         fillColor: context.surfaceBg,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

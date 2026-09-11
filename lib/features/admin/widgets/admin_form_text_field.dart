@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
@@ -7,6 +8,9 @@ class AdminFormTextField extends StatelessWidget {
   final String hintText;
   final TextInputType inputType;
   final Widget? suffix;
+  final Widget? prefix;
+  final List<TextInputFormatter>? inputFormatters;
+  final ValueChanged<String>? onChanged;
 
   const AdminFormTextField({
     super.key,
@@ -14,6 +18,9 @@ class AdminFormTextField extends StatelessWidget {
     required this.hintText,
     this.inputType = TextInputType.text,
     this.suffix,
+    this.prefix,
+    this.inputFormatters,
+    this.onChanged,
   });
 
   @override
@@ -21,6 +28,8 @@ class AdminFormTextField extends StatelessWidget {
     return TextField(
       controller: controller,
       keyboardType: inputType,
+      inputFormatters: inputFormatters,
+      onChanged: onChanged,
       style: const TextStyle(fontSize: 14),
       decoration: InputDecoration(
         hintText: hintText,
@@ -28,6 +37,8 @@ class AdminFormTextField extends StatelessWidget {
           color: context.textSecondary,
           fontSize: 14,
         ),
+        prefixIcon: prefix,
+        prefixIconConstraints: prefix != null ? const BoxConstraints(minWidth: 0, minHeight: 0) : null,
         suffixIcon: suffix,
         filled: true,
         fillColor: context.cardBg,

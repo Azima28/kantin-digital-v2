@@ -11,6 +11,7 @@ import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/widgets/app_toast.dart';
 import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
+import 'package:kantin_digital/core/services/nfc_service.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_card_registration_form.dart';
 import 'package:kantin_digital/features/keuangan/widgets/keuangan_card_registration_success.dart';
 
@@ -39,12 +40,32 @@ class _KeuanganCardRegistrationScreenState extends ConsumerState<KeuanganCardReg
   void initState() {
     super.initState();
     _loadStudentDetails();
+    _startNfcScan();
   }
 
   @override
   void dispose() {
+    NfcService.stopScanning();
     _uidController.dispose();
     super.dispose();
+  }
+
+  void _startNfcScan() {
+    NfcService.startScanning(
+      onTagDiscovered: (String uid) {
+        if (mounted) {
+          setState(() {
+            _uidController.text = uid;
+          });
+          AppToast.showSuccess(
+            context,
+            title: 'Kartu Terdeteksi',
+            message: 'UID $uid siap ditautkan ke akun siswa.',
+          );
+        }
+      },
+      onError: (_) {},
+    );
   }
 
   Future<void> _loadStudentDetails() async {

@@ -5,8 +5,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
+import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/kantin/models/order_item.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
+import 'package:kantin_digital/features/kantin/widgets/approve_cancellation_dialog.dart';
 import 'package:kantin_digital/features/kantin/widgets/order_item_card.dart';
 import 'package:kantin_digital/features/kantin/widgets/order_status_tabs.dart';
 import 'package:kantin_digital/core/widgets/cancel_order_modal.dart';
@@ -45,9 +47,30 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
   Future<void> _updateOrderStatus(String id, String newStatus, String studentId) async {
     try {
       if (newStatus == 'Dibatalkan') {
+        final allOrders = ref.read(canteenOrdersProvider).value ?? [];
+        final order = allOrders.where((o) => o.id == id).firstOrNull;
+
+        if (order != null && order.status == 'Menunggu Pembatalan') {
+          final approved = await ApproveCancellationDialog.show(context, order: order);
+          if (approved == true && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Pembatalan pesanan disetujui. Saldo sebesar ${CurrencyFormatter.format(order.totalAmount)} telah dikembalikan ke ${order.studentName}.',
+                ),
+                backgroundColor: Nebula.teal,
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+          return;
+        }
+
         final success = await CancelOrderModal.show(
           context,
           orderId: id,
+          currentStatus: order?.status,
           onSuccess: () {
             ref.invalidate(canteenOrdersProvider);
           },
@@ -98,20 +121,26 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
 
   List<OrderItem> _getFilteredOrders(List<OrderItem> orders, String tab) {
     var filtered = orders.where((order) {
+      final s = order.status.trim().toLowerCase();
       if (tab == 'baru') {
-        return order.status == 'Baru';
+        return s == 'baru' || s == 'new' || s == 'pending';
       } else if (tab == 'proses') {
-        return order.status == 'Sedang Disiapkan' ||
-            order.status == 'Sedang Dimasak' ||
-            order.status == 'Siap Diambil' ||
-            order.status == 'Sedang Diantar' ||
-            order.status == 'Siap Diantar' ||
-            order.status == 'Menunggu Pembatalan' ||
-            order.status == 'Menunggu Persetujuan Murid';
+        return s == 'sedang disiapkan' ||
+            s == 'sedang dimasak' ||
+            s == 'siap diambil' ||
+            s == 'sedang diantar' ||
+            s == 'siap diantar' ||
+            s == 'menunggu pembatalan' ||
+            s == 'menunggu persetujuan murid' ||
+            s == 'processing' ||
+            s == 'cooking' ||
+            s == 'ready' ||
+            s == 'delivering' ||
+            s == 'on_delivery';
       } else if (tab == 'selesai') {
-        return order.status == 'Selesai';
+        return s == 'selesai' || s == 'success' || s == 'completed';
       } else if (tab == 'batal') {
-        return order.status == 'Dibatalkan';
+        return s == 'dibatalkan' || s == 'cancelled' || s == 'canceled' || s == 'refunded';
       }
       return false;
     }).toList();
@@ -344,31 +373,11 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
           ),
         ),
         data: (orders) {
-          // Count status statistics
-          final now = DateTime.now();
-          final int countBaru = orders.where((o) => o.status == 'Baru').length;
-          final int countProses = orders.where((o) =>
-              o.status == 'Sedang Disiapkan' ||
-              o.status == 'Sedang Dimasak' ||
-              o.status == 'Siap Diambil' ||
-              o.status == 'Sedang Diantar' ||
-              o.status == 'Siap Diantar' ||
-              o.status == 'Menunggu Pembatalan' ||
-              o.status == 'Menunggu Persetujuan Murid').length;
-          final int countSelesai = orders.where((o) {
-            final bool isToday = o.createdAt != null &&
-                o.createdAt!.year == now.year &&
-                o.createdAt!.month == now.month &&
-                o.createdAt!.day == now.day;
-            return o.status == 'Selesai' && isToday;
-          }).length;
-          final int countBatal = orders.where((o) {
-            final bool isToday = o.createdAt != null &&
-                o.createdAt!.year == now.year &&
-                o.createdAt!.month == now.month &&
-                o.createdAt!.day == now.day;
-            return o.status == 'Dibatalkan' && isToday;
-          }).length;
+          // Count status statistics matching the active filtered data
+          final int countBaru = _getFilteredOrders(orders, 'baru').length;
+          final int countProses = _getFilteredOrders(orders, 'proses').length;
+          final int countSelesai = _getFilteredOrders(orders, 'selesai').length;
+          final int countBatal = _getFilteredOrders(orders, 'batal').length;
 
           return RefreshIndicator(
             onRefresh: () async {

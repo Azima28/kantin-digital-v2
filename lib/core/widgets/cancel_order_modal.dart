@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
@@ -15,11 +16,13 @@ import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
 /// to display appropriate list of cancellation reasons.
 class CancelOrderModal extends ConsumerStatefulWidget {
   final String orderId;
+  final String? currentStatus;
   final VoidCallback? onSuccess;
 
   const CancelOrderModal({
     super.key,
     required this.orderId,
+    this.currentStatus,
     this.onSuccess,
   });
 
@@ -27,6 +30,7 @@ class CancelOrderModal extends ConsumerStatefulWidget {
   static Future<bool?> show(
     BuildContext context, {
     required String orderId,
+    String? currentStatus,
     VoidCallback? onSuccess,
   }) {
     return showGeneralDialog<bool>(
@@ -50,6 +54,7 @@ class CancelOrderModal extends ConsumerStatefulWidget {
       pageBuilder: (context, animation, secondaryAnimation) {
         return CancelOrderModal(
           orderId: orderId,
+          currentStatus: currentStatus,
           onSuccess: onSuccess,
         );
       },
@@ -125,7 +130,10 @@ class _CancelOrderModalState extends ConsumerState<CancelOrderModal> {
       final role = authState.profile?['role']?.toString();
       final bool isStudent = role == 'student';
 
-      final String status = isStudent ? 'Menunggu Pembatalan' : 'Dibatalkan';
+      final String curStatus = (widget.currentStatus ?? '').trim().toLowerCase();
+      final bool isCookingOrPreparing = curStatus == 'sedang dimasak' || curStatus == 'sedang disiapkan';
+      final String status = (isStudent && isCookingOrPreparing) ? 'Menunggu Pembatalan' : 'Dibatalkan';
+
       final response = await apiClient.patch(
         '/orders/${widget.orderId}/status',
         body: {
@@ -165,9 +173,18 @@ class _CancelOrderModalState extends ConsumerState<CancelOrderModal> {
     final bool isStudent = role == 'student';
     final List<String> reasons = isStudent ? _studentReasons : _staffReasons;
 
-    final String titleText = isStudent
-        ? 'Mengapa Anda ingin membatalkan pesanan?'
-        : 'Mengapa pesanan dibatalkan?';
+    final String curStatus = (widget.currentStatus ?? '').trim().toLowerCase();
+    final bool isCancelRequest = isStudent && (curStatus == 'sedang dimasak' || curStatus == 'sedang disiapkan');
+
+    final String titleText = isCancelRequest
+        ? 'Ajukan Pembatalan ke Kantin'
+        : (isStudent ? 'Batalkan Pesanan' : 'Mengapa pesanan dibatalkan?');
+
+    final String subtitleText = isCancelRequest
+        ? 'Pesanan sedang disiapkan atau dimasak oleh kantin. Pengajuan pembatalan membutuhkan persetujuan dari petugas kantin.'
+        : (isStudent
+            ? 'Pesanan belum diproses oleh kantin. Saldo pembayaran akan langsung dikembalikan ke kartu Anda.'
+            : 'Pilih alasan pembatalan pesanan. Informasi ini akan digunakan untuk meningkatkan kualitas layanan kantin.');
 
     final double screenWidth = MediaQuery.of(context).size.width;
     final double dialogWidth = screenWidth > 600 ? 540.0 : screenWidth * 0.90;
@@ -213,18 +230,18 @@ class _CancelOrderModalState extends ConsumerState<CancelOrderModal> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.errorLightColor.withValues(alpha: 0.4),
+                          color: (isCancelRequest ? Nebula.amber : AppColors.errorLightColor).withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
-                          CupertinoIcons.exclamationmark_triangle_fill,
-                          color: AppColors.errorRed2,
+                        child: Icon(
+                          isCancelRequest ? CupertinoIcons.hourglass : CupertinoIcons.exclamationmark_triangle_fill,
+                          color: isCancelRequest ? Nebula.amber : AppColors.errorRed2,
                           size: 32,
                         ),
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Batalkan Pesanan',
+                        titleText,
                         style: GoogleFonts.inter(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
@@ -234,7 +251,7 @@ class _CancelOrderModalState extends ConsumerState<CancelOrderModal> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Pilih alasan pembatalan pesanan. Informasi ini akan digunakan untuk meningkatkan kualitas layanan kantin.',
+                        subtitleText,
                         style: GoogleFonts.inter(
                           fontSize: 13,
                           color: AppColors.textSecondary,
@@ -387,9 +404,9 @@ class _CancelOrderModalState extends ConsumerState<CancelOrderModal> {
                             ElevatedButton(
                               onPressed: _isValid && !_isLoading ? _handleConfirm : null,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.errorRed2,
+                                backgroundColor: isCancelRequest ? Nebula.amber : AppColors.errorRed2,
                                 foregroundColor: context.cardBg,
-                                disabledBackgroundColor: AppColors.errorRed2.withValues(alpha: 0.5),
+                                disabledBackgroundColor: (isCancelRequest ? Nebula.amber : AppColors.errorRed2).withValues(alpha: 0.5),
                                 disabledForegroundColor: context.cardBg.withValues(alpha: 0.7),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -407,7 +424,7 @@ class _CancelOrderModalState extends ConsumerState<CancelOrderModal> {
                                       ),
                                     )
                                   : Text(
-                                      'Konfirmasi Pembatalan',
+                                      isCancelRequest ? 'Kirim Pengajuan Batal' : 'Konfirmasi Pembatalan',
                                       style: GoogleFonts.inter(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
@@ -462,9 +479,9 @@ class _CancelOrderModalState extends ConsumerState<CancelOrderModal> {
                               child: ElevatedButton(
                                 onPressed: _isValid && !_isLoading ? _handleConfirm : null,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.errorRed2,
+                                  backgroundColor: isCancelRequest ? Nebula.amber : AppColors.errorRed2,
                                   foregroundColor: context.cardBg,
-                                  disabledBackgroundColor: AppColors.errorRed2.withValues(alpha: 0.5),
+                                  disabledBackgroundColor: (isCancelRequest ? Nebula.amber : AppColors.errorRed2).withValues(alpha: 0.5),
                                   disabledForegroundColor: context.cardBg.withValues(alpha: 0.7),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -482,7 +499,7 @@ class _CancelOrderModalState extends ConsumerState<CancelOrderModal> {
                                         ),
                                       )
                                     : Text(
-                                        'Konfirmasi Pembatalan',
+                                        isCancelRequest ? 'Kirim Pengajuan Batal' : 'Konfirmasi Pembatalan',
                                         style: GoogleFonts.inter(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w600,

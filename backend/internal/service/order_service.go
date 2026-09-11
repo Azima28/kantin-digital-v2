@@ -56,14 +56,39 @@ func (s *OrderService) ListOperatorOrders(ctx context.Context, operatorID, statu
 	return s.orderRepo.ListOrdersByOperator(ctx, operatorID, status)
 }
 
-func (s *OrderService) UpdateOrderStatus(ctx context.Context, orderID, callerUserID string, callerRole domain.Role, newStatus domain.OrderStatus) error {
+func (s *OrderService) UpdateOrderStatus(ctx context.Context, orderID, callerUserID string, callerRole domain.Role, newStatus domain.OrderStatus, cancelReason *string) error {
 	order, err := s.orderRepo.GetOrderByID(ctx, orderID)
 	if err != nil {
 		return err
 	}
 
-	// Verify merchant ownership strictly for canteen operators
-	if callerRole == domain.RolePetugasKantin {
+	// Verify authorization by role
+	if callerRole == domain.RoleStudent {
+		if !strings.EqualFold(order.StudentID, callerUserID) {
+			return errors.New("akses ditolak: pesanan ini bukan milik Anda")
+		}
+
+		// What can a student do?
+		switch order.Status {
+		case domain.OrderStatusBaru:
+			// Fresh order not yet accepted by stall: student can cancel immediately
+			if newStatus != domain.OrderStatusDibatalkan && newStatus != domain.OrderStatusMenungguPembatalan {
+				return errors.New("siswa hanya dapat membatalkan pesanan yang belum diproses")
+			}
+		case domain.OrderStatusSedangDimasak, domain.OrderStatusSedangDisiapkan:
+			// Order is being prepared: student must request cancellation, cannot force direct cancel
+			if newStatus != domain.OrderStatusMenungguPembatalan {
+				return errors.New("pesanan sedang diproses kantin. Silakan ajukan permohonan pembatalan")
+			}
+		case domain.OrderStatusMenungguPersetujuanMurid:
+			// Stall requested cancellation: student can approve (Dibatalkan) or reject (Sedang Disiapkan)
+			if newStatus != domain.OrderStatusDibatalkan && newStatus != domain.OrderStatusSedangDisiapkan && newStatus != domain.OrderStatusSedangDimasak {
+				return errors.New("tindakan tidak valid untuk status pesanan ini")
+			}
+		default:
+			return fmt.Errorf("pesanan dalam status %s tidak dapat dibatalkan oleh siswa", order.Status)
+		}
+	} else if callerRole == domain.RolePetugasKantin {
 		if order.OperatorID == nil || !strings.EqualFold(*order.OperatorID, callerUserID) {
 			return errors.New("akses ditolak: pesanan ini bukan milik stan Anda")
 		}
@@ -87,7 +112,7 @@ func (s *OrderService) UpdateOrderStatus(ctx context.Context, orderID, callerUse
 		return fmt.Errorf("perubahan status dari %s ke %s tidak diizinkan", order.Status, newStatus)
 	}
 
-	return s.orderRepo.UpdateOrderStatus(ctx, orderID, newStatus)
+	return s.orderRepo.UpdateOrderStatus(ctx, orderID, newStatus, cancelReason)
 }
 
 func (s *OrderService) SendMessage(ctx context.Context, msg *domain.OrderMessage, callerRole domain.Role) (*domain.OrderMessage, error) {

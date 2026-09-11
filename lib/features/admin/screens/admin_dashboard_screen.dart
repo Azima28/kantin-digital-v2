@@ -143,7 +143,7 @@ class AdminDashboardScreen extends ConsumerWidget {
             children: [
               const Icon(Icons.error_outline, size: 48, color: Nebula.rose),
               const SizedBox(height: 12),
-              Text('${AppStrings.labelFailed} memuat data dashboard'),
+              const Text('Gagal memuat data dasbor'),
               const SizedBox(height: 8),
               ElevatedButton(
                 onPressed: () => ref.invalidate(adminDashboardProvider),

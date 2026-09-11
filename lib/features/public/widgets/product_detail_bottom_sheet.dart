@@ -11,6 +11,7 @@ import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 import 'package:kantin_digital/features/siswa/providers/student_cart_provider.dart';
 
 /// Full Screen Modal / View to customize purchase options (Custom Pembelian / Ubah Pilihan)
@@ -259,6 +260,26 @@ class _ProductDetailBottomSheetState
 
     final cartNotifier = ref.read(studentCartProvider.notifier);
     final hasConflict = cartNotifier.checkCanteenConflict(operatorId);
+
+    // Validasi batas saku harian siswa jika ada
+    final student = ref.read(siswaStudentProvider).value;
+    if (student != null && student.hasDailyLimit) {
+      final int currentCartTotal = hasConflict ? 0 : ref.read(studentCartProvider).itemsTotal;
+      final int additionalTotal = _calculatedUnitPrice * _quantity;
+      final int estimatedTotal = currentCartTotal + additionalTotal;
+      if (estimatedTotal > student.remainingDailyLimit) {
+        await showAppAlertDialog(
+          context,
+          title: 'Melebihi Batas Saku Harian',
+          message:
+              'Pesanan menu ini (${CurrencyFormatter.format(additionalTotal)}) akan membuat total belanja (${CurrencyFormatter.format(estimatedTotal)}) melebihi sisa batas saku harian Anda (${CurrencyFormatter.format(student.remainingDailyLimit)}).\n\nSilakan kurangi porsi atau pilih menu lain.',
+          buttonLabel: 'Mengerti',
+          icon: Icons.warning_amber_rounded,
+          isDestructive: true,
+        );
+        return;
+      }
+    }
 
     final List<String> optionsList = _selectedOptions.map((opt) {
       return opt.replaceAll(RegExp(r'^\[(PILIH 1|PILIH BANYAK|SINGLE|MULTI|\*|1)\]\s*', caseSensitive: false), '').trim();
@@ -847,7 +868,28 @@ class _ProductDetailBottomSheetState
                         // Plus Button
                         PressScale(
                           scale: 0.90,
-                          onTap: isAvailable ? () => setState(() => _quantity++) : null,
+                          onTap: isAvailable
+                              ? () {
+                                  final student = ref.read(siswaStudentProvider).value;
+                                  if (student != null && student.hasDailyLimit) {
+                                    final int currentCartTotal = ref.read(studentCartProvider).itemsTotal;
+                                    final int nextTotal = currentCartTotal + (_calculatedUnitPrice * (_quantity + 1));
+                                    if (nextTotal > student.remainingDailyLimit) {
+                                      showAppAlertDialog(
+                                        context,
+                                        title: 'Batas Saku Terlampaui',
+                                        message:
+                                            'Menambah porsi (${CurrencyFormatter.format(_calculatedUnitPrice * (_quantity + 1))}) akan membuat total belanja melebihi sisa batas saku harian Anda (${CurrencyFormatter.format(student.remainingDailyLimit)}).',
+                                        buttonLabel: 'Mengerti',
+                                        icon: Icons.warning_amber_rounded,
+                                        isDestructive: true,
+                                      );
+                                      return;
+                                    }
+                                  }
+                                  setState(() => _quantity++);
+                                }
+                              : null,
                           child: Container(
                             width: 32,
                             height: 32,

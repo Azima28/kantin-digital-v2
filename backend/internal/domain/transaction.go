@@ -45,8 +45,12 @@ type Transaction struct {
 	StudentName    *string           `json:"student_name,omitempty"`
 	StudentNISN    *string           `json:"student_nisn,omitempty"`
 	CanteenName    *string           `json:"canteen_name,omitempty"`
+	OperatorName   *string           `json:"operator_name,omitempty"`
+	OperatorRole   *string           `json:"operator_role,omitempty"`
 	ImageURL       *string           `json:"image_url,omitempty"`
 	Items          []TransactionItem `json:"items,omitempty"`
+	BalanceBefore  *int              `json:"balance_before,omitempty"`
+	BalanceAfter   *int              `json:"balance_after,omitempty"`
 }
 
 type BalanceAdjustment struct {

@@ -37,12 +37,14 @@ type Student struct {
 	RfidUID                *string      `json:"rfid_uid,omitempty"`
 	IsActive               bool         `json:"is_active"`
 	DailyLimit             int          `json:"daily_limit"`
+	TodaySpent             int          `json:"today_spent"`
 	WANotificationsEnabled bool         `json:"wa_notifications_enabled"`
 	ParentPhone            *string      `json:"parent_phone,omitempty"`
 	Class                  string       `json:"class"`
 	Rombel                 string       `json:"rombel"`
 	ClassID                *string      `json:"class_id,omitempty"`
 	RombelID               *string      `json:"rombel_id,omitempty"`
+	PinHash                *string      `json:"-"`
 	Profile                *UserProfile `json:"profile,omitempty"`
 }
 

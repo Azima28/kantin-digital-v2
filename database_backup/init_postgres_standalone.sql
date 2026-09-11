@@ -39,7 +39,8 @@ CREATE TABLE IF NOT EXISTS public.students (
     class_id UUID,
     rombel_id UUID,
     class TEXT,
-    rombel TEXT
+    rombel TEXT,
+    pin_hash TEXT DEFAULT crypt('123456', gen_salt('bf'))
 );
 
 -- ---------------------------------------------------------------------

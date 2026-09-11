@@ -28,7 +28,7 @@ class AdminPaymentApiCard extends StatelessWidget {
 
     return SettingSectionWidget(
       icon: CupertinoIcons.link,
-      title: 'Payment API',
+      title: 'API Pembayaran (Midtrans)',
       horizontalPadding: 16,
       verticalPadding: 16,
       iconRadius: 16,
@@ -47,7 +47,7 @@ class AdminPaymentApiCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(99),
               ),
               child: const Text(
-                'Active',
+                'Aktif',
                 style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Nebula.teal),
               ),
             ),
@@ -57,7 +57,7 @@ class AdminPaymentApiCard extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Env', style: TextStyle(fontSize: 11, color: context.textSecondary)),
+            Text('Mode Lingkungan', style: TextStyle(fontSize: 11, color: context.textSecondary)),
             const SizedBox(height: 6),
             Wrap(
               spacing: 4,
@@ -72,7 +72,7 @@ class AdminPaymentApiCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      'Sandbox',
+                      'Uji Coba (Sandbox)',
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
@@ -90,7 +90,7 @@ class AdminPaymentApiCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      'Prod',
+                      'Produksi (Live)',
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
@@ -104,7 +104,7 @@ class AdminPaymentApiCard extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        Text('Client Key', style: TextStyle(fontSize: 10, color: context.textSecondary)),
+        Text('Kunci Klien (Client Key)', style: TextStyle(fontSize: 10, color: context.textSecondary)),
         const SizedBox(height: 4),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),

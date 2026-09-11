@@ -11,7 +11,6 @@ import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/core/widgets/date_filter_modal.dart';
 import 'package:kantin_digital/core/widgets/empty_state_widget.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
-import 'package:kantin_digital/features/kantin/widgets/refund_confirmation_dialog.dart';
 import 'package:kantin_digital/features/kantin/widgets/transaction_details_sheet.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
@@ -579,12 +578,6 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
                       tx.createdAt?.toLocal() ?? DateTime.now();
                   final String timeStr = AppDateFormatter.formatTime(createdAt);
 
-                  final bool isWithinRefundWindow =
-                      DateTime.now().difference(createdAt).inMinutes < 10;
-                  final bool canRefund = _isBerhasil(status) &&
-                      (tx.type == null || tx.type == 'purchase') &&
-                      isWithinRefundWindow;
-
                   final String primaryTitle = _derivePrimaryTitle(tx);
 
                   return Material(
@@ -700,36 +693,6 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
                                         color: Nebula.amber,
                                         fontSize: 9,
                                         fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  )
-                                else if (canRefund)
-                                  GestureDetector(
-                                    onTap: () => showRefundConfirmationDialog(
-                                      context,
-                                      ref,
-                                      id,
-                                      amount,
-                                      studentName,
-                                    ),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 7, vertical: 3),
-                                      decoration: BoxDecoration(
-                                        color: Nebula.rose.withValues(alpha: 0.08),
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(
-                                          color: Nebula.rose.withValues(alpha: 0.4),
-                                          width: 0.6,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        'Kembalikan',
-                                        style: GoogleFonts.inter(
-                                          color: Nebula.rose,
-                                          fontSize: 9.5,
-                                          fontWeight: FontWeight.bold,
-                                        ),
                                       ),
                                     ),
                                   )

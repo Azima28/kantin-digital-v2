@@ -146,7 +146,7 @@ class _KantinMainLayoutState extends ConsumerState<KantinMainLayout> {
                 const PremiumBottomNavBarItem(
                   icon: Icons.person_outline_rounded,
                   activeIcon: Icons.person_rounded,
-                  label: 'Akun',
+                  label: 'Akun Saya',
                 ),
               ],
             );

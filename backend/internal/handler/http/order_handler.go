@@ -54,6 +54,7 @@ func (h *OrderHandler) CreateOrder(c *fiber.Ctx) error {
 	}
 	studentRoom := fmt.Sprintf("student:%s", order.StudentID)
 	h.hub.BroadcastToRoom(studentRoom, "order:new", order)
+	h.hub.BroadcastToRoom("all", "order:new", order)
 
 	return response.Success(c, fiber.StatusCreated, "Pesanan berhasil dibuat", order)
 }
@@ -98,7 +99,8 @@ func (h *OrderHandler) GetOrderByID(c *fiber.Ctx) error {
 }
 
 type UpdateStatusRequest struct {
-	Status domain.OrderStatus `json:"status"`
+	Status              domain.OrderStatus `json:"status"`
+	CancelRequestReason *string            `json:"cancel_request_reason"`
 }
 
 func (h *OrderHandler) UpdateStatus(c *fiber.Ctx) error {
@@ -109,7 +111,7 @@ func (h *OrderHandler) UpdateStatus(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusBadRequest, "Payload status tidak valid", err.Error())
 	}
 
-	if err := h.orderService.UpdateOrderStatus(c.Context(), orderID, claims.UserID, claims.Role, req.Status); err != nil {
+	if err := h.orderService.UpdateOrderStatus(c.Context(), orderID, claims.UserID, claims.Role, req.Status, req.CancelRequestReason); err != nil {
 		return response.Error(c, fiber.StatusBadRequest, "Gagal memperbarui status pesanan: "+err.Error(), err.Error())
 	}
 
@@ -117,6 +119,9 @@ func (h *OrderHandler) UpdateStatus(c *fiber.Ctx) error {
 	statusPayload := map[string]interface{}{
 		"order_id": orderID,
 		"status":   req.Status,
+	}
+	if req.CancelRequestReason != nil {
+		statusPayload["cancel_request_reason"] = *req.CancelRequestReason
 	}
 	h.hub.BroadcastToRoom(fmt.Sprintf("order:%s", orderID), "order:status_updated", statusPayload)
 
@@ -127,6 +132,7 @@ func (h *OrderHandler) UpdateStatus(c *fiber.Ctx) error {
 			h.hub.BroadcastToRoom(fmt.Sprintf("canteen:%s", *order.OperatorID), "order:status_updated", statusPayload)
 		}
 	}
+	h.hub.BroadcastToRoom("all", "order:status_updated", statusPayload)
 
 	return response.Success(c, fiber.StatusOK, "Status pesanan berhasil diperbarui", nil)
 }
@@ -160,7 +166,7 @@ func (h *OrderHandler) SendMessage(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusForbidden, err.Error(), nil)
 	}
 
-	// Broadcast chat message strictly to the order room and participant rooms
+	// Broadcast chat message strictly to the order room, participant rooms, and all
 	h.hub.BroadcastToRoom(fmt.Sprintf("order:%s", orderID), "order:message", savedMsg)
 	order, _ := h.orderService.GetOrderByID(c.Context(), orderID)
 	if order != nil {
@@ -169,6 +175,7 @@ func (h *OrderHandler) SendMessage(c *fiber.Ctx) error {
 			h.hub.BroadcastToRoom(fmt.Sprintf("canteen:%s", *order.OperatorID), "order:message", savedMsg)
 		}
 	}
+	h.hub.BroadcastToRoom("all", "order:message", savedMsg)
 
 	return response.Success(c, fiber.StatusCreated, "Pesan terkirim", savedMsg)
 }
@@ -201,6 +208,7 @@ func (h *OrderHandler) MarkMessagesAsRead(c *fiber.Ctx) error {
 			h.hub.BroadcastToRoom(fmt.Sprintf("canteen:%s", *order.OperatorID), "order:messages_read", readPayload)
 		}
 	}
+	h.hub.BroadcastToRoom("all", "order:messages_read", readPayload)
 	return response.Success(c, fiber.StatusOK, "Pesan ditandai telah dibaca", nil)
 }
 
@@ -238,6 +246,7 @@ func (h *OrderHandler) UpdatePresence(c *fiber.Ctx) error {
 		"role":     roleStr,
 	}
 	h.hub.BroadcastToRoom(fmt.Sprintf("order:%s", orderID), "order:presence", presencePayload)
+	h.hub.BroadcastToRoom("all", "order:presence", presencePayload)
 
 	return h.GetPresence(c)
 }

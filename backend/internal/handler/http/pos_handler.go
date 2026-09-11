@@ -100,16 +100,15 @@ func (h *POSHandler) ScanCard(c *fiber.Ctx) error {
 	}
 
 	student, err := h.paymentService.GetStudentByRFID(c.Context(), rfid)
-	if err != nil {
-		return response.Error(c, fiber.StatusNotFound, "Kartu RFID tidak terdaftar pada sistem", nil)
-	}
-
-	if student.Profile != nil && !student.Profile.IsActive {
-		return response.Error(c, fiber.StatusForbidden, "Akun siswa ini sedang dinonaktifkan / diblokir oleh admin", nil)
+	if err != nil || student == nil {
+		return response.Error(c, fiber.StatusNotFound, "Kartu RFID tidak terdaftar pada akun siswa manapun atau sudah tidak berlaku", nil)
 	}
 
 	if !student.IsActive {
-		return response.Error(c, fiber.StatusForbidden, "Kartu RFID siswa ini sedang diblokir / dibekukan", nil)
+		return response.Error(c, fiber.StatusForbidden, "Kartu RFID ini sedang dinonaktifkan / dibekukan", nil)
+	}
+	if student.Profile != nil && !student.Profile.IsActive {
+		return response.Error(c, fiber.StatusForbidden, "Akun siswa pemilik kartu ini sedang dinonaktifkan / diblokir", nil)
 	}
 
 	// Record that this operator physically read this card, so Checkout can insist

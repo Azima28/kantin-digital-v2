@@ -109,6 +109,7 @@ class _SiswaTopUpScreenState extends ConsumerState<SiswaTopUpScreen> {
       final response = await apiClient.post('/student/topup', body: {
         'student_id': studentId,
         'amount': amount.toInt(),
+        'payment_method': 'qris',
       });
 
       if (!response.success) {
@@ -688,7 +689,7 @@ class _AnimatedSuccessSheetState extends State<AnimatedSuccessSheet> with Ticker
                             child: Column(
                               children: [
                                 Text(
-                                  'Permintaan Terkirim',
+                                  'Top-Up Berhasil!',
                                   style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
@@ -698,7 +699,7 @@ class _AnimatedSuccessSheetState extends State<AnimatedSuccessSheet> with Ticker
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'Saldo bertambah setelah petugas keuangan\nmengonfirmasi pembayaran Anda.',
+                                  'Saldo $formattedAmount telah berhasil ditambahkan ke akun Anda secara instan.',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 14,
@@ -744,11 +745,11 @@ class _AnimatedSuccessSheetState extends State<AnimatedSuccessSheet> with Ticker
                                         ),
                                       ),
                                       Divider(height: 24, color: context.borderLight),
-                                      _buildDetailRow('Metode Pembayaran', 'Tunai ke Petugas Keuangan'),
+                                      _buildDetailRow('Metode Pembayaran', 'QRIS / Virtual Account (Instan)'),
                                       const SizedBox(height: 8),
                                       _buildDetailRow('Waktu Transaksi', formattedDate),
                                       const SizedBox(height: 8),
-                                      _buildDetailRow('Status', 'Menunggu Konfirmasi', isStatus: true),
+                                      _buildDetailRow('Status', 'Sukses', isStatus: true),
                                     ],
                                   ),
                                 ),

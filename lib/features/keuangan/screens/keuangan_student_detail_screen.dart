@@ -9,6 +9,7 @@ import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/features/keuangan/providers/keuangan_providers.dart';
 import 'package:kantin_digital/features/keuangan/widgets/student_detail_header.dart';
 import 'package:kantin_digital/features/keuangan/widgets/student_detail_password_change.dart';
+import 'package:kantin_digital/features/keuangan/widgets/student_detail_pin_change.dart';
 import 'package:kantin_digital/features/keuangan/widgets/student_detail_status_toggle.dart';
 import 'package:kantin_digital/features/shared/screens/student_transactions_screen.dart';
 import 'package:kantin_digital/features/siswa/widgets/siswa_transaction_detail_sheet.dart';
@@ -308,6 +309,21 @@ class _KeuanganStudentDetailScreenState
                             title: AppStrings.adminChangePassword,
                             isEnabled: true,
                             onTap: () => StudentDetailPasswordChange.show(
+                              context, ref, profile.id,
+                            ),
+                          ),
+                          Divider(
+                            height: 1,
+                            thickness: 0.5,
+                            indent: 56,
+                            color: context.dividerCol,
+                          ),
+                          _buildActionTile(
+                            icon: CupertinoIcons.lock_shield_fill,
+                            iconColor: Nebula.teal,
+                            title: 'Ubah PIN Transaksi',
+                            isEnabled: true,
+                            onTap: () => StudentDetailPinChange.show(
                               context, ref, profile.id,
                             ),
                           ),

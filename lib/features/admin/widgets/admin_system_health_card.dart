@@ -28,7 +28,7 @@ class AdminSystemHealthCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'System Health',
+                'Kesehatan Sistem',
                 style: GoogleFonts.inter(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
@@ -67,11 +67,11 @@ class AdminSystemHealthCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
-          _buildHealthItem(context, Icons.speed, 'API Latency', latency, highlightColor: Nebula.teal),
+          _buildHealthItem(context, Icons.speed, 'Latensi API', latency, highlightColor: Nebula.teal),
           const SizedBox(height: 10),
-          _buildHealthItem(context, Icons.storage, 'DB Capacity', dbCapacity),
+          _buildHealthItem(context, Icons.storage, 'Kapasitas Basis Data', dbCapacity),
           const SizedBox(height: 10),
-          _buildHealthItem(context, Icons.check_circle_outline, 'Success Rate', successRate, highlightColor: Nebula.teal),
+          _buildHealthItem(context, Icons.check_circle_outline, 'Tingkat Keberhasilan', successRate, highlightColor: Nebula.teal),
         ],
       ),
     );

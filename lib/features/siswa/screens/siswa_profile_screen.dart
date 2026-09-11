@@ -11,6 +11,7 @@ import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/nebula_effects.dart';
 import 'package:kantin_digital/core/services/storage_service.dart';
 import 'package:kantin_digital/core/widgets/change_password_panel.dart';
+import 'package:kantin_digital/core/widgets/change_pin_panel.dart';
 import 'package:kantin_digital/core/widgets/theme_toggle_tile.dart';
 import 'package:kantin_digital/core/widgets/app_toast.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
@@ -158,6 +159,47 @@ class SiswaProfileScreen extends ConsumerWidget {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
               child: ChangePasswordPanel(parentContext: context),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showChangePinPanel(BuildContext context, WidgetRef ref) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Tutup',
+      barrierColor: Colors.white.withValues(alpha: 0.5),
+      transitionDuration: const Duration(milliseconds: 300),
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack,
+          reverseCurve: Curves.easeInBack,
+        );
+        return ScaleTransition(
+          scale: Tween<double>(begin: 0.7, end: 1.0).animate(curved),
+          child: FadeTransition(
+            opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
+              CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOut,
+                reverseCurve: Curves.easeIn,
+              ),
+            ),
+            child: child,
+          ),
+        );
+      },
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: ChangePinPanel(parentContext: context),
             ),
           ),
         );
@@ -338,6 +380,14 @@ class SiswaProfileScreen extends ConsumerWidget {
                               label: 'Ubah Sandi Akun',
                               onTap: () =>
                                   _showChangePasswordPanel(context, ref),
+                              showDivider: true,
+                            ),
+                            buildIconActionRow(context,
+                              icon: CupertinoIcons.lock_shield,
+                              iconColor: Nebula.teal,
+                              label: 'Ubah PIN Transaksi',
+                              onTap: () =>
+                                  _showChangePinPanel(context, ref),
                               showDivider: true,
                             ),
                             buildIconActionRow(context,

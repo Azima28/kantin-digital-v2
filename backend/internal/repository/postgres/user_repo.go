@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -123,6 +124,17 @@ func (r *UserRepo) GetStudentDetail(ctx context.Context, studentID string) (*dom
 		return nil, err
 	}
 	s.Profile = &p
+
+	var todaySpent int
+	now := time.Now().UTC()
+	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	_ = r.db.Pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(total_amount), 0)
+		FROM public.transactions
+		WHERE student_id = $1 AND type = 'purchase' AND status IN ('success', 'pending') AND created_at >= $2`,
+		studentID, startOfDay).Scan(&todaySpent)
+	s.TodaySpent = todaySpent
+
 	return &s, nil
 }
 
@@ -628,6 +640,7 @@ func (r *UserRepo) UpdateStudentCardStatus(ctx context.Context, studentID string
 	if rfidUID != nil {
 		cleanUID := strings.TrimSpace(*rfidUID)
 		if cleanUID != "" {
+			_, _ = tx.Exec(ctx, `UPDATE public.students SET rfid_uid = NULL WHERE rfid_uid = $1 AND id != $2`, cleanUID, studentID)
 			_, err = tx.Exec(ctx, `UPDATE public.students SET rfid_uid = $1 WHERE id = $2`, cleanUID, studentID)
 			if err != nil {
 				return err
@@ -897,6 +910,44 @@ func (r *UserRepo) UpdateStudentFull(ctx context.Context, p UpdateStudentFullPar
 	}
 	defer tx.Rollback(ctx)
 
+	// Clean & sanitize nullable strings
+	fullName := strings.TrimSpace(p.FullName)
+	var email *string
+	if p.Email != nil {
+		trimmed := strings.TrimSpace(*p.Email)
+		if trimmed != "" {
+			email = &trimmed
+		}
+	}
+	var username *string
+	if p.Username != nil {
+		trimmed := strings.TrimSpace(*p.Username)
+		if trimmed != "" {
+			username = &trimmed
+		}
+	}
+	var nisn *string
+	if p.NISN != nil {
+		trimmed := strings.TrimSpace(*p.NISN)
+		if trimmed != "" {
+			nisn = &trimmed
+		}
+	}
+	var phone *string
+	if p.PhoneNumber != nil {
+		trimmed := strings.TrimSpace(*p.PhoneNumber)
+		if trimmed != "" {
+			phone = &trimmed
+		}
+	}
+	var gender *string
+	if p.Gender != nil {
+		trimmed := strings.TrimSpace(*p.Gender)
+		if trimmed != "" {
+			gender = &trimmed
+		}
+	}
+
 	// 1. Update public.profiles
 	_, err = tx.Exec(ctx, `
 		UPDATE public.profiles
@@ -908,7 +959,7 @@ func (r *UserRepo) UpdateStudentFull(ctx context.Context, p UpdateStudentFullPar
 		    is_active = COALESCE($6, is_active),
 		    gender = COALESCE($7, gender)
 		WHERE id = $8`,
-		p.FullName, p.Email, p.Username, p.NISN, p.PhoneNumber, p.IsActive, p.Gender, p.ID,
+		fullName, email, username, nisn, phone, p.IsActive, gender, p.ID,
 	)
 	if err != nil {
 		return err
@@ -934,9 +985,10 @@ func (r *UserRepo) UpdateStudentFull(ctx context.Context, p UpdateStudentFullPar
 		    rombel = $1,
 		    daily_limit = COALESCE($2, daily_limit),
 		    rfid_uid = COALESCE($3, rfid_uid),
-		    is_active = COALESCE($4, is_active)
-		WHERE id = $5`,
-		className, p.DailyLimit, cleanUID, p.IsActive, p.ID,
+		    is_active = COALESCE($4, is_active),
+		    parent_phone = COALESCE($5, parent_phone)
+		WHERE id = $6`,
+		className, p.DailyLimit, cleanUID, p.IsActive, phone, p.ID,
 	)
 	if err != nil {
 		return err
@@ -1017,6 +1069,24 @@ func (r *UserRepo) SaveAcademicStructure(ctx context.Context, structData *domain
 	return err
 }
 
+// IsMaintenanceMode checks whether maintenance mode is currently enabled in system settings
+func (r *UserRepo) IsMaintenanceMode(ctx context.Context) bool {
+	if r == nil || r.db == nil || r.db.Pool == nil {
+		return false
+	}
+	var valBytes []byte
+	err := r.db.Pool.QueryRow(ctx, `SELECT value FROM public.system_settings WHERE key = 'maintenance_mode'`).Scan(&valBytes)
+	if err != nil {
+		return false
+	}
+	var isMaintenance bool
+	if err := json.Unmarshal(valBytes, &isMaintenance); err == nil {
+		return isMaintenance
+	}
+	str := strings.TrimSpace(string(valBytes))
+	return str == "true" || str == "\"true\"" || str == "1"
+}
+
 // GetGlobalSettings retrieves system settings (midtrans, maintenance, etc.)
 func (r *UserRepo) GetGlobalSettings(ctx context.Context) (map[string]interface{}, error) {
 	result := map[string]interface{}{
@@ -1075,6 +1145,73 @@ func (r *UserRepo) SaveGlobalSettings(ctx context.Context, settings map[string]i
 			SET value = EXCLUDED.value, updated_at = NOW()`,
 			k, valBytes,
 		)
+	}
+	return nil
+}
+
+// CreateBroadcastNotifications inserts broadcast notifications into public.notifications for active users matching the audience.
+func (r *UserRepo) CreateBroadcastNotifications(ctx context.Context, audience, title, message string) (int, error) {
+	if r == nil || r.db == nil || r.db.Pool == nil {
+		return 0, ErrDatabaseNotReady
+	}
+
+	var roleFilter string
+	switch strings.ToLower(strings.TrimSpace(audience)) {
+	case "merchants":
+		roleFilter = "AND role = 'petugas_kantin'"
+	case "students":
+		roleFilter = "AND role IN ('student', 'parent')"
+	case "staff":
+		roleFilter = "AND role IN ('petugas_keuangan', 'petugas_kantin', 'admin', 'super_admin')"
+	default:
+		// "all" or any other value targets all active users
+		roleFilter = ""
+	}
+
+	query := fmt.Sprintf(`
+		INSERT INTO public.notifications (student_id, title, message, type, is_read, created_at)
+		SELECT id, $1, $2, 'announcement', FALSE, NOW()
+		FROM public.profiles
+		WHERE is_active = TRUE %s`, roleFilter)
+
+	tag, err := r.db.Pool.Exec(ctx, query, title, message)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(tag.RowsAffected()), nil
+}
+
+// GetStudentPinHash retrieves the hashed PIN of a student
+func (r *UserRepo) GetStudentPinHash(ctx context.Context, studentID string) (string, error) {
+	if r == nil || r.db == nil || r.db.Pool == nil {
+		return "", ErrDatabaseNotReady
+	}
+	var pinHash *string
+	err := r.db.Pool.QueryRow(ctx, `SELECT pin_hash FROM public.students WHERE id = $1`, studentID).Scan(&pinHash)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", ErrUserNotFound
+		}
+		return "", err
+	}
+	if pinHash == nil {
+		return "", nil
+	}
+	return *pinHash, nil
+}
+
+// UpdateStudentPin updates the student's transaction PIN hash
+func (r *UserRepo) UpdateStudentPin(ctx context.Context, studentID, pinHash string) error {
+	if r == nil || r.db == nil || r.db.Pool == nil {
+		return ErrDatabaseNotReady
+	}
+	res, err := r.db.Pool.Exec(ctx, `UPDATE public.students SET pin_hash = $1 WHERE id = $2`, pinHash, studentID)
+	if err != nil {
+		return err
+	}
+	if res.RowsAffected() == 0 {
+		return ErrUserNotFound
 	}
 	return nil
 }

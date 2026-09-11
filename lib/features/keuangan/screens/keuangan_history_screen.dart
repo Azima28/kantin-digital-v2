@@ -69,10 +69,25 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
       final amtPart =
           amtStr.isNotEmpty ? ' Saldo $amtStr dikembalikan ke siswa.' : '';
       return 'Pesanan$studentPart$canteenPart dibatalkan.$amtPart';
-    } else if (actionType == 'TOPUP' || actionType == 'TOPUP_TUNAI') {
-      final amtStr = amount > 0 ? fmt.format(amount) : '';
+    } else if (actionType.toUpperCase().contains('TOPUP')) {
+      final amtStr = amount > 0 ? ' sebesar ${fmt.format(amount)}' : '';
       final studentPart = studentName.isNotEmpty ? ' untuk $studentName' : '';
-      return 'Top-up tunai$studentPart sebesar $amtStr oleh $staffName.';
+      final isQris = (newValue['method']?.toString().toLowerCase() == 'qris') ||
+          desc.toLowerCase().contains('qris');
+      final methodStr = isQris ? 'via QRIS' : 'tunai';
+      final staffPart = (staffName.isNotEmpty && staffName != 'Petugas Kantin' && staffName != 'Petugas Keuangan')
+          ? ' oleh $staffName'
+          : '';
+      return 'Top-up saldo $methodStr$studentPart$amtStr$staffPart berhasil diproses.';
+    } else if (actionType.toUpperCase().contains('USER_STATUS_CHANGED')) {
+      return 'Status akun pengguna diperbarui.';
+    } else if (actionType.toUpperCase().contains('PASSWORD_CHANGED')) {
+      return 'Kata sandi akun pengguna diperbarui.';
+    } else if (actionType.toUpperCase().contains('USER_CREATED') || actionType.toUpperCase().contains('STUDENT_CREATED')) {
+      final studentPart = studentName.isNotEmpty ? ' untuk $studentName' : '';
+      return 'Pendaftaran akun baru$studentPart.';
+    } else if (actionType.toUpperCase().contains('USER_DELETED')) {
+      return 'Akun pengguna telah dihapus dari sistem.';
     } else if (actionType == 'KOREKSI_SALDO') {
       final reason =
           newValue['reason']?.toString() ?? 'Penyesuaian saldo sistem';
@@ -97,22 +112,31 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
       final reason = newValue['reason']?.toString() ?? 'Penyesuaian kas';
       final canteenPart = canteenName.isNotEmpty ? ' stan $canteenName' : '';
       return 'Koreksi ${isAdd ? "tambah" : "kurang"} saldo$canteenPart sebesar $amtStr ($reason).';
+    } else if (actionType.toUpperCase().contains('SHIFT')) {
+      final desc = newValue['desc']?.toString() ?? '';
+      if (desc.isNotEmpty && !desc.contains('pada ')) return desc;
+      if (actionType.contains('VERIFIKASI')) {
+        return 'Laporan serah terima shift kasir telah diverifikasi.';
+      }
+      return 'Sesi shift kasir resmi ditutup dan direkonsiliasi.';
+    } else if (actionType.toUpperCase().contains('PROFILE') || actionType.toUpperCase().contains('STUDENT_UPDATED')) {
+      final studentPart = studentName.isNotEmpty ? ' $studentName' : '';
+      return 'Pembaruan data profil siswa$studentPart berhasil diperbarui.';
+    } else if (actionType.toUpperCase().contains('PIN')) {
+      final studentPart = studentName.isNotEmpty ? ' $studentName' : '';
+      return 'Pembaruan PIN transaksi 6-digit dompet siswa$studentPart.';
     }
 
-    // Replace raw UUID in description
-    if (uuidRegex.hasMatch(desc)) {
-      String cleaned = desc.replaceAllMapped(uuidRegex, (match) {
+    // Gunakan terjemahan alami dari displaySubtitle
+    String cleaned = log.displaySubtitle;
+    if (uuidRegex.hasMatch(cleaned)) {
+      cleaned = cleaned.replaceAllMapped(uuidRegex, (match) {
         return studentName.isNotEmpty ? 'oleh $studentName' : 'pesanan';
       });
-      cleaned = cleaned.replaceAllMapped(RegExp(r'Rp\s*(\d+)'), (match) {
-        final val = int.tryParse(match.group(1) ?? '0') ?? 0;
-        return fmt.format(val);
-      });
-      return cleaned;
     }
 
     // Format unformatted currency numbers in text
-    return desc.replaceAllMapped(RegExp(r'Rp\s*(\d+)'), (match) {
+    return cleaned.replaceAllMapped(RegExp(r'Rp\s*(\d+)'), (match) {
       final val = int.tryParse(match.group(1) ?? '0') ?? 0;
       return fmt.format(val);
     });
@@ -174,6 +198,36 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
             AppDateFormatter.formatFullDateWithTimeSeconds(created);
         final actorName = log.actorName.isNotEmpty ? log.actorName : '-';
         final formattedKeterangan = _formatKeterangan(log, fmt);
+
+        String actorDisplay = actorName;
+        final actorRole = (log.newValue['actor_role'] ?? log.actorRole).toString().toLowerCase();
+        if (actorRole == 'petugas_keuangan') {
+          actorDisplay = '$actorName (Petugas Keuangan)';
+        } else if (actorRole == 'student') {
+          actorDisplay = '$actorName (Siswa Mandiri)';
+        } else if (actorRole == 'parent') {
+          actorDisplay = '$actorName (Orang Tua / Wali)';
+        } else if (actorRole == 'admin' || actorRole == 'super_admin') {
+          actorDisplay = '$actorName (Administrator)';
+        } else if (actorRole == 'petugas_kantin') {
+          actorDisplay = '$actorName (Kasir Kantin)';
+        }
+
+        final int topupAmount = int.tryParse(log.newValue['amount']?.toString() ?? '') ??
+            int.tryParse(log.newValue['total_amount']?.toString() ?? '') ??
+            0;
+        final String studentName = (log.newValue['student_name'] ?? log.oldValue['student_name'] ?? '').toString();
+        final String method = (log.newValue['method'] ?? log.newValue['purchase_method'] ?? '').toString().toLowerCase();
+        String methodDisplay = 'Kasir Tunai';
+        if (method == 'qris') {
+          methodDisplay = 'QRIS (Instan)';
+        } else if (method == 'cash') {
+          methodDisplay = 'Tunai ke Petugas Keuangan';
+        } else if (method == 'rfid') {
+          methodDisplay = 'Tap Kartu RFID';
+        } else if (method == 'app' || method == 'app_order') {
+          methodDisplay = 'Aplikasi Mobile';
+        }
 
         return Dialog(
           backgroundColor: context.cardBg,
@@ -296,7 +350,7 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  actionType.replaceAll('_', ' '),
+                                  log.actionTypeDisplay,
                                   style: GoogleFonts.inter(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
@@ -331,8 +385,32 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                 _buildInfoRowWithIcon(
                   icon: Icons.person_outline_rounded,
                   label: 'Pelaku (Actor):',
-                  value: actorName,
+                  value: actorDisplay,
                 ),
+                if (topupAmount > 0) ...[
+                  const SizedBox(height: 14),
+                  _buildInfoRowWithIcon(
+                    icon: CupertinoIcons.money_dollar_circle_fill,
+                    label: isTopUp ? 'Nominal Top-Up:' : 'Nominal Transaksi:',
+                    value: fmt.format(topupAmount),
+                  ),
+                ],
+                if (studentName.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  _buildInfoRowWithIcon(
+                    icon: CupertinoIcons.person_crop_circle_fill,
+                    label: 'Penerima (Siswa):',
+                    value: studentName,
+                  ),
+                ],
+                if (isTopUp) ...[
+                  const SizedBox(height: 14),
+                  _buildInfoRowWithIcon(
+                    icon: CupertinoIcons.creditcard_fill,
+                    label: 'Metode Pembayaran:',
+                    value: methodDisplay,
+                  ),
+                ],
                 Divider(height: 28, thickness: 0.5, color: context.dividerCol),
 
                 // Perubahan Data Cards
@@ -421,13 +499,28 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
 
   Widget _buildBeforeAfterCards(
       AuditLog log, AppNumberFormat fmt, BuildContext context) {
-    final actionType = log.actionType;
+    final actionType = log.actionType.toUpperCase();
     final isBatal = actionType == 'BATAL_PESANAN';
+    final isTopUp = actionType.contains('TOPUP');
     final oldValue = log.oldValue;
     final newValue = log.newValue;
 
-    int? oldBal = int.tryParse(oldValue['balance']?.toString() ?? '');
-    int? newBal = int.tryParse(newValue['balance']?.toString() ?? '');
+    int amount = int.tryParse(newValue['amount']?.toString() ?? '') ??
+        int.tryParse(newValue['total_amount']?.toString() ?? '') ??
+        int.tryParse(newValue['refund_amount']?.toString() ?? '') ??
+        0;
+
+    int? oldBal = int.tryParse(oldValue['balance_before']?.toString() ?? '') ??
+        int.tryParse(oldValue['balance']?.toString() ?? '') ??
+        int.tryParse(newValue['balance_before']?.toString() ?? '');
+    int? newBal = int.tryParse(newValue['balance_after']?.toString() ?? '') ??
+        int.tryParse(newValue['balance']?.toString() ?? '');
+
+    if (oldBal == null && newBal != null && amount > 0) {
+      oldBal = newBal - amount;
+    } else if (newBal == null && oldBal != null && amount > 0) {
+      newBal = oldBal + amount;
+    }
 
     if (oldBal == null && isBatal) {
       final refund =
@@ -439,13 +532,51 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
       newBal = 0;
     }
 
+    String? rfidBefore = oldValue['rfid_uid']?.toString();
+    String? rfidAfter = newValue['rfid_uid']?.toString();
+
+    // If there is no balance or card change (e.g. shift closing, profile updates)
+    if (oldBal == null && newBal == null && rfidBefore == null && rfidAfter == null && !isBatal && !isTopUp) {
+      final desc = newValue['desc']?.toString() ?? log.displaySubtitle;
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: context.surfaceBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: context.dividerCol),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'RINCIAN PERUBAHAN',
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: context.textSecondary,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              desc,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: context.textPrimary,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     String statusBefore = oldValue['status']?.toString() ??
         (isBatal ? 'Dipesan' : 'Aktif');
     String statusAfter = newValue['status']?.toString() ??
         (isBatal ? 'Dibatalkan' : 'Sukses');
-
-    String? rfidBefore = oldValue['rfid_uid']?.toString();
-    String? rfidAfter = newValue['rfid_uid']?.toString();
 
     final sesudahBg = isBatal
         ? const Color(0xFFFFF1F2)
@@ -562,7 +693,17 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: context.textPrimary,
+                      color: isBatal ? const Color(0xFFDC2626) : Nebula.teal,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                ] else if (isTopUp && amount > 0) ...[
+                  Text(
+                    'Top-Up: +${fmt.format(amount)}',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Nebula.teal,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -679,16 +820,16 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
 
                     // Filter logs
                     final filtered = auditLogs.where((log) {
-                      final type = log.actionType;
+                      final type = log.actionType.toUpperCase();
 
                       // Type filter
                       bool matchesType = true;
                       if (_selectedType == 'Top-Up') {
-                        matchesType = type == 'TOPUP' || type == 'TOPUP_TUNAI';
+                        matchesType = type.contains('TOPUP');
                       } else if (_selectedType == 'Pencairan-Stan') {
-                        matchesType = type == 'MERCHANT_PAYOUT';
+                        matchesType = type.contains('PAYOUT') || type.contains('WITHDRAWAL');
                       } else if (_selectedType == 'Kartu') {
-                        matchesType = type == 'REGISTRASI_KARTU' || type == 'UNLINK_KARTU';
+                        matchesType = type.contains('KARTU');
                       }
 
                       // Date filter
@@ -706,23 +847,33 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                       );
                     }
 
-                    // Calculation for header stats of the day
+                    // Calculation for header stats of the day from all today's logs
                     double topupSum = 0.0;
                     double payoutSum = 0.0;
-                    for (var log in filtered) {
-                      final type = log.actionType;
+                    for (var log in auditLogs) {
+                      final type = log.actionType.toUpperCase();
                       final created = log.createdAt?.toLocal() ?? DateTime.now();
 
                       if (created.isAfter(todayStart) || created.isAtSameMomentAs(todayStart)) {
                         final newValue = log.newValue;
                         final oldValue = log.oldValue;
 
-                        if (type == 'TOPUP' || type == 'TOPUP_TUNAI') {
-                          final int currentB = int.tryParse(oldValue['balance']?.toString() ?? '0') ?? 0;
-                          final int newB = int.tryParse(newValue['balance']?.toString() ?? '0') ?? 0;
-                          topupSum += (newB - currentB);
-                        } else if (type == 'MERCHANT_PAYOUT') {
-                          final int amt = int.tryParse(newValue['amount']?.toString() ?? '0') ?? 0;
+                        if (type.contains('TOPUP')) {
+                          int amt = int.tryParse(newValue['amount']?.toString() ?? '') ??
+                              int.tryParse(newValue['total_amount']?.toString() ?? '') ??
+                              0;
+                          if (amt == 0) {
+                            final int currentB = int.tryParse(oldValue['balance']?.toString() ?? '0') ?? 0;
+                            final int newB = int.tryParse(newValue['balance']?.toString() ?? '0') ?? 0;
+                            amt = newB - currentB;
+                          }
+                          if (amt > 0) {
+                            topupSum += amt;
+                          }
+                        } else if (type.contains('PAYOUT') || type.contains('WITHDRAWAL')) {
+                          final int amt = int.tryParse(newValue['amount']?.toString() ?? '') ??
+                              int.tryParse(newValue['total_amount']?.toString() ?? '') ??
+                              0;
                           payoutSum += amt;
                         }
                       }
@@ -986,12 +1137,12 @@ class _KeuanganHistoryScreenState extends ConsumerState<KeuanganHistoryScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      actionType.toString().replaceAll('_', ' '),
+                      log.displayTitle,
                       style: GoogleFonts.inter(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                         color: iconColor,
-                        letterSpacing: 0.5,
+                        letterSpacing: 0.3,
                       ),
                     ),
                     const SizedBox(height: 2),

@@ -115,6 +115,7 @@ class MainApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: 'Kantin Digital',
+      scaffoldMessengerKey: AppRouter.scaffoldMessengerKey,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,

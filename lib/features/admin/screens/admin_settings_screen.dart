@@ -88,7 +88,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
       });
 
       if (!response.success) {
-        throw Exception(response.message ?? 'Gagal mengirim broadcast');
+        throw Exception(response.message ?? 'Gagal mengirim siaran pengumuman');
       }
 
       if (mounted) {
@@ -105,7 +105,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppStrings.labelFailed} mengirim broadcast: $e'),
+            content: Text('Gagal mengirim siaran pengumuman: $e'),
             backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
@@ -386,7 +386,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
 
           final Widget paymentApiCard = SettingSectionWidget(
             icon: CupertinoIcons.link,
-            title: 'Payment Gateway (Midtrans)',
+            title: 'Gerbang Pembayaran (Midtrans)',
             horizontalPadding: 16,
             verticalPadding: 16,
             iconRadius: 16,
@@ -414,7 +414,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          _isPaymentApiActive ? 'ACTIVE' : 'INACTIVE',
+                          _isPaymentApiActive ? 'AKTIF' : 'TIDAK AKTIF',
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
@@ -438,7 +438,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
 
               // Env Mode switcher
               Text(
-                'Mode Lingkungan (Environment)',
+                'Mode Lingkungan',
                 style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: context.textSecondary),
               ),
               const SizedBox(height: 6),
@@ -460,7 +460,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                           ),
                         ),
                         child: Text(
-                          'Sandbox (Uji Coba)',
+                          'Uji Coba (Sandbox)',
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
@@ -487,7 +487,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                           ),
                         ),
                         child: Text(
-                          'Production (Live)',
+                          'Produksi (Langsung)',
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
@@ -503,7 +503,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
 
               // Client Key field
               Text(
-                'Client Key',
+                'Kunci Klien (Client Key)',
                 style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: context.textSecondary),
               ),
               const SizedBox(height: 5),
@@ -534,7 +534,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
 
               // Server Key field
               Text(
-                'Server Key (Secret)',
+                'Kunci Server Rahasia (Server Key)',
                 style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: context.textSecondary),
               ),
               const SizedBox(height: 5),
@@ -565,7 +565,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
 
               // Merchant ID field
               Text(
-                'Merchant ID',
+                'ID Penjual (Merchant ID)',
                 style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: context.textSecondary),
               ),
               const SizedBox(height: 5),
@@ -588,7 +588,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
 
           final Widget systemAccessCard = SettingSectionWidget(
             icon: CupertinoIcons.hammer,
-            title: 'System Access',
+            title: 'Akses Sistem',
             horizontalPadding: 16,
             verticalPadding: 16,
             iconRadius: 16,
@@ -606,7 +606,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
               ),
               SizedBox(height: 16),
               SettingTileWidget(
-                title: 'Maintenance',
+                title: 'Mode Pemeliharaan',
                 trailing: SizedBox(
                   width: 44,
                   height: 28,

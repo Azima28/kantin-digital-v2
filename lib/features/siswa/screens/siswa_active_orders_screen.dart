@@ -9,6 +9,7 @@ import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/theme/hallmark_color_scheme.dart';
 import 'package:kantin_digital/core/theme/hallmark_typography.dart';
+import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/core/widgets/cancel_order_modal.dart';
@@ -67,26 +68,34 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
 
   bool _isOrderMenunggu(String status) {
     final s = status.trim().toLowerCase();
-    return s == 'baru';
+    return s == 'baru' || s == 'pending' || s == 'new';
   }
 
   bool _isOrderDiproses(String status) {
     final s = status.trim().toLowerCase();
     return s == 'sedang dimasak' ||
+        s == 'sedang disiapkan' ||
         s == 'siap diambil' ||
         s == 'siap diantar' ||
+        s == 'sedang diantar' ||
         s == 'menunggu pembatalan' ||
-        s == 'menunggu persetujuan murid';
+        s == 'menunggu persetujuan murid' ||
+        s == 'cooking' ||
+        s == 'preparing' ||
+        s == 'ready' ||
+        s == 'delivering' ||
+        s == 'on_delivery' ||
+        s == 'processing';
   }
 
   bool _isOrderCompleted(String status) {
     final s = status.trim().toLowerCase();
-    return s == 'selesai' || s == 'success';
+    return s == 'selesai' || s == 'success' || s == 'completed';
   }
 
   bool _isOrderCancelled(String status) {
     final s = status.trim().toLowerCase();
-    return s == 'dibatalkan' || s == 'cancelled' || s == 'refunded';
+    return s == 'dibatalkan' || s == 'cancelled' || s == 'canceled' || s == 'refunded';
   }
 
   List<OrderItem> _filterOrders(List<OrderItem> allOrders) {
@@ -115,10 +124,11 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
     return list;
   }
 
-  Future<void> _cancelStudentOrder(String orderId, int totalAmount) async {
+  Future<void> _cancelStudentOrder(String orderId, int totalAmount, [String? currentStatus]) async {
     final success = await CancelOrderModal.show(
       context,
       orderId: orderId,
+      currentStatus: currentStatus,
       onSuccess: () {
         ref.invalidate(siswaActiveOrdersProvider);
         ref.invalidate(siswaStudentProvider);
@@ -127,10 +137,14 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
     );
 
     if (success == true && mounted) {
+      final bool isReq = currentStatus == 'Sedang Dimasak' || currentStatus == 'Sedang Disiapkan';
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pesanan berhasil dibatalkan. Saldo telah dikembalikan.'),
+        SnackBar(
+          content: Text(isReq
+              ? 'Pengajuan pembatalan telah dikirim ke kantin. Menunggu konfirmasi.'
+              : 'Pesanan berhasil dibatalkan. Saldo telah dikembalikan.'),
           behavior: SnackBarBehavior.floating,
+          backgroundColor: isReq ? Nebula.amber : Nebula.teal,
         ),
       );
     }
@@ -223,7 +237,8 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
   void _showOrderDetailSheet(BuildContext context, OrderItem order) {
     final colors = context.colors;
     final isMerchantCancel = order.status == 'Menunggu Persetujuan Murid';
-    final canCancel = (order.status == 'Baru' || order.status == 'Sedang Disiapkan' || order.status == 'Sedang Dimasak') && !isMerchantCancel;
+    final isStudentPendingCancel = order.status == 'Menunggu Pembatalan';
+    final canCancel = (order.status == 'Baru' || order.status == 'Sedang Disiapkan' || order.status == 'Sedang Dimasak') && !isMerchantCancel && !isStudentPendingCancel;
 
     Color statusColor;
     Color statusBgColor;
@@ -332,16 +347,19 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // 1. Receipt Details Card (Rincian Pesanan di Atas)
+                      // 1. Status Stepper di Paling Atas ("Baru, Sedang Dimasak / Disiapkan, dll")
+                      _buildStatusStepper(colors, order),
+                      const SizedBox(height: 20),
+
+                      // 2. Receipt Details Card (Rincian Pesanan)
                       _buildReceiptCard(colors, order, statusBgColor, statusColor, statusIcon),
                       const SizedBox(height: 20),
 
-                      // 2. Rating & Ulasan (di Bawah Rincian jika Selesai) / Status Stepper (jika sedang proses)
-                      if (order.status == 'Selesai')
-                        OrderReviewSection(order: order, colors: colors)
-                      else
-                        _buildStatusStepper(colors, order),
-                      const SizedBox(height: 24),
+                      // 3. Rating & Ulasan (jika Selesai)
+                      if (order.status == 'Selesai') ...[
+                        OrderReviewSection(order: order, colors: colors),
+                        const SizedBox(height: 24),
+                      ],
                     ],
                   ),
                 ),
@@ -430,7 +448,7 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
                                   isError: true,
                                   onPressed: () {
                                     Navigator.pop(context);
-                                    _cancelStudentOrder(order.id, order.totalAmount);
+                                    _cancelStudentOrder(order.id, order.totalAmount, order.status);
                                   },
                                 ),
                               ),
@@ -455,10 +473,26 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
     );
   }
 
+  String _formatDeliveryText(String location) {
+    final trimmed = location.trim();
+    if (trimmed.isEmpty) return 'Ambil di Kantin';
+    final lower = trimmed.toLowerCase();
+    if (lower == 'diantar' || lower == 'diantar: diantar') {
+      return 'Layanan: Diantar';
+    }
+    if (lower.startsWith('diantar:')) {
+      final sub = trimmed.substring(8).trim();
+      if (sub.isEmpty || sub.toLowerCase() == 'diantar') return 'Layanan: Diantar';
+      return 'Antar ke: $sub';
+    }
+    return 'Antar ke: $trimmed';
+  }
+
   Widget _buildStatusStepper(HallmarkColorScheme colors, OrderItem order) {
-    final List<String> statuses = ['Baru', 'Sedang Disiapkan', 'Siap Diambil', 'Selesai'];
+    final String cookingLabel = order.status == 'Sedang Dimasak' ? 'Sedang Dimasak' : 'Sedang Disiapkan';
+    final List<String> statuses = ['Baru', cookingLabel, 'Siap Diambil', 'Selesai'];
     int currentIndex = statuses.indexOf(order.status);
-    if (order.status == 'Sedang Dimasak') currentIndex = 1;
+    if (order.status == 'Sedang Dimasak' || order.status == 'Sedang Disiapkan') currentIndex = 1;
     final bool isDelivery = order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty;
 
     if (order.status == 'Sedang Diantar' || order.status == 'Siap Diantar') currentIndex = 2;
@@ -573,7 +607,7 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
     IconData statusIcon,
   ) {
     final String orderNum = '#A-${order.id.substring(0, order.id.length > 6 ? 6 : order.id.length).toUpperCase()}';
-    final String statusText = order.status == 'Baru' ? 'Sedang Diproses' : order.status;
+    final String statusText = order.status;
 
     return Container(
       decoration: BoxDecoration(
@@ -657,7 +691,7 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
                   colors,
                   'Tipe Pengambilan',
                   order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty
-                      ? 'Diantar (${order.deliveryLocation!})'
+                      ? _formatDeliveryText(order.deliveryLocation!)
                       : 'Ambil Mandiri di Kantin',
                 ),
                 const SizedBox(height: 8),
@@ -868,11 +902,15 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
   }
 
   Widget _buildFilterSlideBar(HallmarkColorScheme colors, List<OrderItem> allOrders) {
-    final int menungguCount = allOrders.where((o) => _isOrderMenunggu(o.status)).length;
-    final int diprosesCount = allOrders.where((o) => _isOrderDiproses(o.status)).length;
-    final int selesaiCount = allOrders.where((o) => _isOrderCompleted(o.status)).length;
-    final int dibatalkanCount = allOrders.where((o) => _isOrderCancelled(o.status)).length;
-    final int totalCount = allOrders.length;
+    var ordersToCount = allOrders;
+    if (_dateFilter != null && !_dateFilter!.isAllTime) {
+      ordersToCount = allOrders.where((o) => _dateFilter!.matches(o.createdAt)).toList();
+    }
+    final int menungguCount = ordersToCount.where((o) => _isOrderMenunggu(o.status)).length;
+    final int diprosesCount = ordersToCount.where((o) => _isOrderDiproses(o.status)).length;
+    final int selesaiCount = ordersToCount.where((o) => _isOrderCompleted(o.status)).length;
+    final int dibatalkanCount = ordersToCount.where((o) => _isOrderCancelled(o.status)).length;
+    final int totalCount = ordersToCount.length;
 
     return Container(
       width: double.infinity,
@@ -1348,13 +1386,17 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
         statusBgColor = colors.statusWarning.withValues(alpha: 0.12);
         statusTextColor = colors.statusWarning;
         statusIcon = Icons.hourglass_empty_rounded;
-        statusLabel = 'Menunggu';
+        statusLabel = 'Baru';
       case 'Sedang Disiapkan':
+        statusBgColor = colors.brandPrimary.withValues(alpha: 0.12);
+        statusTextColor = colors.brandPrimary;
+        statusIcon = Icons.soup_kitchen_rounded;
+        statusLabel = 'Sedang Disiapkan';
       case 'Sedang Dimasak':
         statusBgColor = colors.brandPrimary.withValues(alpha: 0.12);
         statusTextColor = colors.brandPrimary;
         statusIcon = Icons.soup_kitchen_rounded;
-        statusLabel = 'Disiapkan';
+        statusLabel = 'Sedang Dimasak';
       case 'Menunggu Pembatalan':
         statusBgColor = colors.statusError.withValues(alpha: 0.12);
         statusTextColor = colors.statusError;
@@ -1375,7 +1417,7 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
         statusBgColor = colors.statusSuccess.withValues(alpha: 0.12);
         statusTextColor = colors.statusSuccess;
         statusIcon = Icons.delivery_dining;
-        statusLabel = 'Diantar';
+        statusLabel = 'Sedang Diantar';
       case 'Selesai':
         statusBgColor = colors.statusSuccess.withValues(alpha: 0.12);
         statusTextColor = colors.statusSuccess;
@@ -1601,16 +1643,16 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
                               Icon(
                                 Icons.delivery_dining,
                                 size: 14,
-                                color: colors.brandPrimary,
+                                color: colors.textMuted,
                               ),
                               const SizedBox(width: 3),
                               Flexible(
                                 child: Text(
-                                  'Diantar: ${order.deliveryLocation!}',
+                                  _formatDeliveryText(order.deliveryLocation!),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: HallmarkTypography.bodySmall(colors.brandPrimary).copyWith(
-                                    fontWeight: FontWeight.w600,
+                                  style: HallmarkTypography.bodySmall(colors.textMuted).copyWith(
+                                    fontWeight: FontWeight.w500,
                                     fontSize: 11.5,
                                   ),
                                 ),
@@ -1707,6 +1749,52 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
                       onPressed: () => _handleStudentApproveMerchantCancel(order),
                     ),
                   ],
+                ),
+              ],
+
+              // If Student Pending Cancellation, show info banner
+              if (order.status == 'Menunggu Pembatalan') ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: colors.statusWarning.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: colors.statusWarning.withValues(alpha: 0.3),
+                      width: 0.6,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.hourglass_top_rounded,
+                        color: colors.statusWarning,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Menunggu Persetujuan Kantin',
+                              style: HallmarkTypography.bodySmall(colors.textPrimary).copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              order.cancelRequestReason != null && order.cancelRequestReason!.isNotEmpty
+                                  ? 'Alasan: ${order.cancelRequestReason!}'
+                                  : 'Pengajuan pembatalan sedang ditinjau oleh pihak stan kantin.',
+                              style: HallmarkTypography.bodySmall(colors.textMuted),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ],

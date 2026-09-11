@@ -128,7 +128,7 @@ class _KeuanganMainLayoutState extends ConsumerState<KeuanganMainLayout> {
             PremiumBottomNavBarItem(
               icon: Icons.person_outline_rounded,
               activeIcon: Icons.person_rounded,
-              label: 'Akun',
+              label: 'Akun Saya',
             ),
           ],
         ),

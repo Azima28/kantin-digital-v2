@@ -41,7 +41,7 @@ func (r *AuditRepo) List(ctx context.Context, limit int) ([]domain.AuditLog, err
 	query := `
 		SELECT a.id, a.user_id, a.action, a.entity_name, a.entity_id,
 		       COALESCE(a.old_data::text, '{}'), COALESCE(a.new_data::text, '{}'), a.ip_address, a.created_at,
-		       COALESCE(p.full_name, 'Sistem')
+		       COALESCE(p.full_name, 'Sistem'), COALESCE(p.role, '')
 		FROM public.audit_logs a
 		LEFT JOIN public.profiles p ON p.id = a.user_id
 		ORDER BY a.created_at DESC
@@ -56,16 +56,17 @@ func (r *AuditRepo) List(ctx context.Context, limit int) ([]domain.AuditLog, err
 	var list []domain.AuditLog
 	for rows.Next() {
 		var a domain.AuditLog
-		var action, entityName, fullName string
+		var action, entityName, fullName, role string
 		var oldData, newData string
 		if err := rows.Scan(
 			&a.ID, &a.ActorID, &action, &entityName, &a.TargetID,
 			&oldData, &newData, &a.IPAddress, &a.CreatedAt,
-			&fullName,
+			&fullName, &role,
 		); err != nil {
 			return nil, err
 		}
 		a.ActorName = fullName
+		a.ActorRole = role
 		a.ActionType = action
 		a.Description = fmt.Sprintf("%s pada %s", action, entityName)
 		a.OldValue = &oldData
@@ -82,7 +83,7 @@ func (r *AuditRepo) ListByOperator(ctx context.Context, operatorID string, limit
 	query := `
 		SELECT a.id, a.user_id, a.action, a.entity_name, a.entity_id,
 		       COALESCE(a.old_data::text, '{}'), COALESCE(a.new_data::text, '{}'), a.ip_address, a.created_at,
-		       COALESCE(p.full_name, 'Kasir')
+		       COALESCE(p.full_name, 'Kasir'), COALESCE(p.role, '')
 		FROM public.audit_logs a
 		LEFT JOIN public.profiles p ON p.id = a.user_id
 		WHERE a.user_id = $1 OR a.entity_id IN (SELECT id::text FROM public.orders WHERE operator_id = $1)
@@ -98,16 +99,17 @@ func (r *AuditRepo) ListByOperator(ctx context.Context, operatorID string, limit
 	var list []domain.AuditLog
 	for rows.Next() {
 		var a domain.AuditLog
-		var action, entityName, fullName string
+		var action, entityName, fullName, role string
 		var oldData, newData string
 		if err := rows.Scan(
 			&a.ID, &a.ActorID, &action, &entityName, &a.TargetID,
 			&oldData, &newData, &a.IPAddress, &a.CreatedAt,
-			&fullName,
+			&fullName, &role,
 		); err != nil {
 			return nil, err
 		}
 		a.ActorName = fullName
+		a.ActorRole = role
 		a.ActionType = action
 		a.Description = fmt.Sprintf("%s pada %s", action, entityName)
 		a.OldValue = &oldData

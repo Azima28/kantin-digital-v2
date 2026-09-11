@@ -2,12 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kantin_digital/core/services/pdf_service.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 
 /// Success screen widget displayed after a successful top-up by keuangan staff.
-class KeuanganTopupSuccessScreen extends StatelessWidget {
+class KeuanganTopupSuccessScreen extends StatefulWidget {
   final String studentName;
   final int amount;
   final int newBalance;
@@ -24,6 +25,53 @@ class KeuanganTopupSuccessScreen extends StatelessWidget {
     required this.refCode,
     required this.fmt,
   });
+
+  @override
+  State<KeuanganTopupSuccessScreen> createState() => _KeuanganTopupSuccessScreenState();
+}
+
+class _KeuanganTopupSuccessScreenState extends State<KeuanganTopupSuccessScreen> {
+  bool _isDownloading = false;
+
+  Future<void> _handleDownloadReceipt() async {
+    if (_isDownloading) return;
+    setState(() => _isDownloading = true);
+
+    try {
+      final filename = await PdfService.downloadReceipt(
+        transactionId: widget.refCode,
+        type: 'topup',
+        amount: widget.amount,
+        studentName: widget.studentName,
+        canteenOrLocation: 'Kasir Keuangan',
+        dateTime: DateTime.now(),
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Struk PDF berhasil diunduh: $filename'),
+            backgroundColor: Nebula.teal,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mengunduh struk PDF: $e'),
+            backgroundColor: Nebula.rose,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isDownloading = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +106,7 @@ class KeuanganTopupSuccessScreen extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Saldo $studentName berhasil ditambah.',
+          'Saldo ${widget.studentName} berhasil ditambah.',
           style: GoogleFonts.inter(
             fontSize: 14,
             color: context.textSecondary,
@@ -81,7 +129,7 @@ class KeuanganTopupSuccessScreen extends StatelessWidget {
               _buildInfoRow(
                 context,
                 'Nominal Pengisian',
-                fmt.format(amount),
+                widget.fmt.format(widget.amount),
                 valueColor: Nebula.teal,
                 isBold: true,
               ),
@@ -90,19 +138,19 @@ class KeuanganTopupSuccessScreen extends StatelessWidget {
                 thickness: 0.5,
                 color: context.dividerCol,
               ),
-              _buildInfoRow(context, 'Saldo Baru', fmt.format(newBalance), isBold: true),
+              _buildInfoRow(context, 'Saldo Baru', widget.fmt.format(widget.newBalance), isBold: true),
               Divider(
                 height: 16,
                 thickness: 0.5,
                 color: context.dividerCol,
               ),
-              _buildInfoRow(context, 'Waktu Transaksi', successTime),
+              _buildInfoRow(context, 'Waktu Transaksi', widget.successTime),
               Divider(
                 height: 16,
                 thickness: 0.5,
                 color: context.dividerCol,
               ),
-              _buildInfoRow(context, 'Kode Referensi', refCode),
+              _buildInfoRow(context, 'Kode Referensi', widget.refCode),
             ],
           ),
         ),
@@ -112,20 +160,16 @@ class KeuanganTopupSuccessScreen extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Simulasi Cetak Struk: Struk dikirim ke printer thermal.',
-                  ),
-                  backgroundColor: Nebula.teal,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-            icon: Icon(CupertinoIcons.printer_fill, size: 18),
+            onPressed: _isDownloading ? null : _handleDownloadReceipt,
+            icon: _isDownloading
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CupertinoActivityIndicator(radius: 8, color: Nebula.teal),
+                  )
+                : const Icon(CupertinoIcons.arrow_down_doc_fill, size: 18),
             label: Text(
-              'CETAK STRUK / BAGIKAN',
+              _isDownloading ? 'MENGUNDUH STRUK...' : 'UNDUH STRUK PDF',
               style: GoogleFonts.inter(
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
@@ -133,7 +177,7 @@ class KeuanganTopupSuccessScreen extends StatelessWidget {
             ),
             style: OutlinedButton.styleFrom(
               foregroundColor: Nebula.teal,
-              side: BorderSide(color: Nebula.teal),
+              side: const BorderSide(color: Nebula.teal),
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -141,7 +185,7 @@ class KeuanganTopupSuccessScreen extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(

@@ -60,6 +60,10 @@ class _KeuanganClosingShiftModalState
   final TextEditingController _physicalCashController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
   bool _isProcessing = false;
+  bool _isClosedSuccess = false;
+  CurrentShiftSummary? _closedShiftSummary;
+  int _closedPhysicalCash = 0;
+  String _closedNotes = '';
 
   final _fmt = const AppNumberFormat(symbol: 'Rp ');
 
@@ -78,7 +82,7 @@ class _KeuanganClosingShiftModalState
     });
   }
 
-  Future<void> _handleCloseShiftAndDownloadPdf({
+  Future<void> _handleCloseShift({
     required CurrentShiftSummary shiftSummary,
     required String officerName,
     required String schoolName,
@@ -86,7 +90,6 @@ class _KeuanganClosingShiftModalState
   }) async {
     final enteredPhysical = _getEnteredPhysicalCash();
     final notes = _notesController.text.trim();
-    final difference = enteredPhysical - shiftSummary.expectedCash;
 
     setState(() => _isProcessing = true);
     try {
@@ -102,55 +105,22 @@ class _KeuanganClosingShiftModalState
         throw Exception(res.message ?? 'Gagal menutup sesi shift kasir');
       }
 
-      // 2. Download / Share Berita Acara PDF Resmi
-      try {
-        await ReportExportService.downloadClosingShiftPdf(
-          officerName: officerName,
-          schoolName: schoolName,
-          authorityLevel: authorityLevel,
-          shiftNumber: shiftSummary.shiftNumber,
-          startedAtStr: shiftSummary.formattedStartedAt,
-          totalInflow: shiftSummary.totalInflow,
-          totalOutflow: shiftSummary.totalOutflow,
-          systemNetCash: shiftSummary.expectedCash,
-          physicalCash: enteredPhysical,
-          difference: difference,
-          topupCount: shiftSummary.topupCount,
-          payoutCount: shiftSummary.payoutCount,
-          notes: notes,
-        );
-      } catch (pdfErr) {
-        debugPrint('[PDF Generate Error]: $pdfErr');
-      }
-
-      // 3. Invalidate Providers untuk Reset Dashboard & Sesi
+      // 2. Invalidate Providers untuk Reset Dashboard & Sesi
       ref.invalidate(keuanganCurrentShiftProvider);
       ref.invalidate(keuanganShiftHistoryProvider);
       ref.invalidate(keuanganDashboardProvider);
       ref.invalidate(adminFinanceOfficersLedgerProvider);
       ref.invalidate(adminAllShiftsProvider(null));
 
+      // 3. Masuk ke status sukses serah terima (jangan langsung pop!)
       if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(CupertinoIcons.checkmark_circle_fill, color: Colors.white, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Sesi Shift #${shiftSummary.shiftNumber} berhasil ditutup & disetor. Laci kasir telah di-reset untuk sesi baru.',
-                    style: GoogleFonts.inter(fontSize: 12.5),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Nebula.teal,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        setState(() {
+          _isProcessing = false;
+          _isClosedSuccess = true;
+          _closedShiftSummary = shiftSummary;
+          _closedPhysicalCash = enteredPhysical;
+          _closedNotes = notes;
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -164,7 +134,47 @@ class _KeuanganClosingShiftModalState
         );
       }
     } finally {
-      if (mounted) setState(() => _isProcessing = false);
+      if (mounted && !_isClosedSuccess) setState(() => _isProcessing = false);
+    }
+  }
+
+  Future<void> _handleDownloadPdf({
+    required CurrentShiftSummary shiftSummary,
+    required String officerName,
+    required String schoolName,
+    required String authorityLevel,
+  }) async {
+    final physical = _isClosedSuccess ? _closedPhysicalCash : _getEnteredPhysicalCash();
+    final notes = _isClosedSuccess ? _closedNotes : _notesController.text.trim();
+    final difference = physical - shiftSummary.expectedCash;
+
+    try {
+      await ReportExportService.downloadClosingShiftPdf(
+        officerName: officerName,
+        schoolName: schoolName,
+        authorityLevel: authorityLevel,
+        shiftNumber: shiftSummary.shiftNumber,
+        startedAtStr: shiftSummary.formattedStartedAt,
+        totalInflow: shiftSummary.totalInflow,
+        totalOutflow: shiftSummary.totalOutflow,
+        systemNetCash: shiftSummary.expectedCash,
+        physicalCash: physical,
+        difference: difference,
+        topupCount: shiftSummary.topupCount,
+        payoutCount: shiftSummary.payoutCount,
+        notes: notes,
+      );
+    } catch (pdfErr) {
+      debugPrint('[PDF Generate Error]: $pdfErr');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mengunduh PDF: $pdfErr', style: GoogleFonts.inter()),
+            backgroundColor: Nebula.rose,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -174,8 +184,8 @@ class _KeuanganClosingShiftModalState
     required String schoolName,
     required String authorityLevel,
   }) async {
-    final enteredPhysical = _getEnteredPhysicalCash();
-    final notes = _notesController.text.trim();
+    final enteredPhysical = _isClosedSuccess ? _closedPhysicalCash : _getEnteredPhysicalCash();
+    final notes = _isClosedSuccess ? _closedNotes : _notesController.text.trim();
     final difference = enteredPhysical - shiftSummary.expectedCash;
 
     setState(() => _isProcessing = true);
@@ -257,7 +267,15 @@ class _KeuanganClosingShiftModalState
       ),
       child: SafeArea(
         top: false,
-        child: shiftAsync.when(
+        child: _isClosedSuccess && _closedShiftSummary != null
+            ? _buildSuccessView(
+                context: context,
+                shiftSummary: _closedShiftSummary!,
+                officerName: fullName,
+                schoolName: school,
+                authorityLevel: authorityLevel,
+              )
+            : shiftAsync.when(
           data: (shiftSummary) {
             final inflow = shiftSummary.totalInflow;
             final outflow = shiftSummary.totalOutflow;
@@ -614,7 +632,7 @@ class _KeuanganClosingShiftModalState
                         ),
                         const SizedBox(height: 20),
 
-                        // ── 5. Tombol Aksi Cetak & Share WhatsApp ──
+                        // ── 5. Tombol Aksi Tutup Kasir ──
                         if (_isProcessing)
                           const Center(
                             child: Padding(
@@ -623,14 +641,14 @@ class _KeuanganClosingShiftModalState
                             ),
                           )
                         else ...[
-                          // Tombol 1: Tutup Kasir & Kunci Shift
+                          // Tombol Utama: Tutup Kasir & Kunci Shift
                           SizedBox(
                             width: double.infinity,
                             height: 48,
                             child: ElevatedButton.icon(
                               onPressed: _physicalCashController.text.trim().isEmpty
                                   ? null
-                                  : () => _handleCloseShiftAndDownloadPdf(
+                                  : () => _handleCloseShift(
                                         shiftSummary: shiftSummary,
                                         officerName: fullName,
                                         schoolName: school,
@@ -655,35 +673,22 @@ class _KeuanganClosingShiftModalState
                             ),
                           ),
                           const SizedBox(height: 10),
-
-                          // Tombol 2: Kirim ke WhatsApp Super Admin
-                          SizedBox(
-                            width: double.infinity,
-                            height: 46,
-                            child: ElevatedButton.icon(
-                              onPressed: () => _handleShareWhatsApp(
-                                shiftSummary: shiftSummary,
-                                officerName: fullName,
-                                schoolName: school,
-                                authorityLevel: authorityLevel,
-                              ),
-                              icon: const Icon(CupertinoIcons.share, size: 18),
-                              label: Text(
-                                'Kirim Serah Terima ke WA Super Admin',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(CupertinoIcons.info_circle, size: 13, color: Nebula.teal),
+                              const SizedBox(width: 5),
+                              Flexible(
+                                child: Text(
+                                  'Bukti serah terima WA & PDF dapat dikirim setelah kasir resmi ditutup.',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    color: context.textSecondary,
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
                               ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF0D9488),
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                            ),
+                            ],
                           ),
                         ],
                       ],
@@ -721,6 +726,207 @@ class _KeuanganClosingShiftModalState
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSuccessView({
+    required BuildContext context,
+    required CurrentShiftSummary shiftSummary,
+    required String officerName,
+    required String schoolName,
+    required String authorityLevel,
+  }) {
+    final difference = _closedPhysicalCash - shiftSummary.expectedCash;
+    final isMatched = difference == 0;
+    final isShort = difference < 0;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Centered Checkmark Icon
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Nebula.teal.withValues(alpha: 0.14),
+              shape: BoxShape.circle,
+              border: Border.all(color: Nebula.teal.withValues(alpha: 0.35), width: 1.5),
+            ),
+            child: const Icon(
+              CupertinoIcons.checkmark_seal_fill,
+              color: Nebula.teal,
+              size: 34,
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Title & Subtitle
+          Text(
+            'Sesi Shift #${shiftSummary.shiftNumber} Resmi Ditutup',
+            style: GoogleFonts.inter(
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+              color: context.textPrimary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Buku kas telah disetor dan dikunci oleh sistem. Silakan kirimkan bukti serah terima kas resmi di bawah ini:',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: context.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 18),
+
+          // Summary Card
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: context.surfaceBg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: context.dividerCol, width: 0.8),
+            ),
+            child: Column(
+              children: [
+                _buildSummaryRow(
+                  label: 'Fisik Uang Disetor:',
+                  value: _fmt.format(_closedPhysicalCash),
+                  sub: 'Dihitung di laci kasir',
+                  color: Nebula.teal,
+                  isBold: true,
+                ),
+                const SizedBox(height: 8),
+                _buildSummaryRow(
+                  label: 'Catatan Sistem:',
+                  value: _fmt.format(shiftSummary.expectedCash),
+                  sub: 'Saldo wajib ada',
+                  color: context.textPrimary,
+                ),
+                const Divider(height: 16, thickness: 0.5),
+                _buildSummaryRow(
+                  label: 'Rekonsiliasi / Selisih:',
+                  value: isMatched
+                      ? 'Pas (Rp 0)'
+                      : (isShort ? '-${_fmt.format(difference.abs())}' : '+${_fmt.format(difference.abs())}'),
+                  sub: isMatched
+                      ? 'Kas seimbang 100%'
+                      : (isShort ? 'Defisit kas fisik' : 'Surplus kas fisik'),
+                  color: isMatched
+                      ? Nebula.teal
+                      : (isShort ? Nebula.rose : Nebula.amber),
+                  isBold: true,
+                ),
+                if (_closedNotes.isNotEmpty) ...[
+                  const Divider(height: 16, thickness: 0.5),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Catatan: ',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: context.textSecondary,
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          _closedNotes,
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: context.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Tombol Tindak Lanjut:
+          // 1. Tombol Kirim ke WhatsApp Super Admin (Warna Hijau WA)
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton.icon(
+              onPressed: () => _handleShareWhatsApp(
+                shiftSummary: shiftSummary,
+                officerName: officerName,
+                schoolName: schoolName,
+                authorityLevel: authorityLevel,
+              ),
+              icon: const Icon(CupertinoIcons.share, size: 18),
+              label: Text(
+                'Kirim Serah Terima ke WA Super Admin',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF25D366),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // 2. Tombol Unduh Berita Acara PDF
+          SizedBox(
+            width: double.infinity,
+            height: 46,
+            child: OutlinedButton.icon(
+              onPressed: () => _handleDownloadPdf(
+                shiftSummary: shiftSummary,
+                officerName: officerName,
+                schoolName: schoolName,
+                authorityLevel: authorityLevel,
+              ),
+              icon: const Icon(CupertinoIcons.arrow_down_doc_fill, size: 18),
+              label: Text(
+                'Unduh Berita Acara (PDF)',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Nebula.teal,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Nebula.teal, width: 1.2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // 3. Tombol Selesai (Pop)
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Selesai & Kembali ke Dashboard',
+              style: GoogleFonts.inter(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: context.textSecondary,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -40,26 +40,29 @@ var orderStatusTransitions = map[OrderStatus][]OrderStatus{
 	},
 	OrderStatusSedangDimasak: {
 		OrderStatusSedangDisiapkan, OrderStatusSiapDiambil, OrderStatusSiapDiantar,
-		OrderStatusSedangDiantar, OrderStatusMenungguPembatalan,
+		OrderStatusSedangDiantar, OrderStatusSelesai, OrderStatusMenungguPembatalan,
 		OrderStatusMenungguPersetujuanMurid, OrderStatusDibatalkan,
 	},
 	OrderStatusSedangDisiapkan: {
 		OrderStatusSedangDimasak, OrderStatusSiapDiambil, OrderStatusSiapDiantar,
-		OrderStatusSedangDiantar, OrderStatusMenungguPembatalan,
+		OrderStatusSedangDiantar, OrderStatusSelesai, OrderStatusMenungguPembatalan,
 		OrderStatusMenungguPersetujuanMurid, OrderStatusDibatalkan,
 	},
 	OrderStatusSiapDiambil: {
+		OrderStatusSedangDisiapkan, OrderStatusSedangDimasak,
 		OrderStatusSedangDiantar, OrderStatusSelesai,
 		OrderStatusMenungguPembatalan, OrderStatusMenungguPersetujuanMurid,
 		OrderStatusDibatalkan,
 	},
 	OrderStatusSiapDiantar: {
+		OrderStatusSedangDisiapkan, OrderStatusSedangDimasak,
 		OrderStatusSedangDiantar, OrderStatusSelesai,
 		OrderStatusMenungguPembatalan, OrderStatusMenungguPersetujuanMurid,
 		OrderStatusDibatalkan,
 	},
 	OrderStatusSedangDiantar: {
-		OrderStatusSiapDiambil, OrderStatusSelesai,
+		OrderStatusSedangDisiapkan, OrderStatusSedangDimasak,
+		OrderStatusSiapDiambil, OrderStatusSiapDiantar, OrderStatusSelesai,
 		OrderStatusMenungguPembatalan, OrderStatusMenungguPersetujuanMurid,
 		OrderStatusDibatalkan,
 	},
@@ -122,14 +125,15 @@ type OrderItem struct {
 }
 
 type OrderMessage struct {
-	ID         string    `json:"id"`
-	OrderID    string    `json:"order_id"`
-	SenderID   string    `json:"sender_id"`
-	SenderRole string    `json:"sender_role"`
-	SenderName string    `json:"sender_name,omitempty"`
-	Message    string    `json:"message"`
-	IsRead     bool      `json:"is_read"`
-	CreatedAt  time.Time `json:"created_at"`
+	ID              string    `json:"id"`
+	OrderID         string    `json:"order_id"`
+	SenderID        string    `json:"sender_id"`
+	SenderRole      string    `json:"sender_role"`
+	SenderName      string    `json:"sender_name,omitempty"`
+	SenderAvatarURL *string   `json:"sender_avatar_url,omitempty"`
+	Message         string    `json:"message"`
+	IsRead          bool      `json:"is_read"`
+	CreatedAt       time.Time `json:"created_at"`
 }
 
 type OrderReview struct {

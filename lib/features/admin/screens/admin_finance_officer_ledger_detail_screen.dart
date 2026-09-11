@@ -192,7 +192,7 @@ class _AdminFinanceOfficerLedgerDetailScreenState
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    '${officer.assignedSchool} · Otoritas ${officer.authorityLevel}',
+                                    '${officer.assignedSchool} · Petugas Keuangan',
                                     style: GoogleFonts.inter(
                                       fontSize: 12,
                                       color: context.textSecondary,

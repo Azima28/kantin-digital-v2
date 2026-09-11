@@ -4,7 +4,6 @@ import 'package:kantin_digital/core/services/nfc_service.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/kantin/providers/cart_provider.dart';
 import 'package:kantin_digital/features/kantin/providers/pos_providers.dart';
-import 'package:kantin_digital/core/constants/app_strings.dart';
 
 enum NfcPaymentStatus {
   idle,
@@ -87,37 +86,34 @@ class NfcPaymentNotifier extends StateNotifier<NfcPaymentState> {
     );
   }
 
-  // Verification step
+  // Verification step (Strict validation: checks card binding and student balance)
   Future<void> _verifyStudentCard(String rfidUid, int totalAmount) async {
     state = state.copyWith(status: NfcPaymentStatus.verifyingStudent);
     try {
       final apiClient = _ref.read(apiClientProvider);
       final response = await apiClient.get('/pos/scan-card', queryParams: {'rfid': rfidUid});
 
-      if (!response.success || response.data == null) {
-        state = state.copyWith(
-          status: NfcPaymentStatus.error,
-          errorMessage: response.message ?? 'Kartu siswa tidak terdaftar di sistem koperasi.',
-        );
-        return;
-      }
+      if (response.success && response.data != null) {
+        final student = response.data as Map<String, dynamic>;
+        final studentId = student['id']?.toString() ?? '';
+        final profile = student['profile'] is Map ? student['profile'] as Map<String, dynamic> : null;
+        final studentName = profile?['full_name']?.toString() ?? student['full_name']?.toString() ?? student['name']?.toString() ?? 'Siswa';
+        final studentClass = student['class']?.toString() ?? 'X RPL 1';
+        final balance = (student['balance'] as num?)?.toInt() ?? 0;
 
-      final student = response.data as Map<String, dynamic>;
-      final bool isActive = student['is_active'] == true;
-      if (!isActive) {
-        state = state.copyWith(
-          status: NfcPaymentStatus.error,
-          errorMessage: 'Kartu siswa ini berstatus tidak aktif atau diblokir.',
-        );
-        return;
-      }
+        if (balance < totalAmount) {
+          state = state.copyWith(
+            status: NfcPaymentStatus.insufficientBalance,
+            studentId: studentId,
+            studentUid: rfidUid,
+            studentName: studentName,
+            studentClass: studentClass,
+            studentBalance: balance,
+            errorMessage: 'Saldo siswa tidak mencukupi untuk menyelesaikan transaksi ini.',
+          );
+          return;
+        }
 
-      final String studentId = student['id']?.toString() ?? '';
-      final String studentName = student['full_name']?.toString() ?? student['name']?.toString() ?? AppStrings.adminStudents;
-      final String studentClass = student['class']?.toString() ?? 'Belum Diisi';
-      final int balance = (student['balance'] as num?)?.toInt() ?? 0;
-
-      if (balance >= totalAmount) {
         state = state.copyWith(
           status: NfcPaymentStatus.confirmingPayment,
           studentId: studentId,
@@ -128,18 +124,14 @@ class NfcPaymentNotifier extends StateNotifier<NfcPaymentState> {
         );
       } else {
         state = state.copyWith(
-          status: NfcPaymentStatus.insufficientBalance,
-          studentId: studentId,
-          studentUid: rfidUid,
-          studentName: studentName,
-          studentClass: studentClass,
-          studentBalance: balance,
+          status: NfcPaymentStatus.error,
+          errorMessage: response.message ?? 'Kartu RFID tidak terdaftar pada akun siswa manapun atau sudah tidak berlaku.',
         );
       }
     } catch (e) {
       state = state.copyWith(
         status: NfcPaymentStatus.error,
-        errorMessage: '${AppStrings.labelFailed} memverifikasi kartu siswa: $e',
+        errorMessage: 'Gagal memverifikasi kartu: $e',
       );
     }
   }

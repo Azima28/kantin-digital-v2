@@ -7,9 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
-import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/parent/widgets/parent_amount_selector.dart';
-import 'package:kantin_digital/features/parent/widgets/parent_midtrans_payment_modal.dart';
+import 'package:kantin_digital/features/siswa/widgets/qris_checkout_content.dart';
 import 'package:kantin_digital/features/parent/providers/parent_providers.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
@@ -103,7 +102,7 @@ class _ParentTopUpFormState extends ConsumerState<ParentTopUpForm> {
     return 0;
   }
 
-  Future<void> _handlePaymentSimulation(double amount, String method) async {
+  Future<void> _handlePaymentSimulation(double amount) async {
     setState(() {
       _isLoading = true;
     });
@@ -114,28 +113,30 @@ class _ParentTopUpFormState extends ConsumerState<ParentTopUpForm> {
       final response = await apiClient.post('/parent/topup', body: {
         'student_id': widget.studentId,
         'amount': amount.toInt(),
+        'payment_method': 'qris',
       });
 
       if (!response.success) {
         throw Exception(response.message ?? 'Top-up gagal');
       }
 
-      // Invalidate dashboard provider so that it updates
+      // Invalidate dashboard provider so that balance & transactions update immediately
       ref.invalidate(siswaStudentProvider);
       ref.invalidate(siswaTransactionsProvider);
       ref.invalidate(parentDashboardProvider(widget.studentId));
       ref.invalidate(userNotificationsProvider);
 
       if (mounted) {
-        Navigator.pop(context); // Close the Midtrans snap modal
+        Navigator.pop(context); // Close the QRIS bottom sheet
         _showSuccessDialog(amount);
       }
     } catch (e) {
       if (mounted) {
         Navigator.pop(context); // Close bottom sheet/modal
+        final String msg = e.toString().replaceFirst('Exception: ', '').trim();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Top-up gagal'),
+            content: Text('Top-up gagal: $msg'),
             backgroundColor: Nebula.rose,
             behavior: SnackBarBehavior.floating,
           ),
@@ -150,7 +151,7 @@ class _ParentTopUpFormState extends ConsumerState<ParentTopUpForm> {
     }
   }
 
-  Future<void> _showMidtransSnapModal() async {
+  void _showQrisModal() {
     if (!_formKey.currentState!.validate()) return;
 
     final double amount = _getFinalAmount();
@@ -167,18 +168,29 @@ class _ParentTopUpFormState extends ConsumerState<ParentTopUpForm> {
       return;
     }
 
-    final parentProfile = ref.read(authNotifierProvider).profile;
-    final senderPhone = parentProfile?['phone'] as String? ?? '';
-
-    await showParentMidtransPaymentModal(
+    showModalBottomSheet(
       context: context,
-      ref: ref,
-      amount: amount,
-      senderPhone: senderPhone,
-      studentId: widget.studentId,
-      studentName: widget.studentName,
-      isLoading: _isLoading,
-      onPay: _handlePaymentSimulation,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      backgroundColor: context.cardBg,
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.fromLTRB(
+              24, 16, 24, 24 + MediaQuery.of(context).viewInsets.bottom),
+          child: QrisCheckoutContent(
+            amount: amount,
+            isLoading: _isLoading,
+            onConfirm: _isLoading
+                ? null
+                : () async {
+                    await _handlePaymentSimulation(amount);
+                  },
+            onCancel: () => Navigator.pop(context),
+          ),
+        );
+      },
     );
   }
 
@@ -383,10 +395,10 @@ class _ParentTopUpFormState extends ConsumerState<ParentTopUpForm> {
                             borderRadius: BorderRadius.circular(999),
                           ),
                         ),
-                        onPressed: _showMidtransSnapModal,
-                        icon: Icon(CupertinoIcons.creditcard, color: context.cardBg, size: 16),
+                        onPressed: _showQrisModal,
+                        icon: Icon(CupertinoIcons.qrcode, color: context.cardBg, size: 18),
                         label: Text(
-                          'BAYAR SEKARANG VIA MIDTRANS',
+                          'BAYAR SEKARANG VIA QRIS',
                           style: GoogleFonts.inter(
                             color: context.cardBg,
                             fontWeight: FontWeight.w700,
@@ -654,7 +666,7 @@ class _AnimatedSuccessSheetState extends State<AnimatedSuccessSheet> with Ticker
                             child: Column(
                               children: [
                                 Text(
-                                  'Permintaan Terkirim',
+                                  'Top-Up Berhasil!',
                                   style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
@@ -664,7 +676,7 @@ class _AnimatedSuccessSheetState extends State<AnimatedSuccessSheet> with Ticker
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'Saldo ${widget.studentName} bertambah setelah petugas keuangan mengonfirmasi pembayaran Anda.',
+                                  'Saldo $formattedAmount telah berhasil ditambahkan ke akun ${widget.studentName}.',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 14,
@@ -710,11 +722,11 @@ class _AnimatedSuccessSheetState extends State<AnimatedSuccessSheet> with Ticker
                                       Divider(height: 24, color: context.dividerCol),
                                       _buildDetailRow('Penerima', widget.studentName),
                                       const SizedBox(height: 8),
-                                      _buildDetailRow('Metode Pembayaran', 'Tunai ke Petugas Keuangan'),
+                                      _buildDetailRow('Metode Pembayaran', 'Simulasi Instan (QRIS)'),
                                       const SizedBox(height: 8),
                                       _buildDetailRow('Waktu Transaksi', formattedDate),
                                       const SizedBox(height: 8),
-                                      _buildDetailRow('Status', 'Menunggu Konfirmasi', isStatus: true),
+                                      _buildDetailRow('Status', 'Berhasil', isStatus: true),
                                     ],
                                   ),
                                 ),

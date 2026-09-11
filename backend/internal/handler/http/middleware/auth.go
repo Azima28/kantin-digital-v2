@@ -134,6 +134,16 @@ func AuthMiddleware(tokenMaker *token.TokenMaker, userRepo *postgres.UserRepo, s
 			}
 		}
 
+		// Maintenance mode guard: block non-admin requests while maintenance mode is active
+		if userRepo != nil && userRepo.IsMaintenanceMode(c.Context()) {
+			if claims.Role != domain.RoleSuperAdmin && claims.Role != domain.RoleAdmin {
+				return response.Error(c, fiber.StatusServiceUnavailable, "Sistem sedang dalam mode pemeliharaan (maintenance). Akses non-admin sedang diblokir sementara.", fiber.Map{
+					"error_code":  "MAINTENANCE_MODE",
+					"maintenance": true,
+				})
+			}
+		}
+
 		// Sliding Session: Auto-renew token if remaining lifetime is less than 50%
 		if claims.ExpiresAt != nil {
 			timeLeft := time.Until(claims.ExpiresAt.Time)

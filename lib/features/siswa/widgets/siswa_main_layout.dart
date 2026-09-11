@@ -151,7 +151,7 @@ class _SiswaMainLayoutState extends ConsumerState<SiswaMainLayout> {
                 const PremiumBottomNavBarItem(
                   icon: Icons.person_outline_rounded,
                   activeIcon: Icons.person_rounded,
-                  label: 'Akun',
+                  label: 'Akun Saya',
                 ),
               ],
             );

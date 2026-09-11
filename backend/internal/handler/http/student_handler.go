@@ -244,6 +244,28 @@ func (h *StudentHandler) MarkAllNotificationsRead(c *fiber.Ctx) error {
 	return response.Success(c, fiber.StatusOK, "Semua notifikasi ditandai dibaca", nil)
 }
 
+func (h *StudentHandler) DeleteNotification(c *fiber.Ctx) error {
+	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
+	notifID := c.Params("id")
+	if notifID == "" {
+		return response.Error(c, fiber.StatusBadRequest, "ID notifikasi wajib diisi", nil)
+	}
+
+	if err := h.notifService.Delete(c.Context(), notifID, claims.UserID); err != nil {
+		return response.Error(c, fiber.StatusInternalServerError, "Gagal menghapus notifikasi", err.Error())
+	}
+	return response.Success(c, fiber.StatusOK, "Notifikasi berhasil dihapus", nil)
+}
+
+func (h *StudentHandler) DeleteAllNotifications(c *fiber.Ctx) error {
+	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
+	if err := h.notifService.DeleteAll(c.Context(), claims.UserID); err != nil {
+		return response.Error(c, fiber.StatusInternalServerError, "Gagal menghapus semua notifikasi", err.Error())
+	}
+	return response.Success(c, fiber.StatusOK, "Semua notifikasi berhasil dihapus", nil)
+}
+
+
 type UpdateCardStatusRequest struct {
 	StudentID string  `json:"student_id"`
 	RfidUID   *string `json:"rfid_uid"`
@@ -298,8 +320,9 @@ func (h *StudentHandler) UpdateCardStatus(c *fiber.Ctx) error {
 }
 
 type StudentTopupRequest struct {
-	StudentID string `json:"student_id"`
-	Amount    int    `json:"amount"`
+	StudentID     string  `json:"student_id"`
+	Amount        int     `json:"amount"`
+	PaymentMethod *string `json:"payment_method"`
 }
 
 func (h *StudentHandler) Topup(c *fiber.Ctx) error {
@@ -314,18 +337,11 @@ func (h *StudentHandler) Topup(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusBadRequest, "Payload top-up tidak valid", err.Error())
 	}
 
-	// selfService marks the callers who can only *ask* for a top-up. They have no
-	// money to hand over inside this request -- no gateway callback, no cash drawer
-	// -- so their call must never credit students.balance. Only a finance officer
-	// or admin, who has physically received the payment, settles the request.
-	selfService := false
-
 	targetStudentID := req.StudentID
 	switch claims.Role {
 	case domain.RoleStudent:
-		// Student can only request a top-up for their own account
+		// Student top-up is processed automatically via QRIS/instant settlement
 		targetStudentID = claims.UserID
-		selfService = true
 	case domain.RoleParent:
 		// Parent can only top up their linked child
 		if targetStudentID == "" {
@@ -345,7 +361,6 @@ func (h *StudentHandler) Topup(c *fiber.Ctx) error {
 		if !isLinked {
 			return response.Error(c, fiber.StatusForbidden, "Akses ditolak: Anda tidak memiliki akses ke siswa ini", nil)
 		}
-		selfService = true
 	case domain.RolePetugasKeuangan, domain.RoleSuperAdmin, domain.RoleAdmin:
 		if targetStudentID == "" {
 			return response.Error(c, fiber.StatusBadRequest, "Student ID wajib disertakan", nil)
@@ -361,25 +376,126 @@ func (h *StudentHandler) Topup(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusBadRequest, "Nominal top-up maksimal Rp 2.000.000 per transaksi", nil)
 	}
 
-	if selfService {
-		tx, err := h.paymentService.RequestTopup(c.Context(), targetStudentID, req.Amount)
-		if err != nil {
-			return response.Error(c, fiber.StatusBadRequest, err.Error(), nil)
-		}
-		return response.Success(c, fiber.StatusAccepted, "Permintaan top-up terkirim. Saldo bertambah setelah petugas keuangan mengonfirmasi pembayaran", tx)
+	method := "qris"
+	if claims.Role == domain.RolePetugasKeuangan || claims.Role == domain.RoleSuperAdmin || claims.Role == domain.RoleAdmin {
+		method = "cash"
+	}
+	if req.PaymentMethod != nil && *req.PaymentMethod != "" {
+		method = *req.PaymentMethod
 	}
 
-	tx, err := h.paymentService.ProcessTopup(c.Context(), targetStudentID, claims.UserID, req.Amount)
+	tx, err := h.paymentService.ProcessTopupWithMethod(c.Context(), targetStudentID, claims.UserID, req.Amount, method)
 	if err != nil {
 		return response.Error(c, fiber.StatusBadRequest, err.Error(), nil)
 	}
 
-	_ = h.paymentService.LogAudit(c.Context(), claims.UserID, "STUDENT_TOPUP", "students", targetStudentID, "",
+	actorName := claims.Email
+	if claims.FullName != "" {
+		actorName = claims.FullName
+	}
+	studentName := ""
+	if tx.StudentName != nil {
+		studentName = *tx.StudentName
+	}
+	balBefore := 0
+	if tx.BalanceBefore != nil {
+		balBefore = *tx.BalanceBefore
+	}
+	balAfter := balBefore + req.Amount
+	if tx.BalanceAfter != nil {
+		balAfter = *tx.BalanceAfter
+	}
+
+	_ = h.paymentService.LogAudit(c.Context(), claims.UserID, "STUDENT_TOPUP", "students", targetStudentID,
+		auditJSON(map[string]interface{}{
+			"balance":        balBefore,
+			"balance_before": balBefore,
+			"status":         "Aktif",
+		}),
 		auditJSON(map[string]interface{}{
 			"amount":         req.Amount,
+			"total_amount":   req.Amount,
+			"balance":        balAfter,
+			"balance_before": balBefore,
+			"balance_after":  balAfter,
 			"transaction_id": tx.ID,
 			"actor_role":     claims.Role,
+			"actor_name":     actorName,
+			"student_name":   studentName,
+			"method":         method,
+			"status":         "Sukses",
 		}), c.IP())
 
 	return response.Success(c, fiber.StatusOK, "Top-up saldo berhasil diproses", tx)
+}
+
+type StudentChangePinRequest struct {
+	OldPin string `json:"old_pin"`
+	NewPin string `json:"new_pin"`
+}
+
+func (h *StudentHandler) ChangePin(c *fiber.Ctx) error {
+	claimsVal := c.Locals(middleware.UserClaimsKey)
+	if claimsVal == nil {
+		return response.Error(c, fiber.StatusUnauthorized, "Autentikasi diperlukan", nil)
+	}
+	claims := claimsVal.(*token.JWTClaims)
+
+	var req StudentChangePinRequest
+	if err := c.BodyParser(&req); err != nil {
+		return response.Error(c, fiber.StatusBadRequest, "Payload tidak valid", err.Error())
+	}
+
+	targetStudentID := claims.UserID
+	if claims.Role != domain.RoleStudent {
+		if sID := c.Query("student_id"); sID != "" {
+			targetStudentID = sID
+		}
+	}
+
+	if err := h.paymentService.StudentChangePin(c.Context(), targetStudentID, req.OldPin, req.NewPin); err != nil {
+		return response.Error(c, fiber.StatusBadRequest, err.Error(), nil)
+	}
+
+	_ = h.paymentService.LogAudit(c.Context(), claims.UserID, "STUDENT_PIN_CHANGED", "students", targetStudentID,
+		"",
+		auditJSON(map[string]interface{}{
+			"status": "PIN Transaksi Diperbarui",
+		}), c.IP())
+
+	return response.Success(c, fiber.StatusOK, "PIN transaksi berhasil diperbarui", nil)
+}
+
+type VerifyPinRequest struct {
+	Pin       string `json:"pin"`
+	StudentID string `json:"student_id"`
+}
+
+func (h *StudentHandler) VerifyPin(c *fiber.Ctx) error {
+	claimsVal := c.Locals(middleware.UserClaimsKey)
+	if claimsVal == nil {
+		return response.Error(c, fiber.StatusUnauthorized, "Autentikasi diperlukan", nil)
+	}
+	claims := claimsVal.(*token.JWTClaims)
+
+	var req VerifyPinRequest
+	if err := c.BodyParser(&req); err != nil {
+		return response.Error(c, fiber.StatusBadRequest, "Payload tidak valid", err.Error())
+	}
+
+	targetStudentID := claims.UserID
+	if req.StudentID != "" && (claims.Role == domain.RoleSuperAdmin || claims.Role == domain.RoleAdmin || claims.Role == domain.RolePetugasKeuangan || claims.Role == domain.RolePetugasKantin) {
+		targetStudentID = req.StudentID
+	}
+
+	valid, err := h.paymentService.VerifyStudentPin(c.Context(), targetStudentID, req.Pin)
+	if err != nil {
+		return response.Error(c, fiber.StatusBadRequest, err.Error(), nil)
+	}
+
+	if !valid {
+		return response.Error(c, fiber.StatusBadRequest, "PIN transaksi salah. Silakan coba lagi.", fiber.Map{"valid": false})
+	}
+
+	return response.Success(c, fiber.StatusOK, "PIN transaksi benar", fiber.Map{"valid": true})
 }

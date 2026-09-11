@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -89,7 +90,17 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
 
   void _showEditProfileDialog(String currentName, String currentPhone, String? currentGender, String? avatarUrl, String role) {
     final nameController = TextEditingController(text: currentName);
-    final phoneController = TextEditingController(text: currentPhone == '-' ? '' : currentPhone);
+    String cleanPhone = currentPhone == '-' ? '' : currentPhone;
+    cleanPhone = cleanPhone.trim().replaceAll(' ', '').replaceAll('-', '');
+    if (cleanPhone.startsWith('+62')) {
+      cleanPhone = cleanPhone.substring(3);
+    } else if (cleanPhone.startsWith('62')) {
+      cleanPhone = cleanPhone.substring(2);
+    } else if (cleanPhone.startsWith('0')) {
+      cleanPhone = cleanPhone.substring(1);
+    }
+    cleanPhone = cleanPhone.replaceAll(RegExp(r'[^0-9]'), '');
+    final phoneController = TextEditingController(text: cleanPhone);
     String selectedGender = currentGender ?? (AppAvatar.isFemale(name: currentName) ? 'P' : 'L');
     final formKey = GlobalKey<FormState>();
     bool isSaving = false;
@@ -310,10 +321,51 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
                       TextFormField(
                         controller: phoneController,
                         keyboardType: TextInputType.phone,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        onChanged: (val) {
+                          if (val.startsWith('0')) {
+                            final stripped = val.replaceFirst(RegExp(r'^0+'), '');
+                            phoneController.value = TextEditingValue(
+                              text: stripped,
+                              selection: TextSelection.collapsed(offset: stripped.length),
+                            );
+                          } else if (val.startsWith('62')) {
+                            final stripped = val.replaceFirst(RegExp(r'^62'), '');
+                            phoneController.value = TextEditingValue(
+                              text: stripped,
+                              selection: TextSelection.collapsed(offset: stripped.length),
+                            );
+                          }
+                        },
                         style: GoogleFonts.inter(fontSize: 14, color: ctx.textPrimary),
                         decoration: InputDecoration(
-                          hintText: 'Contoh: 081234567890',
-                          hintStyle: GoogleFonts.inter(color: ctx.textSecondary, fontSize: 13),
+                          prefixIcon: Container(
+                            padding: const EdgeInsets.only(left: 14, right: 10),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '+62',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Nebula.teal,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  width: 1,
+                                  height: 18,
+                                  color: ctx.dividerCol,
+                                ),
+                              ],
+                            ),
+                          ),
+                          prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                          hintText: '81234567890',
+                          hintStyle: GoogleFonts.inter(color: ctx.textSecondary.withValues(alpha: 0.5), fontSize: 13),
                           filled: true,
                           fillColor: ctx.surfaceBg,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -347,9 +399,11 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
                                   : () async {
                                       if (!formKey.currentState!.validate()) return;
                                       setModalState(() => isSaving = true);
+                                      final cleanDigits = phoneController.text.trim().replaceAll(RegExp(r'[^0-9]'), '');
+                                      final fullPhone = cleanDigits.isNotEmpty ? '+62$cleanDigits' : null;
                                       final ok = await ref.read(authNotifierProvider.notifier).updateProfileDetails(
                                             fullName: nameController.text.trim(),
-                                            phoneNumber: phoneController.text.trim().isEmpty ? null : phoneController.text.trim(),
+                                            phoneNumber: fullPhone,
                                             gender: selectedGender,
                                           );
                                       if (ctx.mounted) {

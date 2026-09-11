@@ -137,7 +137,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
               _selectedRoleFilter != 'Orang Tua')
             IconButton(
               icon: const Icon(CupertinoIcons.square_arrow_down, color: Nebula.teal),
-              tooltip: 'Import $_selectedRoleFilter (CSV)',
+              tooltip: 'Impor $_selectedRoleFilter (CSV)',
               onPressed: () =>
                   showImportUsersDialog(context, ref, _selectedRoleFilter),
             ),

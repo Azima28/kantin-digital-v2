@@ -26,10 +26,10 @@ class AdminBroadcastSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return SettingSectionWidget(
       icon: CupertinoIcons.speaker_2,
-      title: 'Siaran Broadcast',
+      title: 'Siaran Pengumuman',
       children: [
         Text(
-          'Target Audiens',
+          'Sasaran Penerima',
           style: GoogleFonts.inter(
             fontSize: 12,
             fontWeight: FontWeight.bold,
@@ -67,7 +67,7 @@ class AdminBroadcastSection extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'Message Content',
+          'Isi Pesan Pengumuman',
           style: GoogleFonts.inter(
             fontSize: 12,
             fontWeight: FontWeight.bold,
@@ -85,7 +85,7 @@ class AdminBroadcastSection extends StatelessWidget {
             maxLines: 4,
             style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(
-              hintText: 'Ketik pesan notifikasi di sini...',
+              hintText: 'Ketik pesan pengumuman di sini...',
               hintStyle: TextStyle(color: context.textSecondary),
               border: InputBorder.none,
               contentPadding: EdgeInsets.all(12),
@@ -105,7 +105,7 @@ class AdminBroadcastSection extends StatelessWidget {
           ),
           icon: const Icon(CupertinoIcons.paperplane_fill, size: 16),
           label: const Text(
-            'KIRIM NOTIFIKASI PUSH',
+            'KIRIM PENGUMUMAN',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
         ),

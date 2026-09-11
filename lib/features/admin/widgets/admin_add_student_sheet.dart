@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
@@ -215,7 +216,51 @@ void showAddStudentSheet(BuildContext context, WidgetRef ref) {
                 onChanged: (v) => setLocal(() => selectedClass = v ?? selectedClass),
               ),
               const SizedBox(height: 12),
-              _buildFormField(parentPhoneCtrl, 'Nomor HP Orang Tua (WhatsApp)', inputType: TextInputType.phone),
+              _buildFormField(
+                parentPhoneCtrl,
+                '81234567890',
+                inputType: TextInputType.phone,
+                prefix: Container(
+                  padding: const EdgeInsets.only(left: 14, right: 10),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '+62',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.darkTeal,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 1,
+                        height: 18,
+                        color: AppColors.mutedGray.withValues(alpha: 0.3),
+                      ),
+                    ],
+                  ),
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                onChanged: (val) {
+                  if (val.startsWith('0')) {
+                    final stripped = val.replaceFirst(RegExp(r'^0+'), '');
+                    parentPhoneCtrl.value = TextEditingValue(
+                      text: stripped,
+                      selection: TextSelection.collapsed(offset: stripped.length),
+                    );
+                  } else if (val.startsWith('62')) {
+                    final stripped = val.replaceFirst(RegExp(r'^62'), '');
+                    parentPhoneCtrl.value = TextEditingValue(
+                      text: stripped,
+                      selection: TextSelection.collapsed(offset: stripped.length),
+                    );
+                  }
+                },
+              ),
               const SizedBox(height: 12),
               _buildFormField(emailCtrl, 'Email (Opsional, otomatis jika kosong)', inputType: TextInputType.emailAddress),
               const SizedBox(height: 20),
@@ -264,8 +309,9 @@ void showAddStudentSheet(BuildContext context, WidgetRef ref) {
                             final username = usernameCtrl.text.trim().isNotEmpty
                                 ? usernameCtrl.text.trim()
                                 : 'student_$nisn';
-                            final parentPhone = parentPhoneCtrl.text.trim().isNotEmpty
-                                ? parentPhoneCtrl.text.trim()
+                            final cleanParentDigits = parentPhoneCtrl.text.trim().replaceAll(RegExp(r'[^0-9]'), '');
+                            final parentPhone = cleanParentDigits.isNotEmpty
+                                ? '+62$cleanParentDigits'
                                 : null;
                             final rfidVal = rfid.isNotEmpty ? rfid : null;
 
@@ -345,11 +391,14 @@ Widget _buildFormField(
   String hint, {
   TextInputType inputType = TextInputType.text,
   Widget? suffix,
+  Widget? prefix,
+  List<TextInputFormatter>? inputFormatters,
   ValueChanged<String>? onChanged,
 }) =>
     TextField(
       controller: ctrl,
       keyboardType: inputType,
+      inputFormatters: inputFormatters,
       onChanged: onChanged,
       style: GoogleFonts.inter(fontSize: 14),
       decoration: InputDecoration(
@@ -358,6 +407,8 @@ Widget _buildFormField(
           color: AppColors.mutedGray,
           fontSize: 14,
         ),
+        prefixIcon: prefix,
+        prefixIconConstraints: prefix != null ? const BoxConstraints(minWidth: 0, minHeight: 0) : null,
         suffixIcon: suffix,
         filled: true,
         fillColor: AppColors.offWhite,

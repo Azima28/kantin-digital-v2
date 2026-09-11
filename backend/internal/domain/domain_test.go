@@ -117,6 +117,8 @@ func TestOrderStatusTransitionsCoverOperatorFlow(t *testing.T) {
 		{OrderStatusBaru, OrderStatusSedangDimasak},
 		{OrderStatusBaru, OrderStatusDibatalkan},
 		{OrderStatusSedangDimasak, OrderStatusSiapDiambil},
+		{OrderStatusSedangDimasak, OrderStatusSelesai},
+		{OrderStatusSedangDisiapkan, OrderStatusSelesai},
 		{OrderStatusSiapDiambil, OrderStatusSelesai},
 		{OrderStatusSiapDiantar, OrderStatusSedangDiantar},
 		{OrderStatusSedangDiantar, OrderStatusSelesai},

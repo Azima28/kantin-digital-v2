@@ -109,7 +109,7 @@ class AdminStudentStatusCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
           ),
           child: Text(
-            isActive ? 'ACTIVE' : 'BLOCKED',
+            isActive ? 'AKTIF' : 'DIBLOKIR',
             style: GoogleFonts.inter(
               fontSize: 10,
               fontWeight: FontWeight.w700,

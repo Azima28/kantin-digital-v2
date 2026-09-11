@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_colors.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
@@ -9,8 +10,10 @@ import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/utils/app_date_formatter.dart';
-import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
+import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
+import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
+import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 
 /// Bottom Sheet for viewing and managing notifications across all roles.
 class NotificationsBottomSheet extends ConsumerStatefulWidget {
@@ -58,152 +61,103 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
     }
   }
 
-  Future<void> _clearAllNotifications(BuildContext context) async {
-    showDialog(
-      context: context,
-      builder: (BuildContext ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400),
-          child: Container(
-            decoration: BoxDecoration(
-              color: context.cardBg,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: context.borderLight, width: 0.5),
-              boxShadow: [
-                BoxShadow(
-                  color: context.shadowColor,
-                  blurRadius: 24,
-                  spreadRadius: 4,
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Nebula.rose.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(CupertinoIcons.trash, color: Nebula.rose, size: 24),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Text(
-                        'Hapus Semua Notifikasi',
-                        style: GoogleFonts.inter(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: context.textPrimary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Apakah Anda yakin ingin menghapus seluruh riwayat notifikasi Anda? Tindakan ini tidak dapat dibatalkan.',
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: context.textSecondary,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: BorderSide(color: context.dividerCol),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: Text(
-                          'Batal',
-                          style: TextStyle(
-                            color: context.textPrimary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: PressScale(
-                        onTap: () async {
-                          Navigator.pop(ctx);
-                          try {
-                            final apiClient = ref.read(apiClientProvider);
-                            final res = await apiClient.delete('/student/notifications');
-                            if (res.success) {
-                              ref.invalidate(userNotificationsProvider);
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Semua notifikasi berhasil dihapus'),
-                                    backgroundColor: Nebula.teal,
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              }
-                            }
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Gagal menghapus notifikasi'),
-                                  backgroundColor: AppColors.error,
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        child: ElevatedButton(
-                          onPressed: null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Nebula.rose,
-                            disabledBackgroundColor: Nebula.rose,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: const Text(
-                            'Hapus',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+  Future<void> _deleteNotification(BuildContext context, String notifId) async {
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final res = await apiClient.delete('/student/notifications/$notifId');
+      if (res.success) {
+        ref.invalidate(userNotificationsProvider);
+        ref.invalidate(siswaNotificationsProvider);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menghapus notifikasi: $e'),
+            backgroundColor: Nebula.rose,
+            behavior: SnackBarBehavior.floating,
           ),
-        ),
-      ),
+        );
+      }
+    }
+  }
+
+  Future<void> _clearAllNotifications(BuildContext context) async {
+    final confirmed = await showAppConfirmationDialog(
+      context,
+      title: 'Hapus Semua Notifikasi',
+      message: 'Apakah Anda yakin ingin menghapus seluruh riwayat notifikasi Anda? Tindakan ini tidak dapat dibatalkan.',
+      confirmLabel: 'Hapus Semua',
+      isDestructive: true,
+      icon: CupertinoIcons.trash,
     );
+
+    if (!confirmed) return;
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final res = await apiClient.delete('/student/notifications');
+      if (res.success) {
+        ref.invalidate(userNotificationsProvider);
+        ref.invalidate(siswaNotificationsProvider);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Semua notifikasi berhasil dihapus'),
+              backgroundColor: Nebula.teal,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gagal menghapus notifikasi'),
+            backgroundColor: Nebula.rose,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   bool _isPesanan(String? type) {
     if (type == null) return false;
     final t = type.toLowerCase();
-    return t == 'purchase' || t == 'order' || t == 'refund' || t == 'topup';
+    return t == 'purchase' || t == 'order' || t == 'refund' || t == 'topup' || t == 'order_cancellation';
+  }
+
+  void _handleNotificationTap(BuildContext context, AppNotification notif) {
+    if (!notif.isRead) {
+      _markAsRead(context, notif.id);
+    }
+
+    final authState = ref.read(authNotifierProvider);
+    final role = authState.profile?['role']?.toString();
+
+    // Direct routing based on notification type and user role
+    final type = notif.type.toLowerCase();
+    Navigator.pop(context); // Close bottom sheet
+
+    if (type == 'order_cancellation' || type == 'order' || type == 'purchase') {
+      if (role == 'petugas_kantin') {
+        context.push('/pos/orders');
+      } else if (role == 'student') {
+        context.push('/student');
+      }
+    } else if (type == 'topup') {
+      if (role == 'student') {
+        context.push('/student/history');
+      } else if (role == 'petugas_keuangan') {
+        context.push('/finance/history');
+      }
+    } else if (type == 'review' || type == 'ulasan') {
+      if (role == 'petugas_kantin') {
+        context.push('/pos/orders');
+      }
+    }
   }
 
   bool _isUlasan(String? type) {
@@ -439,7 +393,11 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
                       Color iconColor;
                       Color bgColor;
 
-                      if (notif.type == 'purchase' || notif.type == 'order') {
+                      if (notif.type == 'order_cancellation') {
+                        iconData = CupertinoIcons.exclamationmark_triangle_fill;
+                        iconColor = Nebula.rose;
+                        bgColor = Nebula.rose.withValues(alpha: 0.12);
+                      } else if (notif.type == 'purchase' || notif.type == 'order') {
                         iconData = CupertinoIcons.cart;
                         iconColor = AppColors.primary;
                         bgColor = AppColors.primaryLight;
@@ -457,94 +415,137 @@ class _NotificationsBottomSheetState extends ConsumerState<NotificationsBottomSh
                         bgColor = AppColors.accentOrangeLight;
                       }
 
-                      return GestureDetector(
-                        onTap: () {
-                          if (!notif.isRead) {
-                            _markAsRead(context, notif.id);
-                          }
-                        },
-                        child: Container(
+                      return Dismissible(
+                        key: ValueKey('sheet_notif_${notif.id}'),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
                           margin: const EdgeInsets.only(bottom: 10),
-                          padding: const EdgeInsets.all(14),
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          alignment: Alignment.centerRight,
                           decoration: BoxDecoration(
-                            color: context.cardBg,
+                            color: Nebula.rose.withValues(alpha: 0.9),
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: context.borderLight,
-                              width: 0.5,
-                            ),
                           ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Icon badge
-                              Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: bgColor,
-                                ),
-                                child: Icon(
-                                  iconData,
-                                  color: iconColor,
-                                  size: 20,
-                                ),
+                          child: const Icon(CupertinoIcons.trash, color: Colors.white, size: 22),
+                        ),
+                        confirmDismiss: (direction) async {
+                          return await showAppConfirmationDialog(
+                            context,
+                            title: 'Hapus Notifikasi',
+                            message: 'Apakah Anda yakin ingin menghapus notifikasi ini?',
+                            confirmLabel: 'Hapus',
+                            isDestructive: true,
+                            icon: CupertinoIcons.trash,
+                          );
+                        },
+                        onDismissed: (direction) {
+                          _deleteNotification(context, notif.id);
+                        },
+                        child: GestureDetector(
+                          onTap: () => _handleNotificationTap(context, notif),
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: context.cardBg,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: notif.isRead ? context.borderLight : Nebula.teal.withValues(alpha: 0.3),
+                                width: notif.isRead ? 0.5 : 1.0,
                               ),
-                              const SizedBox(width: 12),
-
-                              // Info Column
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            notif.title,
-                                            style: TextStyle(
-                                              fontSize: 13.5,
-                                              fontWeight: FontWeight.w600,
-                                              color: context.textPrimary,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 3),
-                                    Text(
-                                      notif.message,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: context.textSecondary,
-                                        height: 1.3,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      timeStr,
-                                      style: TextStyle(
-                                        fontSize: 10.5,
-                                        color: context.textSecondary.withValues(alpha: 0.7),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              if (!notif.isRead)
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Icon badge
                                 Container(
-                                  width: 8,
-                                  height: 8,
-                                  margin: const EdgeInsets.only(top: 4, left: 4),
-                                  decoration: const BoxDecoration(
-                                    color: Nebula.teal,
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
                                     shape: BoxShape.circle,
+                                    color: bgColor,
+                                  ),
+                                  child: Icon(
+                                    iconData,
+                                    color: iconColor,
+                                    size: 20,
                                   ),
                                 ),
-                            ],
+                                const SizedBox(width: 12),
+
+                                // Info Column
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              notif.title,
+                                              style: TextStyle(
+                                                fontSize: 13.5,
+                                                fontWeight: FontWeight.w600,
+                                                color: context.textPrimary,
+                                              ),
+                                            ),
+                                          ),
+                                          IconButton(
+                                            icon: Icon(CupertinoIcons.trash, size: 15, color: context.textSecondary.withValues(alpha: 0.6)),
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+                                            splashRadius: 14,
+                                            tooltip: 'Hapus',
+                                            onPressed: () async {
+                                              final confirmed = await showAppConfirmationDialog(
+                                                context,
+                                                title: 'Hapus Notifikasi',
+                                                message: 'Apakah Anda yakin ingin menghapus notifikasi ini?',
+                                                confirmLabel: 'Hapus',
+                                                isDestructive: true,
+                                                icon: CupertinoIcons.trash,
+                                              );
+                                              if (confirmed && context.mounted) {
+                                                _deleteNotification(context, notif.id);
+                                              }
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        notif.message,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: context.textSecondary,
+                                          height: 1.3,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        timeStr,
+                                        style: TextStyle(
+                                          fontSize: 10.5,
+                                          color: context.textSecondary.withValues(alpha: 0.7),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                if (!notif.isRead)
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    margin: const EdgeInsets.only(top: 4, left: 4),
+                                    decoration: const BoxDecoration(
+                                      color: Nebula.teal,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
                       );

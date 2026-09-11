@@ -91,20 +91,13 @@ Future<void> showAddFinanceSheet(BuildContext context, WidgetRef ref) async {
                 ),
               ),
               const SizedBox(height: 20),
-              AdminSectionLabel('PENUGASAN SEKOLAH & WEWENANG'),
+              AdminSectionLabel('PENUGASAN SEKOLAH'),
               const SizedBox(height: 8),
               AdminDropdownRow(
                 label: 'Sekolah',
                 value: school,
                 items: [dynamicSchool],
                 onChanged: (v) => setLocal(() => school = v ?? school),
-              ),
-              const SizedBox(height: 12),
-              AdminDropdownRow(
-                label: 'Tingkat Wewenang',
-                value: authLevel,
-                items: ['L1', 'L2', 'L3'],
-                onChanged: (v) => setLocal(() => authLevel = v ?? authLevel),
               ),
               SizedBox(height: 24),
               SizedBox(

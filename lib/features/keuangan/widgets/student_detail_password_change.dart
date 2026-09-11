@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,6 +7,7 @@ import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
+import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 /// Helper class to show a password change dialog for a student profile.
 /// Used inside the keuangan student detail screen.
@@ -116,6 +118,11 @@ class _PasswordChangeDialogState extends ConsumerState<_PasswordChangeDialog> {
                   filled: true,
                   fillColor: context.surfaceBg,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  prefixIcon: Icon(
+                    CupertinoIcons.lock_fill,
+                    size: 18,
+                    color: context.textSecondary.withValues(alpha: 0.6),
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: context.dividerCol),
@@ -198,11 +205,26 @@ class _PasswordChangeDialogState extends ConsumerState<_PasswordChangeDialog> {
     final String password = _passwordController.text.trim();
     if (password.isEmpty) return;
 
+    if (password.length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Kata sandi baru minimal 8 karakter'),
+          backgroundColor: Nebula.rose,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isSaving = true);
     try {
       final apiClient = widget.ref.read(apiClientProvider);
+      final authState = widget.ref.read(authNotifierProvider);
+      final callerRole = authState.profile?['role']?.toString();
+      final prefix = (callerRole == 'petugas_keuangan') ? '/finance' : '/admin';
+
       final response = await apiClient.post(
-        '/admin/users/password',
+        '$prefix/users/password',
         body: {
           'user_id': widget.profileId,
           'new_password': password,

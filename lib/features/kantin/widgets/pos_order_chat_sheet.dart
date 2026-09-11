@@ -43,15 +43,21 @@ class _PosOrderChatSheetState extends ConsumerState<PosOrderChatSheet> {
   int _lastMessageCount = 0;
   bool _initialScrollDone = false;
   Timer? _presenceTimer;
+  Timer? _livePollingTimer;
 
   @override
   void initState() {
     super.initState();
     _markRead();
     ref.read(trackOrderPresenceProvider)(widget.order.id, 'canteen_operator');
-    _presenceTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+    _presenceTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       if (mounted) {
         ref.read(trackOrderPresenceProvider)(widget.order.id, 'canteen_operator');
+      }
+    });
+    _livePollingTimer = Timer.periodic(const Duration(milliseconds: 1800), (_) {
+      if (mounted) {
+        ref.invalidate(orderChatStreamProvider(widget.order.id));
       }
     });
   }
@@ -59,6 +65,7 @@ class _PosOrderChatSheetState extends ConsumerState<PosOrderChatSheet> {
   @override
   void dispose() {
     _presenceTimer?.cancel();
+    _livePollingTimer?.cancel();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -181,6 +188,56 @@ class _PosOrderChatSheetState extends ConsumerState<PosOrderChatSheet> {
     }
   }
 
+  Widget _buildUserAvatar(String? avatarUrl, String name, String role, HallmarkColorScheme colors) {
+    final initial = name.trim().isNotEmpty
+        ? name.trim()[0].toUpperCase()
+        : (role == 'student' ? 'S' : (role == 'admin' ? 'A' : 'P'));
+
+    final isMerchant = role == 'canteen_operator' || role == 'petugas_kantin';
+    final isAdmin = role == 'admin' || role == 'petugas_keuangan' || role == 'super_admin';
+
+    if (avatarUrl != null && avatarUrl.trim().isNotEmpty) {
+      return CircleAvatar(
+        radius: 14,
+        backgroundColor: colors.borderTactile,
+        child: ClipOval(
+          child: Image.network(
+            avatarUrl,
+            width: 28,
+            height: 28,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) =>
+                _buildFallbackAvatarCircle(initial, isMerchant, isAdmin, colors),
+          ),
+        ),
+      );
+    }
+
+    return _buildFallbackAvatarCircle(initial, isMerchant, isAdmin, colors);
+  }
+
+  Widget _buildFallbackAvatarCircle(String initial, bool isMerchant, bool isAdmin, HallmarkColorScheme colors) {
+    final bgColor = isAdmin
+        ? Colors.amber.withValues(alpha: 0.2)
+        : (isMerchant ? colors.brandPrimary.withValues(alpha: 0.15) : colors.surfaceSubtle);
+    final textColor = isAdmin
+        ? Colors.amber[900] ?? Colors.amber
+        : (isMerchant ? colors.brandPrimary : colors.textPrimary);
+
+    return CircleAvatar(
+      radius: 14,
+      backgroundColor: bgColor,
+      child: Text(
+        initial,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: textColor,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -195,6 +252,15 @@ class _PosOrderChatSheetState extends ConsumerState<PosOrderChatSheet> {
       orElse: () => <String>{},
     );
     final bool isSiswaOnline = activeRoles.contains('student');
+
+    final chatMessages = chatAsync.valueOrNull ?? const [];
+    String? studentAvatarUrl;
+    for (final m in chatMessages) {
+      if (m.isStudent && m.senderAvatarUrl != null && m.senderAvatarUrl!.isNotEmpty) {
+        studentAvatarUrl = m.senderAvatarUrl;
+        break;
+      }
+    }
 
     final Color whatsappGreenBg = isDark
         ? const Color(0xFF005C4B) // WhatsApp Dark Green
@@ -239,16 +305,35 @@ class _PosOrderChatSheetState extends ConsumerState<PosOrderChatSheet> {
                     CircleAvatar(
                       radius: 18,
                       backgroundColor: colors.brandPrimary,
-                      child: Text(
-                        widget.order.studentName.isNotEmpty
-                            ? widget.order.studentName[0].toUpperCase()
-                            : 'S',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: studentAvatarUrl != null && studentAvatarUrl.isNotEmpty
+                          ? ClipOval(
+                              child: Image.network(
+                                studentAvatarUrl,
+                                width: 36,
+                                height: 36,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Text(
+                                  widget.order.studentName.isNotEmpty
+                                      ? widget.order.studentName[0].toUpperCase()
+                                      : 'S',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Text(
+                              widget.order.studentName.isNotEmpty
+                                  ? widget.order.studentName[0].toUpperCase()
+                                  : 'S',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                     Positioned(
                       bottom: 0,
@@ -379,84 +464,110 @@ class _PosOrderChatSheetState extends ConsumerState<PosOrderChatSheet> {
                     final bool isAdminSender = msg.isAdmin || msg.senderRole == 'admin' || msg.senderRole == 'petugas_keuangan';
                     final timeStr = AppDateFormatter.formatTime(msg.createdAt);
 
-                    return Align(
-                      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                      child: Container(
-                        margin: EdgeInsets.only(
-                          top: 4,
-                          bottom: 4,
-                          left: isMe ? 48 : 0,
-                          right: isMe ? 0 : 48,
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: isMe ? whatsappGreenBg : colors.surfaceSubtle,
-                          borderRadius: BorderRadius.only(
-                            topLeft: const Radius.circular(16),
-                            topRight: const Radius.circular(16),
-                            bottomLeft: Radius.circular(isMe ? 16 : 4),
-                            bottomRight: Radius.circular(isMe ? 4 : 16),
-                          ),
-                          border: isMe
-                              ? Border.all(color: colors.statusSuccess.withValues(alpha: 0.2), width: 0.5)
-                              : Border.all(color: colors.borderTactile, width: 0.5),
-                        ),
-                        child: Column(
-                          crossAxisAlignment:
-                              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                          children: [
-                            if (isAdminSender) ...[
-                              Container(
-                                margin: const EdgeInsets.only(bottom: 4),
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Colors.amber.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: Colors.amber.withValues(alpha: 0.4), width: 0.5),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (!isMe) ...[
+                            _buildUserAvatar(msg.senderAvatarUrl, msg.senderName, msg.senderRole, colors),
+                            const SizedBox(width: 8),
+                          ],
+                          Flexible(
+                            child: Container(
+                              constraints: BoxConstraints(
+                                maxWidth: MediaQuery.of(context).size.width * 0.72,
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: isMe ? whatsappGreenBg : colors.surfaceSubtle,
+                                borderRadius: BorderRadius.only(
+                                  topLeft: const Radius.circular(16),
+                                  topRight: const Radius.circular(16),
+                                  bottomLeft: Radius.circular(isMe ? 16 : 4),
+                                  bottomRight: Radius.circular(isMe ? 4 : 16),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.verified_user_rounded, size: 10, color: Colors.amber),
-                                    const SizedBox(width: 3),
+                                border: isMe
+                                    ? Border.all(color: colors.statusSuccess.withValues(alpha: 0.2), width: 0.5)
+                                    : Border.all(color: colors.borderTactile, width: 0.5),
+                              ),
+                              child: Column(
+                                crossAxisAlignment:
+                                    isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                                children: [
+                                  if (!isMe && msg.senderName.isNotEmpty) ...[
                                     Text(
-                                      'PETUGAS KEUANGAN / ADMIN',
+                                      msg.senderName,
                                       style: GoogleFonts.inter(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.amber[900] ?? Colors.amber,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: isAdminSender
+                                            ? (Colors.amber[900] ?? Colors.amber)
+                                            : (msg.isStudent ? colors.brandPrimary : colors.textPrimary),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                  ],
+                                  if (isAdminSender) ...[
+                                    Container(
+                                      margin: const EdgeInsets.only(bottom: 4),
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.amber.withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: Colors.amber.withValues(alpha: 0.4), width: 0.5),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.verified_user_rounded, size: 10, color: Colors.amber),
+                                          const SizedBox(width: 3),
+                                          Text(
+                                            'PETUGAS KEUANGAN / ADMIN',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.amber[900] ?? Colors.amber,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
-                                ),
-                              ),
-                            ],
-                            Text(
-                              msg.message,
-                              style: HallmarkTypography.bodyMain(
-                                isMe ? whatsappTextColor : colors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  timeStr,
-                                  style: HallmarkTypography.bodySmall(
-                                    isMe
-                                        ? (isDark ? Colors.white70 : colors.textMuted)
-                                        : colors.textMuted,
-                                  ).copyWith(fontSize: 10),
-                                ),
-                                if (isMe) ...[
-                                  const SizedBox(width: 4),
-                                  _buildWhatsAppTick(msg, isDark, isSiswaOnline),
+                                  Text(
+                                    msg.message,
+                                    style: HallmarkTypography.bodyMain(
+                                      isMe ? whatsappTextColor : colors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        timeStr,
+                                        style: HallmarkTypography.bodySmall(
+                                          isMe
+                                              ? (isDark ? Colors.white70 : colors.textMuted)
+                                              : colors.textMuted,
+                                        ).copyWith(fontSize: 10),
+                                      ),
+                                      if (isMe) ...[
+                                        const SizedBox(width: 4),
+                                        _buildWhatsAppTick(msg, isDark, isSiswaOnline),
+                                      ],
+                                    ],
+                                  ),
                                 ],
-                              ],
+                              ),
                             ),
+                          ),
+                          if (isMe) ...[
+                            const SizedBox(width: 8),
+                            _buildUserAvatar(msg.senderAvatarUrl, msg.senderName, msg.senderRole, colors),
                           ],
-                        ),
+                        ],
                       ),
                     );
                   },

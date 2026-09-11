@@ -90,49 +90,118 @@ class NfcSimulationInput extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Preset Kartu Terdaftar:',
+            'Preset Kartu Terdaftar (Uji Coba):',
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.bold,
               color: context.textSecondary,
             ),
           ),
-          const SizedBox(height: 6),
-          GestureDetector(
-            onTap: () {
-              controller.text = '04:A3:F8:12';
-              ref.read(nfcPaymentProvider.notifier).simulateTagTap('04:A3:F8:12', totalAmount);
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Nebula.teal.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(
-                      CupertinoIcons.person_fill,
-                      size: 14,
-                      color: Nebula.teal,
-                    ),
-                    SizedBox(width: 6),
-                    Text(
-                      'Ahmad Subarjo (04:A3:F8:12)',
-                      style: TextStyle(
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  controller.text = '04:18:7D:CA:C1:21:90';
+                  ref.read(nfcPaymentProvider.notifier).simulateTagTap('04:18:7D:CA:C1:21:90', totalAmount);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: Nebula.teal.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Nebula.teal.withValues(alpha: 0.2)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(
+                        CupertinoIcons.person_fill,
+                        size: 13,
                         color: Nebula.teal,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
                       ),
-                    ),
-                  ],
+                      SizedBox(width: 5),
+                      Text(
+                        'Ahmad Subarjo (Aktif)',
+                        style: TextStyle(
+                          color: Nebula.teal,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
+              GestureDetector(
+                onTap: () {
+                  controller.text = '04:F4:1B:CA:C1:21:90';
+                  ref.read(nfcPaymentProvider.notifier).simulateTagTap('04:F4:1B:CA:C1:21:90', totalAmount);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: Nebula.teal.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Nebula.teal.withValues(alpha: 0.2)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(
+                        CupertinoIcons.person_fill,
+                        size: 13,
+                        color: Nebula.teal,
+                      ),
+                      SizedBox(width: 5),
+                      Text(
+                        'Ahmad Fauzi (Aktif)',
+                        style: TextStyle(
+                          color: Nebula.teal,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  controller.text = '11:22:33:44';
+                  ref.read(nfcPaymentProvider.notifier).simulateTagTap('11:22:33:44', totalAmount);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: Nebula.rose.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Nebula.rose.withValues(alpha: 0.2)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(
+                        CupertinoIcons.xmark_shield_fill,
+                        size: 13,
+                        color: Nebula.rose,
+                      ),
+                      SizedBox(width: 5),
+                      Text(
+                        'Kartu Tidak Terdaftar',
+                        style: TextStyle(
+                          color: Nebula.rose,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

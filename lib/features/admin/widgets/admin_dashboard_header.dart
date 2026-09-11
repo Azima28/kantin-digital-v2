@@ -22,7 +22,7 @@ class AdminDashboardHeader extends StatelessWidget {
           ),
         ),
         Text(
-          'Pusat kendali real-time.',
+          'Pusat kendali waktu nyata.',
           style: GoogleFonts.inter(
             fontSize: 15,
             fontWeight: FontWeight.w400,

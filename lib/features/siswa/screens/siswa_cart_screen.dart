@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
+import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/core/widgets/nebula_components.dart';
@@ -101,6 +102,51 @@ class _SiswaCartScreenState extends ConsumerState<SiswaCartScreen> {
             );
       },
     );
+  }
+
+  Future<void> _handleCheckout(int totalAmount) async {
+    final student = ref.read(siswaStudentProvider).value;
+    if (student != null) {
+      // 1. Validasi saldo akun mencukupi
+      if (student.balance < totalAmount) {
+        final goToTopup = await showAppConfirmationDialog(
+          context,
+          title: 'Saldo Tidak Mencukupi',
+          message:
+              'Saldo akun Anda saat ini (${CurrencyFormatter.format(student.balance)}) tidak mencukupi untuk melakukan pembayaran sebesar ${CurrencyFormatter.format(totalAmount)}.\n\nApakah Anda ingin mengisi saldo (top up) sekarang?',
+          confirmLabel: 'Top Up Saldo',
+          cancelLabel: 'Tutup',
+          icon: Icons.account_balance_wallet_outlined,
+          confirmColor: Nebula.teal,
+        );
+        if (goToTopup && mounted) {
+          context.push('/student/topup');
+        }
+        return;
+      }
+
+      // 2. Validasi batas saku harian
+      if (student.hasDailyLimit) {
+        final remainingLimit = student.remainingDailyLimit;
+        if (totalAmount > remainingLimit) {
+          await showAppAlertDialog(
+            context,
+            title: 'Melebihi Batas Saku Harian',
+            message:
+                'Total pesanan belanja Anda (${CurrencyFormatter.format(totalAmount)}) melebihi batas saku harian yang telah diatur oleh orang tua.\n\n'
+                '• Batas Saku Harian: ${CurrencyFormatter.format(student.dailyLimit!)}\n'
+                '• Terpakai Hari Ini: ${CurrencyFormatter.format(student.todaySpent)}\n'
+                '• Sisa Batas Hari Ini: ${CurrencyFormatter.format(remainingLimit)}',
+            buttonLabel: 'Mengerti',
+            icon: Icons.warning_amber_rounded,
+            isDestructive: true,
+          );
+          return;
+        }
+      }
+    }
+
+    _showPinDialog(totalAmount);
   }
 
   void _showPinDialog(int totalAmount) {
@@ -221,6 +267,22 @@ class _SiswaCartScreenState extends ConsumerState<SiswaCartScreen> {
                                           );
                                     },
                                     onIncrease: () {
+                                      final student = ref.read(siswaStudentProvider).value;
+                                      if (student != null && student.hasDailyLimit) {
+                                        final nextTotal = cart.totalAmount + item.price;
+                                        if (nextTotal > student.remainingDailyLimit) {
+                                          showAppAlertDialog(
+                                            context,
+                                            title: 'Batas Saku Terlampaui',
+                                            message:
+                                                'Menambah porsi item ini akan membuat total belanja (${CurrencyFormatter.format(nextTotal)}) melebihi sisa batas saku harian Anda (${CurrencyFormatter.format(student.remainingDailyLimit)}).',
+                                            buttonLabel: 'Mengerti',
+                                            icon: Icons.warning_amber_rounded,
+                                            isDestructive: true,
+                                          );
+                                          return;
+                                        }
+                                      }
                                       ref.read(studentCartProvider.notifier).increaseQuantity(
                                             item.productId,
                                             selectedOptions: item.selectedOptions,
@@ -415,6 +477,113 @@ class _SiswaCartScreenState extends ConsumerState<SiswaCartScreen> {
               ),
             ],
           ),
+
+          // Info Saldo & Batas Saku Siswa
+          Consumer(
+            builder: (context, ref, child) {
+              final student = ref.watch(siswaStudentProvider).value;
+              if (student == null) return const SizedBox.shrink();
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 12),
+                  Divider(height: 1, thickness: 1.0, color: context.dividerCol),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Saldo Akun Anda',
+                        style: GoogleFonts.inter(fontSize: 12.5, color: context.textSecondary),
+                      ),
+                      Text(
+                        CurrencyFormatter.format(student.balance),
+                        style: GoogleFonts.inter(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: student.balance < cart.totalAmount ? Nebula.rose : Nebula.teal,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (student.hasDailyLimit) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Sisa Batas Saku Hari Ini',
+                          style: GoogleFonts.inter(fontSize: 12.5, color: context.textSecondary),
+                        ),
+                        Text(
+                          CurrencyFormatter.format(student.remainingDailyLimit),
+                          style: GoogleFonts.inter(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: cart.totalAmount > student.remainingDailyLimit ? Nebula.rose : const Color(0xFF10B981),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (student.balance < cart.totalAmount) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Nebula.rose.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Nebula.rose.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline_rounded, color: Nebula.rose, size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Saldo tidak mencukupi untuk tagihan ini (kurang ${CurrencyFormatter.format(cart.totalAmount - student.balance)}).',
+                              style: GoogleFonts.inter(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: Nebula.rose,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else if (student.hasDailyLimit && cart.totalAmount > student.remainingDailyLimit) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.shade900.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.amber.shade800.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.warning_amber_rounded, color: Colors.amber.shade900, size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Tagihan melebihi sisa batas saku harian Anda (lebih ${CurrencyFormatter.format(cart.totalAmount - student.remainingDailyLimit)}).',
+                              style: GoogleFonts.inter(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.amber.shade900,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            },
+          ),
         ],
       ),
     );
@@ -547,7 +716,7 @@ class _SiswaCartScreenState extends ConsumerState<SiswaCartScreen> {
             height: 48,
             child: PressScale(
               scale: 0.98,
-              onTap: () => _showPinDialog(cart.totalAmount),
+              onTap: () => _handleCheckout(cart.totalAmount),
               child: Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFF10B981),
@@ -834,6 +1003,16 @@ class _StudentPinPaymentModalState
         throw Exception('User tidak terautentikasi.');
       }
 
+      // Verifikasi PIN ke endpoint /student/verify-pin
+      final pinVerifyResponse = await apiClient.post(
+        '/student/verify-pin',
+        body: {'pin': pin.trim()},
+      );
+
+      if (!pinVerifyResponse.success) {
+        throw Exception(pinVerifyResponse.message ?? 'PIN yang Anda masukkan salah.');
+      }
+
       setState(() {
         _statusText = 'Memproses Pembayaran...';
       });
@@ -895,11 +1074,21 @@ class _StudentPinPaymentModalState
       }
     } catch (e) {
       if (mounted) {
+        final cleanMsg = e.toString().replaceAll('Exception:', '').trim();
         setState(() {
           _isLoading = false;
-          _errorMessage = e.toString().replaceAll('Exception:', '').trim();
+          _errorMessage = cleanMsg;
           _statusText = 'Gagal Memproses';
         });
+
+        await showAppAlertDialog(
+          context,
+          title: 'Pembayaran Ditolak',
+          message: cleanMsg,
+          buttonLabel: 'Tutup',
+          icon: Icons.error_outline_rounded,
+          isDestructive: true,
+        );
       }
     }
   }
@@ -992,6 +1181,54 @@ class _StudentPinPaymentModalState
             ),
           ],
           const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'PIN Transaksi:',
+                style: GoogleFonts.inter(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: context.textPrimary,
+                ),
+              ),
+              InkWell(
+                onTap: _isLoading
+                    ? null
+                    : () {
+                        setState(() {
+                          _pinController.text = '123456';
+                          _errorMessage = null;
+                        });
+                      },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Nebula.teal.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Nebula.teal.withValues(alpha: 0.3), width: 0.8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(CupertinoIcons.number_square, size: 12, color: Nebula.teal),
+                      const SizedBox(width: 4),
+                      Text(
+                        'PIN Bawaan (123456)',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Nebula.teal,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
           TextField(
             controller: _pinController,
             keyboardType: TextInputType.number,

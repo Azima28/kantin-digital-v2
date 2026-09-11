@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/models/models.dart';
@@ -276,7 +277,7 @@ class _AdminFinanceLedgerScreenState
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'Hari Ini: Inflow +${fmt.format(totalTodayInflow)}',
+                                  'Hari Ini: Masuk +${fmt.format(totalTodayInflow)}',
                                   style: GoogleFonts.inter(
                                     fontSize: 10.5,
                                     fontWeight: FontWeight.w600,
@@ -284,7 +285,7 @@ class _AdminFinanceLedgerScreenState
                                   ),
                                 ),
                                 Text(
-                                  'Outflow -${fmt.format(totalTodayOutflow)}',
+                                  'Keluar -${fmt.format(totalTodayOutflow)}',
                                   style: GoogleFonts.inter(
                                     fontSize: 10.5,
                                     fontWeight: FontWeight.w600,
@@ -874,6 +875,8 @@ class _MasterLedgerExportModal extends StatefulWidget {
 class _MasterLedgerExportModalState extends State<_MasterLedgerExportModal> {
   int _selectedFormat = 0; // 0: PDF, 1: Excel
   int _filterIndex = 0; // 0: Semua Petugas, 1: Hanya Petugas Aktif
+  int _selectedPeriodIndex = 0; // 0: Hari Ini, 1: 7 Hari Terakhir, 2: Bulan Ini, 3: Semua Waktu, 4: Kustom
+  DateTimeRange? _customDateRange;
   bool _isExporting = false;
 
   final _fmt = const AppNumberFormat(symbol: 'Rp ');
@@ -885,33 +888,124 @@ class _MasterLedgerExportModalState extends State<_MasterLedgerExportModal> {
     return widget.officers;
   }
 
-  Future<void> _handleDownload() async {
+  String _getPeriodLabel() {
+    final now = DateTime.now();
+    switch (_selectedPeriodIndex) {
+      case 0:
+        return 'Hari Ini (${DateFormat('d MMM yyyy', 'id_ID').format(now)})';
+      case 1:
+        final start = now.subtract(const Duration(days: 6));
+        return '7 Hari Terakhir (${DateFormat('d MMM', 'id_ID').format(start)} - ${DateFormat('d MMM yyyy', 'id_ID').format(now)})';
+      case 2:
+        return 'Bulan Ini (${DateFormat('MMMM yyyy', 'id_ID').format(now)})';
+      case 3:
+        return 'Semua Waktu (Akumulasi)';
+      case 4:
+        if (_customDateRange != null) {
+          return '${DateFormat('d MMM yyyy', 'id_ID').format(_customDateRange!.start)} - ${DateFormat('d MMM yyyy', 'id_ID').format(_customDateRange!.end)}';
+        }
+        return 'Rentang Kustom';
+      default:
+        return 'Semua Waktu';
+    }
+  }
+
+  Future<void> _pickCustomDateRange() async {
+    final now = DateTime.now();
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(now.year - 2),
+      lastDate: DateTime(now.year + 1),
+      initialDateRange: _customDateRange ??
+          DateTimeRange(
+            start: now.subtract(const Duration(days: 7)),
+            end: now,
+          ),
+      builder: (ctx, child) {
+        return Theme(
+          data: Theme.of(ctx).copyWith(
+            colorScheme: Theme.of(ctx).colorScheme.copyWith(
+                  primary: Nebula.teal,
+                  onPrimary: Colors.white,
+                ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        _customDateRange = picked;
+        _selectedPeriodIndex = 4;
+      });
+    }
+  }
+
+  (int inflow, int outflow, int net, List<FinanceOfficerLedgerItem> officers) _calculateTotalsAndOfficers() {
     final filtered = _getFilteredOfficers();
     int inflow = 0;
     int outflow = 0;
-    for (final o in filtered) {
-      inflow += o.totalCashInflow;
-      outflow += o.totalCashOutflow;
-    }
+
+    final exportOfficers = filtered.map((o) {
+      if (_selectedPeriodIndex == 0) {
+        // Mode Hari Ini
+        inflow += o.todayCashInflow;
+        outflow += o.todayCashOutflow;
+        return FinanceOfficerLedgerItem(
+          id: o.id,
+          fullName: o.fullName,
+          email: o.email,
+          username: o.username,
+          phoneNumber: o.phoneNumber,
+          isActive: o.isActive,
+          avatarUrl: o.avatarUrl,
+          assignedSchool: o.assignedSchool,
+          authorityLevel: o.authorityLevel,
+          totalCashInflow: o.todayCashInflow,
+          totalCashOutflow: o.todayCashOutflow,
+          netCashHandled: o.todayNetCash,
+          totalTransactions: o.todayTxCount,
+          todayCashInflow: o.todayCashInflow,
+          todayCashOutflow: o.todayCashOutflow,
+          todayNetCash: o.todayNetCash,
+          todayTxCount: o.todayTxCount,
+          createdAt: o.createdAt,
+        );
+      } else {
+        // Mode Kumulatif / Rentang Waktu
+        inflow += o.totalCashInflow;
+        outflow += o.totalCashOutflow;
+        return o;
+      }
+    }).toList();
+
     final net = inflow - outflow;
+    return (inflow, outflow, net, exportOfficers);
+  }
+
+  Future<void> _handleDownload() async {
+    final (inflow, outflow, net, exportOfficers) = _calculateTotalsAndOfficers();
+    final periodStr = _getPeriodLabel();
 
     setState(() => _isExporting = true);
     try {
       if (_selectedFormat == 0) {
         // Ekspor PDF
         await ReportExportService.downloadMasterOfficersLedgerPdf(
-          officers: filtered,
+          officers: exportOfficers,
           totalInflow: inflow,
           totalOutflow: outflow,
           totalNet: net,
+          period: periodStr,
         );
       } else {
         // Ekspor Excel
         await ReportExportService.downloadMasterOfficersLedgerExcel(
-          officers: filtered,
+          officers: exportOfficers,
           totalInflow: inflow,
           totalOutflow: outflow,
           totalNet: net,
+          period: periodStr,
         );
       }
       if (mounted) {
@@ -945,11 +1039,7 @@ class _MasterLedgerExportModalState extends State<_MasterLedgerExportModal> {
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _getFilteredOfficers();
-    int currentNet = 0;
-    for (final o in filtered) {
-      currentNet += o.netCashHandled;
-    }
+    final (inflow, outflow, net, exportOfficers) = _calculateTotalsAndOfficers();
 
     return Container(
       decoration: BoxDecoration(
@@ -1063,9 +1153,102 @@ class _MasterLedgerExportModalState extends State<_MasterLedgerExportModal> {
           ),
           const SizedBox(height: 18),
 
-          // ─── 2. Filter Cakupan Petugas ───
+          // ─── 2. Rentang Waktu / Periode ───
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '2. RENTANG WAKTU / PERIODE',
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: context.textSecondary,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              if (_selectedPeriodIndex == 4)
+                InkWell(
+                  onTap: _pickCustomDateRange,
+                  child: Text(
+                    'Ubah Tanggal',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Nebula.teal,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildPeriodChip(
+                  label: 'Hari Ini',
+                  isSelected: _selectedPeriodIndex == 0,
+                  onTap: () => setState(() => _selectedPeriodIndex = 0),
+                ),
+                const SizedBox(width: 8),
+                _buildPeriodChip(
+                  label: '7 Hari',
+                  isSelected: _selectedPeriodIndex == 1,
+                  onTap: () => setState(() => _selectedPeriodIndex = 1),
+                ),
+                const SizedBox(width: 8),
+                _buildPeriodChip(
+                  label: 'Bulan Ini',
+                  isSelected: _selectedPeriodIndex == 2,
+                  onTap: () => setState(() => _selectedPeriodIndex = 2),
+                ),
+                const SizedBox(width: 8),
+                _buildPeriodChip(
+                  label: 'Semua Waktu',
+                  isSelected: _selectedPeriodIndex == 3,
+                  onTap: () => setState(() => _selectedPeriodIndex = 3),
+                ),
+                const SizedBox(width: 8),
+                _buildPeriodChip(
+                  label: _customDateRange == null
+                      ? 'Pilih Rentang...'
+                      : '${DateFormat('d/M').format(_customDateRange!.start)} - ${DateFormat('d/M').format(_customDateRange!.end)}',
+                  icon: CupertinoIcons.calendar,
+                  isSelected: _selectedPeriodIndex == 4,
+                  onTap: _pickCustomDateRange,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: Nebula.teal.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Nebula.teal.withValues(alpha: 0.2), width: 0.6),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(CupertinoIcons.calendar_today, size: 12, color: Nebula.teal),
+                const SizedBox(width: 6),
+                Text(
+                  _getPeriodLabel(),
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Nebula.teal,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          // ─── 3. Filter Cakupan Petugas ───
           Text(
-            '2. CAKUPAN PETUGAS',
+            '3. CAKUPAN PETUGAS',
             style: GoogleFonts.inter(
               fontSize: 11,
               fontWeight: FontWeight.bold,
@@ -1096,7 +1279,7 @@ class _MasterLedgerExportModalState extends State<_MasterLedgerExportModal> {
           ),
           const SizedBox(height: 18),
 
-          // ─── 3. Ringkasan Data Yang Akan Diekspor ───
+          // ─── 4. Ringkasan Data Yang Akan Diekspor ───
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -1104,52 +1287,56 @@ class _MasterLedgerExportModalState extends State<_MasterLedgerExportModal> {
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: context.dividerCol, width: 0.6),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Total Kas Disertakan:',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: context.textSecondary,
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Total Kas Disertakan:',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: context.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _fmt.format(net),
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Nebula.teal,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _fmt.format(currentNet),
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Nebula.teal,
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Nebula.teal.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${exportOfficers.length} Petugas',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Nebula.teal,
+                        ),
                       ),
                     ),
                   ],
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Nebula.teal.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '${filtered.length} Petugas',
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: Nebula.teal,
-                    ),
-                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 20),
 
-          // ─── 4. Tombol Aksi Download ───
+          // ─── 5. Tombol Aksi Download ───
           SizedBox(
             width: double.infinity,
             height: 48,
@@ -1185,6 +1372,51 @@ class _MasterLedgerExportModalState extends State<_MasterLedgerExportModal> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPeriodChip({
+    required String label,
+    IconData? icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Nebula.teal : context.surfaceBg,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? Nebula.teal : context.dividerCol,
+            width: isSelected ? 1.2 : 0.6,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 13,
+                color: isSelected ? Colors.white : context.textSecondary,
+              ),
+              const SizedBox(width: 5),
+            ],
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected ? Colors.white : context.textPrimary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

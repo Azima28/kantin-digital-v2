@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
@@ -21,7 +22,16 @@ void showEditFinanceSheet(
 ) {
   final dynamicSchool = ref.read(academicStructureProvider).valueOrNull?.schoolName ?? 'Sekolah Digital';
   final nameCtrl = TextEditingController(text: profile.fullName);
-  final phoneCtrl = TextEditingController(text: profile.phoneNumber);
+  String cleanPhone = (profile.phoneNumber ?? '').trim().replaceAll(' ', '').replaceAll('-', '');
+  if (cleanPhone.startsWith('+62')) {
+    cleanPhone = cleanPhone.substring(3);
+  } else if (cleanPhone.startsWith('62')) {
+    cleanPhone = cleanPhone.substring(2);
+  } else if (cleanPhone.startsWith('0')) {
+    cleanPhone = cleanPhone.substring(1);
+  }
+  cleanPhone = cleanPhone.replaceAll(RegExp(r'[^0-9]'), '');
+  final phoneCtrl = TextEditingController(text: cleanPhone);
   final emailCtrl = TextEditingController(text: profile.email);
   final usernameCtrl = TextEditingController(text: profile.username);
   String school = officer.assignedSchool.isNotEmpty && officer.assignedSchool != 'SMP Terpadu'
@@ -77,8 +87,48 @@ void showEditFinanceSheet(
               const SizedBox(height: 12),
               AdminFormTextField(
                 controller: phoneCtrl,
-                hintText: 'Nomor HP *',
+                hintText: '81234567890 *',
                 inputType: TextInputType.phone,
+                prefix: Container(
+                  padding: const EdgeInsets.only(left: 14, right: 10),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '+62',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Nebula.teal,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 1,
+                        height: 18,
+                        color: context.dividerCol,
+                      ),
+                    ],
+                  ),
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                onChanged: (val) {
+                  if (val.startsWith('0')) {
+                    final stripped = val.replaceFirst(RegExp(r'^0+'), '');
+                    phoneCtrl.value = TextEditingValue(
+                      text: stripped,
+                      selection: TextSelection.collapsed(offset: stripped.length),
+                    );
+                  } else if (val.startsWith('62')) {
+                    final stripped = val.replaceFirst(RegExp(r'^62'), '');
+                    phoneCtrl.value = TextEditingValue(
+                      text: stripped,
+                      selection: TextSelection.collapsed(offset: stripped.length),
+                    );
+                  }
+                },
               ),
               const SizedBox(height: 12),
               AdminFormTextField(
@@ -91,20 +141,13 @@ void showEditFinanceSheet(
               const SizedBox(height: 8),
               AdminFormTextField(controller: usernameCtrl, hintText: 'Username *'),
               const SizedBox(height: 20),
-              AdminSectionLabel('PENUGASAN SEKOLAH & WEWENANG'),
+              AdminSectionLabel('PENUGASAN SEKOLAH'),
               const SizedBox(height: 8),
               AdminDropdownRow(
                 label: 'Sekolah',
                 value: school,
                 items: [dynamicSchool, if (school != dynamicSchool) school],
                 onChanged: (v) => setLocal(() => school = v ?? school),
-              ),
-              const SizedBox(height: 12),
-              AdminDropdownRow(
-                label: 'Tingkat Otoritas',
-                value: authLevel,
-                items: const ['L1', 'L2', 'L3'],
-                onChanged: (v) => setLocal(() => authLevel = v ?? authLevel),
               ),
               SizedBox(height: 24),
               SizedBox(
@@ -119,7 +162,8 @@ void showEditFinanceSheet(
                       ? null
                       : () async {
                           final name = nameCtrl.text.trim();
-                          final phone = phoneCtrl.text.trim();
+                          final cleanDigits = phoneCtrl.text.trim().replaceAll(RegExp(r'[^0-9]'), '');
+                          final phone = cleanDigits.isNotEmpty ? '+62$cleanDigits' : '';
                           final email = emailCtrl.text.trim();
                           final username = usernameCtrl.text.trim();
 

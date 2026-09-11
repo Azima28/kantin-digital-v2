@@ -1136,7 +1136,7 @@ class ReportExportService {
       ['Total Uang Keluar (Outflow)', 'Pencairan Kas Stan (Payout)', _currencyFmt.format(totalOutflow)],
       ['Kas Fisik di Tangan Petugas', 'Net Uang Tunai di Laci Kasir', _currencyFmt.format(netCash)],
       ['Total Transaksi Jurnal', 'Frekuensi Mutasi Periode Ini', '${journals.length} Transaksi'],
-      ['Status Petugas', 'Otoritas ${officer.authorityLevel}', officer.isActive ? 'AKTIF' : 'NONAKTIF'],
+      ['Status Petugas', 'Petugas Keuangan', officer.isActive ? 'AKTIF' : 'NONAKTIF'],
     ];
 
     for (int i = 0; i < summaryRows.length; i++) {
@@ -1399,9 +1399,9 @@ class ReportExportService {
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text('OTORITAS / STATUS:', style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: subtleText)),
+                      pw.Text('STATUS AKUN:', style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: subtleText)),
                       pw.SizedBox(height: 2),
-                      pw.Text('${officer.authorityLevel} | ${officer.isActive ? "AKTIF" : "NONAKTIF"}', style: boldStyle.copyWith(fontSize: 10, color: primaryTeal)),
+                      pw.Text(officer.isActive ? "AKTIF" : "NONAKTIF", style: boldStyle.copyWith(fontSize: 10, color: primaryTeal)),
                     ],
                   ),
                 ],
@@ -1556,7 +1556,7 @@ class ReportExportService {
                     pw.Text('Petugas Loket Kasir,', style: baseStyle),
                     pw.SizedBox(height: 40),
                     pw.Text('( ${officer.fullName} )', style: boldStyle),
-                    pw.Text('NIP / Otoritas ${officer.authorityLevel}', style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: subtleText)),
+                    pw.Text('Petugas Keuangan Sekolah', style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: subtleText)),
                   ],
                 ),
                 pw.Column(
@@ -1618,7 +1618,6 @@ class ReportExportService {
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
     buffer.writeln('👤 *Petugas:* ${officer.fullName}');
     buffer.writeln('🏫 *Sekolah:* ${officer.assignedSchool}');
-    buffer.writeln('🛡️ *Otoritas:* Level ${officer.authorityLevel}');
     buffer.writeln('📅 *Periode:* $period');
     buffer.writeln('⏰ *Waktu Cetak:* ${AppDateFormatter.formatFullDateWithTime(DateTime.now())}');
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
@@ -1843,9 +1842,9 @@ class ReportExportService {
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text('WEWENANG / SHIFT:', style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: subtleText)),
+                      pw.Text('SESI SHIFT:', style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: subtleText)),
                       pw.SizedBox(height: 2),
-                      pw.Text('Shift #$shiftNumber (Level $authorityLevel)', style: boldStyle.copyWith(fontSize: 10, color: primaryTeal)),
+                      pw.Text('Shift #$shiftNumber', style: boldStyle.copyWith(fontSize: 10, color: primaryTeal)),
                       if (startedAtStr != null)
                         pw.Text('Aktif sejak: $startedAtStr', style: pw.TextStyle(font: ttfRegular, fontSize: 7, color: subtleText)),
                     ],
@@ -2066,7 +2065,7 @@ class ReportExportService {
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
     buffer.writeln('👤 *Petugas Kasir:* $officerName');
     buffer.writeln('🏫 *Sekolah:* $schoolName');
-    buffer.writeln('🛡️ *Sesi Shift:* Shift #$shiftNumber (Level $authorityLevel)');
+    buffer.writeln('🛡️ *Sesi Shift:* Shift #$shiftNumber');
     if (startedAtStr != null) {
       buffer.writeln('⏰ *Aktif Sejak:* $startedAtStr');
     }
@@ -2127,6 +2126,7 @@ class ReportExportService {
     required int totalInflow,
     required int totalOutflow,
     required int totalNet,
+    String period = 'Semua Waktu (Akumulasi)',
   }) async {
     final excel = Excel.createExcel();
     final Sheet masterSheet = excel['Rekap Seluruh Petugas'];
@@ -2235,15 +2235,18 @@ class ReportExportService {
     masterSheet.setColumnWidth(6, 28.0);
     masterSheet.setColumnWidth(7, 16.0);
 
-    // Row 0-2: Title & Metadata
+    // Row 0-3: Title & Metadata
     masterSheet.appendRow([TextCellValue('REKAPITULASI BUKU KAS SELURUH PETUGAS KEUANGAN')]);
     masterSheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0)).cellStyle = titleStyle;
 
-    masterSheet.appendRow([TextCellValue('Waktu Ekspor: ${AppDateFormatter.formatFullDateWithTime(DateTime.now())} WIB')]);
+    masterSheet.appendRow([TextCellValue('Periode Rekap: $period')]);
     masterSheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 1)).cellStyle = metaStyle;
 
-    masterSheet.appendRow([TextCellValue('Total Petugas Terdaftar: ${officers.length} Petugas')]);
+    masterSheet.appendRow([TextCellValue('Waktu Ekspor: ${AppDateFormatter.formatFullDateWithTime(DateTime.now())} WIB')]);
     masterSheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 2)).cellStyle = metaStyle;
+
+    masterSheet.appendRow([TextCellValue('Total Petugas Terdaftar: ${officers.length} Petugas')]);
+    masterSheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 3)).cellStyle = metaStyle;
 
     masterSheet.appendRow([TextCellValue('')]);
 
@@ -2254,7 +2257,7 @@ class ReportExportService {
       TextCellValue(''),
       TextCellValue(''),
     ]);
-    masterSheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 4)).cellStyle = sectionHeaderStyle;
+    masterSheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 5)).cellStyle = sectionHeaderStyle;
 
     masterSheet.appendRow([
       TextCellValue('Total Uang Masuk (+ Top-Up Tunai)'),
@@ -2367,6 +2370,7 @@ class ReportExportService {
     required int totalInflow,
     required int totalOutflow,
     required int totalNet,
+    String period = 'Semua Waktu (Akumulasi)',
   }) async {
     final pdf = pw.Document();
     final printDateStr = AppDateFormatter.formatFullDateWithTime(DateTime.now());
@@ -2457,6 +2461,24 @@ class ReportExportService {
                           fontSize: 9,
                           color: const PdfColor.fromInt(0xFFCCFBF1),
                           letterSpacing: 0.5,
+                        ),
+                      ),
+                      pw.SizedBox(height: 4),
+                      pw.Container(
+                        padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: pw.BoxDecoration(
+                          color: const PdfColor.fromInt(0xFF0F766E),
+                          borderRadius: pw.BorderRadius.circular(4),
+                          border: pw.Border.all(color: const PdfColor.fromInt(0xFF2DD4BF), width: 0.5),
+                        ),
+                        child: pw.Text(
+                          'PERIODE: $period',
+                          style: pw.TextStyle(
+                            font: ttfBold,
+                            fontSize: 7.5,
+                            color: const PdfColor.fromInt(0xFF5EEAD4),
+                            fontWeight: pw.FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],

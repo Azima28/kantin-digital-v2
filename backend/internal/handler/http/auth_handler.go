@@ -73,6 +73,12 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		if errors.Is(err, postgres.ErrDatabaseNotReady) {
 			return response.Error(c, fiber.StatusServiceUnavailable, "Database PostgreSQL sedang tidak terhubung. Silakan coba sesaat lagi.", nil)
 		}
+		if strings.Contains(strings.ToLower(err.Error()), "pemeliharaan") || strings.Contains(strings.ToLower(err.Error()), "maintenance") {
+			return response.Error(c, fiber.StatusServiceUnavailable, err.Error(), fiber.Map{
+				"error_code":  "MAINTENANCE_MODE",
+				"maintenance": true,
+			})
+		}
 		if errors.Is(err, service.ErrAccountInactive) || strings.Contains(err.Error(), "dinonaktifkan") || strings.Contains(err.Error(), "diblokir") {
 			return response.Error(c, fiber.StatusForbidden, err.Error(), fiber.Map{
 				"error_code": "ACCOUNT_BLOCKED",

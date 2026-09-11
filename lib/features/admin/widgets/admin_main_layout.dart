@@ -112,27 +112,27 @@ class _AdminMainLayoutState extends ConsumerState<AdminMainLayout> {
             PremiumBottomNavBarItem(
               icon: CupertinoIcons.square_grid_2x2,
               activeIcon: CupertinoIcons.square_grid_2x2_fill,
-              label: 'Home',
+              label: 'Beranda',
             ),
             PremiumBottomNavBarItem(
               icon: CupertinoIcons.group,
               activeIcon: CupertinoIcons.group_solid,
-              label: 'Users',
+              label: 'Pengguna',
             ),
             PremiumBottomNavBarItem(
               icon: CupertinoIcons.doc_text,
               activeIcon: CupertinoIcons.doc_text_fill,
-              label: 'Audit',
+              label: 'Log Audit',
             ),
             PremiumBottomNavBarItem(
               icon: CupertinoIcons.settings,
               activeIcon: CupertinoIcons.settings_solid,
-              label: 'Settings',
+              label: 'Setelan',
             ),
             PremiumBottomNavBarItem(
               icon: CupertinoIcons.person,
               activeIcon: CupertinoIcons.person_fill,
-              label: 'Akun',
+              label: 'Akun Saya',
             ),
           ],
         ),

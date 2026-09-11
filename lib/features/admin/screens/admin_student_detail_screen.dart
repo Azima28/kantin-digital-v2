@@ -11,11 +11,14 @@ import 'package:kantin_digital/core/utils/currency_formatter.dart';
 import 'package:kantin_digital/core/widgets/nebula_micro_interaction.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/core/widgets/app_avatar.dart';
+import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
+import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_edit_student_sheet.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_student_status_card.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_student_password_change.dart';
+import 'package:kantin_digital/features/admin/widgets/admin_student_pin_change.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_student_rfid_section.dart';
 import 'package:kantin_digital/features/shared/screens/student_transactions_screen.dart';
 import 'package:kantin_digital/features/siswa/widgets/siswa_transaction_detail_sheet.dart';
@@ -49,6 +52,52 @@ class _AdminStudentDetailScreenState
         ),
       ),
     );
+  }
+
+  Future<void> _toggleAccountStatus(bool isAccountActive) async {
+    final bool newStatus = !isAccountActive;
+    final confirmed = await showAppConfirmationDialog(
+      context,
+      title: newStatus ? 'Aktifkan Akun Siswa' : 'Blokir Akun Siswa',
+      message: newStatus
+          ? 'Apakah Anda yakin ingin mengaktifkan kembali akun siswa ini? Siswa dapat kembali bertransaksi dan top-up.'
+          : 'Apakah Anda yakin ingin memblokir akun siswa ini? Siswa tidak akan bisa melakukan transaksi jajan atau top-up.',
+      confirmLabel: newStatus ? 'Aktifkan' : 'Blokir',
+      isDestructive: !newStatus,
+      icon: newStatus ? Icons.lock_open_rounded : Icons.lock_outline_rounded,
+    );
+    if (!confirmed) return;
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      await apiClient.patch('/users/${widget.studentId}/status', body: {
+        'is_active': newStatus,
+      });
+      ref.invalidate(adminStudentDetailProvider(widget.studentId));
+      ref.invalidate(adminUsersProvider);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Akun siswa berhasil ${newStatus ? "diaktifkan" : "diblokir"}.',
+            ),
+            backgroundColor: newStatus ? Nebula.teal : Nebula.rose,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${AppStrings.labelFailed} memperbarui status akun: $e'),
+            backgroundColor: Nebula.rose,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -182,7 +231,7 @@ class _AdminStudentDetailScreenState
                 ),
                 const SizedBox(height: 14),
 
-                // 3. Action Buttons Row (Ubah Kata Sandi & Bekukan/Aktifkan Kartu RFID)
+                // 3. Action Buttons Row (Ubah Kata Sandi, Ubah PIN & Bekukan/Aktifkan Kartu RFID)
                 Row(
                   children: [
                     // Ubah Kata Sandi Button
@@ -217,15 +266,64 @@ class _AdminStudentDetailScreenState
                               const SizedBox(width: 6),
                               Flexible(
                                 child: Text(
-                                  'Ubah\nKata Sandi',
+                                  'Ubah Sandi',
                                   textAlign: TextAlign.center,
-                                  maxLines: 2,
+                                  maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: GoogleFonts.inter(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w600,
                                     color: Nebula.teal,
-                                    height: 1.15,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+
+                    // Ubah PIN Transaksi Button
+                    Expanded(
+                      child: PressScale(
+                        onTap: () => AdminStudentPinChange.show(
+                          context,
+                          ref,
+                          profile.id,
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Nebula.amber.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: Nebula.amber.withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                CupertinoIcons.lock_shield_fill,
+                                color: Nebula.amber,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  'Ubah PIN',
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: Nebula.amber,
                                   ),
                                 ),
                               ),
@@ -295,6 +393,54 @@ class _AdminStudentDetailScreenState
                             fontSize: 12.5,
                             fontWeight: FontWeight.bold,
                             color: Nebula.teal,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // 3c. Toggle Status Akun Siswa (Blokir / Buka Blokir)
+                PressScale(
+                  onTap: () => _toggleAccountStatus(profile.isActive ?? true),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 11,
+                      horizontal: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: (profile.isActive ?? true)
+                          ? Nebula.rose.withValues(alpha: 0.1)
+                          : Nebula.teal.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: (profile.isActive ?? true)
+                            ? Nebula.rose.withValues(alpha: 0.3)
+                            : Nebula.teal.withValues(alpha: 0.3),
+                        width: 0.8,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          (profile.isActive ?? true)
+                              ? Icons.lock_outline_rounded
+                              : Icons.lock_open_rounded,
+                          color: (profile.isActive ?? true) ? Nebula.rose : Nebula.teal,
+                          size: 17,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          (profile.isActive ?? true)
+                              ? 'Blokir Akun Siswa'
+                              : 'Aktifkan Akun Siswa',
+                          style: GoogleFonts.inter(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: (profile.isActive ?? true) ? Nebula.rose : Nebula.teal,
                           ),
                         ),
                       ],

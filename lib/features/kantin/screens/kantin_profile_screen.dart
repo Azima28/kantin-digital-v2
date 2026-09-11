@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -78,6 +79,308 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
           ),
         );
       },
+    );
+  }
+
+  void _showEditProfileDialog({
+    required String currentName,
+    required String currentUsername,
+    required String currentPhone,
+    required String currentEmail,
+  }) {
+    final nameController = TextEditingController(text: currentName);
+    final usernameController = TextEditingController(text: currentUsername);
+    final emailController = TextEditingController(text: currentEmail);
+
+    String cleanPhone = currentPhone == '-' ? '' : currentPhone;
+    cleanPhone = cleanPhone.trim().replaceAll(' ', '').replaceAll('-', '');
+    if (cleanPhone.startsWith('+62')) {
+      cleanPhone = cleanPhone.substring(3);
+    } else if (cleanPhone.startsWith('62')) {
+      cleanPhone = cleanPhone.substring(2);
+    } else if (cleanPhone.startsWith('0')) {
+      cleanPhone = cleanPhone.substring(1);
+    }
+    cleanPhone = cleanPhone.replaceAll(RegExp(r'[^0-9]'), '');
+    final phoneController = TextEditingController(text: cleanPhone);
+    final formKey = GlobalKey<FormState>();
+    bool isSaving = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 440),
+            child: Container(
+              decoration: BoxDecoration(
+                color: ctx.cardBg,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: ctx.dividerCol, width: 0.8),
+                boxShadow: [
+                  BoxShadow(
+                    color: ctx.shadowColor,
+                    blurRadius: 28,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(22),
+              child: Form(
+                key: formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: Nebula.teal.withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(CupertinoIcons.pencil_ellipsis_rectangle, color: Nebula.teal, size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Edit Detail Profil',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 16.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: ctx.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  'Perbarui identitas akun kasir / stan Anda',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.5,
+                                    color: ctx.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+
+                      // Nama Petugas
+                      Text(
+                        'Nama Petugas',
+                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: ctx.textSecondary),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: nameController,
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama petugas wajib diisi' : null,
+                        style: GoogleFonts.inter(fontSize: 13.5, color: ctx.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: 'Nama lengkap Anda',
+                          hintStyle: GoogleFonts.inter(color: ctx.textSecondary, fontSize: 13),
+                          filled: true,
+                          fillColor: ctx.surfaceBg,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Nebula.teal, width: 1.5)),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Email
+                      Text(
+                        'Email',
+                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: ctx.textSecondary),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return 'Email wajib diisi';
+                          if (!v.contains('@')) return 'Format email tidak valid';
+                          return null;
+                        },
+                        style: GoogleFonts.inter(fontSize: 13.5, color: ctx.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: 'email@sekolah.sch.id',
+                          hintStyle: GoogleFonts.inter(color: ctx.textSecondary, fontSize: 13),
+                          filled: true,
+                          fillColor: ctx.surfaceBg,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Nebula.teal, width: 1.5)),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Username
+                      Text(
+                        'Username',
+                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: ctx.textSecondary),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: usernameController,
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Username wajib diisi' : null,
+                        style: GoogleFonts.inter(fontSize: 13.5, color: ctx.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: 'Username login',
+                          hintStyle: GoogleFonts.inter(color: ctx.textSecondary, fontSize: 13),
+                          filled: true,
+                          fillColor: ctx.surfaceBg,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Nebula.teal, width: 1.5)),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // No. Telepon / WhatsApp
+                      Text(
+                        'No. Telepon / WhatsApp',
+                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: ctx.textSecondary),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: phoneController,
+                        keyboardType: TextInputType.phone,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        onChanged: (val) {
+                          if (val.startsWith('0')) {
+                            final stripped = val.replaceFirst(RegExp(r'^0+'), '');
+                            phoneController.value = TextEditingValue(
+                              text: stripped,
+                              selection: TextSelection.collapsed(offset: stripped.length),
+                            );
+                          } else if (val.startsWith('62')) {
+                            final stripped = val.replaceFirst(RegExp(r'^62'), '');
+                            phoneController.value = TextEditingValue(
+                              text: stripped,
+                              selection: TextSelection.collapsed(offset: stripped.length),
+                            );
+                          }
+                        },
+                        style: GoogleFonts.inter(fontSize: 13.5, color: ctx.textPrimary),
+                        decoration: InputDecoration(
+                          prefixIcon: Container(
+                            padding: const EdgeInsets.only(left: 14, right: 10),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '+62',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Nebula.teal,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  width: 1,
+                                  height: 18,
+                                  color: ctx.dividerCol,
+                                ),
+                              ],
+                            ),
+                          ),
+                          prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                          hintText: '81234567890',
+                          hintStyle: GoogleFonts.inter(color: ctx.textSecondary.withValues(alpha: 0.5), fontSize: 13),
+                          filled: true,
+                          fillColor: ctx.surfaceBg,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ctx.dividerCol)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Nebula.teal, width: 1.5)),
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: isSaving ? null : () => Navigator.pop(ctx),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                side: BorderSide(color: ctx.dividerCol),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: Text(
+                                AppStrings.buttonCancel,
+                                style: GoogleFonts.inter(color: ctx.textSecondary, fontWeight: FontWeight.w600, fontSize: 13),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: isSaving
+                                  ? null
+                                  : () async {
+                                      if (!formKey.currentState!.validate()) return;
+                                      setModalState(() => isSaving = true);
+                                      final cleanDigits = phoneController.text.trim().replaceAll(RegExp(r'[^0-9]'), '');
+                                      final fullPhone = cleanDigits.isNotEmpty ? '+62$cleanDigits' : null;
+                                      final ok = await ref.read(authNotifierProvider.notifier).updateProfileDetails(
+                                            fullName: nameController.text.trim(),
+                                            email: emailController.text.trim(),
+                                            username: usernameController.text.trim(),
+                                            phoneNumber: fullPhone,
+                                          );
+                                      if (ctx.mounted) {
+                                        Navigator.pop(ctx);
+                                      }
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(ok ? 'Profil berhasil diperbarui!' : 'Gagal memperbarui profil'),
+                                            backgroundColor: ok ? Nebula.teal : Nebula.rose,
+                                            behavior: SnackBarBehavior.floating,
+                                          ),
+                                        );
+                                      }
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Nebula.teal,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: isSaving
+                                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                  : Text(
+                                      AppStrings.buttonSave,
+                                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -336,6 +639,33 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
               _buildSectionCard(
                 title: '${AppStrings.titleDetail} Profil',
                 icon: CupertinoIcons.person_crop_circle,
+                trailing: InkWell(
+                  onTap: () => _showEditProfileDialog(
+                    currentName: fullName,
+                    currentUsername: username,
+                    currentPhone: phone,
+                    currentEmail: email,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(CupertinoIcons.pencil, size: 13, color: Nebula.teal),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Edit Profil',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Nebula.teal,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 children: [
                   _buildInfoRow('Nama Stan', canteenName),
                   Divider(height: 16, thickness: 0.5, color: context.borderLight),
@@ -638,6 +968,7 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
     required String title,
     required IconData icon,
     required List<Widget> children,
+    Widget? trailing,
   }) {
     return Container(
       width: double.infinity,
@@ -661,17 +992,23 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, color: Nebula.teal, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  color: context.textPrimary,
-                ),
+              Row(
+                children: [
+                  Icon(icon, color: Nebula.teal, size: 18),
+                  const SizedBox(width: 8),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: context.textPrimary,
+                    ),
+                  ),
+                ],
               ),
+              if (trailing != null) trailing,
             ],
           ),
           const SizedBox(height: 16),

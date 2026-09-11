@@ -26,3 +26,11 @@ func (s *NotificationService) MarkAsRead(ctx context.Context, notifID, studentID
 func (s *NotificationService) MarkAllAsRead(ctx context.Context, studentID string) error {
 	return s.notifRepo.MarkAllAsRead(ctx, studentID)
 }
+
+func (s *NotificationService) Delete(ctx context.Context, notifID, studentID string) error {
+	return s.notifRepo.DeleteByID(ctx, notifID, studentID)
+}
+
+func (s *NotificationService) DeleteAll(ctx context.Context, studentID string) error {
+	return s.notifRepo.DeleteAll(ctx, studentID)
+}

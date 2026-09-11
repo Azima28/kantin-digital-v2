@@ -129,9 +129,11 @@ final keuanganReportProvider = FutureProvider.family
     ref.cacheFor(const Duration(minutes: 3));
     final apiClient = ref.watch(apiClientProvider);
     try {
+      final start = DateTime(param.startDate.year, param.startDate.month, param.startDate.day, 0, 0, 0);
+      final end = DateTime(param.endDate.year, param.endDate.month, param.endDate.day, 23, 59, 59, 999);
       final res = await apiClient.get('/finance/report', queryParams: {
-        'start_date': param.startDate.toIso8601String(),
-        'end_date': param.endDate.toIso8601String(),
+        'start_date': start.toIso8601String(),
+        'end_date': end.toIso8601String(),
       });
       if (res.success && res.data != null) {
         final data = res.data as Map<String, dynamic>;

@@ -168,11 +168,15 @@ func (r *TransactionRepo) ProcessPurchase(ctx context.Context, p CheckoutParams)
 		_ = tx.QueryRow(ctx, `
 			SELECT COALESCE(SUM(total_amount), 0)
 			FROM public.transactions
-			WHERE student_id = $1 AND type = 'purchase' AND status = 'success' AND created_at >= $2`,
+			WHERE student_id = $1 AND type = 'purchase' AND status IN ('success', 'pending') AND created_at >= $2`,
 			p.StudentID, startOfDay).Scan(&todaySpent)
 
 		if todaySpent+p.TotalAmount > dailyLimit {
-			return nil, fmt.Errorf("%w (Limit: Rp %d, Terpakai hari ini: Rp %d)", ErrDailyLimitExceeded, dailyLimit, todaySpent)
+			remainingLimit := dailyLimit - todaySpent
+			if remainingLimit < 0 {
+				remainingLimit = 0
+			}
+			return nil, fmt.Errorf("%w (Limit harian: Rp %d, Terpakai hari ini: Rp %d, Sisa limit: Rp %d)", ErrDailyLimitExceeded, dailyLimit, todaySpent, remainingLimit)
 		}
 	}
 
@@ -255,6 +259,11 @@ func (r *TransactionRepo) ProcessPurchase(ctx context.Context, p CheckoutParams)
 
 // ProcessTopup adds balance to student from finance officer
 func (r *TransactionRepo) ProcessTopup(ctx context.Context, studentID, officerID string, amount int) (*domain.Transaction, error) {
+	return r.ProcessTopupWithMethod(ctx, studentID, officerID, amount, "cash")
+}
+
+// ProcessTopupWithMethod adds balance to student with specified payment method (e.g. "qris" or "cash")
+func (r *TransactionRepo) ProcessTopupWithMethod(ctx context.Context, studentID, actorID string, amount int, method string) (*domain.Transaction, error) {
 	tx, err := r.db.Pool.Begin(ctx)
 	if err != nil {
 		return nil, err
@@ -290,11 +299,16 @@ func (r *TransactionRepo) ProcessTopup(ctx context.Context, studentID, officerID
 		return nil, err
 	}
 
-	// 2. Add managed funds to finance officer
+	// 2. Add managed funds to finance officer if actor is finance officer
 	_, _ = tx.Exec(ctx, `
 		UPDATE public.finance_officers
 		SET total_managed_funds = total_managed_funds + $1
-		WHERE id = $2`, amount, officerID)
+		WHERE id = $2`, amount, actorID)
+
+	cleanMethod := strings.TrimSpace(strings.ToLower(method))
+	if cleanMethod == "" {
+		cleanMethod = "cash"
+	}
 
 	// 3. Record transaction. A student-raised request for this same amount is
 	// settled in place rather than duplicated: leaving it pending would keep the
@@ -302,11 +316,25 @@ func (r *TransactionRepo) ProcessTopup(ctx context.Context, studentID, officerID
 	// CreateTopupRequest, and make reports count one top-up as two rows.
 	var txRecord domain.Transaction
 	txRecord.StudentID = studentID
-	txRecord.OperatorID = officerID
+	txRecord.OperatorID = actorID
 	txRecord.TotalAmount = amount
 	txRecord.Type = domain.TxTypeTopup
 	txRecord.Status = domain.TxStatusSuccess
-	txRecord.PurchaseMethod = "cash"
+	txRecord.PurchaseMethod = cleanMethod
+
+	balBefore := currentBalance
+	balAfter := currentBalance + amount
+	txRecord.BalanceBefore = &balBefore
+	txRecord.BalanceAfter = &balAfter
+
+	var stName, stNisn string
+	_ = tx.QueryRow(ctx, `SELECT COALESCE(full_name, ''), COALESCE(nisn, '') FROM public.profiles WHERE id = $1`, studentID).Scan(&stName, &stNisn)
+	if stName != "" {
+		txRecord.StudentName = &stName
+	}
+	if stNisn != "" {
+		txRecord.StudentNISN = &stNisn
+	}
 
 	err = tx.QueryRow(ctx, `
 		UPDATE public.transactions
@@ -336,7 +364,11 @@ func (r *TransactionRepo) ProcessTopup(ctx context.Context, studentID, officerID
 	}
 
 	// 4. Notification
-	notifMsg := fmt.Sprintf("Top-up saldo sebesar Rp %d berhasil ditambahkan ke akun Anda.", amount)
+	methodLabel := strings.ToUpper(cleanMethod)
+	notifMsg := fmt.Sprintf("Top-up saldo sebesar Rp %d via %s berhasil ditambahkan ke akun Anda.", amount, methodLabel)
+	if cleanMethod == "cash" {
+		notifMsg = fmt.Sprintf("Top-up saldo sebesar Rp %d berhasil ditambahkan ke akun Anda.", amount)
+	}
 	_, _ = tx.Exec(ctx, `
 		INSERT INTO public.notifications (student_id, title, message, type)
 		VALUES ($1, $2, $3, 'topup')`,
@@ -494,7 +526,9 @@ func (r *TransactionRepo) ListTransactionsPaged(ctx context.Context, studentID, 
 		SELECT t.id, t.student_id, t.operator_id, t.total_amount, t.type, t.status, t.purchase_method, t.created_at,
 		       COALESCE(c.canteen_name, p.full_name, 'Kantin Sekolah') AS canteen_name,
 		       COALESCE(p_st.full_name, 'Siswa') AS student_name,
-		       p_st.nisn AS student_nisn
+		       p_st.nisn AS student_nisn,
+		       COALESCE(p.full_name, '') AS operator_name,
+		       COALESCE(p.role, '') AS operator_role
 		FROM public.transactions t
 		LEFT JOIN public.canteen_operators c ON c.id = t.operator_id
 		LEFT JOIN public.profiles p ON p.id = t.operator_id
@@ -512,12 +546,20 @@ func (r *TransactionRepo) ListTransactionsPaged(ctx context.Context, studentID, 
 	var list []domain.Transaction
 	for rows.Next() {
 		var t domain.Transaction
+		var opName, opRole string
 		err := rows.Scan(
 			&t.ID, &t.StudentID, &t.OperatorID, &t.TotalAmount, &t.Type, &t.Status, &t.PurchaseMethod, &t.CreatedAt,
 			&t.CanteenName, &t.StudentName, &t.StudentNISN,
+			&opName, &opRole,
 		)
 		if err != nil {
 			return nil, 0, err
+		}
+		if opName != "" {
+			t.OperatorName = &opName
+		}
+		if opRole != "" {
+			t.OperatorRole = &opRole
 		}
 		list = append(list, t)
 	}

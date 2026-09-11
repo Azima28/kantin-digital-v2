@@ -107,6 +107,7 @@ final sendOrderMessageProvider = Provider<Future<void> Function(
 })>((ref) {
   final apiClient = ref.read(apiClientProvider);
   final currentUserId = ref.watch(authNotifierProvider.select((s) => s.profile?['id'] as String?));
+  final currentUserAvatar = ref.watch(authNotifierProvider.select((s) => s.profile?['avatar_url'] as String?));
 
   return (
     String orderId,
@@ -124,6 +125,7 @@ final sendOrderMessageProvider = Provider<Future<void> Function(
       senderId: currentUserId ?? '',
       senderRole: senderRole,
       senderName: senderName,
+      senderAvatarUrl: currentUserAvatar,
       message: text,
       createdAt: DateTime.now(),
       isFromCurrentSession: true,

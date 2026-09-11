@@ -48,13 +48,23 @@ class _AdminMerchantDetailScreenState extends ConsumerState<AdminMerchantDetailS
 
     try {
       final apiClient = ref.read(apiClientProvider);
-      final response = await apiClient.post(
-        '/admin/users/password',
+      var response = await apiClient.post(
+        '/finance/users/password',
         body: {
           'user_id': profileId,
           'new_password': password,
         },
       );
+
+      if (!response.success) {
+        response = await apiClient.post(
+          '/admin/users/password',
+          body: {
+            'user_id': profileId,
+            'new_password': password,
+          },
+        );
+      }
 
       if (!response.success) {
         throw Exception(response.message ?? 'Gagal mengubah kata sandi');

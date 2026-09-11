@@ -184,13 +184,24 @@ final adminParentDetailProvider = FutureProvider
 final adminMerchantDetailProvider = FutureProvider
     .family<AdminMerchantDetail, String>((ref, id) async {
   final apiClient = ref.watch(apiClientProvider);
+  // Try /finance/merchant first (accessible by Petugas Keuangan, Super Admin, Admin)
+  try {
+    final res = await apiClient.get('/finance/merchant/$id');
+    if (res.success && res.data != null) {
+      return AdminMerchantDetail.fromJson(res.data as Map<String, dynamic>);
+    }
+  } catch (e) {
+    debugPrint('adminMerchantDetailProvider (/finance) error: $e');
+  }
+
+  // Fallback to /admin/merchant
   try {
     final res = await apiClient.get('/admin/merchant/$id');
     if (res.success && res.data != null) {
       return AdminMerchantDetail.fromJson(res.data as Map<String, dynamic>);
     }
   } catch (e) {
-    debugPrint('adminMerchantDetailProvider error: $e');
+    debugPrint('adminMerchantDetailProvider (/admin) error: $e');
   }
 
   return AdminMerchantDetail.fromJson({

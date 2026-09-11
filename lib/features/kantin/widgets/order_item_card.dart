@@ -4,8 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/utils/currency_formatter.dart';
+import 'package:kantin_digital/core/widgets/app_confirmation_dialog.dart';
 import 'package:kantin_digital/core/widgets/order_chat_button.dart';
 import 'package:kantin_digital/features/kantin/models/order_item.dart';
+import 'package:kantin_digital/features/kantin/widgets/approve_cancellation_dialog.dart';
 import 'package:kantin_digital/features/kantin/widgets/order_detail_sheet.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
@@ -26,7 +28,6 @@ class OrderItemCard extends StatefulWidget {
 class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProviderStateMixin {
   late AnimationController _scaleController;
   late Animation<double> _scaleAnimation;
-  bool _isExiting = false;
 
   @override
   void initState() {
@@ -38,14 +39,6 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
       upperBound: 1.0,
     )..value = 1.0;
     _scaleAnimation = _scaleController;
-  }
-
-  @override
-  void didUpdateWidget(OrderItemCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.order.id != widget.order.id) {
-      _isExiting = false;
-    }
   }
 
   @override
@@ -69,14 +62,7 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
   }
 
   void _triggerStatusChange(String newStatus) {
-    setState(() {
-      _isExiting = true;
-    });
-    Future.delayed(const Duration(milliseconds: 250), () {
-      if (mounted) {
-        widget.onStatusChanged(widget.order.id, newStatus, widget.order.studentId);
-      }
-    });
+    widget.onStatusChanged(widget.order.id, newStatus, widget.order.studentId);
   }
 
   @override
@@ -127,19 +113,15 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
       }
     }
 
-    return AnimatedOpacity(
-      opacity: _isExiting ? 0.0 : 1.0,
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeIn,
-      child: AnimatedBuilder(
-        animation: _scaleAnimation,
-        builder: (context, child) {
-          return Transform.scale(
-            scale: _scaleAnimation.value,
-            child: child,
-          );
-        },
-        child: Container(
+    return AnimatedBuilder(
+      animation: _scaleAnimation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: child,
+        );
+      },
+      child: Container(
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
             color: context.cardBg,
@@ -482,32 +464,71 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                               ? Column(
                                   crossAxisAlignment: CrossAxisAlignment.stretch,
                                   children: [
-                                    // Warning Banner
+                                    // Warning Banner: Pengajuan Pembatalan Siswa
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                       decoration: BoxDecoration(
                                         color: Nebula.rose.withValues(alpha: 0.08),
                                         borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(color: Nebula.rose.withValues(alpha: 0.15)),
+                                        border: Border.all(color: Nebula.rose.withValues(alpha: 0.2)),
                                       ),
-                                      child: Row(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          const Icon(
-                                            Icons.warning_amber_rounded,
-                                            color: Nebula.rose,
-                                            size: 18,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              AppStrings.labelSiswaMintaBatal,
-                                              style: GoogleFonts.inter(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w700,
+                                          Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.warning_amber_rounded,
                                                 color: Nebula.rose,
+                                                size: 18,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  AppStrings.labelSiswaMintaBatal,
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 12.5,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: Nebula.rose,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          if (widget.order.cancelRequestReason != null && widget.order.cancelRequestReason!.trim().isNotEmpty) ...[
+                                            const SizedBox(height: 6),
+                                            Container(
+                                              width: double.infinity,
+                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                              decoration: BoxDecoration(
+                                                color: context.cardBg,
+                                                borderRadius: BorderRadius.circular(8),
+                                                border: Border.all(color: Nebula.rose.withValues(alpha: 0.15)),
+                                              ),
+                                              child: Row(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Alasan: ',
+                                                    style: GoogleFonts.inter(
+                                                      fontSize: 11.5,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: context.textPrimary,
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    child: Text(
+                                                      widget.order.cancelRequestReason!,
+                                                      style: GoogleFonts.inter(
+                                                        fontSize: 11.5,
+                                                        color: context.textSecondary,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
-                                          ),
+                                          ],
                                         ],
                                       ),
                                     ),
@@ -518,7 +539,20 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                                       children: [
                                         // Reject Request
                                         OutlinedButton(
-                                          onPressed: () => _triggerStatusChange('Sedang Disiapkan'),
+                                          onPressed: () async {
+                                            final confirmReject = await showAppConfirmationDialog(
+                                              context,
+                                              title: 'Tolak Permohonan Batal?',
+                                              message: 'Pesanan untuk ${widget.order.studentName} akan tetap dilanjutkan ke status Sedang Disiapkan.',
+                                              confirmLabel: 'Ya, Tolak Batal',
+                                              cancelLabel: 'Kembali',
+                                              icon: Icons.close_rounded,
+                                              confirmColor: Nebula.amber,
+                                            );
+                                            if (confirmReject == true && context.mounted) {
+                                              _triggerStatusChange('Sedang Disiapkan');
+                                            }
+                                          },
                                           style: OutlinedButton.styleFrom(
                                             foregroundColor: context.textSecondary,
                                             side: BorderSide(color: context.dividerCol),
@@ -538,10 +572,25 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                                         const SizedBox(width: 8),
                                         // Approve Request
                                         ElevatedButton(
-                                          onPressed: () => _triggerStatusChange('Dibatalkan'),
+                                          onPressed: () async {
+                                            final approved = await ApproveCancellationDialog.show(
+                                              context,
+                                              order: widget.order,
+                                            );
+                                            if (approved == true && context.mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text('Pembatalan pesanan disetujui. Saldo sebesar ${CurrencyFormatter.format(widget.order.totalAmount)} telah dikembalikan ke ${widget.order.studentName}.'),
+                                                  backgroundColor: Nebula.teal,
+                                                  behavior: SnackBarBehavior.floating,
+                                                  duration: const Duration(seconds: 3),
+                                                ),
+                                              );
+                                            }
+                                          },
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: Nebula.rose,
-                                            foregroundColor: context.cardBg,
+                                            foregroundColor: Colors.white,
                                             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(10),
@@ -713,9 +762,8 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
             ),
           ),
         ),
-      ),
-    );
-  }
+      );
+    }
 
   Widget _buildDashedDivider() {
     return LayoutBuilder(

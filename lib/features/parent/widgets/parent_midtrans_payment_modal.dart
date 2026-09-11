@@ -28,6 +28,9 @@ Future<void> showParentMidtransPaymentModal({
   final String orderId = 'KD-${DateTime.now().millisecondsSinceEpoch % 900000 + 100000}';
   String selectedMethod = 'QRIS'; // Default choice
   bool showInstructions = false;
+  final TextEditingController pinController = TextEditingController();
+  bool obscurePin = true;
+  String? pinError;
 
   await showDialog(
     context: context,
@@ -184,11 +187,122 @@ Future<void> showParentMidtransPaymentModal({
                                 else
                                   const MidtransCstoreDetailForm(),
 
-                                const SizedBox(height: 32),
+                                const SizedBox(height: 20),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: context.surfaceBg,
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(color: context.borderLight, width: 0.8),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Sandi / PIN Transaksi',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 12.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: context.textPrimary,
+                                            ),
+                                          ),
+                                          InkWell(
+                                            onTap: isLoading
+                                                ? null
+                                                : () {
+                                                    setModalState(() {
+                                                      pinController.text = '123456';
+                                                      pinError = null;
+                                                    });
+                                                  },
+                                            borderRadius: BorderRadius.circular(8),
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: Nebula.teal.withValues(alpha: 0.12),
+                                                borderRadius: BorderRadius.circular(8),
+                                                border: Border.all(color: Nebula.teal.withValues(alpha: 0.3), width: 0.8),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  const Icon(CupertinoIcons.wand_rays, size: 12, color: Nebula.teal),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    'Simulasi Sandi',
+                                                    style: GoogleFonts.inter(
+                                                      fontSize: 11,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Nebula.teal,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      TextField(
+                                        controller: pinController,
+                                        obscureText: obscurePin,
+                                        keyboardType: TextInputType.number,
+                                        maxLength: 6,
+                                        textAlign: TextAlign.center,
+                                        enabled: !isLoading,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 20,
+                                          letterSpacing: 6,
+                                          fontWeight: FontWeight.bold,
+                                          color: Nebula.teal,
+                                        ),
+                                        decoration: InputDecoration(
+                                          counterText: '',
+                                          hintText: '••••••',
+                                          hintStyle: GoogleFonts.inter(
+                                            fontSize: 20,
+                                            letterSpacing: 6,
+                                            color: context.textSecondary.withValues(alpha: 0.3),
+                                          ),
+                                          filled: true,
+                                          fillColor: context.cardBg,
+                                          contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: BorderSide(color: context.borderLight),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: const BorderSide(color: Nebula.teal, width: 1.5),
+                                          ),
+                                          suffixIcon: IconButton(
+                                            icon: Icon(
+                                              obscurePin ? CupertinoIcons.eye_slash : CupertinoIcons.eye,
+                                              size: 18,
+                                              color: context.textSecondary,
+                                            ),
+                                            onPressed: () => setModalState(() => obscurePin = !obscurePin),
+                                          ),
+                                        ),
+                                      ),
+                                      if (pinError != null) ...[
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          pinError!,
+                                          style: GoogleFonts.inter(fontSize: 11, color: Nebula.rose, fontWeight: FontWeight.w500),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
 
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Nebula.amber,
+                                    backgroundColor: Nebula.teal,
                                     shape: RoundedRectangleBorder(
                                       borderRadius:
                                           BorderRadius.circular(12),
@@ -200,6 +314,12 @@ Future<void> showParentMidtransPaymentModal({
                                   onPressed: isLoading
                                       ? null
                                       : () async {
+                                          if (pinController.text.trim().isEmpty) {
+                                            setModalState(() {
+                                              pinError = 'Silakan masukkan sandi / PIN atau gunakan tombol Simulasi Sandi';
+                                            });
+                                            return;
+                                          }
                                           setModalState(() {});
                                           await onPay(
                                               amount,
@@ -211,7 +331,7 @@ Future<void> showParentMidtransPaymentModal({
                                       ? CupertinoActivityIndicator(
                                           color: context.cardBg)
                                       : Text(
-                                          'SIMULASIKAN PEMBAYARAN SUKSES',
+                                          'KONFIRMASI BAYAR',
                                           style:
                                               GoogleFonts.inter(
                                             color: context.cardBg,
@@ -422,4 +542,5 @@ Future<void> showParentMidtransPaymentModal({
       );
     },
   );
+  pinController.dispose();
 }

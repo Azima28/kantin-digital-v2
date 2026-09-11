@@ -1,6 +1,9 @@
 package http
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/gofiber/fiber/v2"
 	"kantin-backend/internal/domain"
 	"kantin-backend/internal/handler/http/middleware"
@@ -60,11 +63,11 @@ func (h *ParentHandler) Dashboard(c *fiber.Ctx) error {
 }
 
 type UpdateStudentSettingsRequest struct {
-	StudentID   string  `json:"student_id"`
-	DailyLimit  *int    `json:"daily_limit"`
-	IsActive    *bool   `json:"is_active"`
-	WaEnabled   *bool   `json:"wa_notifications_enabled"`
-	ParentPhone *string `json:"parent_phone"`
+	StudentID   string      `json:"student_id"`
+	DailyLimit  interface{} `json:"daily_limit"`
+	IsActive    *bool       `json:"is_active"`
+	WaEnabled   *bool       `json:"wa_notifications_enabled"`
+	ParentPhone *string     `json:"parent_phone"`
 }
 
 func (h *ParentHandler) UpdateStudentSettings(c *fiber.Ctx) error {
@@ -108,7 +111,27 @@ func (h *ParentHandler) UpdateStudentSettings(c *fiber.Ctx) error {
 		return response.Error(c, fiber.StatusForbidden, "Akses ditolak: Peran Anda tidak memiliki izin mengubah pengaturan siswa", nil)
 	}
 
-	if err := h.paymentService.UpdateStudentSettings(c.Context(), req.StudentID, req.DailyLimit, req.IsActive, req.WaEnabled, req.ParentPhone); err != nil {
+	var dailyLimitPtr *int
+	if req.DailyLimit != nil {
+		switch v := req.DailyLimit.(type) {
+		case float64:
+			val := int(v)
+			dailyLimitPtr = &val
+		case int:
+			dailyLimitPtr = &v
+		case int64:
+			val := int(v)
+			dailyLimitPtr = &val
+		case string:
+			clean := strings.TrimSpace(v)
+			if f, err := strconv.ParseFloat(clean, 64); err == nil {
+				val := int(f)
+				dailyLimitPtr = &val
+			}
+		}
+	}
+
+	if err := h.paymentService.UpdateStudentSettings(c.Context(), req.StudentID, dailyLimitPtr, req.IsActive, req.WaEnabled, req.ParentPhone); err != nil {
 		return response.Error(c, fiber.StatusInternalServerError, "Gagal memperbarui pengaturan siswa", err.Error())
 	}
 
