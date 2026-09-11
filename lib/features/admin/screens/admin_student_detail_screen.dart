@@ -22,6 +22,7 @@ import 'package:kantin_digital/features/admin/widgets/admin_student_pin_change.d
 import 'package:kantin_digital/features/admin/widgets/admin_student_rfid_section.dart';
 import 'package:kantin_digital/features/shared/screens/student_transactions_screen.dart';
 import 'package:kantin_digital/features/siswa/widgets/siswa_transaction_detail_sheet.dart';
+import 'package:kantin_digital/features/keuangan/widgets/balance_correction_dialog.dart';
 
 class AdminStudentDetailScreen extends ConsumerStatefulWidget {
   final String studentId;
@@ -345,59 +346,122 @@ class _AdminStudentDetailScreenState
                 ),
                 const SizedBox(height: 10),
 
-                // 3b. Finance Quick Action (Top-Up Saldo)
-                PressScale(
-                  onTap: () {
-                    final studentProfile = StudentWithProfile(
-                      id: profile.id,
-                      fullName: fullName,
-                      email: email,
-                      nisn: nisn,
-                      isActive: profile.isActive ?? true,
-                      class_: className,
-                      balance: balance,
-                      rfidUid: student.rfidUid,
-                      cardIsActive: isCardActive,
-                    );
-                    context.push(
-                      '/finance/topup',
-                      extra: studentProfile,
-                    );
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 11,
-                      horizontal: 16,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Nebula.teal.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: Nebula.teal.withValues(alpha: 0.3),
-                        width: 0.8,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          CupertinoIcons.arrow_up_circle_fill,
-                          color: Nebula.teal,
-                          size: 17,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Top-Up Saldo Siswa',
-                          style: GoogleFonts.inter(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.bold,
-                            color: Nebula.teal,
+                // 3b. Finance Quick Actions (Top-Up Saldo & Koreksi Saldo)
+                Row(
+                  children: [
+                    Expanded(
+                      child: PressScale(
+                        onTap: () {
+                          final studentProfile = StudentWithProfile(
+                            id: profile.id,
+                            fullName: fullName,
+                            email: email,
+                            nisn: nisn,
+                            isActive: profile.isActive ?? true,
+                            class_: className,
+                            balance: balance,
+                            rfidUid: student.rfidUid,
+                            cardIsActive: isCardActive,
+                          );
+                          context.push(
+                            '/finance/topup',
+                            extra: studentProfile,
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 11,
+                            horizontal: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Nebula.teal.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: Nebula.teal.withValues(alpha: 0.3),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                CupertinoIcons.arrow_up_circle_fill,
+                                color: Nebula.teal,
+                                size: 17,
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  'Top-Up Saldo',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Nebula.teal,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: PressScale(
+                        onTap: () async {
+                          final updated = await BalanceCorrectionDialog.show(
+                            context,
+                            studentId: profile.id,
+                            studentName: fullName,
+                            nisn: nisn,
+                            currentBalance: balance,
+                          );
+                          if (updated == true) {
+                            ref.invalidate(adminStudentDetailProvider(widget.studentId));
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 11,
+                            horizontal: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Nebula.amber.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: Nebula.amber.withValues(alpha: 0.3),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.tune_rounded,
+                                color: Nebula.amber,
+                                size: 17,
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  'Koreksi Saldo',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Nebula.amber,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
 

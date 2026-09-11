@@ -4,6 +4,7 @@ import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/utils/app_date_formatter.dart';
 import 'package:kantin_digital/core/utils/riverpod_cache_extensions.dart';
+import 'package:kantin_digital/features/admin/providers/admin_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 // ============================================================================
@@ -357,4 +358,42 @@ final keuanganShiftHistoryProvider =
   }
   return <CashierShift>[];
 });
+
+// ============================================================================
+// BALANCE CORRECTION MUTATION (Keuangan / Admin)
+// ============================================================================
+
+/// Memproses koreksi saldo siswa (penambahan atau pengurangan saldo) dengan audit trail
+Future<bool> processBalanceCorrection(
+  WidgetRef ref, {
+  required String studentId,
+  required int amount,
+  required String type, // 'add' or 'deduct'
+  required String reason,
+}) async {
+  final apiClient = ref.read(apiClientProvider);
+  final response = await apiClient.post('/finance/correction', body: {
+    'student_id': studentId,
+    'amount': amount,
+    'type': type,
+    'reason': reason,
+  });
+
+  if (!response.success) {
+    throw Exception(response.message ?? 'Gagal memproses koreksi saldo');
+  }
+
+  // Refresh all relevant providers across roles
+  ref.invalidate(keuanganDashboardProvider);
+  ref.invalidate(keuanganStudentsProvider);
+  ref.invalidate(keuanganStudentDetailProvider(studentId));
+  ref.invalidate(adminStudentDetailProvider(studentId));
+  ref.invalidate(adminUsersProvider);
+  ref.invalidate(adminDashboardProvider);
+  ref.invalidate(userNotificationsProvider);
+  ref.invalidate(keuanganHistoryProvider);
+
+  return true;
+}
+
 

@@ -11,6 +11,7 @@ import 'package:kantin_digital/features/keuangan/widgets/student_detail_header.d
 import 'package:kantin_digital/features/keuangan/widgets/student_detail_password_change.dart';
 import 'package:kantin_digital/features/keuangan/widgets/student_detail_pin_change.dart';
 import 'package:kantin_digital/features/keuangan/widgets/student_detail_status_toggle.dart';
+import 'package:kantin_digital/features/keuangan/widgets/balance_correction_dialog.dart';
 import 'package:kantin_digital/features/shared/screens/student_transactions_screen.dart';
 import 'package:kantin_digital/features/siswa/widgets/siswa_transaction_detail_sheet.dart';
 import 'package:kantin_digital/features/admin/widgets/admin_edit_student_sheet.dart';
@@ -277,6 +278,34 @@ class _KeuanganStudentDetailScreenState
                                 '/finance/topup',
                                 extra: studentProfile,
                               );
+                            },
+                          ),
+                          Divider(
+                            height: 1,
+                            thickness: 0.5,
+                            indent: 56,
+                            color: context.dividerCol,
+                          ),
+                          _buildActionTile(
+                            icon: Icons.tune_rounded,
+                            iconColor: Nebula.amber,
+                            title: 'Koreksi Saldo',
+                            subtitle: 'Penyesuaian tambah/kurang saldo dengan catatan forensik',
+                            isEnabled: isAccountActive,
+                            disabledTooltip: !isAccountActive
+                                ? 'Akun siswa sedang dinonaktifkan'
+                                : null,
+                            onTap: () async {
+                              final updated = await BalanceCorrectionDialog.show(
+                                context,
+                                studentId: widget.studentId,
+                                studentName: fullName,
+                                nisn: nisn,
+                                currentBalance: balance,
+                              );
+                              if (updated == true) {
+                                ref.invalidate(keuanganStudentDetailProvider(widget.studentId));
+                              }
                             },
                           ),
                           Divider(

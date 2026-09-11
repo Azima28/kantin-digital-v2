@@ -45,7 +45,7 @@ func setupTestApp() *fiber.App {
 	orderH := httpHandler.NewOrderHandler(orderService, hub)
 	posH := httpHandler.NewPOSHandler(paymentService)
 	studentH := httpHandler.NewStudentHandler(paymentService, notifService, tokenMaker)
-	financeH := httpHandler.NewFinanceHandler(paymentService)
+	financeH := httpHandler.NewFinanceHandler(paymentService, hub)
 	parentH := httpHandler.NewParentHandler(paymentService)
 	uploadH := httpHandler.NewUploadHandler(cfg.UploadDir, &postgres.DB{})
 

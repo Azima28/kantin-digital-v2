@@ -9,9 +9,11 @@ type TransactionType string
 const (
 	TxTypePurchase           TransactionType = "purchase"
 	TxTypeTopup              TransactionType = "topup"
-		TxTypeRefund             TransactionType = "refund"
+	TxTypeCorrection         TransactionType = "correction"
+	TxTypeRefund             TransactionType = "refund"
 	TxTypeWithdrawal         TransactionType = "withdrawal"
-	)
+	TxTypeMerchantAdjustment TransactionType = "merchant_adjustment"
+)
 
 type TransactionStatus string
 

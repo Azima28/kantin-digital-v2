@@ -457,6 +457,137 @@ func (r *TransactionRepo) CreateTopupRequest(ctx context.Context, studentID stri
 	return &txRecord, nil
 }
 
+// ProcessCorrection atomically adjusts a student's balance (either addition or deduction)
+// with row-level locking, strict negative balance prevention, and records a 'correction' transaction.
+func (r *TransactionRepo) ProcessCorrection(ctx context.Context, studentID, actorID string, amount int, reason string) (*domain.Transaction, error) {
+	reason = strings.TrimSpace(reason)
+	if reason == "" {
+		return nil, errors.New("alasan koreksi saldo wajib diisi")
+	}
+	if amount == 0 {
+		return nil, errors.New("nominal koreksi saldo tidak boleh nol")
+	}
+
+	tx, err := r.db.Pool.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("gagal memulai database transaksi: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	// 1. Validate student and acquire row-level lock
+	var currentBalance int
+	var isProfileActive bool
+	var fullName, nisn string
+
+	err = tx.QueryRow(ctx, `
+		SELECT s.balance, p.is_active, COALESCE(p.full_name, ''), COALESCE(p.nisn, '')
+		FROM public.students s
+		JOIN public.profiles p ON p.id = s.id
+		WHERE s.id = $1
+		FOR UPDATE`, studentID).Scan(&currentBalance, &isProfileActive, &fullName, &nisn)
+	if err != nil {
+		return nil, fmt.Errorf("siswa tidak ditemukan: %w", err)
+	}
+
+	if !isProfileActive {
+		return nil, errors.New("koreksi saldo ditolak: Akun siswa sedang dinonaktifkan / diblokir oleh admin")
+	}
+
+	newBalance := currentBalance + amount
+	if newBalance < 0 {
+		return nil, fmt.Errorf("koreksi ditolak: Saldo siswa saat ini (Rp %d) tidak mencukupi untuk pengurangan sebesar Rp %d (saldo akhir tidak boleh negatif)", currentBalance, -amount)
+	}
+
+	// 2. Update student balance
+	_, err = tx.Exec(ctx, `
+		UPDATE public.students
+		SET balance = $1
+		WHERE id = $2`, newBalance, studentID)
+	if err != nil {
+		return nil, fmt.Errorf("gagal memperbarui saldo siswa: %w", err)
+	}
+
+	// 3. Determine method and absolute total_amount
+	absAmount := amount
+	method := "credit"
+	if amount < 0 {
+		absAmount = -amount
+		method = "debit"
+	}
+
+	// 4. Insert transaction record
+	var txRecord domain.Transaction
+	txRecord.StudentID = studentID
+	txRecord.OperatorID = actorID
+	txRecord.TotalAmount = absAmount
+	txRecord.Type = domain.TxTypeCorrection
+	txRecord.Status = domain.TxStatusSuccess
+	txRecord.PurchaseMethod = method
+	balBefore := currentBalance
+	balAfter := newBalance
+	txRecord.BalanceBefore = &balBefore
+	txRecord.BalanceAfter = &balAfter
+	if fullName != "" {
+		txRecord.StudentName = &fullName
+	}
+	if nisn != "" {
+		txRecord.StudentNISN = &nisn
+	}
+
+	err = tx.QueryRow(ctx, `
+		INSERT INTO public.transactions (student_id, operator_id, total_amount, type, status, purchase_method)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id, created_at`,
+		txRecord.StudentID, txRecord.OperatorID, txRecord.TotalAmount, txRecord.Type, txRecord.Status, txRecord.PurchaseMethod,
+	).Scan(&txRecord.ID, &txRecord.CreatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("gagal mencatat transaksi koreksi: %w", err)
+	}
+
+	// 5. Insert transaction item for the explanation / reason
+	itemCustomNotes := reason
+	var itemID string
+	err = tx.QueryRow(ctx, `
+		INSERT INTO public.transaction_items (transaction_id, product_id, quantity, unit_price, custom_notes)
+		VALUES ($1, NULL, 1, $2, $3)
+		RETURNING id`,
+		txRecord.ID, absAmount, itemCustomNotes,
+	).Scan(&itemID)
+	if err == nil {
+		txRecord.Items = []domain.TransactionItem{
+			{
+				ID:            itemID,
+				TransactionID: txRecord.ID,
+				Quantity:      1,
+				UnitPrice:     absAmount,
+				CustomNotes:   &itemCustomNotes,
+			},
+		}
+	}
+
+	// 6. Notification to student
+	var notifTitle, notifMsg string
+	if amount > 0 {
+		notifTitle = "Koreksi Saldo: Penambahan 💰"
+		notifMsg = fmt.Sprintf("Saldo Anda telah ditambahkan sebesar Rp %d oleh Petugas Keuangan. Catatan: %s", absAmount, reason)
+	} else {
+		notifTitle = "Koreksi Saldo: Pengurangan ⚠️"
+		notifMsg = fmt.Sprintf("Saldo Anda telah dikurangi sebesar Rp %d oleh Petugas Keuangan. Catatan: %s", absAmount, reason)
+	}
+
+	_, _ = tx.Exec(ctx, `
+		INSERT INTO public.notifications (student_id, title, message, type)
+		VALUES ($1, $2, $3, 'correction')`,
+		studentID, notifTitle, notifMsg,
+	)
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("gagal menyimpan perubahan koreksi: %w", err)
+	}
+
+	return &txRecord, nil
+}
+
 // ListTransactionsByStudent retrieves student transaction ledger
 func (r *TransactionRepo) ListTransactionsByStudent(ctx context.Context, studentID string, limit int) ([]domain.Transaction, error) {
 	list, _, err := r.ListTransactionsPaged(ctx, studentID, "", limit, 0, "", "", "")

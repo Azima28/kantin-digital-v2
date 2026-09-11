@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -200,6 +201,138 @@ func (h *FinanceHandler) Topup(c *fiber.Ctx) error {
 		}), c.IP())
 
 	return response.Success(c, fiber.StatusOK, "Top-up saldo berhasil", tx)
+}
+
+type CorrectionRequest struct {
+	StudentID string `json:"student_id"`
+	Amount    int    `json:"amount"`
+	Type      string `json:"type"` // "add" or "deduct"
+	Reason    string `json:"reason"`
+}
+
+func (h *FinanceHandler) Correction(c *fiber.Ctx) error {
+	claims := c.Locals(middleware.UserClaimsKey).(*token.JWTClaims)
+	if claims.Role != domain.RolePetugasKeuangan && claims.Role != domain.RoleSuperAdmin && claims.Role != domain.RoleAdmin {
+		return response.Error(c, fiber.StatusForbidden, "Akses ditolak: Hanya Petugas Keuangan atau Administrator yang berwenang memproses koreksi saldo", nil)
+	}
+
+	var req CorrectionRequest
+	if err := c.BodyParser(&req); err != nil {
+		return response.Error(c, fiber.StatusBadRequest, "Payload koreksi saldo tidak valid", err.Error())
+	}
+
+	req.StudentID = strings.TrimSpace(req.StudentID)
+	req.Reason = strings.TrimSpace(req.Reason)
+	req.Type = strings.TrimSpace(strings.ToLower(req.Type))
+
+	if req.StudentID == "" {
+		return response.Error(c, fiber.StatusBadRequest, "Student ID wajib diisi", nil)
+	}
+
+	if req.Reason == "" {
+		return response.Error(c, fiber.StatusBadRequest, "Alasan koreksi saldo wajib diisi", nil)
+	}
+
+	// Support direction via Type ("deduct" / "add") or via signed Amount
+	delta := req.Amount
+	if req.Type == "deduct" || req.Type == "pengurangan" || req.Type == "sub" {
+		if delta > 0 {
+			delta = -delta
+		}
+	} else if req.Type == "add" || req.Type == "penambahan" {
+		if delta < 0 {
+			delta = -delta
+		}
+	}
+
+	if delta == 0 {
+		return response.Error(c, fiber.StatusBadRequest, "Nominal koreksi saldo tidak boleh nol", nil)
+	}
+
+	absAmount := delta
+	if absAmount < 0 {
+		absAmount = -absAmount
+	}
+
+	if absAmount < 1000 {
+		return response.Error(c, fiber.StatusBadRequest, "Nominal koreksi saldo minimal Rp 1.000", nil)
+	}
+
+	if absAmount > 2000000 {
+		return response.Error(c, fiber.StatusBadRequest, "Nominal koreksi saldo maksimal Rp 2.000.000 per transaksi", nil)
+	}
+
+	tx, err := h.paymentService.ProcessCorrection(c.Context(), req.StudentID, claims.UserID, delta, req.Reason)
+	if err != nil {
+		return response.Error(c, fiber.StatusBadRequest, err.Error(), nil)
+	}
+
+	actorName := claims.Email
+	if claims.FullName != "" {
+		actorName = claims.FullName
+	}
+	studentName := ""
+	if tx.StudentName != nil {
+		studentName = *tx.StudentName
+	}
+	balBefore := 0
+	if tx.BalanceBefore != nil {
+		balBefore = *tx.BalanceBefore
+	}
+	balAfter := 0
+	if tx.BalanceAfter != nil {
+		balAfter = *tx.BalanceAfter
+	}
+
+	actionDirection := "PENAMBAHAN"
+	if delta < 0 {
+		actionDirection = "PENGURANGAN"
+	}
+
+	_ = h.paymentService.LogAudit(c.Context(), claims.UserID, "BALANCE_CORRECTION", "students", req.StudentID,
+		auditJSON(map[string]interface{}{
+			"balance":        balBefore,
+			"balance_before": balBefore,
+			"status":         "Aktif",
+		}),
+		auditJSON(map[string]interface{}{
+			"amount":         delta,
+			"abs_amount":     absAmount,
+			"direction":      actionDirection,
+			"reason":         req.Reason,
+			"balance":        balAfter,
+			"balance_before": balBefore,
+			"balance_after":  balAfter,
+			"transaction_id": tx.ID,
+			"actor_role":     claims.Role,
+			"actor_name":     actorName,
+			"student_name":   studentName,
+			"status":         "Sukses",
+		}), c.IP())
+
+	if h.hub != nil {
+		h.hub.BroadcastToRoom(fmt.Sprintf("student:%s", req.StudentID), "balance:updated", fiber.Map{
+			"student_id":     req.StudentID,
+			"balance":        balAfter,
+			"delta":          delta,
+			"abs_amount":     absAmount,
+			"reason":         req.Reason,
+			"transaction_id": tx.ID,
+		})
+		h.hub.BroadcastToRoom(req.StudentID, "balance:updated", fiber.Map{
+			"student_id":     req.StudentID,
+			"balance":        balAfter,
+			"delta":          delta,
+			"abs_amount":     absAmount,
+			"reason":         req.Reason,
+			"transaction_id": tx.ID,
+		})
+		h.hub.BroadcastToRoom("all", "balance:updated", fiber.Map{
+			"student_id": req.StudentID,
+		})
+	}
+
+	return response.Success(c, fiber.StatusOK, "Koreksi saldo berhasil diproses", tx)
 }
 
 type MerchantWithdrawRequest struct {

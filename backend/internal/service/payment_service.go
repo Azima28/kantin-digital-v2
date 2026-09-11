@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"kantin-backend/internal/domain"
@@ -64,6 +65,25 @@ func (s *PaymentService) ProcessTopupWithMethod(ctx context.Context, studentID, 
 		return nil, errors.New("nominal top-up maksimal Rp 2.000.000 per transaksi")
 	}
 	return s.txRepo.ProcessTopupWithMethod(ctx, studentID, actorID, amount, method)
+}
+
+// ProcessCorrection executes a balance adjustment (addition or deduction) with row-level lock and audit safety.
+func (s *PaymentService) ProcessCorrection(ctx context.Context, studentID, actorID string, amount int, reason string) (*domain.Transaction, error) {
+	if amount == 0 {
+		return nil, errors.New("nominal koreksi saldo tidak boleh nol")
+	}
+	absAmount := amount
+	if absAmount < 0 {
+		absAmount = -absAmount
+	}
+	if absAmount > 2000000 {
+		return nil, errors.New("nominal koreksi saldo maksimal Rp 2.000.000 per transaksi")
+	}
+	reason = strings.TrimSpace(reason)
+	if reason == "" {
+		return nil, errors.New("alasan koreksi saldo wajib diisi")
+	}
+	return s.txRepo.ProcessCorrection(ctx, studentID, actorID, amount, reason)
 }
 
 // RequestTopup queues a student's own top-up request without crediting anything.
