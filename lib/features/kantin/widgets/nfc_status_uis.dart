@@ -129,14 +129,23 @@ class NfcConfirmingPaymentUi extends ConsumerWidget {
               elevation: 0,
             ),
             onPressed: isConfirming ? null : onConfirm,
-            child: Text(
-              'KONFIRMASI BAYAR',
-              style: TextStyle(
-                color: context.cardBg,
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
-              ),
-            ),
+            child: isConfirming
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Text(
+                    'KONFIRMASI BAYAR',
+                    style: TextStyle(
+                      color: context.cardBg,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
           ),
         ),
       ],

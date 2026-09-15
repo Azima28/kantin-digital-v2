@@ -633,45 +633,57 @@ class _KeuanganClosingShiftModalState
                         const SizedBox(height: 20),
 
                         // ── 5. Tombol Aksi Tutup Kasir ──
-                        if (_isProcessing)
-                          const Center(
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(vertical: 12),
-                              child: CircularProgressIndicator(color: Nebula.teal),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 48,
+                          child: ElevatedButton(
+                            onPressed: _isProcessing || _physicalCashController.text.trim().isEmpty
+                                ? null
+                                : () => _handleCloseShift(
+                                      shiftSummary: shiftSummary,
+                                      officerName: fullName,
+                                      schoolName: school,
+                                      authorityLevel: authorityLevel,
+                                    ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Nebula.teal,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
                             ),
-                          )
-                        else ...[
-                          // Tombol Utama: Tutup Kasir & Kunci Shift
-                          SizedBox(
-                            width: double.infinity,
-                            height: 48,
-                            child: ElevatedButton.icon(
-                              onPressed: _physicalCashController.text.trim().isEmpty
-                                  ? null
-                                  : () => _handleCloseShift(
-                                        shiftSummary: shiftSummary,
-                                        officerName: fullName,
-                                        schoolName: school,
-                                        authorityLevel: authorityLevel,
+                            child: _isProcessing
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(CupertinoIcons.lock_shield_fill, size: 18),
+                                      const SizedBox(width: 8),
+                                      Flexible(
+                                        child: Text(
+                                          'Tutup Kasir & Setor Sesi Shift #${shiftSummary.shiftNumber}',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
-                              icon: const Icon(CupertinoIcons.lock_shield_fill, size: 18),
-                              label: Text(
-                                'Tutup Kasir & Setor Sesi Shift #${shiftSummary.shiftNumber}',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Nebula.teal,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                            ),
+                                    ],
+                                  ),
                           ),
+                        ),
+                        if (!_isProcessing) ...[
                           const SizedBox(height: 10),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,

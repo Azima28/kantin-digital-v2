@@ -13,9 +13,9 @@ import 'package:kantin_digital/features/kantin/widgets/approve_cancellation_dial
 import 'package:kantin_digital/features/kantin/widgets/pos_order_chat_sheet.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
-class OrderDetailSheet extends ConsumerWidget {
+class OrderDetailSheet extends ConsumerStatefulWidget {
   final OrderItem order;
-  final void Function(String id, String newStatus, String studentId) onStatusChanged;
+  final Future<void> Function(String id, String newStatus, String studentId) onStatusChanged;
 
   const OrderDetailSheet({
     super.key,
@@ -26,7 +26,7 @@ class OrderDetailSheet extends ConsumerWidget {
   static Future<void> show(
     BuildContext context, {
     required OrderItem order,
-    required void Function(String id, String newStatus, String studentId) onStatusChanged,
+    required Future<void> Function(String id, String newStatus, String studentId) onStatusChanged,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -41,7 +41,17 @@ class OrderDetailSheet extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<OrderDetailSheet> createState() => _OrderDetailSheetState();
+}
+
+class _OrderDetailSheetState extends ConsumerState<OrderDetailSheet> {
+  String? _activeLoadingAction; // 'primary', 'batal', 'tolak', 'setujui'
+
+  OrderItem get order => widget.order;
+  Future<void> Function(String id, String newStatus, String studentId) get onStatusChanged => widget.onStatusChanged;
+
+  @override
+  Widget build(BuildContext context) {
     final double screenHeight = MediaQuery.of(context).size.height;
 
     final productsAsync = ref.watch(posProductsProvider);
@@ -851,56 +861,82 @@ class OrderDetailSheet extends ConsumerWidget {
                 // Reject Cancellation (Tolak)
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () async {
-                      final confirmReject = await showAppConfirmationDialog(
-                        context,
-                        title: 'Tolak Permohonan Batal?',
-                        message: 'Pesanan untuk ${order.studentName} akan tetap dilanjutkan ke status Sedang Disiapkan.',
-                        confirmLabel: 'Ya, Tolak Batal',
-                        cancelLabel: 'Kembali',
-                        icon: Icons.close_rounded,
-                        confirmColor: Nebula.amber,
-                      );
-                      if (confirmReject == true && context.mounted) {
-                        Navigator.pop(context);
-                        onStatusChanged(order.id, 'Sedang Disiapkan', order.studentId);
-                      }
-                    },
+                    onPressed: _activeLoadingAction != null
+                        ? null
+                        : () async {
+                            final navigator = Navigator.of(context);
+                            final confirmReject = await showAppConfirmationDialog(
+                              context,
+                              title: 'Tolak Permohonan Batal?',
+                              message: 'Pesanan untuk ${order.studentName} akan tetap dilanjutkan ke status Sedang Disiapkan.',
+                              confirmLabel: 'Ya, Tolak Batal',
+                              cancelLabel: 'Kembali',
+                              icon: Icons.close_rounded,
+                              confirmColor: Nebula.amber,
+                            );
+                            if (confirmReject == true && mounted) {
+                              setState(() => _activeLoadingAction = 'tolak');
+                              try {
+                                await onStatusChanged(order.id, 'Sedang Disiapkan', order.studentId);
+                                if (mounted) navigator.pop();
+                              } finally {
+                                if (mounted) setState(() => _activeLoadingAction = null);
+                              }
+                            }
+                          },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: context.textSecondary,
                       side: BorderSide(color: context.dividerCol),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: Text(
-                      'Tolak Batal',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
+                    child: _activeLoadingAction == 'tolak'
+                        ? SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(context.textSecondary),
+                            ),
+                          )
+                        : Text(
+                            'Tolak Batal',
+                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 // Approve Cancellation (Setujui)
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      final approved = await ApproveCancellationDialog.show(
-                        context,
-                        order: order,
-                      );
-                      if (approved == true && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Pembatalan pesanan disetujui. Saldo sebesar ${CurrencyFormatter.format(order.totalAmount)} telah dikembalikan ke ${order.studentName}.',
-                            ),
-                            backgroundColor: Nebula.teal,
-                            behavior: SnackBarBehavior.floating,
-                            duration: const Duration(seconds: 3),
-                          ),
-                        );
-                      }
-                    },
+                    onPressed: _activeLoadingAction != null
+                        ? null
+                        : () async {
+                            final navigator = Navigator.of(context);
+                            final messenger = ScaffoldMessenger.of(context);
+                            setState(() => _activeLoadingAction = 'setujui');
+                            try {
+                              final approved = await ApproveCancellationDialog.show(
+                                context,
+                                order: order,
+                              );
+                              if (approved == true && mounted) {
+                                navigator.pop();
+                                messenger.showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Pembatalan pesanan disetujui. Saldo sebesar ${CurrencyFormatter.format(order.totalAmount)} telah dikembalikan ke ${order.studentName}.',
+                                    ),
+                                    backgroundColor: Nebula.teal,
+                                    behavior: SnackBarBehavior.floating,
+                                    duration: const Duration(seconds: 3),
+                                  ),
+                                );
+                              }
+                            } finally {
+                              if (mounted) setState(() => _activeLoadingAction = null);
+                            }
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Nebula.rose,
                       foregroundColor: Colors.white,
@@ -908,10 +944,19 @@ class OrderDetailSheet extends ConsumerWidget {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 0,
                     ),
-                    child: Text(
-                      'Setujui Batal',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
+                    child: _activeLoadingAction == 'setujui'
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : Text(
+                            'Setujui Batal',
+                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
                   ),
                 ),
               ],
@@ -967,24 +1012,27 @@ class OrderDetailSheet extends ConsumerWidget {
           // 1. Primary Status Action Button on TOP (Full Width)
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-                String nextStatus = 'Sedang Disiapkan';
-                if (order.status == 'Sedang Disiapkan' || order.status == 'Sedang Dimasak') {
-                  nextStatus = (order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty)
-                      ? 'Sedang Diantar'
-                      : 'Siap Diambil';
-                } else if (order.status == 'Siap Diambil' || order.status == 'Sedang Diantar' || order.status == 'Siap Diantar') {
-                  nextStatus = 'Selesai';
-                }
-                onStatusChanged(order.id, nextStatus, order.studentId);
-              },
-              icon: Icon(_getNextActionIcon(), size: 17),
-              label: Text(
-                _getNextActionLabel(),
-                style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14),
-              ),
+            child: ElevatedButton(
+              onPressed: _activeLoadingAction != null
+                  ? null
+                  : () async {
+                      final navigator = Navigator.of(context);
+                      setState(() => _activeLoadingAction = 'primary');
+                      String nextStatus = 'Sedang Disiapkan';
+                      if (order.status == 'Sedang Disiapkan' || order.status == 'Sedang Dimasak') {
+                        nextStatus = (order.deliveryLocation != null && order.deliveryLocation!.isNotEmpty)
+                            ? 'Sedang Diantar'
+                            : 'Siap Diambil';
+                      } else if (order.status == 'Siap Diambil' || order.status == 'Sedang Diantar' || order.status == 'Siap Diantar') {
+                        nextStatus = 'Selesai';
+                      }
+                      try {
+                        await onStatusChanged(order.id, nextStatus, order.studentId);
+                        if (mounted) navigator.pop();
+                      } finally {
+                        if (mounted) setState(() => _activeLoadingAction = null);
+                      }
+                    },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Nebula.teal,
                 foregroundColor: Colors.white,
@@ -992,6 +1040,27 @@ class OrderDetailSheet extends ConsumerWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 0,
               ),
+              child: _activeLoadingAction == 'primary'
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(_getNextActionIcon(), size: 17),
+                        const SizedBox(width: 8),
+                        Text(
+                          _getNextActionLabel(),
+                          style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                      ],
+                    ),
             ),
           ),
           const SizedBox(height: 10),
@@ -1002,20 +1071,37 @@ class OrderDetailSheet extends ConsumerWidget {
               // Cancel Action button
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    onStatusChanged(order.id, 'Dibatalkan', order.studentId);
-                  },
+                  onPressed: _activeLoadingAction != null
+                      ? null
+                      : () async {
+                          final navigator = Navigator.of(context);
+                          setState(() => _activeLoadingAction = 'batal');
+                          try {
+                            await onStatusChanged(order.id, 'Dibatalkan', order.studentId);
+                            if (mounted) navigator.pop();
+                          } finally {
+                            if (mounted) setState(() => _activeLoadingAction = null);
+                          }
+                        },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Nebula.rose,
                     side: const BorderSide(color: Nebula.rose, width: 1.2),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text(
-                    'Batalkan',
-                    style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
+                  child: _activeLoadingAction == 'batal'
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Nebula.rose),
+                          ),
+                        )
+                      : Text(
+                          'Batalkan',
+                          style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
                 ),
               ),
               const SizedBox(width: 12),

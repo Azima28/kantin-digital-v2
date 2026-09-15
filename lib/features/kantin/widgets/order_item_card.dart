@@ -13,7 +13,7 @@ import 'package:kantin_digital/core/theme/nebula_colors.dart';
 
 class OrderItemCard extends StatefulWidget {
   final OrderItem order;
-  final void Function(String id, String newStatus, String studentId) onStatusChanged;
+  final Future<void> Function(String id, String newStatus, String studentId) onStatusChanged;
 
   const OrderItemCard({
     super.key,
@@ -28,6 +28,7 @@ class OrderItemCard extends StatefulWidget {
 class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProviderStateMixin {
   late AnimationController _scaleController;
   late Animation<double> _scaleAnimation;
+  String? _activeLoadingAction; // 'terima', 'batal', 'tolak', 'setujui', 'status_dropdown'
 
   @override
   void initState() {
@@ -61,8 +62,78 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
     );
   }
 
-  void _triggerStatusChange(String newStatus) {
-    widget.onStatusChanged(widget.order.id, newStatus, widget.order.studentId);
+  Future<void> _handleAccept() async {
+    if (_activeLoadingAction != null) return;
+    setState(() => _activeLoadingAction = 'terima');
+    try {
+      await widget.onStatusChanged(widget.order.id, 'Sedang Disiapkan', widget.order.studentId);
+    } finally {
+      if (mounted) setState(() => _activeLoadingAction = null);
+    }
+  }
+
+  Future<void> _handleCancel() async {
+    if (_activeLoadingAction != null) return;
+    setState(() => _activeLoadingAction = 'batal');
+    try {
+      await widget.onStatusChanged(widget.order.id, 'Dibatalkan', widget.order.studentId);
+    } finally {
+      if (mounted) setState(() => _activeLoadingAction = null);
+    }
+  }
+
+  Future<void> _handleRejectCancel() async {
+    if (_activeLoadingAction != null) return;
+    final confirmReject = await showAppConfirmationDialog(
+      context,
+      title: 'Tolak Permohonan Batal?',
+      message: 'Pesanan untuk ${widget.order.studentName} akan tetap dilanjutkan ke status Sedang Disiapkan.',
+      confirmLabel: 'Ya, Tolak Batal',
+      cancelLabel: 'Kembali',
+      icon: Icons.close_rounded,
+      confirmColor: Nebula.amber,
+    );
+    if (confirmReject == true && mounted) {
+      setState(() => _activeLoadingAction = 'tolak');
+      try {
+        await widget.onStatusChanged(widget.order.id, 'Sedang Disiapkan', widget.order.studentId);
+      } finally {
+        if (mounted) setState(() => _activeLoadingAction = null);
+      }
+    }
+  }
+
+  Future<void> _handleApproveCancel() async {
+    if (_activeLoadingAction != null) return;
+    setState(() => _activeLoadingAction = 'setujui');
+    try {
+      final approved = await ApproveCancellationDialog.show(
+        context,
+        order: widget.order,
+      );
+      if (approved == true && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Pembatalan pesanan disetujui. Saldo sebesar ${CurrencyFormatter.format(widget.order.totalAmount)} telah dikembalikan ke ${widget.order.studentName}.'),
+            backgroundColor: Nebula.teal,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _activeLoadingAction = null);
+    }
+  }
+
+  Future<void> _handleStatusDropdownChange(String newStatus) async {
+    if (_activeLoadingAction != null) return;
+    setState(() => _activeLoadingAction = 'status_dropdown');
+    try {
+      await widget.onStatusChanged(widget.order.id, newStatus, widget.order.studentId);
+    } finally {
+      if (mounted) setState(() => _activeLoadingAction = null);
+    }
   }
 
   @override
@@ -539,20 +610,7 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                                       children: [
                                         // Reject Request
                                         OutlinedButton(
-                                          onPressed: () async {
-                                            final confirmReject = await showAppConfirmationDialog(
-                                              context,
-                                              title: 'Tolak Permohonan Batal?',
-                                              message: 'Pesanan untuk ${widget.order.studentName} akan tetap dilanjutkan ke status Sedang Disiapkan.',
-                                              confirmLabel: 'Ya, Tolak Batal',
-                                              cancelLabel: 'Kembali',
-                                              icon: Icons.close_rounded,
-                                              confirmColor: Nebula.amber,
-                                            );
-                                            if (confirmReject == true && context.mounted) {
-                                              _triggerStatusChange('Sedang Disiapkan');
-                                            }
-                                          },
+                                          onPressed: _activeLoadingAction != null ? null : _handleRejectCancel,
                                           style: OutlinedButton.styleFrom(
                                             foregroundColor: context.textSecondary,
                                             side: BorderSide(color: context.dividerCol),
@@ -561,33 +619,27 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                                               borderRadius: BorderRadius.circular(10),
                                             ),
                                           ),
-                                          child: Text(
-                                            AppStrings.adminReject,
-                                            style: GoogleFonts.inter(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
+                                          child: _activeLoadingAction == 'tolak'
+                                              ? SizedBox(
+                                                  width: 14,
+                                                  height: 14,
+                                                  child: CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                    valueColor: AlwaysStoppedAnimation<Color>(context.textSecondary),
+                                                  ),
+                                                )
+                                              : Text(
+                                                  AppStrings.adminReject,
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
                                         ),
                                         const SizedBox(width: 8),
                                         // Approve Request
                                         ElevatedButton(
-                                          onPressed: () async {
-                                            final approved = await ApproveCancellationDialog.show(
-                                              context,
-                                              order: widget.order,
-                                            );
-                                            if (approved == true && context.mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(
-                                                  content: Text('Pembatalan pesanan disetujui. Saldo sebesar ${CurrencyFormatter.format(widget.order.totalAmount)} telah dikembalikan ke ${widget.order.studentName}.'),
-                                                  backgroundColor: Nebula.teal,
-                                                  behavior: SnackBarBehavior.floating,
-                                                  duration: const Duration(seconds: 3),
-                                                ),
-                                              );
-                                            }
-                                          },
+                                          onPressed: _activeLoadingAction != null ? null : _handleApproveCancel,
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: Nebula.rose,
                                             foregroundColor: Colors.white,
@@ -597,13 +649,22 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                                             ),
                                             elevation: 0,
                                           ),
-                                          child: Text(
-                                            AppStrings.adminApprove,
-                                            style: GoogleFonts.inter(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
+                                          child: _activeLoadingAction == 'setujui'
+                                              ? const SizedBox(
+                                                  width: 14,
+                                                  height: 14,
+                                                  child: CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                                  ),
+                                                )
+                                              : Text(
+                                                  AppStrings.adminApprove,
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
                                         ),
                                       ],
                                     ),
@@ -643,7 +704,7 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                                         // Cancel Button
                                         Expanded(
                                           child: OutlinedButton(
-                                            onPressed: () => _triggerStatusChange('Dibatalkan'),
+                                            onPressed: _activeLoadingAction != null ? null : _handleCancel,
                                             style: OutlinedButton.styleFrom(
                                               foregroundColor: Nebula.rose,
                                               side: const BorderSide(color: Nebula.rose, width: 1.0),
@@ -652,15 +713,24 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                                                 borderRadius: BorderRadius.circular(10),
                                               ),
                                             ),
-                                            child: Text(
-                                              'Batalkan',
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: GoogleFonts.inter(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
+                                            child: _activeLoadingAction == 'batal'
+                                                ? const SizedBox(
+                                                    width: 14,
+                                                    height: 14,
+                                                    child: CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      valueColor: AlwaysStoppedAnimation<Color>(Nebula.rose),
+                                                    ),
+                                                  )
+                                                : Text(
+                                                    'Batalkan',
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: GoogleFonts.inter(
+                                                      fontSize: 12,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
                                           ),
                                         ),
                                         const SizedBox(width: 8),
@@ -669,7 +739,7 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                                         Expanded(
                                           child: widget.order.status == 'Baru'
                                               ? ElevatedButton(
-                                                  onPressed: () => _triggerStatusChange('Sedang Disiapkan'),
+                                                  onPressed: _activeLoadingAction != null ? null : _handleAccept,
                                                   style: ElevatedButton.styleFrom(
                                                     backgroundColor: Nebula.teal,
                                                     foregroundColor: Colors.white,
@@ -679,78 +749,110 @@ class _OrderItemCardState extends State<OrderItemCard> with SingleTickerProvider
                                                     ),
                                                     elevation: 0,
                                                   ),
-                                                  child: Row(
-                                                    mainAxisAlignment: MainAxisAlignment.center,
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      const Icon(CupertinoIcons.checkmark_circle, size: 14),
-                                                      const SizedBox(width: 4),
-                                                      Flexible(
-                                                        child: Text(
-                                                          'Terima',
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow.ellipsis,
-                                                          style: GoogleFonts.inter(
-                                                            fontSize: 12,
-                                                            fontWeight: FontWeight.w700,
+                                                  child: _activeLoadingAction == 'terima'
+                                                      ? const SizedBox(
+                                                          width: 14,
+                                                          height: 14,
+                                                          child: CircularProgressIndicator(
+                                                            strokeWidth: 2,
+                                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                                          ),
+                                                        )
+                                                      : Row(
+                                                          mainAxisAlignment: MainAxisAlignment.center,
+                                                          mainAxisSize: MainAxisSize.min,
+                                                          children: [
+                                                            const Icon(CupertinoIcons.checkmark_circle, size: 14),
+                                                            const SizedBox(width: 4),
+                                                            Flexible(
+                                                              child: Text(
+                                                                'Terima',
+                                                                maxLines: 1,
+                                                                overflow: TextOverflow.ellipsis,
+                                                                style: GoogleFonts.inter(
+                                                                  fontSize: 12,
+                                                                  fontWeight: FontWeight.w700,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                )
+                                              : _activeLoadingAction == 'status_dropdown'
+                                                  ? Container(
+                                                      padding: const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 8,
+                                                      ),
+                                                      decoration: BoxDecoration(
+                                                        color: context.surfaceBg,
+                                                        borderRadius: BorderRadius.circular(10),
+                                                        border: Border.all(color: context.dividerCol, width: 0.5),
+                                                      ),
+                                                      child: const Center(
+                                                        child: SizedBox(
+                                                          width: 14,
+                                                          height: 14,
+                                                          child: CircularProgressIndicator(
+                                                            strokeWidth: 2,
+                                                            valueColor: AlwaysStoppedAnimation<Color>(Nebula.teal),
                                                           ),
                                                         ),
                                                       ),
-                                                    ],
-                                                  ),
-                                                )
-                                              : PopupMenuButton<String>(
-                                                  onSelected: (newStatus) => _triggerStatusChange(newStatus),
-                                                  itemBuilder: (BuildContext context) {
-                                                    final bool isDelivery = widget.order.deliveryLocation != null && widget.order.deliveryLocation!.isNotEmpty;
-                                                    final List<String> statusOptions = [
-                                                      'Sedang Disiapkan',
-                                                      if (isDelivery) 'Sedang Diantar' else 'Siap Diambil',
-                                                      'Selesai',
-                                                    ];
-                                                    return statusOptions
-                                                        .where((s) => s != widget.order.status)
-                                                        .map((status) => PopupMenuItem(
-                                                              value: status,
-                                                              child: Text(status),
-                                                            ))
-                                                        .toList();
-                                                  },
-                                                  child: Container(
-                                                    padding: const EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 8,
-                                                    ),
-                                                    decoration: BoxDecoration(
-                                                      color: context.surfaceBg,
-                                                      borderRadius: BorderRadius.circular(10),
-                                                      border: Border.all(color: context.dividerCol, width: 0.5),
-                                                    ),
-                                                    child: FittedBox(
-                                                      fit: BoxFit.scaleDown,
-                                                      child: Row(
-                                                        mainAxisAlignment: MainAxisAlignment.center,
-                                                        mainAxisSize: MainAxisSize.min,
-                                                        children: [
-                                                          Text(
-                                                            widget.order.status,
-                                                            style: GoogleFonts.inter(
-                                                              fontSize: 12,
-                                                              fontWeight: FontWeight.w600,
-                                                              color: context.textPrimary,
-                                                            ),
+                                                    )
+                                                  : PopupMenuButton<String>(
+                                                      enabled: _activeLoadingAction == null,
+                                                      onSelected: (newStatus) => _handleStatusDropdownChange(newStatus),
+                                                      itemBuilder: (BuildContext context) {
+                                                        final bool isDelivery = widget.order.deliveryLocation != null && widget.order.deliveryLocation!.isNotEmpty;
+                                                        final List<String> statusOptions = [
+                                                          'Sedang Disiapkan',
+                                                          if (isDelivery) 'Sedang Diantar' else 'Siap Diambil',
+                                                          'Selesai',
+                                                        ];
+                                                        return statusOptions
+                                                            .where((s) => s != widget.order.status)
+                                                            .map((status) => PopupMenuItem(
+                                                                  value: status,
+                                                                  child: Text(status),
+                                                                ))
+                                                            .toList();
+                                                      },
+                                                      child: Container(
+                                                        padding: const EdgeInsets.symmetric(
+                                                          horizontal: 8,
+                                                          vertical: 8,
+                                                        ),
+                                                        decoration: BoxDecoration(
+                                                          color: context.surfaceBg,
+                                                          borderRadius: BorderRadius.circular(10),
+                                                          border: Border.all(color: context.dividerCol, width: 0.5),
+                                                        ),
+                                                        child: FittedBox(
+                                                          fit: BoxFit.scaleDown,
+                                                          child: Row(
+                                                            mainAxisAlignment: MainAxisAlignment.center,
+                                                            mainAxisSize: MainAxisSize.min,
+                                                            children: [
+                                                              Text(
+                                                                widget.order.status,
+                                                                style: GoogleFonts.inter(
+                                                                  fontSize: 12,
+                                                                  fontWeight: FontWeight.w600,
+                                                                  color: context.textPrimary,
+                                                                ),
+                                                              ),
+                                                              const SizedBox(width: 4),
+                                                              Icon(
+                                                                CupertinoIcons.chevron_down,
+                                                                size: 11,
+                                                                color: context.textPrimary,
+                                                              ),
+                                                            ],
                                                           ),
-                                                          const SizedBox(width: 4),
-                                                          Icon(
-                                                            CupertinoIcons.chevron_down,
-                                                            size: 11,
-                                                            color: context.textPrimary,
-                                                          ),
-                                                        ],
+                                                        ),
                                                       ),
                                                     ),
-                                                  ),
-                                                ),
                                         ),
                                       ],
                                     ),

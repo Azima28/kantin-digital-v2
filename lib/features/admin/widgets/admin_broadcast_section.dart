@@ -93,7 +93,7 @@ class AdminBroadcastSection extends StatelessWidget {
           ),
         ),
         SizedBox(height: 16),
-        ElevatedButton.icon(
+        ElevatedButton(
           onPressed: isSaving ? null : onSend,
           style: ElevatedButton.styleFrom(
             backgroundColor: Nebula.teal,
@@ -103,11 +103,27 @@ class AdminBroadcastSection extends StatelessWidget {
             ),
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),
-          icon: const Icon(CupertinoIcons.paperplane_fill, size: 16),
-          label: const Text(
-            'KIRIM PENGUMUMAN',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
+          child: isSaving
+              ? SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(context.cardBg),
+                  ),
+                )
+              : const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(CupertinoIcons.paperplane_fill, size: 16),
+                    SizedBox(width: 8),
+                    Text(
+                      'KIRIM PENGUMUMAN',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
         ),
       ],
     );
