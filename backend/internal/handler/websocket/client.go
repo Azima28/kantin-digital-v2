@@ -29,6 +29,7 @@ func (c *Client) ReadPump() {
 			break
 		}
 		// Client messages are processed as heartbeats / pings; mutations go via REST API
+		c.hub.TouchUserActivity(c.User)
 	}
 }
 

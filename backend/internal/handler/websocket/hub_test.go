@@ -48,6 +48,11 @@ func TestHubRoomIsolation(t *testing.T) {
 
 	time.Sleep(20 * time.Millisecond)
 
+	// Drain any presence registration broadcasts sent to "all" during client joins
+	for len(clientAll.send) > 0 {
+		<-clientAll.send
+	}
+
 	// Broadcast strictly to order:123
 	hub.BroadcastToRoom("order:123", "order:message", map[string]string{
 		"text": "pesan rahasia",
@@ -83,5 +88,43 @@ func TestHubRoomIsolation(t *testing.T) {
 		t.Errorf("Security Leak: clientOther in room 'order:999' received private room message: %s", string(msg))
 	default:
 		// Passed: channel is empty
+	}
+}
+
+func TestHubUserPresenceTracking(t *testing.T) {
+	hub := NewHub()
+	go hub.Run()
+
+	studentID := "student-presence-test-123"
+
+	if hub.IsUserOnline(studentID) {
+		t.Errorf("Expected user %s to be offline before connecting", studentID)
+	}
+
+	client := &Client{
+		hub:  hub,
+		send: make(chan []byte, 10),
+		Room: "all",
+		User: studentID,
+	}
+
+	hub.register <- client
+	time.Sleep(20 * time.Millisecond)
+
+	if !hub.IsUserOnline(studentID) {
+		t.Errorf("Expected user %s to be online after connecting to websocket", studentID)
+	}
+
+	hub.unregister <- client
+	time.Sleep(20 * time.Millisecond)
+
+	// After disconnect, if within 60s lastSeen is set, but userClients has 0
+	// Let's verify active client removal
+	hub.mu.RLock()
+	clientsCount := len(hub.userClients[studentID])
+	hub.mu.RUnlock()
+
+	if clientsCount != 0 {
+		t.Errorf("Expected user %s to have 0 active clients after disconnect, got %d", studentID, clientsCount)
 	}
 }

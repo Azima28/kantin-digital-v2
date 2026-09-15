@@ -23,6 +23,7 @@ class RealtimeService {
   WebSocketChannel? _channel;
   StreamSubscription? _subscription;
   Timer? _reconnectTimer;
+  Timer? _heartbeatTimer;
   bool _isDisposed = false;
   bool _isConnected = false;
   int _reconnectAttempts = 0;
@@ -69,6 +70,11 @@ class RealtimeService {
       _reconnectAttempts = 0;
       debugPrint('[RealtimeService] Connected to Go WebSocket at $wsUrl (room=all)');
 
+      _heartbeatTimer?.cancel();
+      _heartbeatTimer = Timer.periodic(const Duration(seconds: 25), (_) {
+        _sendHeartbeat();
+      });
+
       _subscription = _channel!.stream.listen(
         (dynamic rawMessage) {
           _handleIncomingMessage(rawMessage);
@@ -91,6 +97,7 @@ class RealtimeService {
 
   void _scheduleReconnect() {
     _isConnected = false;
+    _heartbeatTimer?.cancel();
     if (_isDisposed) return;
     _reconnectTimer?.cancel();
     _reconnectAttempts++;
@@ -100,6 +107,14 @@ class RealtimeService {
         connect();
       }
     });
+  }
+
+  void _sendHeartbeat() {
+    if (_isConnected && _channel != null) {
+      try {
+        _channel!.sink.add(json.encode({'event': 'ping'}));
+      } catch (_) {}
+    }
   }
 
   Map<String, dynamic>? _toMap(dynamic obj) {
@@ -154,6 +169,10 @@ class RealtimeService {
               _ref.invalidate(orderPresenceProvider(orderId));
             }
           }
+          break;
+
+        case 'user:presence':
+          _ref.invalidate(orderPresenceProvider);
           break;
 
         case 'order:new':
@@ -331,6 +350,7 @@ class RealtimeService {
   void dispose() {
     _isDisposed = true;
     _isConnected = false;
+    _heartbeatTimer?.cancel();
     _reconnectTimer?.cancel();
     _subscription?.cancel();
     _channel?.sink.close();

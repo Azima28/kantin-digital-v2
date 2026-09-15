@@ -42,20 +42,16 @@ class _PosOrderChatSheetState extends ConsumerState<PosOrderChatSheet> {
   bool _isMarkingRead = false;
   int _lastMessageCount = 0;
   bool _initialScrollDone = false;
-  Timer? _presenceTimer;
   Timer? _livePollingTimer;
 
   @override
   void initState() {
     super.initState();
     _markRead();
+    // Sentuh presence saat chat dibuka
     ref.read(trackOrderPresenceProvider)(widget.order.id, 'canteen_operator');
-    _presenceTimer = Timer.periodic(const Duration(seconds: 15), (_) {
-      if (mounted) {
-        ref.read(trackOrderPresenceProvider)(widget.order.id, 'canteen_operator');
-      }
-    });
-    _livePollingTimer = Timer.periodic(const Duration(milliseconds: 1800), (_) {
+    // Polling cadangan santai (15 detik) jika WebSocket sempat terganggu
+    _livePollingTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       if (mounted) {
         ref.invalidate(orderChatStreamProvider(widget.order.id));
       }
@@ -64,7 +60,6 @@ class _PosOrderChatSheetState extends ConsumerState<PosOrderChatSheet> {
 
   @override
   void dispose() {
-    _presenceTimer?.cancel();
     _livePollingTimer?.cancel();
     _messageController.dispose();
     _scrollController.dispose();

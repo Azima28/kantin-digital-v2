@@ -325,11 +325,28 @@ func main() {
 	api.Get("/academic-structure", catalogH.GetPublicAcademicStructure)
 
 	// Protected Routes
-	authRequired := api.Group("", middleware.AuthMiddleware(tokenMaker, userRepo, sessionRepo))
+	authRequired := api.Group("", middleware.AuthMiddleware(tokenMaker, userRepo, sessionRepo), func(c *fiber.Ctx) error {
+		if claimsVal := c.Locals(middleware.UserClaimsKey); claimsVal != nil {
+			if claims, ok := claimsVal.(*token.JWTClaims); ok && claims.UserID != "" {
+				hub.TouchUserActivity(claims.UserID)
+			}
+		}
+		return c.Next()
+	})
 	{
 		authRequired.Get("/auth/me", authH.Me)
 		authRequired.Post("/auth/logout", authH.Logout)
 		authRequired.Post("/auth/change-password", passwordLimiter, authH.ChangePassword)
+
+		// User Web Presence Check
+		authRequired.Get("/users/:id/presence", func(c *fiber.Ctx) error {
+			targetID := c.Params("id")
+			isOnline := hub.IsUserOnline(targetID)
+			return response.Success(c, fiber.StatusOK, "User presence", fiber.Map{
+				"user_id":   targetID,
+				"is_online": isOnline,
+			})
+		})
 
 		// Uploads (Protected with role verification for products)
 		authRequired.Post("/upload/product-image", middleware.RequireRoles(domain.RolePetugasKantin, domain.RoleAdmin, domain.RoleSuperAdmin), uploadH.UploadProductImage)

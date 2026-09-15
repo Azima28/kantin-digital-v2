@@ -234,6 +234,8 @@ func (h *OrderHandler) UpdatePresence(c *fiber.Ctx) error {
 		roleStr = "canteen_operator"
 	}
 
+	h.hub.TouchUserActivity(claims.UserID)
+
 	presenceLock.Lock()
 	if _, ok := orderPresenceMap[orderID]; !ok {
 		orderPresenceMap[orderID] = make(map[string]time.Time)
@@ -255,17 +257,35 @@ func (h *OrderHandler) GetPresence(c *fiber.Ctx) error {
 	orderID := c.Params("id")
 	now := time.Now()
 
+	activeRolesMap := make(map[string]bool)
+
+	// 1. Primary check: check participants' live presence on the web (WebSocket / Web Activity)
+	order, err := h.orderService.GetOrderByID(c.Context(), orderID)
+	if err == nil && order != nil {
+		if order.StudentID != "" && h.hub.IsUserOnline(order.StudentID) {
+			activeRolesMap["student"] = true
+		}
+		if order.OperatorID != nil && *order.OperatorID != "" && h.hub.IsUserOnline(*order.OperatorID) {
+			activeRolesMap["canteen_operator"] = true
+		}
+	}
+
+	// 2. Fallback check: recent chat-specific presence in orderPresenceMap (within 60s)
 	presenceLock.RLock()
 	roleMap, ok := orderPresenceMap[orderID]
-	activeRoles := make([]string, 0)
 	if ok {
 		for role, lastSeen := range roleMap {
-			if now.Sub(lastSeen) < 15*time.Second {
-				activeRoles = append(activeRoles, role)
+			if now.Sub(lastSeen) < 60*time.Second {
+				activeRolesMap[role] = true
 			}
 		}
 	}
 	presenceLock.RUnlock()
+
+	activeRoles := make([]string, 0, len(activeRolesMap))
+	for role := range activeRolesMap {
+		activeRoles = append(activeRoles, role)
+	}
 
 	return response.Success(c, fiber.StatusOK, "Active presence roles", activeRoles)
 }

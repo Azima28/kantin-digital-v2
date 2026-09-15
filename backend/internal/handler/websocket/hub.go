@@ -3,6 +3,7 @@ package websocket
 import (
 	"encoding/json"
 	"sync"
+	"time"
 )
 
 type EventPayload struct {
@@ -12,21 +13,25 @@ type EventPayload struct {
 }
 
 type Hub struct {
-	clients    map[*Client]bool
-	rooms      map[string]map[*Client]bool
-	broadcast  chan []byte
-	register   chan *Client
-	unregister chan *Client
-	mu         sync.RWMutex
+	clients      map[*Client]bool
+	rooms        map[string]map[*Client]bool
+	userClients  map[string]map[*Client]bool
+	userLastSeen map[string]time.Time
+	broadcast    chan []byte
+	register     chan *Client
+	unregister   chan *Client
+	mu           sync.RWMutex
 }
 
 func NewHub() *Hub {
 	return &Hub{
-		clients:    make(map[*Client]bool),
-		rooms:      make(map[string]map[*Client]bool),
-		broadcast:  make(chan []byte, 256),
-		register:   make(chan *Client),
-		unregister: make(chan *Client),
+		clients:      make(map[*Client]bool),
+		rooms:        make(map[string]map[*Client]bool),
+		userClients:  make(map[string]map[*Client]bool),
+		userLastSeen: make(map[string]time.Time),
+		broadcast:    make(chan []byte, 256),
+		register:     make(chan *Client),
+		unregister:   make(chan *Client),
 	}
 }
 
@@ -42,7 +47,23 @@ func (h *Hub) Run() {
 				}
 				h.rooms[client.Room][client] = true
 			}
+
+			var justCameOnline bool
+			if client.User != "" && client.User != "guest" {
+				if _, ok := h.userClients[client.User]; !ok {
+					h.userClients[client.User] = make(map[*Client]bool)
+				}
+				if len(h.userClients[client.User]) == 0 {
+					justCameOnline = true
+				}
+				h.userClients[client.User][client] = true
+				h.userLastSeen[client.User] = time.Now()
+			}
 			h.mu.Unlock()
+
+			if justCameOnline {
+				h.broadcastUserPresence(client.User, "online")
+			}
 
 		case client := <-h.unregister:
 			h.mu.Lock()
@@ -58,7 +79,23 @@ func (h *Hub) Run() {
 					}
 				}
 			}
+
+			var justWentOffline bool
+			if client.User != "" && client.User != "guest" {
+				if userClients, ok := h.userClients[client.User]; ok {
+					delete(userClients, client)
+					if len(userClients) == 0 {
+						delete(h.userClients, client.User)
+						h.userLastSeen[client.User] = time.Now()
+						justWentOffline = true
+					}
+				}
+			}
 			h.mu.Unlock()
+
+			if justWentOffline {
+				h.broadcastUserPresence(client.User, "offline")
+			}
 
 		case message := <-h.broadcast:
 			h.mu.RLock()
@@ -73,6 +110,58 @@ func (h *Hub) Run() {
 			h.mu.RUnlock()
 		}
 	}
+}
+
+func (h *Hub) broadcastUserPresence(userID, status string) {
+	payload := map[string]interface{}{
+		"user_id":   userID,
+		"status":    status,
+		"timestamp": time.Now().Unix(),
+	}
+	h.BroadcastToRoom("all", "user:presence", payload)
+}
+
+// IsUserOnline returns true if the user has an active WebSocket connection
+// on the web or had activity within the last 60 seconds.
+func (h *Hub) IsUserOnline(userID string) bool {
+	if userID == "" || userID == "guest" {
+		return false
+	}
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	if clients, ok := h.userClients[userID]; ok && len(clients) > 0 {
+		return true
+	}
+	if lastSeen, ok := h.userLastSeen[userID]; ok {
+		if time.Since(lastSeen) < 60*time.Second {
+			return true
+		}
+	}
+	return false
+}
+
+// TouchUserActivity updates the last active timestamp for a user.
+func (h *Hub) TouchUserActivity(userID string) {
+	if userID == "" || userID == "guest" {
+		return
+	}
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.userLastSeen[userID] = time.Now()
+}
+
+// GetOnlineUsers returns a list of user IDs currently connected on the web.
+func (h *Hub) GetOnlineUsers() []string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	users := make([]string, 0, len(h.userClients))
+	for u, clients := range h.userClients {
+		if len(clients) > 0 {
+			users = append(users, u)
+		}
+	}
+	return users
 }
 
 // BroadcastToRoom sends a message strictly to clients in the specified room without leaking to other rooms
