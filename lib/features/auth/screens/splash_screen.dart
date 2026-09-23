@@ -81,13 +81,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Official Brand Logo (Light & Dark theme aware)
+                    // Official Brand Symbol Mark (Light & Dark theme aware)
                     Image.asset(
                       isDark
-                          ? 'assets/images/app_logo_dark.png'
-                          : 'assets/images/app_logo_light.png',
-                      width: 150,
-                      height: 150,
+                          ? 'assets/images/app_symbol_dark.png'
+                          : 'assets/images/app_symbol_light.png',
+                      width: 140,
+                      height: 140,
                       fit: BoxFit.contain,
                       errorBuilder: (_, __, ___) => Container(
                         width: 128,

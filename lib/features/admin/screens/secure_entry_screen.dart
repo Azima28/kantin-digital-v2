@@ -61,7 +61,7 @@ class _SecureEntryScreenState extends ConsumerState<SecureEntryScreen> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Image.asset(
-                      'assets/images/app_logo_dark.png',
+                      'assets/images/app_symbol_dark.png',
                       fit: BoxFit.contain,
                       errorBuilder: (_, __, ___) => Icon(
                         Icons.admin_panel_settings,

@@ -46,8 +46,8 @@ class PublicHomeScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                           child: Image.asset(
                             context.isDark
-                                ? 'assets/images/app_logo_dark.png'
-                                : 'assets/images/app_logo_light.png',
+                                ? 'assets/images/app_symbol_dark.png'
+                                : 'assets/images/app_symbol_light.png',
                             width: 36,
                             height: 36,
                             fit: BoxFit.contain,

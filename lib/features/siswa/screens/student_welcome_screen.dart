@@ -331,8 +331,8 @@ class _StudentWelcomeScreenState extends ConsumerState<StudentWelcomeScreen> {
                 borderRadius: BorderRadius.circular(8),
                 child: Image.asset(
                   isDark
-                      ? 'assets/images/app_logo_dark.png'
-                      : 'assets/images/app_logo_light.png',
+                      ? 'assets/images/app_symbol_dark.png'
+                      : 'assets/images/app_symbol_light.png',
                   width: 28,
                   height: 28,
                   fit: BoxFit.contain,

@@ -78,7 +78,7 @@ class NebulaSidebar extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: Image.asset(
-                'assets/images/app_logo_dark.png',
+                'assets/images/app_symbol_dark.png',
                 fit: BoxFit.contain,
                 errorBuilder: (_, __, ___) => Icon(
                   headerIcon,

@@ -516,8 +516,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   borderRadius: BorderRadius.circular(12),
                   child: Image.asset(
                     isDark
-                        ? 'assets/images/app_logo_dark.png'
-                        : 'assets/images/app_logo_light.png',
+                        ? 'assets/images/app_symbol_dark.png'
+                        : 'assets/images/app_symbol_light.png',
                     width: 44,
                     height: 44,
                     fit: BoxFit.contain,

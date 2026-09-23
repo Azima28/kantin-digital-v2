@@ -117,8 +117,8 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
                         borderRadius: BorderRadius.circular(18),
                         child: Image.asset(
                           context.isDark
-                              ? 'assets/images/app_logo_dark.png'
-                              : 'assets/images/app_logo_light.png',
+                              ? 'assets/images/app_symbol_dark.png'
+                              : 'assets/images/app_symbol_light.png',
                           width: 68,
                           height: 68,
                           fit: BoxFit.contain,
