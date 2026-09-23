@@ -14,6 +14,7 @@ import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/app_image_picker_sheet.dart';
+import 'package:kantin_digital/core/widgets/about_sekantin_sheet.dart';
 import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 import 'package:kantin_digital/core/widgets/app_avatar.dart';
 
@@ -317,6 +318,13 @@ class _KeuanganProfileScreenState extends ConsumerState<KeuanganProfileScreen> {
                       icon: CupertinoIcons.lock_shield,
                       title: 'Ubah Kata Sandi',
                       onTap: _showChangePasswordDialog,
+                      context: context,
+                    ),
+                    _buildDivider(context),
+                    _buildActionItem(
+                      icon: CupertinoIcons.info_circle,
+                      title: 'Tentang SeKantin',
+                      onTap: () => showAboutSeKantinSheet(context),
                       context: context,
                     ),
                     _buildDivider(context),

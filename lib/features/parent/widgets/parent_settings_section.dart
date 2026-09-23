@@ -12,6 +12,7 @@ import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/providers/theme_provider.dart';
 import 'package:kantin_digital/core/widgets/app_image_picker_sheet.dart';
 import 'package:kantin_digital/core/widgets/app_avatar.dart';
+import 'package:kantin_digital/core/widgets/about_sekantin_sheet.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 
 /// Settings section for parent dashboard with profile avatar upload, daily limit, and card freeze.
@@ -712,6 +713,41 @@ class _ParentSettingsSectionState extends ConsumerState<ParentSettingsSection> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+        ),
+        const SizedBox(height: 20),
+
+        // Tentang SeKantin Tile
+        Container(
+          decoration: BoxDecoration(
+            color: context.cardBg,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: context.dividerCol, width: 1),
+          ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+            leading: CircleAvatar(
+              radius: 18,
+              backgroundColor: Nebula.teal.withValues(alpha: 0.08),
+              child: const Icon(CupertinoIcons.info_circle_fill, color: Nebula.teal, size: 20),
+            ),
+            title: Text(
+              'Tentang SeKantin',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: context.textPrimary,
+              ),
+            ),
+            subtitle: Text(
+              'Informasi filosofi, sistem keamanan, & bantuan',
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                color: context.textSecondary,
+              ),
+            ),
+            trailing: Icon(CupertinoIcons.chevron_forward, size: 16, color: context.textSecondary),
+            onTap: () => showAboutSeKantinSheet(context),
+          ),
         ),
       ],
     );

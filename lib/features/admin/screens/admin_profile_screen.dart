@@ -11,6 +11,7 @@ import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/services/storage_service.dart';
 import 'package:kantin_digital/core/theme/nebula_colors.dart';
 import 'package:kantin_digital/core/widgets/app_image_picker_sheet.dart';
+import 'package:kantin_digital/core/widgets/about_sekantin_sheet.dart';
 import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
 import 'package:kantin_digital/core/widgets/change_password_panel.dart';
 import 'package:kantin_digital/core/widgets/theme_toggle_tile.dart';
@@ -658,6 +659,35 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
                             Expanded(
                               child: Text(
                                 AppStrings.adminChangePassword,
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13.5,
+                                  color: context.textPrimary,
+                                ),
+                              ),
+                            ),
+                            Icon(CupertinoIcons.chevron_forward, size: 16, color: context.textSecondary),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Divider(height: 16, thickness: 0.5, color: context.dividerCol),
+                    InkWell(
+                      onTap: () => showAboutSeKantinSheet(context),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 16,
+                              backgroundColor: Nebula.teal.withValues(alpha: 0.08),
+                              child: const Icon(CupertinoIcons.info_circle_fill, color: Nebula.teal, size: 18),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Tentang SeKantin',
                                 style: GoogleFonts.inter(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 13.5,

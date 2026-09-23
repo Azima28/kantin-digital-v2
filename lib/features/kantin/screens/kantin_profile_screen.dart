@@ -10,6 +10,7 @@ import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/services/storage_service.dart';
 import 'package:kantin_digital/core/widgets/logout_confirmation_dialog.dart';
+import 'package:kantin_digital/core/widgets/about_sekantin_sheet.dart';
 import 'package:kantin_digital/core/widgets/app_image_picker_sheet.dart';
 import 'package:kantin_digital/core/widgets/change_password_panel.dart';
 import 'package:kantin_digital/core/widgets/theme_toggle_tile.dart';
@@ -750,6 +751,32 @@ class _KantinProfileScreenState extends ConsumerState<KantinProfileScreen> {
                       ),
                       trailing: Icon(CupertinoIcons.chevron_forward, size: 16, color: context.textSecondary),
                       onTap: _showChangePasswordDialog,
+                    ),
+                    Divider(height: 1, thickness: 0.5, color: context.dividerCol),
+                    ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                      leading: CircleAvatar(
+                        radius: 18,
+                        backgroundColor: Nebula.teal.withValues(alpha: 0.08),
+                        child: const Icon(CupertinoIcons.info_circle_fill, color: Nebula.teal, size: 20),
+                      ),
+                      title: Text(
+                        'Tentang SeKantin',
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: context.textPrimary,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Informasi versi, filosofi, & bantuan sistem',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          color: context.textSecondary,
+                        ),
+                      ),
+                      trailing: Icon(CupertinoIcons.chevron_forward, size: 16, color: context.textSecondary),
+                      onTap: () => showAboutSeKantinSheet(context),
                     ),
                   ],
                 ),

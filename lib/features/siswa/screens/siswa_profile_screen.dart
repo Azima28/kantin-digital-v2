@@ -16,6 +16,7 @@ import 'package:kantin_digital/core/widgets/theme_toggle_tile.dart';
 import 'package:kantin_digital/core/widgets/app_toast.dart';
 import 'package:kantin_digital/core/widgets/shimmer_loading.dart';
 import 'package:kantin_digital/core/widgets/app_image_picker_sheet.dart';
+import 'package:kantin_digital/core/widgets/about_sekantin_sheet.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/features/auth/providers/auth_provider.dart';
 import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
@@ -388,6 +389,13 @@ class SiswaProfileScreen extends ConsumerWidget {
                               label: 'Ubah PIN Transaksi',
                               onTap: () =>
                                   _showChangePinPanel(context, ref),
+                              showDivider: true,
+                            ),
+                            buildIconActionRow(context,
+                              icon: CupertinoIcons.info_circle,
+                              iconColor: Nebula.teal,
+                              label: 'Tentang SeKantin',
+                              onTap: () => showAboutSeKantinSheet(context),
                               showDivider: true,
                             ),
                             buildIconActionRow(context,
