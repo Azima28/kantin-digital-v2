@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/theme/hallmark_color_scheme.dart';
 import 'package:kantin_digital/core/theme/hallmark_typography.dart';
@@ -394,63 +395,96 @@ class _OrderChatSheetState extends ConsumerState<OrderChatSheet> {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               border: Border(bottom: BorderSide(color: colors.borderTactile, width: 0.5)),
             ),
             child: Row(
               children: [
-                Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundColor: colors.brandPrimary.withValues(alpha: 0.15),
-                      child: canteenAvatarUrl != null && canteenAvatarUrl.isNotEmpty
-                          ? ClipOval(
-                              child: Image.network(
-                                canteenAvatarUrl,
-                                width: 36,
-                                height: 36,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
-                                    Icon(Icons.storefront_rounded, color: colors.brandPrimary, size: 20),
-                              ),
-                            )
-                          : Icon(Icons.storefront_rounded, color: colors.brandPrimary, size: 20),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          color: isPedagangOnline ? colors.statusSuccess : colors.textMuted.withValues(alpha: 0.5),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: colors.surfaceContainer, width: 1.5),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.order.canteenName?.isNotEmpty == true
-                            ? widget.order.canteenName!
-                            : 'Pedagang Kantin',
-                        style: HallmarkTypography.titleSmall(colors.textPrimary),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                  child: InkWell(
+                    onTap: () {
+                      final canteenId = widget.order.operatorId;
+                      Navigator.pop(context);
+                      if (canteenId != null && canteenId.isNotEmpty) {
+                        context.push('/public/stan/$canteenId');
+                      } else {
+                        context.push('/public/menu');
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 2.0),
+                      child: Row(
+                        children: [
+                          Stack(
+                            children: [
+                              CircleAvatar(
+                                radius: 18,
+                                backgroundColor: colors.brandPrimary.withValues(alpha: 0.15),
+                                child: canteenAvatarUrl != null && canteenAvatarUrl.isNotEmpty
+                                    ? ClipOval(
+                                        child: Image.network(
+                                          canteenAvatarUrl,
+                                          width: 36,
+                                          height: 36,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) =>
+                                              Icon(Icons.storefront_rounded, color: colors.brandPrimary, size: 20),
+                                        ),
+                                      )
+                                    : Icon(Icons.storefront_rounded, color: colors.brandPrimary, size: 20),
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    color: isPedagangOnline ? colors.statusSuccess : colors.textMuted.withValues(alpha: 0.5),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: colors.surfaceContainer, width: 1.5),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        widget.order.canteenName?.isNotEmpty == true
+                                            ? widget.order.canteenName!
+                                            : 'Pedagang Kantin',
+                                        style: HallmarkTypography.titleSmall(colors.textPrimary),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      CupertinoIcons.chevron_forward,
+                                      size: 13,
+                                      color: colors.brandPrimary,
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  'ID: #${widget.order.id.length > 8 ? widget.order.id.substring(0, 8) : widget.order.id} • ${widget.order.status} • ${isPedagangOnline ? "Online" : "Offline"}',
+                                  style: HallmarkTypography.bodySmall(colors.textMuted),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        'ID: #${widget.order.id.length > 8 ? widget.order.id.substring(0, 8) : widget.order.id} • ${widget.order.status} • ${isPedagangOnline ? "Online" : "Offline"}',
-                        style: HallmarkTypography.bodySmall(colors.textMuted),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
                 IconButton(
