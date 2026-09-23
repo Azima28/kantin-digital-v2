@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
@@ -198,39 +197,11 @@ class _AboutSeKantinDialog extends ConsumerWidget {
                       ),
                       showDivider: true,
                     ),
-                    InkWell(
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        context.go('/public/info');
-                      },
-                      borderRadius: const BorderRadius.vertical(
-                        bottom: Radius.circular(14),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 11,
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'Panduan & Info Sekolah',
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: context.textPrimary,
-                                ),
-                              ),
-                            ),
-                            Icon(
-                              CupertinoIcons.chevron_forward,
-                              size: 14,
-                              color: context.textSecondary,
-                            ),
-                          ],
-                        ),
-                      ),
+                    _buildRow(
+                      context,
+                      label: 'Keamanan Transaksi',
+                      value: 'PIN & RFID Terproteksi',
+                      showDivider: false,
                     ),
                   ],
                 ),
