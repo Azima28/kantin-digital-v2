@@ -44,7 +44,7 @@ class NebulaSidebar extends StatelessWidget {
     const Color sidebarBg = Color(0xFF054A47);
     const Color activeItemBg = Color(0xFF0B6E6A);
     const Color activeCyanAccent = Color(0xFF2DD4BF);
-    const Color logoBadgeBg = Color(0xFF0D9488);
+    const Color logoBadgeBg = Colors.white;
 
     return Container(
       width: 130,
@@ -59,18 +59,18 @@ class NebulaSidebar extends StatelessWidget {
         children: [
           const SizedBox(height: 28),
 
-          // Top Header Logo Badge (Square rounded badge with brand logo)
+          // Top Header Logo Badge (Square rounded badge with white background for maximum contrast)
           Container(
-            width: 54,
-            height: 54,
-            padding: const EdgeInsets.all(6),
+            width: 52,
+            height: 52,
+            padding: const EdgeInsets.all(7),
             decoration: BoxDecoration(
               color: logoBadgeBg,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 10,
+                  color: Colors.black.withValues(alpha: 0.18),
+                  blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
               ],
@@ -78,11 +78,11 @@ class NebulaSidebar extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: Image.asset(
-                'assets/images/app_symbol_dark.png',
+                'assets/images/app_symbol_light.png',
                 fit: BoxFit.contain,
                 errorBuilder: (_, __, ___) => Icon(
                   headerIcon,
-                  color: Colors.white,
+                  color: const Color(0xFF0D9488),
                   size: 28,
                 ),
               ),
