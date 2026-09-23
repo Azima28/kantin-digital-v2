@@ -654,8 +654,23 @@ func (r *TransactionRepo) ListTransactionsPaged(ctx context.Context, studentID, 
 
 	// 2. Data Query
 	dataQuery := `
-		SELECT t.id, t.student_id, t.operator_id, t.total_amount, t.type, t.status, t.purchase_method, t.created_at,
-		       COALESCE(c.canteen_name, p.full_name, 'Kantin Sekolah') AS canteen_name,
+		SELECT t.id, t.student_id, 
+		       COALESCE(t.operator_id, (
+		           SELECT p2.operator_id 
+		           FROM public.transaction_items ti2 
+		           JOIN public.products p2 ON p2.id = ti2.product_id 
+		           WHERE ti2.transaction_id = t.id 
+		           LIMIT 1
+		       )) AS operator_id,
+		       t.total_amount, t.type, t.status, t.purchase_method, t.created_at,
+		       COALESCE(c.canteen_name, (
+		           SELECT co2.canteen_name 
+		           FROM public.transaction_items ti2 
+		           JOIN public.products p2 ON p2.id = ti2.product_id 
+		           JOIN public.canteen_operators co2 ON co2.id = p2.operator_id 
+		           WHERE ti2.transaction_id = t.id 
+		           LIMIT 1
+		       ), p.full_name, 'Kantin Sekolah') AS canteen_name,
 		       COALESCE(p_st.full_name, 'Siswa') AS student_name,
 		       p_st.nisn AS student_nisn,
 		       COALESCE(p.full_name, '') AS operator_name,

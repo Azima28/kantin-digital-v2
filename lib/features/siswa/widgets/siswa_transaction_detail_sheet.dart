@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
@@ -143,12 +144,136 @@ void showTransactionDetailSheet(
                   ),
                   const SizedBox(height: 18),
 
+                  // ── Merchant / Toko Stan Kantin Header (Shopee / GoFood Style) ──
+                  if (type == 'purchase') ...[
+                    InkWell(
+                      onTap: () {
+                        Navigator.pop(context);
+                        final canteenId = tx.operatorId;
+                        if (canteenId != null && canteenId.isNotEmpty) {
+                          context.push('/public/stan/$canteenId');
+                        } else {
+                          context.push('/public/menu');
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: context.surfaceBg,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: context.dividerCol, width: 0.6),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: Nebula.teal.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(
+                                Icons.storefront_rounded,
+                                color: Nebula.teal,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          canteenName.isNotEmpty ? canteenName : 'Stan Kantin',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 13.5,
+                                            fontWeight: FontWeight.bold,
+                                            color: context.textPrimary,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                        decoration: BoxDecoration(
+                                          color: Nebula.teal.withValues(alpha: 0.12),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          'Stan',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 9.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: Nebula.teal,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Kunjungi toko & lihat menu lainnya',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      color: context.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Kunjungi',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Nebula.teal,
+                                  ),
+                                ),
+                                const SizedBox(width: 2),
+                                const Icon(
+                                  CupertinoIcons.chevron_forward,
+                                  size: 14,
+                                  color: Nebula.teal,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
                   // Metadata Info Section
                   _buildDataRow(context, 'ID Transaksi', '#${txId.length > 8 ? txId.substring(0, 8).toUpperCase() : txId}'),
                   const Divider(height: 18, thickness: 0.5),
                   _buildDataRow(context, 'Nama Siswa', studentName),
                   const Divider(height: 18, thickness: 0.5),
-                  _buildDataRow(context, 'Merchant / Stan', type == 'topup' ? 'Koperasi / Petugas Keuangan' : canteenName),
+                  _buildDataRow(
+                    context,
+                    'Merchant / Stan',
+                    type == 'topup' ? 'Koperasi / Petugas Keuangan' : canteenName,
+                    onTap: type == 'purchase'
+                        ? () {
+                            Navigator.pop(context);
+                            final canteenId = tx.operatorId;
+                            if (canteenId != null && canteenId.isNotEmpty) {
+                              context.push('/public/stan/$canteenId');
+                            } else {
+                              context.push('/public/menu');
+                            }
+                          }
+                        : null,
+                  ),
                   const Divider(height: 18, thickness: 0.5),
                   _buildDataRow(context, 'Metode Pembayaran', type == 'topup' ? (tx.purchaseMethod?.toLowerCase() == 'qris' ? 'QRIS (Instan)' : 'Kasir Tunai') : tx.purchaseMethodDisplay),
 
@@ -418,20 +543,47 @@ void showTransactionDetailSheet(
   );
 }
 
-Widget _buildDataRow(BuildContext context, String label, String value) {
-  return Row(
+Widget _buildDataRow(BuildContext context, String label, String value, {VoidCallback? onTap}) {
+  final content = Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
       Text(label, style: GoogleFonts.inter(color: context.textSecondary, fontSize: 12.5)),
       const SizedBox(width: 8),
       Flexible(
-        child: Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12.5, color: context.textPrimary),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12.5,
+                  color: onTap != null ? Nebula.teal : context.textPrimary,
+                ),
+              ),
+            ),
+            if (onTap != null) ...[
+              const SizedBox(width: 4),
+              const Icon(CupertinoIcons.chevron_forward, size: 12, color: Nebula.teal),
+            ],
+          ],
         ),
       ),
     ],
   );
+
+  if (onTap != null) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2.0),
+        child: content,
+      ),
+    );
+  }
+  return content;
 }
