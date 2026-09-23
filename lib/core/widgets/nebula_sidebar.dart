@@ -59,10 +59,11 @@ class NebulaSidebar extends StatelessWidget {
         children: [
           const SizedBox(height: 28),
 
-          // Top Header Logo Badge (Square rounded badge with store icon)
+          // Top Header Logo Badge (Square rounded badge with brand logo)
           Container(
             width: 54,
             height: 54,
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               color: logoBadgeBg,
               borderRadius: BorderRadius.circular(16),
@@ -74,10 +75,17 @@ class NebulaSidebar extends StatelessWidget {
                 ),
               ],
             ),
-            child: Icon(
-              headerIcon,
-              color: Colors.white,
-              size: 28,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.asset(
+                'assets/images/app_logo_dark.png',
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => Icon(
+                  headerIcon,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
             ),
           ),
 

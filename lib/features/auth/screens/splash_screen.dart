@@ -81,22 +81,30 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Clean Logo Badge (128x128 container)
-                    Container(
-                      width: 128,
-                      height: 128,
-                      decoration: BoxDecoration(
-                        color: primaryColor.withValues(alpha: isDark ? 0.15 : 0.08),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: primaryColor.withValues(alpha: 0.25),
-                          width: 1.5,
+                    // Official Brand Logo (Light & Dark theme aware)
+                    Image.asset(
+                      isDark
+                          ? 'assets/images/app_logo_dark.png'
+                          : 'assets/images/app_logo_light.png',
+                      width: 150,
+                      height: 150,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: 128,
+                        height: 128,
+                        decoration: BoxDecoration(
+                          color: primaryColor.withValues(alpha: isDark ? 0.15 : 0.08),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: primaryColor.withValues(alpha: 0.25),
+                            width: 1.5,
+                          ),
                         ),
-                      ),
-                      child: Icon(
-                        CupertinoIcons.creditcard_fill,
-                        color: primaryColor,
-                        size: 56,
+                        child: Icon(
+                          CupertinoIcons.creditcard_fill,
+                          color: primaryColor,
+                          size: 56,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),

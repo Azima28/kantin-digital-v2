@@ -49,6 +49,24 @@
       height: 100vh;
       width: 100vw;
       overflow: hidden;
+      transition: background-color 0.3s ease;
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #0B1120;
+      }
+      .app-title {
+        color: #F8FAFC !important;
+      }
+      .app-subtitle {
+        color: #94A3B8 !important;
+      }
+      .logo-img.light {
+        display: none !important;
+      }
+      .logo-img.dark {
+        display: block !important;
+      }
     }
     #loading-splash {
       display: flex;
@@ -56,42 +74,40 @@
       align-items: center;
       justify-content: center;
       text-align: center;
+      padding: 24px;
       transition: opacity 0.4s ease-out;
     }
-    .logo-container {
-      width: 72px;
-      height: 72px;
-      border-radius: 20px;
-      background: linear-gradient(135deg, #0D9488 0%, #047857 100%);
-      box-shadow: 0 10px 25px rgba(13, 148, 136, 0.25);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 20px;
-      animation: pulse 2s infinite ease-in-out;
+    .logo-img {
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      margin-bottom: 18px;
+      filter: drop-shadow(0 8px 24px rgba(13, 148, 136, 0.2));
+      animation: pulse 2.2s infinite ease-in-out;
     }
-    .logo-container svg {
-      width: 38px;
-      height: 38px;
-      fill: #FFFFFF;
+    .logo-img.dark {
+      display: none;
+    }
+    .logo-img.light {
+      display: block;
     }
     .app-title {
-      font-size: 20px;
-      font-weight: 700;
+      font-size: 22px;
+      font-weight: 800;
       color: #0F172A;
       letter-spacing: -0.5px;
       margin: 0 0 6px 0;
     }
     .app-subtitle {
-      font-size: 12px;
+      font-size: 13px;
       color: #64748B;
       margin: 0 0 24px 0;
       font-weight: 500;
     }
     .spinner {
-      width: 28px;
-      height: 28px;
-      border: 2.5px solid rgba(13, 148, 136, 0.15);
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(13, 148, 136, 0.15);
       border-top-color: #0D9488;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
@@ -101,17 +117,14 @@
     }
     @keyframes pulse {
       0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
+      50% { transform: scale(1.04); }
     }
   </style>
 </head>
 <body>
   <div id="loading-splash">
-    <div class="logo-container">
-      <svg viewBox="0 0 24 24">
-        <path d="M19 14V6c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zm-2 0H3V6h14v8zm4-7v11c0 1.1-.9 2-2 2H4v-2h15V7h2z"/>
-      </svg>
-    </div>
+    <img src="images/logo_light.png" class="logo-img light" alt="Kantin Digital Logo" />
+    <img src="images/logo_dark.png" class="logo-img dark" alt="Kantin Digital Logo" />
     <h1 class="app-title">Kantin Digital</h1>
     <p class="app-subtitle">Sistem Kasir & Dompet Digital Sekolah</p>
     <div class="spinner"></div>

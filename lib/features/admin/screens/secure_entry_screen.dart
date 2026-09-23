@@ -46,6 +46,7 @@ class _SecureEntryScreenState extends ConsumerState<SecureEntryScreen> {
                 Container(
                   width: 72,
                   height: 72,
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: Nebula.teal,
                     borderRadius: BorderRadius.circular(20),
@@ -57,10 +58,17 @@ class _SecureEntryScreenState extends ConsumerState<SecureEntryScreen> {
                       ),
                     ],
                   ),
-                  child: Icon(
-                    Icons.admin_panel_settings,
-                    color: context.cardBg,
-                    size: 36,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.asset(
+                      'assets/images/app_logo_dark.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => Icon(
+                        Icons.admin_panel_settings,
+                        color: context.cardBg,
+                        size: 36,
+                      ),
+                    ),
                   ),
                 ),
                 SizedBox(height: 24),

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:kantin_digital/core/constants/app_strings.dart';
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/providers/shared_providers.dart';
 import 'package:kantin_digital/core/theme/hallmark_color_scheme.dart';
 import 'package:kantin_digital/core/theme/hallmark_typography.dart';
@@ -111,22 +112,33 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Brand Mark
-                      Container(
-                        width: 64,
-                        height: 64,
-                        decoration: BoxDecoration(
-                          color: colors.brandPrimary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                            color: colors.brandPrimary.withValues(alpha: 0.2),
-                            width: 0.5,
+                      // Brand Mark (Official App Logo)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(18),
+                        child: Image.asset(
+                          context.isDark
+                              ? 'assets/images/app_logo_dark.png'
+                              : 'assets/images/app_logo_light.png',
+                          width: 68,
+                          height: 68,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: colors.brandPrimary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color: colors.brandPrimary.withValues(alpha: 0.2),
+                                width: 0.5,
+                              ),
+                            ),
+                            child: Icon(
+                              CupertinoIcons.creditcard,
+                              color: colors.brandPrimary,
+                              size: 30,
+                            ),
                           ),
-                        ),
-                        child: Icon(
-                          CupertinoIcons.creditcard,
-                          color: colors.brandPrimary,
-                          size: 30,
                         ),
                       ),
                       const SizedBox(height: 16),

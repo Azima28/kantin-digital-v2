@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/theme/hallmark_color_scheme.dart';
 import 'package:kantin_digital/core/theme/hallmark_typography.dart';
 import 'package:kantin_digital/core/widgets/hallmark_button.dart';
@@ -39,20 +40,36 @@ class PublicHomeScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: colors.brandPrimary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: colors.brandPrimary.withValues(alpha: 0.2),
-                          width: 0.5,
+                    Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.asset(
+                            context.isDark
+                                ? 'assets/images/app_logo_dark.png'
+                                : 'assets/images/app_logo_light.png',
+                            width: 36,
+                            height: 36,
+                            fit: BoxFit.contain,
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        '🍽️  Kantin Digital v2.0',
-                        style: HallmarkTypography.bodySmall(colors.brandPrimary),
-                      ),
+                        const SizedBox(width: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: colors.brandPrimary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: colors.brandPrimary.withValues(alpha: 0.2),
+                              width: 0.5,
+                            ),
+                          ),
+                          child: Text(
+                            'Kantin Digital v2.0',
+                            style: HallmarkTypography.bodySmall(colors.brandPrimary),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     Text(
