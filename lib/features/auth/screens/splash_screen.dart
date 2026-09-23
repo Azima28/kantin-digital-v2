@@ -117,13 +117,23 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                             letterSpacing: -0.5,
                           ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
-                      'v2.0 by Nebula Labs',
+                      AppStrings.appTagline,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             fontSize: 14,
+                            color: primaryColor,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.5,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'v2.0 • Digital Canteen Ecosystem',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontSize: 12,
                             color: context.textSecondary,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.w400,
                           ),
                     ),
                   ],

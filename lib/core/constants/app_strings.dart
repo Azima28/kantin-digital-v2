@@ -4,6 +4,8 @@ class AppStrings {
   // General & Branding
   static const String appName = 'SeKantin';
   static const String appCanteenTitle = 'SeKantin Kasir';
+  static const String appTagline = 'Smart Efficiency Kantin';
+  static const String appAcronymMeaning = 'Smart Efficiency Kantin';
   static const String subtitleSplash = 'Mulai Jajan Praktis,\nTanpa Uang Tunai Lagi';
   static const String buttonGetStarted = 'Mulai Sekarang';
 

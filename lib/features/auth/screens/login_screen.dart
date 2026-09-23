@@ -541,20 +541,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'SEKANTIN',
+                      AppStrings.appName,
                       style: GoogleFonts.poppins(
                         fontSize: 18,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                         color: activeTextMain,
                         letterSpacing: 0.5,
                       ),
                     ),
                     Text(
-                      'Akun layanan sekolah',
+                      AppStrings.appTagline,
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         color: activeTextMuted,
-                        fontWeight: FontWeight.w400,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],

@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
+import 'package:kantin_digital/core/constants/app_strings.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
 import 'package:kantin_digital/core/models/models.dart';
 import 'package:kantin_digital/core/providers/theme_provider.dart';
@@ -358,7 +359,7 @@ class _StudentWelcomeScreenState extends ConsumerState<StudentWelcomeScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                'SEKANTIN',
+                AppStrings.appName,
                 style: HallmarkTypography.titleSmall(colors.brandPrimary).copyWith(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
