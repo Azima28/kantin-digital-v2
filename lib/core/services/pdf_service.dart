@@ -360,7 +360,7 @@ class PdfService {
                 child: pw.Column(
                   children: [
                     pw.Text(
-                      'Terima kasih telah menggunakan Kantin Digital!',
+                      'Terima kasih telah menggunakan SeKantin!',
                       style: pw.TextStyle(
                           font: ttfRegular, fontSize: 9, color: _textGray),
                       textAlign: pw.TextAlign.center,

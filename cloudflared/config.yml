@@ -28,6 +28,12 @@ ingress:
   - hostname: zitech.web.id
     service: http://web:80
 
+  - hostname: sekantin.zitech.web.id
+    service: http://web:80
+    originRequest:
+      connectTimeout: 30s
+      noHappyEyeballs: true
+
   - hostname: kantin.zitech.web.id
     service: http://web:80
     originRequest:

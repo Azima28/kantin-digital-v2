@@ -358,7 +358,7 @@ class _StudentWelcomeScreenState extends ConsumerState<StudentWelcomeScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                'KANTIN DIGITAL',
+                'SEKANTIN',
                 style: HallmarkTypography.titleSmall(colors.brandPrimary).copyWith(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,

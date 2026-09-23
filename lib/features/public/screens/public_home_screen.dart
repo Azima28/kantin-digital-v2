@@ -65,7 +65,7 @@ class PublicHomeScreen extends StatelessWidget {
                             ),
                           ),
                           child: Text(
-                            'Kantin Digital v2.0',
+                            'SeKantin v2.0',
                             style: HallmarkTypography.bodySmall(colors.brandPrimary),
                           ),
                         ),

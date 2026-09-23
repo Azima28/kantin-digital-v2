@@ -12,7 +12,7 @@ class ConnectivityService {
     }
     return const String.fromEnvironment(
       'BACKEND_HEALTH_URL',
-      defaultValue: 'https://kantin.zitech.web.id/health',
+      defaultValue: 'https://sekantin.zitech.web.id/health',
     );
   }
 

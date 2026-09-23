@@ -2,13 +2,13 @@ class AppStrings {
   AppStrings._();
 
   // General & Branding
-  static const String appName = 'Kantin Digital';
-  static const String appCanteenTitle = 'Kantin Digital Kasir';
+  static const String appName = 'SeKantin';
+  static const String appCanteenTitle = 'SeKantin Kasir';
   static const String subtitleSplash = 'Mulai Jajan Praktis,\nTanpa Uang Tunai Lagi';
   static const String buttonGetStarted = 'Mulai Sekarang';
 
   // Welcome Screen (Redesign from login.html template)
-  static const String welcomeBadge = 'Kantin Digital v2.0';
+  static const String welcomeBadge = 'SeKantin v2.0';
   static const String welcomeTagline = 'PESAN • BAYAR • AMBIL';
   static const String welcomeHeroTitlePart1 = 'Jajan jadi\n';
   static const String welcomeHeroTitlePart2 = 'sederhana.';

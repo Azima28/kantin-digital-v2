@@ -143,7 +143,7 @@ class _ParentPortalScreenState extends ConsumerState<ParentPortalScreen> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'KANTIN DIGITAL',
+                        'SEKANTIN',
                         style: HallmarkTypography.headingL2(colors.brandPrimary),
                       ),
                       const SizedBox(height: 4),

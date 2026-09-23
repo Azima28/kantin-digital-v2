@@ -755,7 +755,7 @@ class _KeuanganSettingsScreenState extends ConsumerState<KeuanganSettingsScreen>
                 children: [
                   _buildInfoRow('Versi', '2.0.0 (Enterprise)'),
                   Divider(height: 16, thickness: 0.5, color: context.dividerCol),
-                  _buildInfoRow('Platform', 'Kantin Digital'),
+                  _buildInfoRow('Platform', 'SeKantin'),
                 ],
               ),
               const SizedBox(height: 24),

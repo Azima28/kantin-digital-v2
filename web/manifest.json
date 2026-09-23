@@ -1,11 +1,11 @@
 {
-    "name": "Kantin Digital",
-    "short_name": "Kantin Digital",
+    "name": "SeKantin",
+    "short_name": "SeKantin",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0D9488",
     "theme_color": "#0D9488",
-    "description": "Sistem Kantin Digital - RFID/NFC based digital canteen system",
+    "description": "SeKantin - RFID/NFC based digital canteen system",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

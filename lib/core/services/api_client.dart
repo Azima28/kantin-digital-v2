@@ -60,7 +60,7 @@ class ApiClient {
     }
     return const String.fromEnvironment(
       'BACKEND_API_URL',
-      defaultValue: 'https://kantin.zitech.web.id/api/v1',
+      defaultValue: 'https://sekantin.zitech.web.id/api/v1',
     );
   }
 
@@ -91,7 +91,7 @@ class ApiClient {
     if (backendHost.isEmpty) {
       backendHost = const String.fromEnvironment(
         'BACKEND_HOST',
-        defaultValue: 'https://kantin.zitech.web.id',
+        defaultValue: 'https://sekantin.zitech.web.id',
       );
     }
     final cleanPath = trimmed.startsWith('/') ? trimmed : '/$trimmed';

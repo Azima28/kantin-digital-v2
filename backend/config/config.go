@@ -51,7 +51,7 @@ func LoadConfig() *Config {
 		// website on the internet make cookie-authenticated calls on behalf of a
 		// logged-in visitor. Fiber cannot express "wildcard but without credentials",
 		// so production has to name its origins.
-		panic("FATAL: CORS_ORIGINS tidak boleh '*' pada environment production. Isi dengan daftar origin eksplisit, contoh: CORS_ORIGINS=https://zitech.web.id,https://kantin.zitech.web.id")
+		panic("FATAL: CORS_ORIGINS tidak boleh '*' pada environment production. Isi dengan daftar origin eksplisit, contoh: CORS_ORIGINS=https://sekantin.zitech.web.id,https://kantin.zitech.web.id,https://zitech.web.id")
 	}
 
 	uploadDir := getEnv("UPLOAD_DIR", "./uploads")

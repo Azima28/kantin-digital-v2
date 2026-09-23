@@ -72,7 +72,7 @@ class _ParentTopUpScreenState extends ConsumerState<ParentTopUpScreen> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Kantin Digital',
+                  'SeKantin',
                   style: GoogleFonts.inter(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
@@ -110,7 +110,7 @@ class _ParentTopUpScreenState extends ConsumerState<ParentTopUpScreen> {
             padding: const EdgeInsets.symmetric(vertical: 16),
             child: Center(
               child: Text(
-                '© 2024 Kantin Digital. All rights reserved.',
+                '© 2026 SeKantin. All rights reserved.',
                 style: GoogleFonts.inter(fontSize: 11, color: context.textSecondary),
               ),
             ),

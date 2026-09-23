@@ -75,7 +75,7 @@ class _SecureEntryScreenState extends ConsumerState<SecureEntryScreen> {
 
                 // Title
                 Text(
-                  'Kantin Digital',
+                  'SeKantin',
                   style: GoogleFonts.inter(
                     fontSize: 34,
                     fontWeight: FontWeight.w700,

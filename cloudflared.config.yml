@@ -13,6 +13,8 @@ protocol: http2
 ingress:
   - hostname: zitech.web.id
     service: http://127.0.0.1:80
+  - hostname: sekantin.zitech.web.id
+    service: http://127.0.0.1:80
   - hostname: kantin.zitech.web.id
     service: http://127.0.0.1:80
   - service: http_status:404

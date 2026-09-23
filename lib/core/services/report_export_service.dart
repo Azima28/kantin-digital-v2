@@ -564,7 +564,7 @@ class ReportExportService {
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
-                  'Sistem Kantin Digital | Dokumen Laporan Keuangan Sah',
+                  'Sistem SeKantin | Dokumen Laporan Keuangan Sah',
                   style: pw.TextStyle(font: ttfRegular, fontSize: 8, color: subtleText),
                 ),
                 pw.Text(
@@ -916,7 +916,7 @@ class ReportExportService {
                   border: pw.Border.all(color: borderCol, width: 0.8),
                 ),
                 child: pw.Text(
-                  'Dokumen ini ditarik secara otomatis & terverifikasi oleh Sistem Kantin Digital.',
+                  'Dokumen ini ditarik secara otomatis & terverifikasi oleh Sistem SeKantin.',
                   style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: grayText),
                 ),
               ),
@@ -926,7 +926,7 @@ class ReportExportService {
       ),
     );
 
-    final String filename = 'Laporan_Keuangan_Kantin_Digital_${AppDateFormatter.formatCompactFileStamp(DateTime.now())}.pdf';
+    final String filename = 'Laporan_Keuangan_SeKantin_${AppDateFormatter.formatCompactFileStamp(DateTime.now())}.pdf';
 
     await Printing.sharePdf(
       bytes: await pdf.save(),
@@ -1293,7 +1293,7 @@ class ReportExportService {
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
-                  'Sistem Kantin Digital | Buku Kas Sah Petugas Loket',
+                  'Sistem SeKantin | Buku Kas Sah Petugas Loket',
                   style: pw.TextStyle(font: ttfRegular, fontSize: 8, color: subtleText),
                 ),
                 pw.Text(
@@ -1582,7 +1582,7 @@ class ReportExportService {
                   border: pw.Border.all(color: borderCol, width: 0.8),
                 ),
                 child: pw.Text(
-                  'Dokumen buku kas ini ditarik secara digital & terverifikasi oleh Sistem Kantin Digital.',
+                  'Dokumen buku kas ini ditarik secara digital & terverifikasi oleh Sistem SeKantin.',
                   style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: grayText),
                 ),
               ),
@@ -1614,7 +1614,7 @@ class ReportExportService {
     // 1. Susun teks pesan ringkasan WhatsApp yang sangat rapi dan informatif
     final buffer = StringBuffer();
     buffer.writeln('📋 *LAPORAN BUKU KAS PETUGAS LOKET*');
-    buffer.writeln('Kantin Digital — Sistem Akuntabilitas Sah');
+    buffer.writeln('SeKantin — Sistem Akuntabilitas Sah');
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
     buffer.writeln('👤 *Petugas:* ${officer.fullName}');
     buffer.writeln('🏫 *Sekolah:* ${officer.assignedSchool}');
@@ -1640,7 +1640,7 @@ class ReportExportService {
       buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
     }
 
-    buffer.writeln('_Laporan ditarik resmi dari Sistem Kantin Digital._');
+    buffer.writeln('_Laporan ditarik resmi dari Sistem SeKantin._');
 
     // 2. Buka WhatsApp dengan pesan terformat
     final encodedText = Uri.encodeComponent(buffer.toString());
@@ -1736,7 +1736,7 @@ class ReportExportService {
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
-                  'Sistem Kantin Digital | Berita Acara Sah Tutup Kasir (Shift #$shiftNumber)',
+                  'Sistem SeKantin | Berita Acara Sah Tutup Kasir (Shift #$shiftNumber)',
                   style: pw.TextStyle(font: ttfRegular, fontSize: 8, color: subtleText),
                 ),
                 pw.Text(
@@ -2024,7 +2024,7 @@ class ReportExportService {
                   border: pw.Border.all(color: borderCol, width: 0.8),
                 ),
                 child: pw.Text(
-                  'Dokumen berita acara ini diterbitkan secara digital oleh Sistem Kantin Digital.',
+                  'Dokumen berita acara ini diterbitkan secara digital oleh Sistem SeKantin.',
                   style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: grayText),
                 ),
               ),
@@ -2061,7 +2061,7 @@ class ReportExportService {
   }) async {
     final buffer = StringBuffer();
     buffer.writeln('🔒 *BERITA ACARA TUTUP KASIR (SHIFT #$shiftNumber)*');
-    buffer.writeln('Kantin Digital — Sistem Akuntabilitas Sah');
+    buffer.writeln('SeKantin — Sistem Akuntabilitas Sah');
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
     buffer.writeln('👤 *Petugas Kasir:* $officerName');
     buffer.writeln('🏫 *Sekolah:* $schoolName');
@@ -2089,7 +2089,7 @@ class ReportExportService {
       buffer.writeln('📝 *Catatan:* $notes');
     }
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
-    buffer.writeln('_Laporan serah terima kas resmi diterbitkan dari Sistem Kantin Digital._');
+    buffer.writeln('_Laporan serah terima kas resmi diterbitkan dari Sistem SeKantin._');
 
     final encodedText = Uri.encodeComponent(buffer.toString());
     final waUrl = 'https://api.whatsapp.com/send?text=$encodedText';
@@ -2680,7 +2680,7 @@ class ReportExportService {
                   border: pw.Border.all(color: borderCol, width: 0.8),
                 ),
                 child: pw.Text(
-                  'Dokumen rekapitulasi pembukuan kas ini diterbitkan secara otomatis & terverifikasi oleh Sistem Kantin Digital.',
+                  'Dokumen rekapitulasi pembukuan kas ini diterbitkan secara otomatis & terverifikasi oleh Sistem SeKantin.',
                   style: pw.TextStyle(font: ttfRegular, fontSize: 7.5, color: grayText),
                 ),
               ),

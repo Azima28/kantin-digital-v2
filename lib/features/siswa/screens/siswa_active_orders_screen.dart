@@ -23,6 +23,7 @@ import 'package:kantin_digital/features/siswa/providers/siswa_providers.dart';
 import 'package:kantin_digital/features/siswa/widgets/order_chat_sheet.dart';
 import 'package:kantin_digital/features/siswa/widgets/order_review_section.dart';
 import 'package:kantin_digital/features/kantin/models/order_item.dart';
+import 'package:kantin_digital/core/services/api_client.dart';
 
 enum StudentOrderFilter {
   menunggu,
@@ -49,20 +50,20 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
       return currentImgUrl.trim();
     }
     final lower = productName.toLowerCase().trim();
-    if (lower.contains('dimsum')) return 'https://kantin.zitech.web.id/uploads/products/product_dimsum_goreng.jpg';
-    if (lower.contains('nasi goreng') || lower.contains('nasgor')) return 'https://kantin.zitech.web.id/uploads/products/product_nasi_goreng.jpg';
-    if (lower.contains('mie ayam') || lower.contains('mie bakso')) return 'https://kantin.zitech.web.id/uploads/products/product_mie_ayam.jpg';
-    if (lower.contains('ayam geprek') || lower.contains('geprek')) return 'https://kantin.zitech.web.id/uploads/products/product_ayam_geprek.jpg';
-    if (lower.contains('bakso')) return 'https://kantin.zitech.web.id/uploads/products/product_bakso_mercon.jpg';
-    if (lower.contains('soto')) return 'https://kantin.zitech.web.id/uploads/products/product_soto_ayam.jpg';
-    if (lower.contains('nasi rames') || lower.contains('rames')) return 'https://kantin.zitech.web.id/uploads/products/product_nasi_rames.jpg';
-    if (lower.contains('es jeruk') || lower.contains('jeruk')) return 'https://kantin.zitech.web.id/uploads/products/product_es_jeruk.jpg';
-    if (lower.contains('es teh') || lower.contains('teh')) return 'https://kantin.zitech.web.id/uploads/products/product_es_teh.jpg';
-    if (lower.contains('jus') || lower.contains('alpukat')) return 'https://kantin.zitech.web.id/uploads/products/product_jus_alpukat.jpg';
-    if (lower.contains('air') || lower.contains('mineral') || lower.contains('aqua')) return 'https://kantin.zitech.web.id/uploads/products/product_air_mineral.jpg';
-    if (lower.contains('pisang')) return 'https://kantin.zitech.web.id/uploads/products/product_pisang_keju.jpg';
-    if (lower.contains('risol')) return 'https://kantin.zitech.web.id/uploads/products/product_risoles_mayo.jpg';
-    if (lower.contains('tango') || lower.contains('wafer')) return 'https://kantin.zitech.web.id/uploads/products/product_tango_wafer.jpg';
+    if (lower.contains('dimsum')) return ApiClient.resolveImageUrl('/uploads/products/product_dimsum_goreng.jpg');
+    if (lower.contains('nasi goreng') || lower.contains('nasgor')) return ApiClient.resolveImageUrl('/uploads/products/product_nasi_goreng.jpg');
+    if (lower.contains('mie ayam') || lower.contains('mie bakso')) return ApiClient.resolveImageUrl('/uploads/products/product_mie_ayam.jpg');
+    if (lower.contains('ayam geprek') || lower.contains('geprek')) return ApiClient.resolveImageUrl('/uploads/products/product_ayam_geprek.jpg');
+    if (lower.contains('bakso')) return ApiClient.resolveImageUrl('/uploads/products/product_bakso_mercon.jpg');
+    if (lower.contains('soto')) return ApiClient.resolveImageUrl('/uploads/products/product_soto_ayam.jpg');
+    if (lower.contains('nasi rames') || lower.contains('rames')) return ApiClient.resolveImageUrl('/uploads/products/product_nasi_rames.jpg');
+    if (lower.contains('es jeruk') || lower.contains('jeruk')) return ApiClient.resolveImageUrl('/uploads/products/product_es_jeruk.jpg');
+    if (lower.contains('es teh') || lower.contains('teh')) return ApiClient.resolveImageUrl('/uploads/products/product_es_teh.jpg');
+    if (lower.contains('jus') || lower.contains('alpukat')) return ApiClient.resolveImageUrl('/uploads/products/product_jus_alpukat.jpg');
+    if (lower.contains('air') || lower.contains('mineral') || lower.contains('aqua')) return ApiClient.resolveImageUrl('/uploads/products/product_air_mineral.jpg');
+    if (lower.contains('pisang')) return ApiClient.resolveImageUrl('/uploads/products/product_pisang_keju.jpg');
+    if (lower.contains('risol')) return ApiClient.resolveImageUrl('/uploads/products/product_risoles_mayo.jpg');
+    if (lower.contains('tango') || lower.contains('wafer')) return ApiClient.resolveImageUrl('/uploads/products/product_tango_wafer.jpg');
     return null;
   }
 

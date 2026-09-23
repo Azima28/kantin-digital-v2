@@ -341,7 +341,7 @@ class _SiswaPaymentAnimationOverlayState
             ],
           ),
           Text(
-            'Kantin Digital',
+            'SeKantin',
             style: GoogleFonts.inter(
               color: Colors.white54,
               fontSize: 11,

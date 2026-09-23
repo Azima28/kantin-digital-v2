@@ -83,7 +83,7 @@ class PublicSchoolInfoScreen extends StatelessWidget {
             _buildSection(
               icon: CupertinoIcons.info_circle_fill,
               iconColor: Nebula.teal,
-              title: 'Cara Menggunakan Kantin Digital',
+              title: 'Cara Menggunakan SeKantin',
               children: [
                 _buildStepRow('1', 'Pastikan kartu RFID kamu aktif dan memiliki saldo cukup.'),
                 _buildStepRow('2', '${AppStrings.buttonSelect} menu yang ingin dibeli di kasir kantin.'),

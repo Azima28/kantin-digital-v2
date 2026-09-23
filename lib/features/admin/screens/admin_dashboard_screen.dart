@@ -56,7 +56,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Kantin Digital',
+                  'SeKantin',
                   style: GoogleFonts.inter(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,

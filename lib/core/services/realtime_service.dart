@@ -43,7 +43,7 @@ class RealtimeService {
     }
     return const String.fromEnvironment(
       'BACKEND_WS_URL',
-      defaultValue: 'wss://kantin.zitech.web.id/ws',
+      defaultValue: 'wss://sekantin.zitech.web.id/ws',
     );
   }
 
