@@ -27,6 +27,8 @@ class OrderItem {
   final int totalAmount; // fixed: changed from double to int
   final String? cancelRequestReason;
   final DateTime? createdAt;
+  final String? operatorId;
+  final String? canteenName;
 
   const OrderItem({
     required this.id,
@@ -39,6 +41,8 @@ class OrderItem {
     required this.totalAmount,
     this.cancelRequestReason,
     this.createdAt,
+    this.operatorId,
+    this.canteenName,
   });
 
   /// Returns the item with the highest unit price (termahal) in this order
@@ -66,6 +70,8 @@ class OrderItem {
     String? studentId,
     String? cancelRequestReason,
     DateTime? createdAt,
+    String? operatorId,
+    String? canteenName,
   }) {
     return OrderItem(
       id: id,
@@ -78,6 +84,8 @@ class OrderItem {
       totalAmount: totalAmount,
       cancelRequestReason: cancelRequestReason ?? this.cancelRequestReason,
       createdAt: createdAt ?? this.createdAt,
+      operatorId: operatorId ?? this.operatorId,
+      canteenName: canteenName ?? this.canteenName,
     );
   }
 }

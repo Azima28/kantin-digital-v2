@@ -400,6 +400,7 @@ void showTransactionDetailSheet(
                             status: status,
                             items: const [],
                             totalAmount: amount,
+                            canteenName: canteenName,
                           );
                           OrderChatSheet.show(context, order: dummyOrder);
                         },

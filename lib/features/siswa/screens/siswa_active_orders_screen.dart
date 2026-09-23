@@ -2,6 +2,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kantin_digital/core/extensions/theme_extensions.dart';
@@ -406,12 +407,18 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
                             children: [
                               Icon(CupertinoIcons.chat_bubble_2_fill, size: 16, color: colors.brandPrimary),
                               const SizedBox(width: 8),
-                              Text(
-                                'Chat Pedagang Kantin',
-                                style: GoogleFonts.inter(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13.5,
-                                  color: colors.brandPrimary,
+                              Flexible(
+                                child: Text(
+                                  order.canteenName?.isNotEmpty == true
+                                      ? 'Chat ${order.canteenName}'
+                                      : 'Chat Pedagang Kantin',
+                                  style: GoogleFonts.inter(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13.5,
+                                    color: colors.brandPrimary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               if (unreadCount > 0) ...[
@@ -677,6 +684,107 @@ class _SiswaActiveOrdersScreenState extends ConsumerState<SiswaActiveOrdersScree
                   ),
                 ),
               ],
+            ),
+          ),
+          Divider(height: 1, color: colors.borderTactile),
+
+          // ── Merchant / Toko Stan Kantin Header (Shopee / GoFood Style) ──
+          InkWell(
+            onTap: () {
+              final canteenId = order.operatorId;
+              if (canteenId != null && canteenId.isNotEmpty) {
+                Navigator.pop(context);
+                context.push('/public/stan/$canteenId');
+              } else {
+                Navigator.pop(context);
+                context.push('/public/menu');
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              color: colors.surfaceSubtle.withValues(alpha: 0.6),
+              child: Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: colors.brandPrimary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.storefront_rounded,
+                      color: colors.brandPrimary,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                order.canteenName?.isNotEmpty == true
+                                    ? order.canteenName!
+                                    : 'Stan Kantin',
+                                style: HallmarkTypography.titleSmall(colors.textPrimary).copyWith(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                              decoration: BoxDecoration(
+                                color: colors.brandPrimary.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'Stan',
+                                style: GoogleFonts.inter(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: colors.brandPrimary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Kunjungi toko & lihat menu lainnya',
+                          style: HallmarkTypography.bodySmall(colors.textMuted).copyWith(fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Kunjungi',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: colors.brandPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Icon(
+                        CupertinoIcons.chevron_forward,
+                        size: 14,
+                        color: colors.brandPrimary,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
           Divider(height: 1, color: colors.borderTactile),

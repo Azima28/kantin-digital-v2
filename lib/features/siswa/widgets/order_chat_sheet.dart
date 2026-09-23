@@ -439,8 +439,12 @@ class _OrderChatSheetState extends ConsumerState<OrderChatSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Chat Pedagang Kantin',
+                        widget.order.canteenName?.isNotEmpty == true
+                            ? widget.order.canteenName!
+                            : 'Pedagang Kantin',
                         style: HallmarkTypography.titleSmall(colors.textPrimary),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         'ID: #${widget.order.id.length > 8 ? widget.order.id.substring(0, 8) : widget.order.id} • ${widget.order.status} • ${isPedagangOnline ? "Online" : "Offline"}',
@@ -492,7 +496,9 @@ class _OrderChatSheetState extends ConsumerState<OrderChatSheet> {
                             Icon(CupertinoIcons.chat_bubble_2, color: colors.brandPrimary.withValues(alpha: 0.4), size: 44),
                             const SizedBox(height: 10),
                             Text(
-                              'Belum ada pesan.\nMulai obrolan langsung dengan pedagang kantin!',
+                              widget.order.canteenName?.isNotEmpty == true
+                                  ? 'Belum ada pesan.\nMulai obrolan langsung dengan ${widget.order.canteenName}!'
+                                  : 'Belum ada pesan.\nMulai obrolan langsung dengan pedagang kantin!',
                               textAlign: TextAlign.center,
                               style: HallmarkTypography.bodyMain(colors.textMuted),
                             ),
@@ -685,7 +691,9 @@ class _OrderChatSheetState extends ConsumerState<OrderChatSheet> {
                     textInputAction: TextInputAction.send,
                     onSubmitted: (_) => _sendMessage(),
                     decoration: InputDecoration(
-                      hintText: 'Tulis pesan untuk kantin...',
+                      hintText: widget.order.canteenName?.isNotEmpty == true
+                          ? 'Tulis pesan untuk ${widget.order.canteenName}...'
+                          : 'Tulis pesan untuk kantin...',
                       hintStyle: HallmarkTypography.bodyMain(colors.textMuted),
                       filled: true,
                       fillColor: colors.surfaceSubtle,

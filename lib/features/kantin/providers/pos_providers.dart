@@ -172,6 +172,13 @@ final canteenOrdersProvider = FutureProvider.autoDispose<List<OrderItem>>((Ref r
           }
         }
 
+        final operatorMap = map['operator'] as Map<String, dynamic>?;
+        final rawCanteenName = operatorMap?['canteen_name']?.toString()
+            ?? map['canteen_name']?.toString()
+            ?? map['operator_name']?.toString();
+        final rawOperatorId = map['operator_id']?.toString()
+            ?? operatorMap?['id']?.toString();
+
         return OrderItem(
           id: map['id']?.toString() ?? '',
           studentId: map['student_id']?.toString() ?? '',
@@ -183,6 +190,8 @@ final canteenOrdersProvider = FutureProvider.autoDispose<List<OrderItem>>((Ref r
           totalAmount: (map['total_amount'] as num?)?.toInt() ?? 0,
           cancelRequestReason: map['cancel_request_reason']?.toString(),
           createdAt: map['created_at'] != null ? DateTime.tryParse(map['created_at'].toString())?.toLocal() : null,
+          operatorId: rawOperatorId,
+          canteenName: rawCanteenName,
         );
       }).toList();
     }

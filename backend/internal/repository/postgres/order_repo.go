@@ -261,8 +261,23 @@ func (r *OrderRepo) CreateOrder(ctx context.Context, order *domain.Order, items 
 
 func (r *OrderRepo) GetOrderByID(ctx context.Context, orderID string) (*domain.Order, error) {
 	query := `
-		SELECT o.id, o.student_id, o.student_name, o.operator_id, o.status, o.delivery_location, o.total_amount, o.cancel_request_reason, o.created_at,
-		       c.canteen_name
+		SELECT o.id, o.student_id, o.student_name,
+		       COALESCE(o.operator_id, (
+		           SELECT p.operator_id
+		           FROM public.order_items oi
+		           JOIN public.products p ON p.id = oi.product_id
+		           WHERE oi.order_id = o.id
+		           LIMIT 1
+		       )) AS operator_id,
+		       o.status, o.delivery_location, o.total_amount, o.cancel_request_reason, o.created_at,
+		       COALESCE(c.canteen_name, (
+		           SELECT co.canteen_name
+		           FROM public.order_items oi
+		           JOIN public.products p ON p.id = oi.product_id
+		           JOIN public.canteen_operators co ON co.id = p.operator_id
+		           WHERE oi.order_id = o.id
+		           LIMIT 1
+		       ), 'Stan Kantin') AS canteen_name
 		FROM public.orders o
 		LEFT JOIN public.canteen_operators c ON c.id = o.operator_id
 		WHERE o.id = $1`
@@ -281,6 +296,9 @@ func (r *OrderRepo) GetOrderByID(ctx context.Context, orderID string) (*domain.O
 		return nil, err
 	}
 
+	if canteenName != nil {
+		o.CanteenName = *canteenName
+	}
 	if o.OperatorID != nil && canteenName != nil {
 		o.Operator = &domain.CanteenOperator{
 			ID:          *o.OperatorID,
@@ -315,8 +333,23 @@ func (r *OrderRepo) GetOrderByID(ctx context.Context, orderID string) (*domain.O
 
 func (r *OrderRepo) ListOrdersByStudent(ctx context.Context, studentID string) ([]domain.Order, error) {
 	query := `
-		SELECT o.id, o.student_id, o.student_name, o.operator_id, o.status, o.delivery_location, o.total_amount, o.cancel_request_reason, o.created_at,
-		       c.canteen_name
+		SELECT o.id, o.student_id, o.student_name,
+		       COALESCE(o.operator_id, (
+		           SELECT p.operator_id
+		           FROM public.order_items oi
+		           JOIN public.products p ON p.id = oi.product_id
+		           WHERE oi.order_id = o.id
+		           LIMIT 1
+		       )) AS operator_id,
+		       o.status, o.delivery_location, o.total_amount, o.cancel_request_reason, o.created_at,
+		       COALESCE(c.canteen_name, (
+		           SELECT co.canteen_name
+		           FROM public.order_items oi
+		           JOIN public.products p ON p.id = oi.product_id
+		           JOIN public.canteen_operators co ON co.id = p.operator_id
+		           WHERE oi.order_id = o.id
+		           LIMIT 1
+		       ), 'Stan Kantin') AS canteen_name
 		FROM public.orders o
 		LEFT JOIN public.canteen_operators c ON c.id = o.operator_id
 		WHERE o.student_id = $1
@@ -338,6 +371,9 @@ func (r *OrderRepo) ListOrdersByStudent(ctx context.Context, studentID string) (
 		)
 		if err != nil {
 			return nil, err
+		}
+		if canteenName != nil {
+			o.CanteenName = *canteenName
 		}
 		if o.OperatorID != nil && canteenName != nil {
 			o.Operator = &domain.CanteenOperator{

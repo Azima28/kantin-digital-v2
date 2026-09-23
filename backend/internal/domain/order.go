@@ -157,6 +157,7 @@ type Order struct {
 	StudentID           string          `json:"student_id"`
 	StudentName         string          `json:"student_name"`
 	OperatorID          *string         `json:"operator_id,omitempty"`
+	CanteenName         string          `json:"canteen_name,omitempty"`
 	Status              OrderStatus     `json:"status"`
 	DeliveryLocation    *string         `json:"delivery_location,omitempty"`
 	TotalAmount         int             `json:"total_amount"`
